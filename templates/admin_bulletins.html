@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Bulletins - Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;padding:20px;}
+        
+        /* ─── TOP BAR ────────────────────────────────────────────────────── */
+        .topbar{
+            background:linear-gradient(90deg,#1a237e,#3949ab);
+            color:#fff;
+            padding:14px 28px;
+            border-radius:16px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:10px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+            margin-bottom:22px;
+        }
+        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
+        .topbar h1 i{color:#667eea;}
+        .topbar a{
+            color:#fff;
+            text-decoration:none;
+            background:rgba(255,255,255,0.15);
+            padding:8px 20px;
+            border-radius:25px;
+            font-size:0.85rem;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            border:1px solid rgba(255,255,255,0.1);
+        }
+        .topbar a:hover{
+            background:rgba(255,255,255,0.25);
+            transform:translateY(-2px);
+        }
+        
+        .container{max-width:900px;margin:0 auto;}
+        
+        /* ─── CARDS ────────────────────────────────────────────────────── */
+        .card{
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            border-radius:16px;
+            padding:22px 24px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.06);
+            border:1px solid rgba(26,35,126,0.08);
+            margin-bottom:22px;
+            transition:0.3s;
+        }
+        .card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+        .card-header{
+            color:#1a237e;
+            font-size:1.05rem;
+            font-weight:600;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            border-bottom:2px dashed #e8eaf6;
+            padding-bottom:10px;
+            margin-bottom:16px;
+        }
+        .card-header i{color:#3949ab;}
+        
+        /* ─── FORM ────────────────────────────────────────────────────── */
+        .fg{margin-bottom:14px;}
+        .fg label{
+            display:block;
+            font-weight:500;
+            margin-bottom:5px;
+            color:#333;
+            font-size:0.85rem;
+        }
+        .fg label i{color:#3949ab;margin-right:6px;width:18px;}
+        .fg input,.fg select,.fg textarea{
+            width:100%;
+            padding:10px 14px;
+            border:2px solid #e0e0e0;
+            border-radius:10px;
+            font-family:'Poppins',sans-serif;
+            font-size:0.9rem;
+            transition:border-color 0.3s;
+            background:#fafafa;
+        }
+        .fg input:focus,.fg select:focus,.fg textarea:focus{
+            outline:none;
+            border-color:#3949ab;
+            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
+            background:#fff;
+        }
+        .fg textarea{min-height:80px;resize:vertical;}
+        
+        .btn{
+            padding:10px 24px;
+            border:none;
+            border-radius:10px;
+            font-weight:600;
+            cursor:pointer;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            font-size:0.9rem;
+            font-family:'Poppins',sans-serif;
+        }
+        .btn-primary{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
+        }
+        .btn-primary:hover{
+            transform:translateY(-2px);
+            box-shadow:0 6px 20px rgba(26,35,126,0.3);
+        }
+        .btn-danger{
+            background:linear-gradient(135deg,#c62828,#e53935);
+            color:#fff;
+        }
+        .btn-danger:hover{
+            transform:translateY(-2px);
+            box-shadow:0 6px 20px rgba(198,40,40,0.3);
+        }
+        .btn-sm{padding:4px 14px;font-size:0.75rem;}
+        
+        /* ─── ALERT ────────────────────────────────────────────────────── */
+        .alert{
+            padding:12px 18px;
+            border-radius:10px;
+            margin-bottom:16px;
+            display:none;
+            align-items:center;
+            gap:10px;
+        }
+        .alert-success{
+            background:#e8f5e9;
+            border-left:4px solid #2e7d32;
+            color:#1b5e20;
+        }
+        .alert-error{
+            background:#fce4ec;
+            border-left:4px solid #c62828;
+            color:#c62828;
+        }
+        
+        /* ─── BULLETIN ITEMS ──────────────────────────────────────────── */
+        .bulletin-item{
+            background:#f5f7fa;
+            border-left:4px solid #3949ab;
+            border-radius:10px;
+            padding:14px 18px;
+            margin-bottom:12px;
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-start;
+            gap:12px;
+            transition:0.2s;
+        }
+        .bulletin-item:hover{background:#e8eaf6;}
+        .bulletin-item.teacher{border-color:#667eea;background:#f3f0ff;}
+        .bulletin-item.teacher:hover{background:#e8eaf6;}
+        
+        .b-title{
+            font-weight:600;
+            color:#1a237e;
+            margin-bottom:3px;
+            font-size:0.95rem;
+        }
+        .bulletin-item.teacher .b-title{color:#3949ab;}
+        .b-content{color:#444;font-size:0.88rem;line-height:1.5;}
+        .b-meta{
+            font-size:0.78rem;
+            color:#888;
+            margin-top:6px;
+            display:flex;
+            flex-wrap:wrap;
+            gap:12px;
+            align-items:center;
+        }
+        .b-meta i{color:#3949ab;width:16px;}
+        .b-meta .permalink{
+            color:#1a237e;
+            font-weight:600;
+            text-decoration:none;
+            transition:color 0.2s;
+            display:inline-flex;
+            align-items:center;
+            gap:4px;
+        }
+        .b-meta .permalink:hover{color:#3949ab;text-decoration:underline;}
+        
+        .empty{
+            text-align:center;
+            padding:40px;
+            color:#999;
+        }
+        .empty i{
+            font-size:2.5rem;
+            color:#ddd;
+            display:block;
+            margin-bottom:12px;
+        }
+        
+        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
+        @media(max-width:768px){
+            .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
+            .topbar a{font-size:0.75rem;padding:6px 14px;}
+            .container{padding:0 4px;}
+            .card{padding:16px 18px;}
+        }
+        @media(max-width:480px){
+            .bulletin-item{flex-direction:column;}
+            .bulletin-item .delete-btn{align-self:flex-end;}
+            .b-meta{flex-direction:column;gap:4px;}
+        }
+    </style>
+</head>
+<body>
+
+<!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
+<div class="topbar">
+    <h1><i class="fas fa-bullhorn"></i> Manage Bulletins</h1>
+    <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
+</div>
+
+<div class="container">
+    
+    <div id="alertBox" class="alert"></div>
+
+    <!-- ─── POST NEW BULLETIN ─────────────────────────────────────────── -->
+    <div class="card">
+        <div class="card-header"><i class="fas fa-plus-circle"></i> Post New Announcement</div>
+        <form id="bulletinForm" onsubmit="postBulletin(event)">
+            <div class="fg">
+                <label><i class="fas fa-heading"></i> Title</label>
+                <input type="text" name="title" required placeholder="e.g. Exam Schedule Updated">
+            </div>
+            <div class="fg">
+                <label><i class="fas fa-align-left"></i> Content</label>
+                <textarea name="content" required placeholder="Write your announcement here..."></textarea>
+            </div>
+            <div class="fg">
+                <label><i class="fas fa-graduation-cap"></i> Target Class <span style="color:#999;font-weight:400;">(optional)</span></label>
+                <input type="text" name="target_class" placeholder="e.g. 10 (leave blank for all classes)">
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i> Post Announcement
+            </button>
+        </form>
+    </div>
+
+    <!-- ─── ACTIVE BULLETINS ──────────────────────────────────────────── -->
+    <div class="card">
+        <div class="card-header"><i class="fas fa-list"></i> Active Bulletins</div>
+        <div id="bulletinsList">
+            {% if bulletins %}
+                {% for b in bulletins %}
+                <div class="bulletin-item {% if b.poster_type=='teacher' %}teacher{% endif %}">
+                    <div style="flex:1;">
+                        <div class="b-title">{{ b.title }}</div>
+                        <div class="b-content">{{ b.content }}</div>
+                        <div class="b-meta">
+                            <span><i class="fas fa-user"></i> {{ b.poster_name }}</span>
+                            <span><i class="fas fa-calendar"></i> {{ b.created_at[:10] if b.created_at else '' }}</span>
+                            {% if b.target_class %}
+                                <span><i class="fas fa-graduation-cap"></i> Class {{ b.target_class }}</span>
+                            {% endif %}
+                            <a href="/announcement/{{ b.id }}" target="_blank" class="permalink" title="Permanent link — copy and share">
+                                <i class="fas fa-link"></i> Permalink
+                            </a>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger btn-sm delete-btn" onclick="deleteBulletin({{ b.id }}, this)">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty">
+                    <i class="fas fa-bell-slash"></i>
+                    No bulletins posted yet
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
+
+<script>
+function showAlert(msg, type) {
+    const box = document.getElementById('alertBox');
+    box.className = 'alert alert-' + type;
+    box.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}"></i> ${msg}`;
+    box.style.display = 'flex';
+    setTimeout(() => box.style.display = 'none', 5000);
+}
+
+async function postBulletin(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const btn = form.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting...';
+    
+    try {
+        const res = await fetch('/api/bulletins/post', {method:'POST', body:formData});
+        const data = await res.json();
+        showAlert(data.message, data.status);
+        if (data.status === 'success') { 
+            form.reset(); 
+            setTimeout(()=>location.reload(), 1500); 
+        }
+    } catch(err) { 
+        showAlert('Error: '+err.message, 'error'); 
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Post Announcement';
+}
+
+async function deleteBulletin(id, btn) {
+    if (!confirm('Delete this bulletin?')) return;
+    try {
+        const res = await fetch('/api/bulletins/'+id+'/delete', {method:'DELETE'});
+        const data = await res.json();
+        if (data.status === 'success') {
+            const item = btn.closest('.bulletin-item');
+            item.style.transition = 'all 0.3s';
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(-20px)';
+            setTimeout(() => item.remove(), 300);
+            
+            // Check if list is empty
+            const list = document.getElementById('bulletinsList');
+            if (list.children.length === 0) {
+                list.innerHTML = '<div class="empty"><i class="fas fa-bell-slash"></i>No bulletins posted yet</div>';
+            }
+        }
+    } catch(err) { 
+        showAlert('Error deleting bulletin', 'error'); 
+    }
+}
+</script>
+</body>
+</html>
