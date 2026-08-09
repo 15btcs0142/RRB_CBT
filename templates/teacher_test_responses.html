@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Responses - RRB CBT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        /* ─── TOP BAR ────────────────────────────────────────────────────── */
+        .topbar {
+            background: linear-gradient(90deg, #1a237e, #3949ab);
+            padding: 18px 28px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 24px;
+        }
+        .topbar h1 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .topbar h1 i { color: #667eea; }
+        .topbar .sub-info {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+        .topbar .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 8px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            font-size: 0.85rem;
+            font-family: 'Poppins', sans-serif;
+        }
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .btn-primary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .btn-pdf {
+            background: #c62828;
+            color: #fff;
+        }
+        .btn-pdf:hover {
+            background: #b71c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(198, 40, 40, 0.3);
+        }
+        .btn-back {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        /* ─── SUMMARY ────────────────────────────────────────────────────── */
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .summary-item {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 18px 20px;
+            border-radius: 14px;
+            text-align: center;
+            border: 1px solid rgba(26, 35, 126, 0.08);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            transition: 0.3s;
+        }
+        .summary-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+        .summary-item .icon {
+            font-size: 1.8rem;
+            margin-bottom: 4px;
+        }
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .summary-label {
+            color: #666;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .summary-item.total .summary-value { color: #1a237e; }
+        .summary-item.total .icon { color: #1a237e; }
+        .summary-item.correct .summary-value { color: #2e7d32; }
+        .summary-item.correct .icon { color: #2e7d32; }
+        .summary-item.wrong .summary-value { color: #c62828; }
+        .summary-item.wrong .icon { color: #c62828; }
+        .summary-item.score .summary-value { color: #e65100; }
+        .summary-item.score .icon { color: #e65100; }
+
+        /* ─── QUESTION CARDS ───────────────────────────────────────────── */
+        .question-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 22px 24px;
+            border-radius: 14px;
+            border: 1px solid rgba(26, 35, 126, 0.08);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            margin-bottom: 16px;
+            border-left: 5px solid #999;
+            transition: 0.3s;
+        }
+        .question-card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+        .question-card.correct { border-left-color: #2e7d32; }
+        .question-card.wrong { border-left-color: #c62828; }
+        .question-card.unattempted { border-left-color: #999; }
+
+        .q-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .q-num {
+            font-size: 0.85rem;
+            color: #888;
+            font-weight: 500;
+        }
+        .status-badge {
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .badge-correct {
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+        .badge-wrong {
+            background: #fce4ec;
+            color: #c62828;
+        }
+        .badge-skip {
+            background: #eceff1;
+            color: #78909c;
+        }
+
+        .q-text {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 14px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .q-image {
+            max-height: 150px;
+            border-radius: 10px;
+            margin-bottom: 14px;
+            border: 1px solid #e0e0e0;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .option {
+            padding: 10px 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            color: #444;
+            font-size: 0.9rem;
+            border: 1px solid #e0e0e0;
+            transition: 0.2s;
+        }
+        .option:hover {
+            background: #f0f0f0;
+        }
+        .option.correct-ans {
+            background: #e8f5e9;
+            color: #1b5e20;
+            border-color: #a5d6a7;
+            font-weight: 600;
+        }
+        .option.selected-wrong {
+            background: #fce4ec;
+            color: #c62828;
+            border-color: #ef9a9a;
+        }
+        .option.selected-correct {
+            background: #e8f5e9;
+            color: #1b5e20;
+            border-color: #81c784;
+            font-weight: 700;
+        }
+        .option .opt-label {
+            font-weight: 600;
+            margin-right: 6px;
+        }
+
+        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
+        @media (max-width: 768px) {
+            .topbar {
+                flex-direction: column;
+                text-align: center;
+                padding: 16px 20px;
+            }
+            .topbar .btn-group {
+                justify-content: center;
+                width: 100%;
+            }
+            .summary {
+                grid-template-columns: 1fr 1fr;
+            }
+            .question-card {
+                padding: 16px 18px;
+            }
+            .q-text {
+                font-size: 0.85rem;
+            }
+        }
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+            .summary {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .summary-item {
+                padding: 12px 14px;
+            }
+            .summary-value {
+                font-size: 1.5rem;
+            }
+            .btn {
+                font-size: 0.75rem;
+                padding: 6px 14px;
+            }
+            .topbar h1 {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
+    <div class="topbar">
+        <div>
+            <h1><i class="fas fa-file-alt"></i> Test Responses</h1>
+            <div class="sub-info">
+                <i class="fas fa-graduation-cap"></i> {{ result.class }}
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                <i class="fas fa-book"></i> {{ result.subject }}
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                <i class="fas fa-tag"></i> {{ result.chapter or 'N/A' }}
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                <i class="fas fa-calendar-alt"></i> {{ result.test_date[:10] if result.test_date else '' }}
+            </div>
+        </div>
+        <div class="btn-group">
+            <a href="/teacher/generate_student_report/{{ result.student_id }}" class="btn btn-pdf">
+                <i class="fas fa-file-pdf"></i> PDF
+            </a>
+            <a href="javascript:history.back()" class="btn btn-back">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- ─── CALCULATE STATS ───────────────────────────────────────────── -->
+    {% set correct = namespace(count=0) %}
+    {% set total = questions|length %}
+    {% set attempted = namespace(count=0) %}
+    {% for q in questions %}
+        {% if q.selected == q.correct %}
+            {% set correct.count = correct.count + 1 %}
+        {% endif %}
+        {% if q.selected %}
+            {% set attempted.count = attempted.count + 1 %}
+        {% endif %}
+    {% endfor %}
+    {% set wrong = total - correct.count %}
+    {% set not_attempted = total - attempted.count %}
+    {% set percentage = (correct.count / total * 100) if total > 0 else 0 %}
+
+    <!-- ─── SUMMARY ────────────────────────────────────────────────────── -->
+    <div class="summary">
+        <div class="summary-item total">
+            <div class="icon"><i class="fas fa-question-circle"></i></div>
+            <div class="summary-value">{{ total }}</div>
+            <div class="summary-label">Total Questions</div>
+        </div>
+        <div class="summary-item correct">
+            <div class="icon"><i class="fas fa-check-circle"></i></div>
+            <div class="summary-value">{{ correct.count }}</div>
+            <div class="summary-label">Correct</div>
+        </div>
+        <div class="summary-item wrong">
+            <div class="icon"><i class="fas fa-times-circle"></i></div>
+            <div class="summary-value">{{ wrong }}</div>
+            <div class="summary-label">Wrong</div>
+        </div>
+        <div class="summary-item score">
+            <div class="icon"><i class="fas fa-percentage"></i></div>
+            <div class="summary-value">{{ "%.1f"|format(percentage) }}%</div>
+            <div class="summary-label">Score</div>
+        </div>
+    </div>
+
+    <!-- ─── QUESTIONS ──────────────────────────────────────────────────── -->
+    {% for q in questions %}
+        {% if q.selected == q.correct %}
+            {% set card_class = 'correct' %}
+            {% set badge_class = 'badge-correct' %}
+            {% set badge_text = 'Correct' %}
+            {% set badge_icon = 'fa-check' %}
+        {% elif q.selected %}
+            {% set card_class = 'wrong' %}
+            {% set badge_class = 'badge-wrong' %}
+            {% set badge_text = 'Wrong' %}
+            {% set badge_icon = 'fa-times' %}
+        {% else %}
+            {% set card_class = 'unattempted' %}
+            {% set badge_class = 'badge-skip' %}
+            {% set badge_text = 'Not Attempted' %}
+            {% set badge_icon = 'fa-minus' %}
+        {% endif %}
+        
+        <div class="question-card {{ card_class }}">
+            <div class="q-header">
+                <span class="q-num"><i class="fas fa-hashtag" style="color:#999;"></i> Question {{ loop.index }}</span>
+                <span class="status-badge {{ badge_class }}">
+                    <i class="fas {{ badge_icon }}"></i> {{ badge_text }}
+                </span>
+            </div>
+            
+            <div class="q-text">{{ q.question }}</div>
+            
+            {% if q.image_path %}
+                <img src="{{ url_for('static', filename=q.image_path) }}" class="q-image" alt="Question image">
+            {% endif %}
+            
+            <div class="options">
+                {% for opt_key, opt_label in [('option_a','A'), ('option_b','B'), ('option_c','C'), ('option_d','D')] %}
+                    {% set opt_val = q.options[opt_label] if q.options else '' %}
+                    {% if opt_val %}
+                        {% if q.selected == opt_label and opt_label == q.correct %}
+                            <div class="option selected-correct">
+                                <span class="opt-label">{{ opt_label }}.</span> {{ opt_val }}
+                                <span style="float:right;color:#2e7d32;"><i class="fas fa-check-circle"></i></span>
+                            </div>
+                        {% elif q.selected == opt_label %}
+                            <div class="option selected-wrong">
+                                <span class="opt-label">{{ opt_label }}.</span> {{ opt_val }}
+                                <span style="float:right;color:#c62828;"><i class="fas fa-times-circle"></i></span>
+                            </div>
+                        {% elif opt_label == q.correct %}
+                            <div class="option correct-ans">
+                                <span class="opt-label">{{ opt_label }}.</span> {{ opt_val }}
+                                <span style="float:right;color:#2e7d32;"><i class="fas fa-check"></i></span>
+                            </div>
+                        {% else %}
+                            <div class="option">
+                                <span class="opt-label">{{ opt_label }}.</span> {{ opt_val }}
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+
+
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
+
+</body>
+</html>
