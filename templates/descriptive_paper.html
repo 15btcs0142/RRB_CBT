@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Descriptive Paper Generator — RRB CBT</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{--g:#2e7d32;--gd:#1b5e20;--gl:#e8f5e9;--p:#667eea;--sh:0 4px 20px rgba(0,0,0,.10);--r:14px;}
+body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
+
+/* HEADER */
+.hdr{background:linear-gradient(90deg,var(--gd),var(--g));color:#fff;padding:14px 28px;
+     display:flex;justify-content:space-between;align-items:center;box-shadow:0 3px 12px rgba(0,0,0,.2);}
+.hdr h1{font-size:1.2rem;display:flex;align-items:center;gap:10px;}
+.hdr-links{display:flex;gap:10px;}
+.hdr-btn{background:rgba(255,255,255,.18);color:#fff;padding:7px 16px;border-radius:20px;
+          text-decoration:none;font-size:.84rem;border:1px solid rgba(255,255,255,.3);transition:background .2s;}
+.hdr-btn:hover{background:rgba(255,255,255,.32);}
+
+/* LAYOUT */
+.wrap{display:grid;grid-template-columns:420px 1fr;gap:24px;max-width:1400px;margin:24px auto;padding:0 20px;}
+
+/* FORM PANEL */
+.form-panel{display:flex;flex-direction:column;gap:18px;}
+.card{background:#fff;border-radius:var(--r);padding:22px;box-shadow:var(--sh);}
+.card-title{font-size:.95rem;font-weight:700;color:var(--gd);margin-bottom:16px;
+             display:flex;align-items:center;gap:8px;border-bottom:2px solid var(--gl);padding-bottom:8px;}
+.fg{margin-bottom:14px;}
+.fg:last-child{margin-bottom:0;}
+.fg label{display:block;font-size:.82rem;font-weight:600;color:#333;margin-bottom:5px;}
+.fg label i{color:var(--g);margin-right:4px;}
+.fg input,.fg select,.fg textarea{
+    width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:9px;
+    font-family:'Poppins',sans-serif;font-size:.88rem;transition:border-color .25s;background:#fff;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px rgba(46,125,50,.1);}
+.fg textarea{min-height:70px;resize:vertical;}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fg-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+/* Question type grid */
+.qtype-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.qt-card{border:2px solid #e0e0e0;border-radius:10px;padding:12px;transition:border-color .25s;background:#fff;}
+.qt-card:focus-within{border-color:var(--g);background:var(--gl);}
+.qt-label{font-size:.78rem;font-weight:700;color:#333;display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.qt-label i{color:var(--p);}
+.qt-card input[type=number]{
+    width:100%;padding:6px 10px;border:2px solid #e0e0e0;border-radius:7px;
+    font-family:'Poppins',sans-serif;font-size:.88rem;text-align:center;}
+.qt-card input[type=number]:focus{outline:none;border-color:var(--g);}
+.total-chip{background:linear-gradient(135deg,var(--gd),var(--g));color:#fff;
+             padding:5px 14px;border-radius:20px;font-size:.82rem;font-weight:700;display:inline-block;margin-top:4px;}
+
+/* Full-syllabus toggle */
+.toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.toggle-row label{font-size:.82rem;font-weight:600;color:#333;cursor:pointer;}
+.toggle-switch{position:relative;display:inline-block;width:38px;height:22px;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.slider-round{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;
+               background:#ccc;border-radius:22px;transition:.3s;}
+.slider-round::before{position:absolute;content:'';height:16px;width:16px;left:3px;bottom:3px;
+                       background:#fff;border-radius:50%;transition:.3s;}
+.toggle-switch input:checked + .slider-round{background:var(--g);}
+.toggle-switch input:checked + .slider-round::before{transform:translateX(16px);}
+
+/* Image upload */
+.img-drop{border:2px dashed var(--g);border-radius:10px;padding:20px;text-align:center;
+           background:var(--gl);cursor:pointer;transition:background .25s;}
+.img-drop:hover{background:#d0efda;}
+.img-drop i{font-size:1.8rem;color:var(--g);display:block;margin-bottom:6px;}
+.img-drop p{font-size:.82rem;color:#555;}
+.img-drop small{color:#888;}
+.img-preview{max-width:100%;max-height:120px;border-radius:8px;margin-top:8px;}
+
+/* Generate button */
+.gen-btn{width:100%;background:linear-gradient(135deg,var(--gd),var(--g));color:#fff;
+          border:none;padding:14px;border-radius:10px;font-size:1rem;font-weight:700;
+          font-family:'Poppins',sans-serif;cursor:pointer;display:flex;align-items:center;
+          justify-content:center;gap:10px;transition:transform .2s,box-shadow .2s;}
+.gen-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(27,94,32,.35);}
+.gen-btn:disabled{opacity:.55;cursor:not-allowed;}
+
+/* Alert */
+.alert{padding:12px 16px;border-radius:9px;margin-bottom:14px;display:none;font-size:.88rem;}
+.alert-err{background:#fde8e8;border-left:4px solid #e53935;color:#b71c1c;}
+.alert-ok{background:#d4edda;border-left:4px solid #28a745;color:#155724;}
+
+/* PREVIEW PANEL */
+.preview-panel{position:sticky;top:24px;height:calc(100vh - 80px);display:flex;flex-direction:column;}
+.preview-toolbar{background:#fff;border-radius:var(--r) var(--r) 0 0;padding:14px 20px;
+                  display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--gl);flex-shrink:0;}
+.preview-toolbar h3{font-size:.95rem;color:#333;flex:1;}
+.tb-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border:none;
+         border-radius:20px;font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:600;
+         cursor:pointer;transition:all .2s;text-decoration:none;}
+.tb-print{background:var(--g);color:#fff;}
+.tb-print:hover{background:var(--gd);}
+.tb-doc{background:#1565c0;color:#fff;}
+.tb-doc:hover{background:#0d47a1;}
+.tb-disabled{background:#e0e0e0;color:#999;cursor:not-allowed;}
+.preview-frame{flex:1;border:none;background:#f9f9f9;border-radius:0 0 var(--r) var(--r);overflow:hidden;}
+
+/* LOADING OVERLAY */
+#loadingOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+                  z-index:9999;align-items:center;justify-content:center;}
+#loadingOverlay.on{display:flex;}
+.loader-box{background:#fff;border-radius:18px;padding:40px 50px;text-align:center;
+             box-shadow:0 20px 60px rgba(0,0,0,.4);}
+.loader-box .spin{width:48px;height:48px;border:4px solid #e0e0e0;border-top-color:var(--g);
+                   border-radius:50%;animation:sp 1s linear infinite;margin:0 auto 16px;}
+@keyframes sp{100%{transform:rotate(360deg)}}
+.loader-box p{color:#333;font-weight:600;font-size:1rem;}
+.loader-box small{color:#888;font-size:.82rem;}
+
+/* RESPONSIVE */
+@media(max-width:1024px){
+  .wrap{grid-template-columns:1fr;}
+  .preview-panel{position:static;height:600px;}
+}
+@media(max-width:600px){.fg-row,.fg-row3,.qtype-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay">
+  <div class="loader-box">
+    <div class="spin"></div>
+    <p>Generating Question Paper…</p>
+    <small>Gemini AI is writing your paper. Please wait.</small>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <h1><i class="fas fa-file-alt"></i> Descriptive Question Paper Generator</h1>
+  <div class="hdr-links">
+    {% if is_admin %}
+    <a href="/admin/dashboard" class="hdr-btn"><i class="fas fa-arrow-left"></i> Admin Dashboard</a>
+    {% else %}
+    <a href="/teacher/dashboard" class="hdr-btn"><i class="fas fa-arrow-left"></i> Teacher Dashboard</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ── FORM PANEL ─────────────────────────────────────────────── -->
+  <div class="form-panel">
+
+    <div id="alertBox" class="alert"></div>
+
+    <!-- Paper Identity -->
+    <div class="card">
+      <div class="card-title"><i class="fas fa-school"></i> Paper Identity</div>
+
+      {% if is_admin %}
+      <div class="fg-row">
+        <div class="fg">
+          <label><i class="fas fa-graduation-cap"></i>Class</label>
+          <input type="text" id="classInput" placeholder="e.g. 11, 12, X" list="classSuggestions">
+          <datalist id="classSuggestions">
+            {% for p in all_pairs if is_admin %}
+            <option value="{{ p.class }}">
+            {% endfor %}
+          </datalist>
+        </div>
+        <div class="fg">
+          <label><i class="fas fa-book"></i>Subject</label>
+          <input type="text" id="subjectInput" placeholder="e.g. Chemistry" list="subjectSuggestions">
+          <datalist id="subjectSuggestions">
+            {% for p in all_pairs if is_admin %}
+            <option value="{{ p.subject }}">
+            {% endfor %}
+          </datalist>
+        </div>
+      </div>
+      {% else %}
+      <div class="fg-row">
+        <div class="fg">
+          <label><i class="fas fa-graduation-cap"></i>Class</label>
+          <select id="classInput" onchange="filterSubjects(this.value)">
+            <option value="">Select Class</option>
+            {% set seen_cls = [] %}
+            {% for a in assignments %}
+              {% if a.class not in seen_cls %}
+              <option value="{{ a.class }}">{{ a.class }}</option>
+              {% set _ = seen_cls.append(a.class) %}
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+        <div class="fg">
+          <label><i class="fas fa-book"></i>Subject</label>
+          <select id="subjectInput">
+            <option value="">Select Subject</option>
+          </select>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="fg">
+        <label><i class="fas fa-list-ul"></i>Topics / Chapters</label>
+        <div class="toggle-row">
+          <label class="toggle-switch">
+            <input type="checkbox" id="fullSyllabusToggle" onchange="toggleTopics(this.checked)">
+            <span class="slider-round"></span>
+          </label>
+          <label for="fullSyllabusToggle">Full / Complete Syllabus</label>
+        </div>
+        <textarea id="topicsInput" placeholder="e.g. Chapter 3: Electrochemistry, Chapter 4: Chemical Kinetics&#10;Separate topics with commas or new lines"></textarea>
+      </div>
+
+      <div class="fg-row3">
+        <div class="fg">
+          <label><i class="fas fa-vial"></i>Exam Type</label>
+          <select id="examType">
+            <option>Unit Test</option>
+            <option>Half Yearly</option>
+            <option>Pre-Board</option>
+            <option>Yearly</option>
+            <option>Practice Test</option>
+            <option>Term 1</option>
+            <option>Term 2</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label><i class="far fa-clock"></i>Duration</label>
+          <input type="text" id="durationInput" value="3 Hours" placeholder="e.g. 3 Hours">
+        </div>
+        <div class="fg">
+          <label><i class="fas fa-star"></i>Max Marks</label>
+          <input type="number" id="maxMarksInput" value="100" min="1">
+        </div>
+      </div>
+    </div>
+
+    <!-- School Info (pre-filled from settings) -->
+    <div class="card">
+      <div class="card-title"><i class="fas fa-building"></i> School Information</div>
+      <div class="fg">
+        <label><i class="fas fa-school"></i>School Name</label>
+        <input type="text" id="schoolName" value="{{ school_name }}">
+      </div>
+      <div class="fg">
+        <label><i class="fas fa-map-marker-alt"></i>School Address</label>
+        <input type="text" id="schoolAddress" value="{{ school_address }}" placeholder="Full address (optional)">
+      </div>
+      <div class="fg">
+        <label><i class="fas fa-calendar-alt"></i>Academic Session</label>
+        <input type="text" id="academicSession" value="{{ academic_session }}" placeholder="e.g. 2024–25">
+      </div>
+    </div>
+
+    <!-- Question Types -->
+    <div class="card">
+      <div class="card-title"><i class="fas fa-list-ol"></i> Questions Per Type</div>
+      <div class="qtype-grid">
+        <div class="qt-card">
+          <div class="qt-label"><i class="fas fa-check-square"></i>MCQ (1 mark)</div>
+          <input type="number" id="mcqCount" min="0" max="40" value="0" oninput="updateTotal()">
+        </div>
+        <div class="qt-card">
+          <div class="qt-label"><i class="fas fa-balance-scale"></i>Assertion-Reason (1 mark)</div>
+          <input type="number" id="arCount" min="0" max="20" value="0" oninput="updateTotal()">
+        </div>
+        <div class="qt-card">
+          <div class="qt-label"><i class="fas fa-minus"></i>Very Short (2 marks)</div>
+          <input type="number" id="vsCount" min="0" max="20" value="0" oninput="updateTotal()">
+        </div>
+        <div class="qt-card">
+          <div class="qt-label"><i class="fas fa-align-left"></i>Short Answer (3 marks)</div>
+          <input type="number" id="shCount" min="0" max="15" value="0" oninput="updateTotal()">
+        </div>
+        <div class="qt-card">
+          <div class="qt-label"><i class="fas fa-align-justify"></i>Long Answer (5 marks)</div>
+          <input type="number" id="lgCount" min="0" max="10" value="0" oninput="updateTotal()">
+        </div>
+        <div class="qt-card">
+          <div class="qt-label"><i class="fas fa-file-alt"></i>Case Study (4 marks)</div>
+          <input type="number" id="csCount" min="0" max="5" value="0" oninput="updateTotal()">
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        Total Questions: <span id="totalBadge" class="total-chip">0</span>
+      </div>
+    </div>
+
+    <!-- Remarks + Image -->
+    <div class="card">
+      <div class="card-title"><i class="fas fa-lightbulb"></i> AI Instructions & Image</div>
+      <div class="fg">
+        <label><i class="fas fa-pencil-alt"></i>Remarks / Extra Prompt</label>
+        <textarea id="remarksInput" placeholder="Guide the AI — e.g.:&#10;• Focus 40% on Electrochemistry&#10;• Include 2 PYQ-style questions&#10;• Marks distribution: Section A 10M, Section B 15M…&#10;• Include application-based questions"></textarea>
+      </div>
+      <div class="fg">
+        <label><i class="fas fa-image"></i>Image Upload <span style="color:#aaa;font-weight:400;">(optional — for image-based questions)</span></label>
+        <div class="img-drop" onclick="document.getElementById('imgFileInput').click()" id="imgDrop">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p id="imgDropLabel">Click to upload an image</p>
+          <small>Diagram, graph, or figure to base questions on</small>
+        </div>
+        <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="previewImage(this)">
+        <img id="imgPreview" class="img-preview" style="display:none">
+      </div>
+    </div>
+
+    <!-- Generate -->
+    <button class="gen-btn" id="genBtn" onclick="generatePaper()">
+      <i class="fas fa-magic"></i> Generate Question Paper
+    </button>
+
+  </div><!-- end form-panel -->
+
+  <!-- ── PREVIEW PANEL ───────────────────────────────────────────── -->
+  <div class="preview-panel">
+    <div class="preview-toolbar">
+      <h3><i class="fas fa-eye" style="color:var(--g);margin-right:6px;"></i> Live Preview</h3>
+      <button class="tb-btn tb-print tb-disabled" id="btnPrint" onclick="doPrint()" disabled>
+        <i class="fas fa-print"></i> Print / PDF
+      </button>
+      <button class="tb-btn tb-doc tb-disabled" id="btnDoc" onclick="doDoc()" disabled>
+        <i class="fas fa-file-word"></i> Download DOC
+      </button>
+    </div>
+    <iframe id="previewFrame" class="preview-frame" title="Paper Preview"
+            srcdoc="<html><body style='font-family:Arial;text-align:center;padding:60px;color:#bbb;'><p style='font-size:2rem;'>📄</p><p>Generate a paper to see the preview here.</p><div class="footer" style="margin-top:30px; text-align:center; font-size:9pt; color:#666; border-top:1px solid #ccc; padding-top:10px; page-break-inside:avoid;">
+    Generated by RRB CBT | Developed by Gaurav Shukla & Team
+</div>
+</body></html>">
+    </iframe>
+  </div>
+
+</div><!-- end .wrap -->
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────
+const assignments = {{ assignments | tojson | safe }};
+const IS_ADMIN    = {{ 'true' if is_admin else 'false' }};
+
+// ── TEACHER: filter subjects by class ────────────────────────────────
+function filterSubjects(cls) {
+  const sel = document.getElementById('subjectInput');
+  sel.innerHTML = '<option value="">Select Subject</option>';
+  assignments.filter(a => a.class === cls).forEach(a => {
+    const o = document.createElement('option');
+    o.value = a.subject; o.textContent = a.subject;
+    sel.appendChild(o);
+  });
+}
+
+// ── FULL SYLLABUS TOGGLE ─────────────────────────────────────────────
+function toggleTopics(checked) {
+  const ta = document.getElementById('topicsInput');
+  ta.disabled = checked;
+  ta.style.opacity = checked ? '.4' : '1';
+  if (checked) ta.value = '';
+}
+
+// ── QUESTION TOTAL ────────────────────────────────────────────────────
+function updateTotal() {
+  const ids  = ['mcqCount','arCount','vsCount','shCount','lgCount','csCount'];
+  const total = ids.reduce((s,id) => s + (parseInt(document.getElementById(id).value)||0), 0);
+  document.getElementById('totalBadge').textContent = total;
+}
+
+// ── IMAGE PREVIEW ─────────────────────────────────────────────────────
+function previewImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('imgPreview').src   = e.target.result;
+    document.getElementById('imgPreview').style.display = 'block';
+    document.getElementById('imgDropLabel').textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── ALERT HELPER ──────────────────────────────────────────────────────
+function showAlert(msg, type='err') {
+  const el = document.getElementById('alertBox');
+  el.className = `alert alert-${type}`;
+  el.innerHTML = `<i class="fas fa-${type==='ok'?'check-circle':'exclamation-circle'}"></i> ${msg}`;
+  el.style.display = 'block';
+  el.scrollIntoView({behavior:'smooth'});
+  if (type === 'ok') setTimeout(() => el.style.display='none', 5000);
+}
+
+// ── GENERATE ──────────────────────────────────────────────────────────
+let _paperMeta     = null;
+let _paperSections = null;
+
+async function generatePaper() {
+  // Validate
+  const cls  = document.getElementById('classInput').value.trim();
+  const subj = document.getElementById('subjectInput').value.trim();
+  if (!cls || !subj) { showAlert('Please select Class and Subject.'); return; }
+  const total = parseInt(document.getElementById('totalBadge').textContent);
+  if (total === 0) { showAlert('Enter at least 1 question in any section.'); return; }
+
+  document.getElementById('alertBox').style.display = 'none';
+  document.getElementById('loadingOverlay').classList.add('on');
+  document.getElementById('genBtn').disabled = true;
+
+  try {
+    const fd = new FormData();
+    fd.append('class',            cls);
+    fd.append('subject',          subj);
+    fd.append('full_syllabus',    document.getElementById('fullSyllabusToggle').checked ? 'yes' : 'no');
+    fd.append('topics',           document.getElementById('topicsInput').value);
+    fd.append('exam_type',        document.getElementById('examType').value);
+    fd.append('duration',         document.getElementById('durationInput').value);
+    fd.append('max_marks',        document.getElementById('maxMarksInput').value);
+    fd.append('school_name',      document.getElementById('schoolName').value);
+    fd.append('school_address',   document.getElementById('schoolAddress').value);
+    fd.append('academic_session', document.getElementById('academicSession').value);
+    fd.append('remarks',          document.getElementById('remarksInput').value);
+    fd.append('mcq_count',        document.getElementById('mcqCount').value);
+    fd.append('ar_count',         document.getElementById('arCount').value);
+    fd.append('vs_count',         document.getElementById('vsCount').value);
+    fd.append('sh_count',         document.getElementById('shCount').value);
+    fd.append('lg_count',         document.getElementById('lgCount').value);
+    fd.append('cs_count',         document.getElementById('csCount').value);
+
+    const imgFile = document.getElementById('imgFileInput').files[0];
+    if (imgFile) fd.append('image_file', imgFile);
+
+    const res  = await fetch('/descriptive_paper', {method:'POST', body:fd});
+    const data = await res.json();
+
+    if (data.status !== 'success') throw new Error(data.message || 'Generation failed');
+
+    _paperMeta     = data.meta;
+    _paperSections = data.paper.sections || [];
+
+    renderPreview(_paperMeta, _paperSections);
+
+    // Enable toolbar buttons
+    ['btnPrint','btnDoc'].forEach(id => {
+      const btn = document.getElementById(id);
+      btn.disabled = false;
+      btn.classList.remove('tb-disabled');
+    });
+
+  } catch(e) {
+    showAlert('Error: ' + e.message);
+  } finally {
+    document.getElementById('loadingOverlay').classList.remove('on');
+    document.getElementById('genBtn').disabled = false;
+  }
+}
+
+// ── BUILD PREVIEW HTML ────────────────────────────────────────────────
+function buildPaperHTML(meta, sections, forPrint=false) {
+  const logoHtml = meta.logo_base64
+    ? `<img src="${meta.logo_base64}" style="height:70px;width:70px;border-radius:50%;object-fit:cover;border:2px solid #1b5e20;">`
+    : `<div style="width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,#1b5e20,#2e7d32);
+           display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.8rem;">🏫</div>`;
+
+  let sectionsHTML = '';
+  sections.forEach(sec => {
+    const qRows = (sec.questions || []).map((q, qi) => {
+      // Options
+      let optHTML = '';
+      if (q.options && q.options.length) {
+        optHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 18px;margin:6px 0 0 28px;">
+          ${q.options.map(o=>`<span style="font-size:10.5pt;">${o}</span>`).join('')}
+        </div>`;
+      }
+      // Sub-questions (Case Study)
+      let subHTML = '';
+      if (q.sub_questions && q.sub_questions.length) {
+        subHTML = q.sub_questions.map(sq =>
+          `<div style="margin:5px 0 0 28px;font-size:10.5pt;">
+             <strong>(${sq.number || ''})</strong> ${sq.question || sq.text || sq}
+           </div>`
+        ).join('');
+      }
+      return `<div style="margin-bottom:11px;page-break-inside:avoid;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div style="flex:1;">
+            <span style="font-weight:700;color:#1b5e20;">Q${q.number || qi+1}.</span>
+            <span style="font-size:10.5pt;margin-left:4px;">${q.question || ''}</span>
+          </div>
+          <span style="background:#e8f5e9;color:#1b5e20;padding:1px 7px;border-radius:8px;
+                       font-size:8pt;font-weight:700;white-space:nowrap;margin-left:10px;flex-shrink:0;">
+            ${sec.marks_per_question||1}M
+          </span>
+        </div>
+        ${optHTML}${subHTML}
+        ${(!q.options || !q.options.length) && (!q.sub_questions || !q.sub_questions.length)
+          ? `<div style="margin:5px 0 0 28px;">${Array(4).fill('<div style="border-bottom:1pt dotted #aaa;height:18px;margin:2px 0;"></div>').join('')}</div>`
+          : ''}
+      </div>`;
+    }).join('');
+
+    sectionsHTML += `
+      <div style="margin-top:18px;">
+        <div style="background:#1b5e20;color:#fff;padding:5px 13px;font-weight:700;font-size:10.5pt;">
+          ${sec.section_label || ''} — ${sec.section_title || ''}
+          <span style="font-weight:400;font-size:9pt;margin-left:8px;">[${sec.marks_per_question||1} mark each]</span>
+        </div>
+        ${sec.instruction ? `<p style="font-style:italic;font-size:9pt;color:#555;margin:5px 0 7px;">${sec.instruction}</p>` : ''}
+        ${qRows}
+      </div>`;
+  });
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    *{box-sizing:border-box;}
+    body{font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;color:#000;margin:${forPrint?'12mm 14mm':'20px'};line-height:1.6;}
+    .no-print{display:${forPrint?'none':'block'};}
+    @media print{.no-print{display:none!important;} body{margin:12mm 14mm;}}
+    @page{margin:10mm 12mm;}
+  </style>
+  </head><body>
+  <!-- PRINT BUTTON (shown in preview, hidden when printing) -->
+  <div class="no-print" style="text-align:right;margin-bottom:12px;">
+    <button onclick="window.print()" style="background:#1b5e20;color:#fff;border:none;padding:8px 20px;
+            border-radius:8px;font-size:.88rem;cursor:pointer;margin-right:6px;">🖨 Print / Save PDF</button>
+    <button onclick="window.close()" style="background:#555;color:#fff;border:none;padding:8px 16px;
+            border-radius:8px;font-size:.88rem;cursor:pointer;">✕ Close</button>
+  </div>
+
+  <!-- HEADER -->
+  <div style="text-align:center;border-bottom:2px solid #1b5e20;padding-bottom:10px;margin-bottom:14px;">
+    ${logoHtml}
+    <div style="font-size:16pt;font-weight:bold;color:#1b5e20;margin:6px 0 2px;">${meta.school_name||''}</div>
+    ${meta.school_address ? `<div style="font-size:9pt;color:#444;">${meta.school_address}</div>` : ''}
+    ${meta.academic_session ? `<div style="font-size:9pt;color:#666;">Academic Session: ${meta.academic_session}</div>` : ''}
+  </div>
+
+  <!-- META TABLE -->
+  <table style="width:100%;border-collapse:collapse;border:1pt solid #c8e6c9;background:#f9fbe7;margin-bottom:14px;">
+    <tr>
+      <td style="padding:5px 10px;"><strong style="color:#1b5e20;">Exam:</strong> ${meta.exam_type||''}</td>
+      <td style="padding:5px 10px;"><strong style="color:#1b5e20;">Class:</strong> ${meta.class||''}</td>
+      <td style="padding:5px 10px;"><strong style="color:#1b5e20;">Subject:</strong> ${meta.subject||''}</td>
+    </tr>
+    <tr>
+      <td style="padding:5px 10px;"><strong style="color:#1b5e20;">Duration:</strong> ${meta.duration||''}</td>
+      <td style="padding:5px 10px;"><strong style="color:#1b5e20;">Max Marks:</strong> ${meta.max_marks||''}</td>
+      <td style="padding:5px 10px;"><strong style="color:#1b5e20;">Date:</strong> ${meta.date||''}</td>
+    </tr>
+  </table>
+
+  <!-- GENERAL INSTRUCTIONS -->
+  <div style="background:#fff3e0;border:1pt solid #ffe082;border-radius:4px;padding:7px 12px;font-size:9pt;margin-bottom:14px;">
+    <strong>General Instructions:</strong> All questions are compulsory. Read each question carefully before answering.
+    Marks for each question are indicated at the right margin.
+  </div>
+
+  <!-- SECTIONS -->
+  ${sectionsHTML}
+
+  <div class="footer" style="margin-top:30px; text-align:center; font-size:9pt; color:#666; border-top:1px solid #ccc; padding-top:10px; page-break-inside:avoid;">
+    Generated by RRB CBT | Developed by Gaurav Shukla & Team
+</div>
+</body></html>`;
+}
+
+function renderPreview(meta, sections) {
+  const html  = buildPaperHTML(meta, sections, false);
+  const frame = document.getElementById('previewFrame');
+  frame.srcdoc = html;
+}
+
+// ── PRINT ─────────────────────────────────────────────────────────────
+function doPrint() {
+  if (!_paperMeta || !_paperSections) return;
+  const html = buildPaperHTML(_paperMeta, _paperSections, true);
+  const win  = window.open('', '_blank', 'width=900,height=700');
+  win.document.write(html);
+  win.document.close();
+  // Auto trigger print after content loads
+  win.onload = () => setTimeout(() => win.print(), 400);
+}
+
+// ── DOC DOWNLOAD ──────────────────────────────────────────────────────
+function doDoc() {
+  if (!_paperMeta || !_paperSections) return;
+  // Build plain HTML for Word (Word can open HTML as .doc)
+  const html = buildPaperHTML(_paperMeta, _paperSections, true);
+  const blob  = new Blob(['\ufeff' + html], {type:'application/msword'});
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement('a');
+  const fname = `${_paperMeta.school_name}_${_paperMeta.class}_${_paperMeta.subject}_${_paperMeta.exam_type}.doc`
+                .replace(/\s+/g,'_');
+  a.href     = url;
+  a.download = fname;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+<div class="footer" style="margin-top:30px; text-align:center; font-size:9pt; color:#666; border-top:1px solid #ccc; padding-top:10px; page-break-inside:avoid;">
+    Generated by RRB CBT | Developed by Gaurav Shukla & Team
+</div>
+</body>
+</html>
