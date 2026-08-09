@@ -1,0 +1,31 @@
+question, option a, option b, option c, option d, correct_answer
+An object is an identifiable entity with some characteristics and behaviour., True, False, Depends on the programming language, Only in Java, True
+The concept of Abstraction is:, Binding data and functions together, Hiding inner complexity and providing usable interfaces, Reusing of the code, Making methods constant, Hiding inner complexity and providing usable interfaces
+Java supports:, Single Inheritance, Multilevel Inheritance, Multiple Inheritance, Both a and b, Both a and b
+The default access specifier for a method of a class is:, Private, Public, Package, Protected, Package
+Code reuse is implemented by:, Abstraction, Function overloading, Inheritance, Polymorphism, Inheritance
+Which of the following statements is true regarding a final class?, An abstract class may not have any final methods, A final class may not have any abstract methods, Transient variables must be static, All of the above, A final class may not have any abstract methods
+What do you mean by nameless objects?, An object created by using the new keyword, An object of a superclass created in the subclass, An object without having any name but having a reference, An object that has no reference, An object that has no reference
+Akash wants the members of his class Employee to be accessible only to his class "Employee". What access specifier should he use for the members?, Private, Protected, Public, default, Private
+Which of the following is not a feature of OOPS?, Inheritance, Function Overloading, Polymorphism, All are OOPS Features, All are OOPS Features
+A non-static method is also called:, class method, Instance method, Constant method, Instance variable, Instance method
+To delete an object obj, the statement is:, delete obj;, remove obj;, del obj;, delete l obj;, delete obj;
+Data hiding is implemented by:, Access specifiers, Static variables, Inheritance, None, Access specifiers
+The statement to create an object of class student in Java is:, obj = create Object();, obj = new Student();, obj = new object(Student);, None of the above, obj = new Student();
+The keyword to create a class is:, Class, CLASS, class, None, class
+__________ objects of a class can be created., 5, Only 1, As many, 2, As many
+A class is a:, Primitive data type, User defined data type, User defined derived data type, Derived data type, User defined derived data type
+A class is an object factory:, True, False, Error, Both a and b, True
+Objects cannot be created of __________ class., Concrete, Virtual, Child, Base, Virtual
+The parent class of a class is also called __________., Base class, Super class, Both a and b, None, Both a and b
+The other name for messages of a class is:, Methods, Functions, Instances, Both a and b, Both a and b
+The members of a class are defined inside:, ( ), { }, [ ], None, { }
+What is the primary purpose of a constructor in a class?, To destroy an object, To initialize the data members of a class, To create a new class, To call the main method, To initialize the data members of a class
+Which of the following is a valid declaration of an object of class 'Student'?, Student s = new Student();, new Student s = Student();, Student = new s();, s = Student();, Student s = new Student();
+The 'new' operator is used to:, Deallocate memory for an object, Allocate memory for an object, Call a method, Define a class, Allocate memory for an object
+Which operator is used to access members of an object?, ::, ., ->, &, .
+What is a class considered in object-oriented programming?, A data type, A blueprint for objects, A function, A variable, A blueprint for objects
+The data in an object is accessed through the member functions of the object known as __________., variables, methods, classes, packages, methods
+The values of data member or member variables at any given point of time determine an object's __________., behavior, class, state, identity, state
+In Object-Oriented Programming, which concept binds data and functions together under a single unit?, Abstraction, Polymorphism, Encapsulation, Inheritance, Encapsulation
+Which of the following is an example of a primitive data type?, String, Array, int, Object, int
