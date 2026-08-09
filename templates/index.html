@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ school_name }} — CBT Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        /* ── RESET & BASE ──────────────────────────────────────────────── */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --green-dk: #1b5e20;
+            --green: #2e7d32;
+            --green-lt: #e8f5e9;
+            --purple: #667eea;
+            --shadow: 0 4px 20px rgba(0, 0, 0, .10);
+            --radius: 14px;
+            --topbar-h: 72px;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(180deg, #eff6ff 0%, #f8fbff 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ── TOP BAR ───────────────────────────────────────────────────── */
+        .top-bar {
+            background: linear-gradient(90deg, #4338ca, #6366f1);
+            color: #ffffff;
+            padding: 12px 28px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 22px 60px rgba(67, 56, 202, 0.18);
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            height: var(--topbar-h);
+            min-height: var(--topbar-h);
+        }
+        .top-bar .logo {
+            height: 44px;
+            width: 44px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, .35);
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .top-bar .logo-ph {
+            height: 44px;
+            width: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .school-text .name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .school-text .tag {
+            font-size: .72rem;
+            opacity: .9;
+        }
+        .top-bar .clock {
+            margin-left: auto;
+            background: rgba(255, 255, 255, .18);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: .85rem;
+            white-space: nowrap;
+        }
+
+        /* ── FULL-SCREEN LOGIN WRAPPER ───────────────────────────────── */
+        .login-fullscreen {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 24px;
+            min-height: calc(100vh - var(--topbar-h));
+            background: linear-gradient(135deg, #eef2ff 0%, #f8faff 100%);
+        }
+
+        /* ── LOGIN PANEL (compact card) ─────────────────────────────── */
+        .login-panel {
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+            width: 100%;
+            max-width: 980px;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            min-height: 480px;
+            max-height: 88vh;
+            border: 1px solid rgba(99, 102, 241, 0.08);
+        }
+
+        /* ── LEFT : "HELLO STUDENT" with NOTICE BOARD ────────────────── */
+        .hello-student {
+            background: linear-gradient(145deg, #1d4ed8, #4338ca);
+            color: #ffffff;
+            padding: 32px 28px 28px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        .hello-student::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+        .hello-student>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hello-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+        .hello-header .auth-logo,
+        .hello-header .auth-logo-ph {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.08);
+            flex-shrink: 0;
+        }
+        .hello-header .auth-logo-ph {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+        .hello-header .greeting h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.3px;
+        }
+        .hello-header .greeting p {
+            font-size: .82rem;
+            opacity: .85;
+            margin-top: 2px;
+        }
+
+        /* ── NOTICE BOARD inside Hello Student ───────────────────────── */
+        .board-inside {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            margin-top: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 18px;
+            padding: 4px 0 0 0;
+            backdrop-filter: blur(2px);
+        }
+        .board-inside .board-head-in {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px 6px 14px;
+            flex-shrink: 0;
+        }
+        .board-inside .board-head-in h3 {
+            font-size: .85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.2px;
+        }
+        .board-inside .board-head-in .badge-count {
+            background: rgba(255, 255, 255, .18);
+            padding: 1px 10px;
+            border-radius: 20px;
+            font-size: .7rem;
+            font-weight: 500;
+        }
+        .board-inside .board-body-in {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 10px 10px 14px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+        }
+        .board-inside .board-body-in::-webkit-scrollbar {
+            width: 4px;
+        }
+        .board-inside .board-body-in::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 4px;
+        }
+
+        /* Notice cards (light on dark) */
+        .notice-in {
+            background: rgba(255, 255, 255, 0.10);
+            backdrop-filter: blur(4px);
+            border-left: 3px solid rgba(255, 255, 255, 0.50);
+            border-radius: 0 12px 12px 0;
+            padding: 10px 13px;
+            margin-bottom: 10px;
+            transition: background .2s;
+        }
+        .notice-in:hover {
+            background: rgba(255, 255, 255, 0.16);
+        }
+        .notice-in.teacher {
+            border-left-color: #a5b4fc;
+            background: rgba(165, 180, 252, 0.14);
+        }
+        .notice-in:last-child {
+            margin-bottom: 0;
+        }
+        .notice-in .n-title {
+            font-weight: 600;
+            font-size: .85rem;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+        .notice-in .n-body {
+            font-size: .8rem;
+            color: rgba(255, 255, 255, 0.88);
+            line-height: 1.5;
+            margin-bottom: 4px;
+        }
+        .notice-in .n-meta {
+            font-size: .68rem;
+            color: rgba(255, 255, 255, 0.65);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .notice-in .n-meta i {
+            margin-right: 3px;
+            opacity: .7;
+        }
+
+        .empty-notice-in {
+            text-align: center;
+            padding: 28px 12px;
+            color: rgba(255, 255, 255, 0.50);
+        }
+        .empty-notice-in i {
+            font-size: 1.8rem;
+            display: block;
+            margin-bottom: 8px;
+            opacity: .6;
+        }
+        .empty-notice-in p {
+            font-size: .82rem;
+        }
+
+        /* ── Class Teachers (inside Hello Student) ───────────────────── */
+        .ct-section-in {
+            flex-shrink: 0;
+            padding: 6px 14px 12px 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.10);
+            margin-top: 2px;
+        }
+        .ct-head-in {
+            font-size: .75rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.70);
+            margin: 6px 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.3px;
+        }
+        .ct-list-in {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .ct-chip-in {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(255, 255, 255, 0.10);
+            backdrop-filter: blur(4px);
+            border-radius: 25px;
+            padding: 4px 10px 4px 4px;
+            font-size: .74rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .ct-pic-in,
+        .ct-pic-ph-in {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .ct-pic-ph-in {
+            background: rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: .7rem;
+        }
+        .ct-chip-in .ct-info-in .ct-name-in {
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.2;
+        }
+        .ct-chip-in .ct-info-in .ct-class-in {
+            font-size: .64rem;
+            color: rgba(255, 255, 255, 0.60);
+        }
+
+        /* ── RIGHT : LOGIN FORM ───────────────────────────────────────── */
+        .auth-form {
+            padding: 22px 24px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #ffffff;
+            overflow-y: auto;
+        }
+        .lbox-top {
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        .lbox-top h2 {
+            font-size: 1.4rem;
+            color: #0f172a;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+        }
+        .lbox-top .sub {
+            font-size: .82rem;
+            color: #475569;
+            line-height: 1.4;
+            margin-top: 1px;
+        }
+
+        .dt-pill {
+            text-align: center;
+            background: #eef2ff;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: .8rem;
+            color: #1d4ed8;
+            font-weight: 600;
+            margin-bottom: 10px;
+            border: 1px solid rgba(99, 102, 241, 0.14);
+        }
+
+        .err-box {
+            background: #fef2f2;
+            border-left: 4px solid #f43f5e;
+            color: #b91c1c;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: .82rem;
+            margin-bottom: 10px;
+        }
+
+        .fg {
+            margin-bottom: 8px;
+        }
+        .fg label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            font-size: .8rem;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+        .fg label i {
+            color: #4f46e5;
+        }
+        .fg input,
+        .fg select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid rgba(79, 70, 229, 0.16);
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: .88rem;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+            background: #f8fbff;
+            color: #0f172a;
+        }
+        .fg input:focus,
+        .fg select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.10);
+        }
+        .fg-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .login-btn {
+            width: 100%;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(90deg, #4338ca, #6366f1);
+            color: #ffffff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: .92rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 12px 22px rgba(67, 56, 202, 0.18);
+        }
+        .login-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 28px rgba(67, 56, 202, 0.24);
+        }
+
+        .portal-links {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .pl {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: .8rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+        .pl:hover {
+            transform: translateY(-2px);
+        }
+        .pl-t {
+            background: rgba(99, 102, 241, 0.10);
+            color: #312e81;
+            border: 1px solid rgba(147, 197, 253, 0.30);
+        }
+        .pl-a {
+            background: rgba(168, 85, 247, 0.10);
+            color: #6d28d9;
+            border: 1px solid rgba(192, 132, 252, 0.30);
+        }
+
+        /* ── RESPONSIVE ────────────────────────────────────────────────── */
+        @media (max-width: 1024px) {
+            .login-fullscreen {
+                padding: 30px 35px;
+            }
+            .login-panel {
+                grid-template-columns: 1.1fr 1fr;
+                min-height: 500px;
+                max-height: 88vh;
+            }
+            .hello-student {
+                padding: 24px 20px 20px;
+            }
+            .auth-form {
+                padding: 28px 24px 24px;
+            }
+            .lbox-top h2 {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 880px) {
+            .login-fullscreen {
+                padding: 20px 25px;
+            }
+            .login-panel {
+                grid-template-columns: 1fr;
+                max-height: none;
+                min-height: auto;
+                border-radius: 28px;
+            }
+            .hello-student {
+                max-height: 420px;
+                min-height: 300px;
+                padding: 20px 18px 16px;
+            }
+            .hello-student .greeting h2 {
+                font-size: 1.3rem;
+            }
+            .auth-form {
+                padding: 24px 20px 28px;
+            }
+            .login-fullscreen {
+                padding: 16px 20px;
+                min-height: calc(100vh - var(--topbar-h));
+            }
+            .board-inside .board-body-in {
+                padding: 2px 6px 8px 10px;
+            }
+        }
+
+        @media (max-width: 580px) {
+            .top-bar {
+                padding: 8px 14px;
+                gap: 10px;
+                height: auto;
+                min-height: 60px;
+            }
+            .top-bar .logo,
+            .top-bar .logo-ph {
+                height: 36px;
+                width: 36px;
+                font-size: 1rem;
+            }
+            .school-text .name {
+                font-size: .95rem;
+            }
+            .school-text .tag {
+                font-size: .62rem;
+            }
+            .top-bar .clock {
+                font-size: .72rem;
+                padding: 4px 10px;
+            }
+            .login-fullscreen {
+                padding: 12px 14px;
+                min-height: calc(100vh - 60px);
+            }
+            .login-panel {
+                border-radius: 20px;
+            }
+            .hello-student {
+                max-height: 340px;
+                min-height: 220px;
+                padding: 16px 14px 12px;
+            }
+            .hello-header .auth-logo,
+            .hello-header .auth-logo-ph {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            .hello-header .greeting h2 {
+                font-size: 1.1rem;
+            }
+            .hello-header .greeting p {
+                font-size: .7rem;
+            }
+            .board-inside .board-head-in h3 {
+                font-size: .75rem;
+            }
+            .notice-in .n-title {
+                font-size: .78rem;
+            }
+            .notice-in .n-body {
+                font-size: .74rem;
+            }
+            .notice-in .n-meta {
+                font-size: .62rem;
+                gap: 8px;
+            }
+            .auth-form {
+                padding: 18px 14px 20px;
+            }
+            .lbox-top h2 {
+                font-size: 1.3rem;
+            }
+            .lbox-top .sub {
+                font-size: .82rem;
+            }
+            .fg-row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+            .fg input,
+            .fg select {
+                padding: 10px 12px;
+                font-size: .88rem;
+            }
+            .login-btn {
+                padding: 12px 14px;
+                font-size: .9rem;
+            }
+            .portal-links {
+                grid-template-columns: 1fr;
+                gap: 8px;
+                margin-top: 14px;
+            }
+            .pl {
+                padding: 10px 12px;
+                font-size: .8rem;
+            }
+            .ct-chip-in {
+                font-size: .68rem;
+                padding: 3px 8px 3px 3px;
+            }
+            .ct-pic-in,
+            .ct-pic-ph-in {
+                width: 22px;
+                height: 22px;
+                font-size: .6rem;
+            }
+            .dt-pill {
+                font-size: .78rem;
+                padding: 8px 12px;
+            }
+            .err-box {
+                font-size: .8rem;
+                padding: 10px 12px;
+            }
+            .board-inside .board-body-in {
+                padding: 2px 4px 6px 8px;
+            }
+            .ct-section-in {
+                padding: 4px 10px 8px 10px;
+            }
+            .ct-head-in {
+                font-size: .68rem;
+                margin: 4px 0 6px 0;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .login-fullscreen {
+                padding: 8px 10px;
+            }
+            .hello-student {
+                max-height: 280px;
+                min-height: 180px;
+                padding: 12px 10px 10px;
+            }
+            .hello-header .greeting h2 {
+                font-size: .95rem;
+            }
+            .board-inside .board-head-in h3 {
+                font-size: .68rem;
+            }
+            .notice-in {
+                padding: 6px 10px;
+                margin-bottom: 6px;
+            }
+            .notice-in .n-title {
+                font-size: .72rem;
+            }
+            .notice-in .n-body {
+                font-size: .68rem;
+            }
+            .notice-in .n-meta {
+                font-size: .58rem;
+                gap: 6px;
+            }
+            .auth-form {
+                padding: 14px 10px 16px;
+            }
+            .lbox-top h2 {
+                font-size: 1.1rem;
+            }
+            .fg label {
+                font-size: .78rem;
+            }
+            .fg input,
+            .fg select {
+                padding: 8px 10px;
+                font-size: .82rem;
+            }
+            .login-btn {
+                padding: 10px 12px;
+                font-size: .82rem;
+            }
+            .top-bar .clock {
+                font-size: .64rem;
+                padding: 3px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── TOP BAR ──────────────────────────────────────────────────── -->
+    <div class="top-bar">
+        {% if logo_path %}
+        <img src="{{ url_for('static', filename=logo_path) }}" class="logo" alt="Logo" />
+        {% else %}
+        <div class="logo-ph"><i class="fas fa-graduation-cap"></i></div>
+        {% endif %}
+        <div class="school-text">
+            <div class="name">{{ school_name }}</div>
+            <div class="tag">Computer Based Test Portal</div>
+        </div>
+        <div style="margin-left:auto; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <a href="/teacher" style="background:rgba(255,255,255,0.2); color:#fff; padding:5px 14px; border-radius:20px; text-decoration:none; font-size:0.82rem; font-weight:600; display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(255,255,255,0.3); transition:all 0.2s;"><i class="fas fa-chalkboard-teacher"></i> Teacher Login</a>
+            <a href="/admin" style="background:rgba(255,255,255,0.2); color:#fff; padding:5px 14px; border-radius:20px; text-decoration:none; font-size:0.82rem; font-weight:600; display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(255,255,255,0.3); transition:all 0.2s;"><i class="fas fa-user-shield"></i> Admin</a>
+            <div class="clock"><i class="far fa-clock"></i> <span id="lc">--:--:--</span></div>
+        </div>
+    </div>
+
+    <!-- ─── FULL-SCREEN LOGIN WRAPPER ──────────────────────────────── -->
+    <div class="login-fullscreen">
+
+        <div class="login-panel">
+
+            <!-- ═══ LEFT : "HELLO STUDENT" with NOTICE BOARD ═══ -->
+            <div class="hello-student">
+
+                <div class="hello-header">
+                    {% if logo_path %}
+                    <img src="{{ url_for('static', filename=logo_path) }}" class="auth-logo" alt="Logo" />
+                    {% else %}
+                    <div class="auth-logo-ph"><i class="fas fa-graduation-cap"></i></div>
+                    {% endif %}
+                    <div class="greeting">
+                        <h2>Hello Student!</h2>
+                        <p>Stay updated with school announcements</p>
+                    </div>
+                </div>
+
+                <!-- NOTICE BOARD (embedded) -->
+                <div class="board-inside">
+                    <div class="board-head-in">
+                        <h3><i class="fas fa-bullhorn"></i> School Notice Board</h3>
+                        {% if bulletins %}
+                        <span class="badge-count">{{ bulletins|length }} notice{{ 's' if bulletins|length != 1 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="board-body-in" id="boardBodyIn">
+                        {% if bulletins %}
+                        {% for b in bulletins %}
+                        <div class="notice-in {% if b.poster_type == 'teacher' %}teacher{% endif %}">
+                            <div class="n-title">{{ b.title }}</div>
+                            <div class="n-body">{{ b.content }}</div>
+                            <div class="n-meta">
+                                <span><i class="fas fa-user"></i>{{ b.poster_name }}</span>
+                                <span><i class="fas fa-calendar-alt"></i>{{ b.created_at[:10] if b.created_at else '' }}</span>
+                                {% if b.target_class %}
+                                <span><i class="fas fa-graduation-cap"></i>Class {{ b.target_class }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="empty-notice-in">
+                            <i class="fas fa-bell-slash"></i>
+                            <p>No announcements yet</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- CLASS TEACHERS (inside Hello Student) -->
+                {% if class_teachers %}
+                <div class="ct-section-in">
+                    <div class="ct-head-in">
+                        <i class="fas fa-chalkboard-teacher"></i> Class Teachers
+                    </div>
+                    <div class="ct-list-in">
+                        {% for ct in class_teachers %}
+                        <div class="ct-chip-in">
+                            {% if ct.picture %}
+                            <img src="{{ url_for('static', filename=ct.picture) }}" class="ct-pic-in" alt="" />
+                            {% else %}
+                            <div class="ct-pic-ph-in"><i class="fas fa-user"></i></div>
+                            {% endif %}
+                            <div class="ct-info-in">
+                                <div class="ct-name-in">{{ ct.name }}</div>
+                                <div class="ct-class-in">Class {{ ct.class }}{% if ct.section %}-{{ ct.section }}{% endif %}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+
+            <!-- ═══ RIGHT : LOGIN FORM ═══ -->
+            <div class="auth-form">
+                <div class="lbox-top">
+                    <h2>Student Login</h2>
+                    <p class="sub">Enter your details to begin the exam</p>
+                </div>
+
+                <div class="dt-pill"><i class="far fa-calendar-alt"></i> <span id="ds">--</span></div>
+
+                {% if error %}
+                <div class="err-box"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+                {% endif %}
+
+                <form action="/student_login" method="POST">
+                    <div class="fg">
+                        <label><i class="fas fa-user"></i>Full Name</label>
+                        <input type="text" name="name" placeholder="Your full name" required autocomplete="name" />
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-id-card"></i>Admission Number</label>
+                        <input type="text" name="student_id" placeholder="e.g. 2024001" required />
+                    </div>
+                    <div class="fg-row">
+                        <div class="fg">
+                            <label><i class="fas fa-graduation-cap"></i>Class</label>
+                            <select name="class" id="classSelect" required>
+                                <option value="">Class</option>
+                                {% for cls in class_subject_map.keys() %}
+                                <option value="{{ cls }}">{{ cls }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label><i class="fas fa-layer-group"></i>Section</label>
+                            <select name="section" id="sectionSelect">
+                                <option value="">Select Section</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-book"></i>Subject</label>
+                        <select name="subject" id="subjectSelect" required>
+                            <option value="">Select Subject</option>
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-file-alt"></i>Test Number <span style="font-size:.7rem;color:#aaa;">(optional)</span></label>
+                        <select name="test_no" id="testNoSelect">
+                            <option value="">All Tests / Latest</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="login-btn">
+                        <i class="fas fa-sign-in-alt"></i>&nbsp; Login &amp; Start
+                    </button>
+                </form>
+
+        <div class="footer-note" style="text-align:center; margin-top:20px; padding-top:15px; border-top:1px dashed rgba(0,0,0,0.1); font-size:0.85rem; color:#666;">
+    <i class="fas fa-shield-alt" style="color:#1a237e; margin-right:5px;"></i> RRB CBT &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
+</div>
+
+                <div class="portal-links">
+                    <a href="/teacher" class="pl pl-t"><i class="fas fa-chalkboard-teacher"></i>Teacher Login</a>
+                    <a href="/admin" class="pl pl-a"><i class="fas fa-user-shield"></i>Admin</a>
+                </div>
+            </div>
+
+        </div><!-- /.login-panel -->
+
+    </div><!-- /.login-fullscreen -->
+
+    <script>
+        // ─── LIVE CLOCK + DATE ──────────────────────────────────────────
+        function tick() {
+            const n = new Date();
+            document.getElementById('lc').textContent = n.toLocaleTimeString('en-IN');
+            document.getElementById('ds').textContent =
+                n.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        tick();
+        setInterval(tick, 1000);
+
+        // ─── CLASS → SUBJECT DYNAMIC MAPPING ──────────────────────────
+        const csMap = {{ class_subject_map | tojson | safe }};
+        const classEl = document.getElementById('classSelect');
+        const subjectEl = document.getElementById('subjectSelect');
+        const testNoEl = document.getElementById('testNoSelect');
+
+        async function loadTestNumbers(cls, subj) {
+            testNoEl.innerHTML = '<option value="">All Tests / Latest</option>';
+            if (!cls || !subj) return;
+            try {
+                const res = await fetch(`/api/test_numbers?class=${encodeURIComponent(cls)}&subject=${encodeURIComponent(subj)}`);
+                const data = await res.json();
+                const tests = data.test_numbers || [];
+                tests.forEach(tn => {
+                    const o = document.createElement('option');
+                    o.value = tn;
+                    o.textContent = tn;
+                    testNoEl.appendChild(o);
+                });
+                if (tests.length > 0) {
+                    testNoEl.value = tests[tests.length - 1];
+                }
+            } catch (e) { /* silent fail */ }
+        }
+
+        classEl.addEventListener('change', function() {
+            const subs = csMap[this.value] || [];
+            subjectEl.innerHTML = '<option value="">Select Subject</option>';
+            subs.forEach(s => {
+                const o = document.createElement('option');
+                o.value = s;
+                o.textContent = s;
+                subjectEl.appendChild(o);
+            });
+            if (subs.length === 1) {
+                subjectEl.value = subs[0];
+                loadTestNumbers(this.value, subs[0]);
+            } else {
+                testNoEl.innerHTML = '<option value="">All Tests / Latest</option>';
+            }
+        });
+
+        subjectEl.addEventListener('change', function() {
+            loadTestNumbers(classEl.value, this.value);
+        });
+
+        // Auto-select if only one class
+        const classes = Object.keys(csMap);
+        if (classes.length === 1) {
+            classEl.value = classes[0];
+            classEl.dispatchEvent(new Event('change'));
+        }
+    </script>
+
+</body>
+</html>
