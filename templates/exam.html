@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RRB CBT - Exam</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="gemini-key" content="{{ gemini_key }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        .exam-body {
+            background: #e9eef4;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* ── COMPACT HEADER SECTION ───────────────────────────────────────── */
+        .exam-header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 12px;
+            padding: 8px 18px;
+            background: linear-gradient(135deg, #0d3b66 0%, #144b74 45%, #0b2545 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            min-height: 50px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .header-title span {
+            font-size: 0.82rem;
+            opacity: 0.85;
+            font-weight: 500;
+        }
+
+        .header-info {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .header-chip {
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        /* Compact Timer & Question Counter Pill Badges */
+        .timer-box,
+        .question-progress {
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 20px;
+            padding: 4px 12px;
+            text-align: center;
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .timer-box .timer-time {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #ffd54f;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .question-progress .value {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #81d4fa;
+        }
+
+        .exam-marquee {
+            background: #ffffff;
+            padding: 4px 18px;
+            color: #334155;
+            font-size: 0.82rem;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+            white-space: nowrap;
+        }
+
+        /* ── MAIN CONTENT AREA ────────────────────────────────────────────── */
+        .exam-main {
+            display: flex;
+            flex: 1;
+            gap: 16px;
+            padding: 12px 18px 8px;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .question-panel {
+            flex: 3;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px 24px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
+
+        .question-count {
+            font-size: 0.88rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .question-count strong {
+            font-size: 1.25rem;
+            color: #0f172a;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+
+        .question-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-pill {
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border: 1px solid #bfdbfe;
+        }
+
+        .question-text {
+            font-size: 1.18rem;
+            line-height: 1.7;
+            margin-bottom: 18px;
+            color: #0f172a;
+            font-weight: 500;
+        }
+
+        .options {
+            display: grid;
+            gap: 12px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-item:hover {
+            border-color: #93c5fd;
+            background: #eff6ff;
+        }
+
+        .option-item.selected {
+            border-color: #2563eb;
+            background: #dbeafe;
+        }
+
+        .option-item input[type="radio"] {
+            margin-top: 4px;
+            transform: scale(1.2);
+            accent-color: #2563eb;
+            cursor: pointer;
+        }
+
+        /* ── QUESTION PALETTE (DESKTOP) ──────────────────────────────────── */
+        .palette-panel {
+            flex: 1;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            overflow-y: auto;
+            position: sticky;
+            top: 60px;
+            max-height: calc(100vh - 120px);
+            min-height: 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .palette-panel h4 {
+            margin-bottom: 12px;
+            font-size: 0.92rem;
+            color: #0f172a;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .palette-btn {
+            width: 100%;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #ffffff;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.16s ease;
+        }
+
+        .palette-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .palette-btn.not-visited {
+            background: #94a3b8;
+            border-color: #64748b;
+        }
+
+        .palette-btn.not-answered {
+            background: #ef4444;
+            border-color: #dc2626;
+        }
+
+        .palette-btn.answered {
+            background: #22c55e;
+            border-color: #16a34a;
+        }
+
+        .palette-btn.marked {
+            background: #7c3aed;
+            border-color: #6d28d9;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px dashed #e2e8f0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #475569;
+            font-size: 0.78rem;
+        }
+
+        .legend-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        /* ── SINGLE ROW FOOTER SECTION ───────────────────────────────────── */
+        .exam-footer {
+            position: sticky;
+            bottom: 0;
+            z-index: 18;
+            background: #ffffff;
+            padding: 8px 16px;
+            box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .footer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 1400px;
+            flex-wrap: nowrap;
+        }
+
+        /* Compact Exam Action Buttons */
+        .btn-exam {
+            flex: 1 1 0px;
+            min-width: 0;
+            padding: 9px 14px;
+            font-weight: 600;
+            font-size: 0.86rem;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            font-family: inherit;
+        }
+
+        .btn-exam i {
+            font-size: 0.88rem;
+        }
+
+        .btn-exam:hover {
+            transform: translateY(-1.5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            color: #ffffff;
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: #ffffff;
+        }
+
+        .btn-orange {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: #ffffff;
+        }
+
+        .btn-red {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: #ffffff;
+        }
+
+        /* Mobile Palette Floating Button & Drawer */
+        .palette-toggle-btn {
+            display: none;
+            background: #0d3b66;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            font-size: 1.2rem;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            position: fixed;
+            bottom: 60px;
+            right: 14px;
+            z-index: 1000;
+        }
+
+        .palette-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.5);
+            z-index: 999;
+            backdrop-filter: blur(2px);
+        }
+
+        .palette-overlay.active {
+            display: block;
+        }
+
+        .mobile-palette {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 84%;
+            max-width: 320px;
+            height: 100%;
+            background: #ffffff;
+            z-index: 1001;
+            transition: right 0.25s ease;
+            box-shadow: -8px 0 24px rgba(15, 23, 42, 0.18);
+            overflow-y: auto;
+            padding: 18px;
+        }
+
+        .mobile-palette.active {
+            right: 0;
+        }
+
+        .mobile-palette .close-btn {
+            background: #f1f5f9;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 1.1rem;
+            color: #334155;
+            cursor: pointer;
+            float: right;
+        }
+
+        /* ── RESPONSIVE MEDIA QUERIES (MOBILE OPTIMIZATION) ─────────────── */
+        @media (max-width: 1024px) {
+            .exam-main {
+                flex-direction: column;
+                padding: 10px 12px 6px;
+            }
+
+            .palette-panel {
+                display: none;
+            }
+
+            .palette-toggle-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .exam-header {
+                padding: 6px 10px;
+                min-height: 44px;
+            }
+
+            .header-title {
+                font-size: 0.85rem;
+            }
+
+            .header-title img {
+                height: 28px !important;
+            }
+
+            .header-chip {
+                padding: 2px 7px;
+                font-size: 0.7rem;
+            }
+
+            /* Hide extra header details on small screen to save space */
+            .header-chip:nth-child(n+3) {
+                display: none;
+            }
+
+            .timer-box,
+            .question-progress {
+                padding: 3px 8px;
+                font-size: 0.78rem;
+            }
+
+            .timer-box .timer-time,
+            .question-progress .value {
+                font-size: 0.9rem;
+            }
+
+            .exam-marquee {
+                display: none; /* Hide marquee on mobile to save vertical space */
+            }
+
+            .question-panel {
+                padding: 14px 12px;
+                border-radius: 12px;
+            }
+
+            .question-text {
+                font-size: 1.05rem;
+                line-height: 1.6;
+                margin-bottom: 14px;
+            }
+
+            .option-item {
+                padding: 10px 12px;
+                font-size: 0.88rem;
+                border-radius: 10px;
+            }
+
+            .exam-footer {
+                padding: 6px 8px;
+            }
+
+            .footer-row {
+                gap: 4px;
+            }
+
+            .btn-exam {
+                padding: 8px 4px;
+                font-size: 0.75rem;
+                border-radius: 8px;
+                gap: 3px;
+            }
+
+            .btn-exam i {
+                font-size: 0.78rem;
+            }
+        }
+    </style>
+</head>
+<body class="exam-body">
+    <div class="watermark">RRB Group of Schools</div>
+
+    <!-- ── COMPACT HEADER SECTION ── -->
+    <div class="exam-header">
+        <div class="header-left">
+            <div class="header-title">
+                {% if logo_path %}
+                <img src="{{ url_for('static', filename=logo_path) }}" alt="Logo" style="height:32px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.4);">
+                {% endif %}
+                <div>
+                    <div>{{ school_name }}</div>
+                    <span>CBT Exam</span>
+                </div>
+            </div>
+            <div class="header-info">
+                <span class="header-chip"><i class="fas fa-user-circle"></i> {{ student_name }}</span>
+                <span class="header-chip"><i class="fas fa-graduation-cap"></i> {{ student_class }}{% if student_section %}-{{ student_section }}{% endif %}</span>
+                <span class="header-chip"><i class="fas fa-book"></i> {{ student_subject }}</span>
+            </div>
+        </div>
+
+        <!-- Timer & Question Counter Badges -->
+        <div class="header-right">
+            <div class="timer-box" id="timer">
+                <i class="far fa-clock" style="color:#ffd54f;"></i>
+                <span class="timer-time">00:00</span>
+            </div>
+            <div class="question-progress">
+                <i class="fas fa-list-ol" style="color:#81d4fa;"></i>
+                <span class="value"><span id="questionNumberHeader">0</span>/<span id="questionTotalHeader">0</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MAIN EXAM AREA ── -->
+    <div class="exam-main">
+        <div class="question-panel">
+            {% if is_combined and combined_subjects %}
+            <!-- Subject Tab Bar for combined/multi-subject tests -->
+            <div id="subjectTabBar" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;
+                 padding:8px 12px;background:#f4f8ff;border-radius:12px;border:1px solid #dbeafe;">
+                <span style="font-size:.78rem;font-weight:700;color:#334155;align-self:center;margin-right:4px;">
+                    <i class="fas fa-layer-group" style="color:#2563eb"></i> Subject:
+                </span>
+                {% for subj in combined_subjects %}
+                <button class="subj-tab {% if loop.first %}subj-tab-active{% endif %}"
+                        data-subject="{{ subj }}"
+                        onclick="jumpToSubject('{{ subj }}', this)"
+                        style="padding:5px 14px;border:1.5px solid #2563eb;border-radius:20px;
+                               background:{% if loop.first %}#2563eb{% else %}#fff{% endif %};
+                               color:{% if loop.first %}#fff{% else %}#2563eb{% endif %};
+                               font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:600;
+                               cursor:pointer;transition:all .2s;">
+                    {{ subj }}
+                    <span id="subjCount-{{ loop.index0 }}"
+                          style="font-size:.7rem;opacity:.85;margin-left:4px;"></span>
+                </button>
+                {% endfor %}
+                <span id="subjectProgress" style="margin-left:auto;font-size:.76rem;color:#475569;align-self:center;"></span>
+            </div>
+            {% endif %}
+            
+            <div class="question-header">
+                <div class="question-count">Question Number <strong><span id="questionNumberPanel">1</span>/<span id="questionTotalPanel">0</span></strong></div>
+                <div class="question-status"><span class="status-pill" id="currentStatus">Not Answered</span></div>
+            </div>
+            <div id="questionText" class="question-text"></div>
+            <div id="optionsContainer" class="options"></div>
+        </div>
+
+        <!-- Desktop Palette Panel -->
+        <div class="palette-panel" id="desktopPalette">
+            <h4><i class="fas fa-th-large"></i> Question Palette</h4>
+            <div id="paletteGrid" class="palette-grid"></div>
+            <div class="legend">
+                <div class="legend-item"><span class="legend-box" style="background:#94a3b8"></span> Not Visited</div>
+                <div class="legend-item"><span class="legend-box" style="background:#ef4444"></span> Not Answered</div>
+                <div class="legend-item"><span class="legend-box" style="background:#22c55e"></span> Answered</div>
+                <div class="legend-item"><span class="legend-box" style="background:#7c3aed"></span> Marked</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── COMPACT SINGLE ROW FOOTER SECTION ── -->
+    <div class="exam-footer">
+        <div class="footer-row">
+            <button id="saveNextBtn" class="btn-green btn-exam">
+                <i class="fas fa-save"></i> Save &amp; Next
+            </button>
+            <button id="markReviewBtn" class="btn-purple btn-exam">
+                <i class="fas fa-bookmark"></i> Mark &amp; Next
+            </button>
+            <button id="clearBtn" class="btn-orange btn-exam">
+                <i class="fas fa-undo-alt"></i> Clear Response
+            </button>
+            <button id="submitBtn" class="btn-red btn-exam">
+                <i class="fas fa-check-circle"></i> Submit
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Palette Floating Toggle Button -->
+    <button class="palette-toggle-btn" id="paletteToggleBtn" title="Question Palette">
+        <i class="fas fa-th-large"></i>
+    </button>
+
+    <!-- Mobile Palette Drawer -->
+    <div class="palette-overlay" id="paletteOverlay"></div>
+    <div class="mobile-palette" id="mobilePalette">
+        <button class="close-btn" id="closePaletteBtn">&times;</button>
+        <h4 style="margin-top:10px; margin-bottom:12px;"><i class="fas fa-th-large"></i> Question Palette</h4>
+        <div id="mobilePaletteGrid" class="palette-grid"></div>
+        <div class="legend">
+            <div class="legend-item"><span class="legend-box" style="background:#94a3b8"></span> Not Visited</div>
+            <div class="legend-item"><span class="legend-box" style="background:#ef4444"></span> Not Answered</div>
+            <div class="legend-item"><span class="legend-box" style="background:#22c55e"></span> Answered</div>
+            <div class="legend-item"><span class="legend-box" style="background:#7c3aed"></span> Marked</div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/multimodal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/exam.js') }}"></script>
+    <script>
+    // ── COMBINED TEST LOGIC ──────────────────────────────────────────────────
+    const IS_COMBINED       = {{ 'true' if is_combined else 'false' }};
+    const COMBINED_SUBJECTS = {{ combined_subjects | tojson | safe }};
+
+    function initCombinedTabs() {
+        if (!IS_COMBINED || !COMBINED_SUBJECTS.length) return;
+        if (!window.questions || !window.questions.length) return;
+
+        window._subjIndexMap = {};
+        COMBINED_SUBJECTS.forEach(s => window._subjIndexMap[s] = []);
+        window.questions.forEach((q, i) => {
+            const s = q.subject || COMBINED_SUBJECTS[0];
+            if (window._subjIndexMap[s]) window._subjIndexMap[s].push(i);
+        });
+
+        COMBINED_SUBJECTS.forEach((s, idx) => {
+            const badge = document.getElementById('subjCount-' + idx);
+            if (badge) badge.textContent = '(' + (window._subjIndexMap[s]||[]).length + 'Q)';
+        });
+
+        updateSubjectProgress();
+    }
+
+    function jumpToSubject(subject, btn) {
+        if (!window._subjIndexMap) return;
+        const indices = window._subjIndexMap[subject] || [];
+        if (!indices.length) return;
+
+        document.querySelectorAll('.subj-tab').forEach(b => {
+            b.style.background = '#fff';
+            b.style.color      = '#2563eb';
+            b.classList.remove('subj-tab-active');
+        });
+        btn.style.background = '#2563eb';
+        btn.style.color      = '#fff';
+        btn.classList.add('subj-tab-active');
+
+        loadQuestion(indices[0]);
+        updateSubjectProgress();
+    }
+
+    function updateSubjectProgress() {
+        if (!IS_COMBINED || !window._subjIndexMap || typeof currentIndex === 'undefined') return;
+        const q = window.questions && window.questions[currentIndex];
+        if (!q) return;
+        const subj    = q.subject || '';
+        const indices = window._subjIndexMap[subj] || [];
+        const posInSubj = indices.indexOf(currentIndex) + 1;
+        const prog = document.getElementById('subjectProgress');
+        if (prog && subj) {
+            prog.textContent = subj + ': Q' + posInSubj + '/' + indices.length;
+        }
+
+        document.querySelectorAll('.subj-tab').forEach(b => {
+            const isActive = b.dataset.subject === subj;
+            b.style.background = isActive ? '#2563eb' : '#fff';
+            b.style.color      = isActive ? '#fff'    : '#2563eb';
+        });
+    }
+
+    const _origLoad = window.loadQuestion;
+    window.loadQuestion = function(index) {
+        _origLoad(index);
+        if (IS_COMBINED) updateSubjectProgress();
+    };
+
+    const _origInit = window.initExam || function(){};
+    window.initExam = function() {
+        _origInit();
+        initCombinedTabs();
+    };
+    </script>
+</body>
+</html>
