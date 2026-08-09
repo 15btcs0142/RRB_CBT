@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Students - RRB CBT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header h1 { color: #333; }
+        .back-btn {
+            background: #667eea;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .back-btn:hover { background: #764ba2; }
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        .student-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .student-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .student-pic {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+        .student-pic img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .student-info {
+            text-align: center;
+        }
+        .student-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        .student-details {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+        .student-details i {
+            color: #667eea;
+            margin-right: 5px;
+        }
+        .no-students {
+            background: white;
+            padding: 60px 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .no-students i {
+            font-size: 4rem;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-users"></i> My Students</h1>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button onclick="openAddModal()" style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:10px 22px;border-radius:20px;cursor:pointer;font-weight:600;font-family:'Poppins',sans-serif;">
+                    <i class="fas fa-user-plus"></i> Add Student
+                </button>
+                <a href="/teacher/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+            </div>
+        </div>
+
+        <!-- Add Student Modal -->
+        <div id="addModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;">
+            <div style="background:white;max-width:600px;margin:40px auto;padding:30px;border-radius:15px;max-height:85vh;overflow-y:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h3><i class="fas fa-user-plus"></i> Add New Student</h3>
+                    <button onclick="document.getElementById('addModal').style.display='none'" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#999;">&times;</button>
+                </div>
+                <div id="addAlert" style="display:none;padding:10px 15px;border-radius:8px;margin-bottom:15px;"></div>
+                <form id="addStudentForm" onsubmit="addStudent(event)">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div>
+                            <label style="display:block;font-weight:500;margin-bottom:6px;font-size:0.9rem;">Full Name *</label>
+                            <input type="text" name="name" required style="width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:500;margin-bottom:6px;font-size:0.9rem;">Student ID *</label>
+                            <input type="text" name="student_id" required style="width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:500;margin-bottom:6px;font-size:0.9rem;">Class *</label>
+                            <input type="text" name="class" required style="width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:500;margin-bottom:6px;font-size:0.9rem;">Section</label>
+                            <input type="text" name="section" style="width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:500;margin-bottom:6px;font-size:0.9rem;">Subject</label>
+                            <input type="text" name="subject" style="width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:500;margin-bottom:6px;font-size:0.9rem;">Admission No</label>
+                            <input type="text" name="admission_no" style="width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:500;margin-bottom:6px;font-size:0.9rem;">Date of Birth</label>
+                            <input type="date" name="dob" style="width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:500;margin-bottom:6px;font-size:0.9rem;">House</label>
+                            <input type="text" name="house" style="width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:500;margin-bottom:6px;font-size:0.9rem;">Parents Name</label>
+                            <input type="text" name="parents_name" style="width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-weight:500;margin-bottom:6px;font-size:0.9rem;">Profile Picture</label>
+                            <input type="file" name="picture" accept="image/*" style="width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;">
+                        </div>
+                        <div style="grid-column:1/-1;">
+                            <label style="display:block;font-weight:500;margin-bottom:6px;font-size:0.9rem;">Address</label>
+                            <textarea name="address" rows="2" style="width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;resize:vertical;"></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" style="width:100%;margin-top:18px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:1rem;font-family:'Poppins',sans-serif;">
+                        <i class="fas fa-save"></i> Add Student
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        {% if students %}
+        <div class="students-grid">
+            {% for student in students %}
+            <a href="/teacher/student/{{ student.student_id }}" class="student-card">
+                <div class="student-pic">
+                    {% if student.picture %}
+                    <img src="{{ url_for('static', filename=student.picture) }}" alt="{{ student.name }}">
+                    {% else %}
+                    <i class="fas fa-user"></i>
+                    {% endif %}
+                </div>
+                <div class="student-info">
+                    <div class="student-name">{{ student.name }}</div>
+                    <div class="student-details">
+                        <i class="fas fa-id-card"></i> {{ student.admission_no or student.student_id }}
+                    </div>
+                    <div class="student-details">
+                        <i class="fas fa-graduation-cap"></i> {{ student.class }} {% if student.section %}- {{ student.section }}{% endif %}
+                    </div>
+                    {% if student.house %}
+                    <div class="student-details">
+                        <i class="fas fa-home"></i> {{ student.house }}
+                    </div>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-students">
+            <i class="fas fa-user-slash"></i>
+            <h2>No Students Found</h2>
+            <p>No students are assigned to your classes yet. Use the Add Student button above.</p>
+        </div>
+        {% endif %}
+    
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
+<script>
+    function openAddModal() { document.getElementById('addModal').style.display='block'; }
+    window.onclick = e => { if(e.target.id==='addModal') e.target.style.display='none'; };
+    async function addStudent(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const btn = e.target.querySelector('button[type=submit]');
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+        try {
+            const res = await fetch('/teacher/student/add', {method:'POST', body:formData});
+            const data = await res.json();
+            const alertDiv = document.getElementById('addAlert');
+            alertDiv.style.display='block';
+            alertDiv.style.background = data.status==='success'?'#d4edda':'#f8d7da';
+            alertDiv.style.color = data.status==='success'?'#155724':'#721c24';
+            alertDiv.textContent = data.message;
+            if (data.status==='success') setTimeout(()=>location.reload(), 1500);
+        } catch(err) { alert('Error: '+err.message); }
+        btn.disabled=false; btn.innerHTML='<i class="fas fa-save"></i> Add Student';
+    }
+</script>
+</body>
+</html>
