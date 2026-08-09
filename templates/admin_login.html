@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - RRB CBT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{
+            font-family:'Poppins',sans-serif;
+            background:linear-gradient(135deg, #e8edf5 0%, #c5cae9 100%);
+            min-height:100vh;
+            display:flex;
+            flex-direction: column;
+            align-items:center;
+            justify-content:center;
+            padding:20px;
+            position:relative;
+            overflow:hidden;
+        }
+
+        /* ─── Floating particles background ──────────────────────────── */
+        .particles {
+            position:fixed;
+            top:0;left:0;
+            width:100%;height:100%;
+            pointer-events:none;
+            z-index:0;
+            overflow:hidden;
+        }
+        .particle {
+            position:absolute;
+            width:8px;height:8px;
+            background:rgba(26,35,126,0.06);
+            border-radius:50%;
+            animation:floatUp linear infinite;
+        }
+        .particle:nth-child(1){left:10%;animation-duration:12s;animation-delay:0s;width:12px;height:12px;}
+        .particle:nth-child(2){left:20%;animation-duration:15s;animation-delay:2s;}
+        .particle:nth-child(3){left:30%;animation-duration:10s;animation-delay:1s;width:6px;height:6px;}
+        .particle:nth-child(4){left:40%;animation-duration:18s;animation-delay:3s;width:14px;height:14px;}
+        .particle:nth-child(5){left:50%;animation-duration:13s;animation-delay:0.5s;}
+        .particle:nth-child(6){left:60%;animation-duration:16s;animation-delay:2.5s;width:10px;height:10px;}
+        .particle:nth-child(7){left:70%;animation-duration:11s;animation-delay:1.5s;}
+        .particle:nth-child(8){left:80%;animation-duration:14s;animation-delay:3.5s;width:8px;height:8px;}
+        .particle:nth-child(9){left:90%;animation-duration:17s;animation-delay:0.8s;width:16px;height:16px;}
+        .particle:nth-child(10){left:95%;animation-duration:12s;animation-delay:2s;}
+        
+        @keyframes floatUp {
+            0% { transform:translateY(100vh) scale(0); opacity:0; }
+            10% { opacity:1; }
+            90% { opacity:1; }
+            100% { transform:translateY(-10vh) scale(1); opacity:0; }
+        }
+
+        /* ─── Watermark ────────────────────────────────────────────────── */
+        .watermark {
+            position:fixed;
+            top:50%;left:50%;
+            transform:translate(-50%,-50%) rotate(-25deg);
+            font-size:7vw;
+            color:rgba(26,35,126,0.04);
+            white-space:nowrap;
+            pointer-events:none;
+            z-index:0;
+            font-weight:800;
+            text-transform:uppercase;
+            letter-spacing:8px;
+            user-select:none;
+        }
+
+        /* ─── Login Box ────────────────────────────────────────────────── */
+        .login-box{
+            background:rgba(255,255,255,0.96);
+            backdrop-filter:blur(12px);
+            border-radius:24px;
+            padding:45px 40px 38px;
+            max-width:420px;
+            width:100%;
+            box-shadow:0 25px 70px rgba(26,35,126,0.15);
+            z-index:1;
+            position:relative;
+            overflow:hidden;
+            transition:transform 0.3s ease;
+            border:1px solid rgba(26,35,126,0.08);
+        }
+        .login-box:hover{transform:translateY(-3px);}
+        
+        .login-box::before{
+            content:'';
+            position:absolute;
+            top:0;left:0;
+            width:100%;
+            height:4px;
+            background:linear-gradient(90deg, #1a237e, #667eea, #1a237e);
+            background-size:200% auto;
+            animation:shimmer 2.5s linear infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position:0% center; }
+            100% { background-position:200% center; }
+        }
+
+        /* ─── Logo ────────────────────────────────────────────────────── */
+        .logo-wrap{margin-bottom:22px;}
+        .logo-icon{
+            width:76px;
+            height:76px;
+            border-radius:50%;
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            display:flex;
+            flex-direction: column;
+            align-items:center;
+            justify-content:center;
+            font-size:2.2rem;
+            color:white;
+            margin:0 auto;
+            box-shadow:0 10px 30px rgba(26,35,126,0.2);
+            position:relative;
+        }
+        .logo-icon::after{
+            content:'';
+            position:absolute;
+            inset:-4px;
+            border-radius:50%;
+            border:2px solid rgba(26,35,126,0.1);
+            animation:ringPulse 2s ease-in-out infinite;
+        }
+        @keyframes ringPulse {
+            0% { transform:scale(1); opacity:1; }
+            100% { transform:scale(1.15); opacity:0; }
+        }
+
+        .school-name{
+            font-size:1.4rem;
+            font-weight:700;
+            color:#1a237e;
+            margin-top:8px;
+            margin-bottom:2px;
+        }
+        .portal-label{
+            font-size:0.85rem;
+            color:#888;
+            margin-bottom:24px;
+        }
+
+        /* ─── Error Message ──────────────────────────────────────────── */
+        .err{
+            background:#fce4ec;
+            border-left:4px solid #c62828;
+            color:#c62828;
+            padding:10px 16px;
+            border-radius:10px;
+            text-align:left;
+            margin-bottom:18px;
+            font-size:0.85rem;
+            display:flex;
+            flex-direction: column;
+            align-items:center;
+            gap:10px;
+        }
+        .err i{font-size:1.1rem;}
+
+        /* ─── Form ───────────────────────────────────────────────────── */
+        .fg{margin-bottom:18px;text-align:left;}
+        .fg label{
+            display:block;
+            font-weight:500;
+            margin-bottom:6px;
+            color:#333;
+            font-size:0.85rem;
+        }
+        .fg label i{color:#3949ab;margin-right:6px;width:18px;}
+        .fg input{
+            width:100%;
+            padding:12px 16px;
+            border:2px solid #e0e0e0;
+            border-radius:10px;
+            font-family:'Poppins',sans-serif;
+            font-size:0.95rem;
+            transition:all 0.3s;
+            background:#fafafa;
+        }
+        .fg input:focus{
+            outline:none;
+            border-color:#3949ab;
+            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
+            background:#fff;
+        }
+        .fg input::placeholder{color:#bbb;}
+
+        /* ─── Login Button ───────────────────────────────────────────── */
+        .login-btn{
+            width:100%;
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:white;
+            border:none;
+            padding:14px;
+            border-radius:12px;
+            font-size:1rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:all 0.3s;
+            display:flex;
+            flex-direction: column;
+            align-items:center;
+            justify-content:center;
+            gap:10px;
+            font-family:'Poppins',sans-serif;
+        }
+        .login-btn:hover{
+            transform:translateY(-2px);
+            box-shadow:0 10px 25px rgba(26,35,126,0.3);
+        }
+        .login-btn:active{transform:translateY(0);}
+
+        /* ─── Back Link ──────────────────────────────────────────────── */
+        .back-link{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            margin-top:18px;
+            color:#888;
+            font-size:0.82rem;
+            text-decoration:none;
+            transition:all 0.3s;
+        }
+        .back-link:hover{color:#1a237e;}
+        .back-link i{color:#3949ab;}
+
+        /* ─── Footer ─────────────────────────────────────────────────── */
+        .footer-note{
+            margin-top:20px;
+            font-size:0.7rem;
+            color:#ccc;
+            border-top:1px solid #f0f0f0;
+            padding-top:14px;
+            letter-spacing:0.3px;
+        }
+        .footer-note i{color:#1a237e;margin-right:4px;}
+
+        /* ─── Responsive ────────────────────────────────────────────────── */
+        @media(max-width:480px){
+            .login-box{padding:30px 22px 26px;border-radius:18px;}
+            .logo-icon{width:64px;height:64px;font-size:1.8rem;}
+            .school-name{font-size:1.2rem;}
+            .login-btn{padding:12px;font-size:0.95rem;}
+            .watermark{font-size:12vw;}
+        }
+        @media(max-width:360px){
+            .login-box{padding:22px 16px 18px;}
+            .fg input{padding:10px 12px;font-size:0.85rem;}
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── Floating Particles ────────────────────────────────────────── -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- ─── Watermark ──────────────────────────────────────────────────── -->
+    <div class="watermark">RRB Group of Schools</div>
+
+    <!-- ─── Login Box ──────────────────────────────────────────────────── -->
+    <div class="login-box">
+        <div class="logo-wrap">
+            <div class="logo-icon"><i class="fas fa-user-shield"></i></div>
+        </div>
+        <div class="school-name">RRB Group of Schools</div>
+        <div class="portal-label">Administrator Portal</div>
+
+        <!-- Error Message -->
+        {% if error %}
+        <div class="err">
+            <i class="fas fa-exclamation-circle"></i> {{ error }}
+        </div>
+        {% endif %}
+
+        <!-- Login Form -->
+        <form action="/admin" method="POST">
+            <div class="fg">
+                <label><i class="fas fa-lock"></i> Admin Password</label>
+                <input type="password" name="password" required autofocus placeholder="Enter admin password">
+            </div>
+            <button type="submit" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i> Login as Admin
+            </button>
+        </form>
+
+        <div class="footer-note" style="text-align:center; margin-top:20px; padding-top:15px; border-top:1px dashed rgba(0,0,0,0.1); font-size:0.85rem; color:#666;">
+    <i class="fas fa-shield-alt" style="color:#1a237e; margin-right:5px;"></i> RRB CBT &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
+</div>
+
+        <div style="text-align:center;">
+            <a href="/" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to Student Portal
+            </a>
+        </div>
+
+        </div>
+
+</body>
+</html>
