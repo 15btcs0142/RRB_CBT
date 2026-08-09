@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Class Report - RRB CBT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#f5f7fa,#e8f5e9);min-height:100vh;}
+        .header{background:linear-gradient(90deg,#1b5e20,#2e7d32);color:white;padding:18px 30px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+        .header h1{font-size:1.5rem;}
+        .back-btn{background:rgba(255,255,255,0.2);color:white;padding:8px 20px;border-radius:20px;text-decoration:none;}
+        .back-btn:hover{background:rgba(255,255,255,0.35);}
+        .container{max-width:1100px;margin:25px auto;padding:0 20px;}
+        .card{background:white;border-radius:15px;padding:28px;box-shadow:0 5px 20px rgba(0,0,0,0.08);margin-bottom:25px;}
+        .card h3{color:#1b5e20;margin-bottom:22px;}
+        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;}
+        .form-group label{display:block;font-weight:500;margin-bottom:7px;color:#333;font-size:0.9rem;}
+        .form-group label i{color:#2e7d32;margin-right:6px;}
+        .form-group input,.form-group select{width:100%;padding:10px 13px;border:2px solid #e0e0e0;border-radius:9px;font-family:'Poppins',sans-serif;font-size:0.95rem;transition:border-color 0.3s;background:white;}
+        .form-group input:focus,.form-group select:focus{outline:none;border-color:#2e7d32;}
+        .btn-row{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;}
+        .btn{padding:12px 26px;border:none;border-radius:9px;cursor:pointer;font-weight:600;font-size:0.95rem;display:inline-flex;align-items:center;gap:8px;transition:all 0.3s;text-decoration:none;}
+        .btn-excel{background:#217346;color:white;}
+        .btn-excel:hover{background:#1a5c38;}
+        .btn-pdf{background:#dc3545;color:white;}
+        .btn-pdf:hover{background:#c82333;}
+        .btn-preview{background:#667eea;color:white;}
+        .btn-preview:hover{background:#764ba2;}
+        .alert{padding:13px 18px;border-radius:8px;margin-bottom:18px;display:none;}
+        .alert-success{background:#d4edda;border-left:4px solid #28a745;color:#155724;}
+        .alert-error{background:#f8d7da;border-left:4px solid #dc3545;color:#721c24;}
+        .preview-section{display:none;}
+        .preview-table{width:100%;border-collapse:collapse;margin-top:15px;}
+        .preview-table thead tr{background:#2e7d32;color:white;}
+        .preview-table th,.preview-table td{padding:10px 13px;text-align:left;border-bottom:1px solid #eee;font-size:0.88rem;}
+        .preview-table tr:hover td{background:#f9f9f9;}
+        .student-cell{display:flex;align-items:center;gap:10px;}
+        .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:white;font-size:0.85rem;flex-shrink:0;}
+        .avatar img{width:32px;height:32px;border-radius:50%;object-fit:cover;}
+        .pct-badge{padding:3px 10px;border-radius:20px;font-size:0.82rem;font-weight:600;}
+        .pct-high{background:#d4edda;color:#155724;}
+        .pct-mid{background:#fff3cd;color:#856404;}
+        .pct-low{background:#f8d7da;color:#721c24;}
+        .loading-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;}
+        .loading-overlay.active{display:flex;}
+        .loader-box{background:white;padding:35px 45px;border-radius:15px;text-align:center;}
+        .loader-box i{font-size:3rem;color:#2e7d32;animation:spin 1s linear infinite;display:block;margin-bottom:15px;}
+        @keyframes spin{100%{transform:rotate(360deg)}}
+        .info-bar{background:#e8f5e9;border-radius:9px;padding:12px 18px;margin-bottom:18px;color:#1b5e20;font-size:0.9rem;}
+        .disabled-option{color:#aaa;}
+        .small-note{font-size:0.78rem;color:#888;margin-top:4px;}
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1><i class="fas fa-chart-bar"></i> Class Report Generator</h1>
+    {% if role == 'admin' %}
+    <a href="/admin/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    {% else %}
+    <a href="/teacher/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    {% endif %}
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loader-box">
+        <i class="fas fa-spinner"></i>
+        <p style="color:#333;font-weight:600;">Generating Report...</p>
+        <p style="color:#666;font-size:0.85rem;margin-top:5px;">Please wait</p>
+    </div>
+</div>
+
+<div class="container">
+    <div id="alertBox" class="alert"></div>
+
+    <div class="card">
+        <h3><i class="fas fa-filter"></i> Report Filters</h3>
+        <div class="info-bar">
+            <i class="fas fa-info-circle"></i>
+            Select class, section, subject, test number, and date range. Export as <strong>Excel</strong> or <strong>PDF</strong>.
+        </div>
+
+        <form id="reportForm">
+            <div class="form-grid">
+                <!-- Class dropdown 1–12 -->
+                <div class="form-group">
+                    <label><i class="fas fa-graduation-cap"></i> Class *</label>
+                    <select name="class" id="classSelect" required>
+                        <option value="">Select Class</option>
+                        {% for i in range(1,13) %}
+                        <option value="{{ i }}" {% if role == 'teacher' and assignments and assignments[0].class == i|string %}selected{% endif %}>{{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Section dropdown A–D -->
+                <div class="form-group">
+                    <label><i class="fas fa-layer-group"></i> Section</label>
+                    <select name="section" id="sectionSelect">
+                        <option value="">All Sections</option>
+                        <option value="A" {% if role == 'teacher' and assignments and assignments[0].section == 'A' %}selected{% endif %}>A</option>
+                        <option value="B" {% if role == 'teacher' and assignments and assignments[0].section == 'B' %}selected{% endif %}>B</option>
+                        <option value="C" {% if role == 'teacher' and assignments and assignments[0].section == 'C' %}selected{% endif %}>C</option>
+                        <option value="D" {% if role == 'teacher' and assignments and assignments[0].section == 'D' %}selected{% endif %}>D</option>
+                    </select>
+                </div>
+
+                <!-- Subject dropdown (dynamic) -->
+                <div class="form-group">
+                    <label><i class="fas fa-book"></i> Subject</label>
+                    <select name="subject" id="subjectSelect">
+                        <option value="">All Subjects</option>
+                    </select>
+                    <div class="small-note" id="subjectNote">Select a class to load subjects</div>
+                </div>
+
+                <!-- Test Number dropdown (dynamic) -->
+                <div class="form-group">
+                    <label><i class="fas fa-hashtag"></i> Test Number</label>
+                    <select name="test_no" id="testNoSelect">
+                        <option value="">All Tests</option>
+                    </select>
+                    <div class="small-note" id="testNote">Select class & subject to load test numbers</div>
+                </div>
+
+                <!-- Date from / to -->
+                <div class="form-group">
+                    <label><i class="fas fa-calendar-alt"></i> From Date</label>
+                    <input type="date" name="date_from" id="dateFrom">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-calendar-alt"></i> To Date</label>
+                    <input type="date" name="date_to" id="dateTo">
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-sort"></i> Sort By</label>
+                    <select name="sort_by" id="sortBy">
+                        <option value="name">Name (A-Z)</option>
+                        <option value="percentage">Performance (High-Low)</option>
+                    </select>
+                </div>
+            </div>
+
+            {% if role == 'teacher' and assignments %}
+            <div style="margin-top:15px;">
+                <label style="font-weight:500;color:#333;font-size:0.9rem;"><i class="fas fa-tasks" style="color:#2e7d32"></i> Quick Select Assignment:</label>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+                    {% for a in assignments %}
+                    <button type="button" onclick="fillAssignment('{{ a.class }}','{{ a.section or '' }}','{{ a.subject }}')"
+                        style="background:#e8f5e9;border:1px solid #2e7d32;color:#1b5e20;padding:5px 15px;border-radius:20px;cursor:pointer;font-size:0.85rem;font-family:'Poppins',sans-serif;">
+                        {{ a.class }}{% if a.section %}{{ a.section }}{% endif %} - {{ a.subject }}
+                        {% if a.is_class_teacher %}<i class="fas fa-crown" style="color:#ffc107"></i>{% endif %}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="btn-row">
+                <button type="button" class="btn btn-preview" onclick="previewReport()">
+                    <i class="fas fa-eye"></i> Preview
+                </button>
+                <button type="button" class="btn btn-excel" onclick="generateReport('excel')">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </button>
+                <button type="button" class="btn btn-pdf" onclick="generateReport('pdf')">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="card preview-section" id="previewCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;flex-wrap:wrap;gap:10px;">
+            <h3 style="margin:0"><i class="fas fa-table"></i> Preview</h3>
+            <div style="display:flex;gap:10px;">
+                <button class="btn btn-excel" onclick="generateReport('excel')" style="padding:8px 18px;font-size:0.88rem;">
+                    <i class="fas fa-file-excel"></i> Excel
+                </button>
+                <button class="btn btn-pdf" onclick="generateReport('pdf')" style="padding:8px 18px;font-size:0.88rem;">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+            </div>
+        </div>
+        <div id="previewContent"></div>
+    </div>
+</div>
+
+<script>
+// ── Helpers ────────────────────────────────────────────────
+function showAlert(msg, type) {
+    const box = document.getElementById('alertBox');
+    box.className = 'alert alert-' + type;
+    box.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}"></i> ${msg}`;
+    box.style.display = 'block';
+    setTimeout(()=>box.style.display='none', 5000);
+}
+
+function getFormData() {
+    return {
+        class: document.getElementById('classSelect').value,
+        section: document.getElementById('sectionSelect').value,
+        subject: document.getElementById('subjectSelect').value,
+        test_no: document.getElementById('testNoSelect').value,
+        date_from: document.getElementById('dateFrom').value,
+        date_to: document.getElementById('dateTo').value,
+        sort_by: document.getElementById('sortBy').value
+    };
+}
+
+function fillAssignment(cls, sec, subj) {
+    document.getElementById('classSelect').value = cls;
+    document.getElementById('sectionSelect').value = sec || '';
+    // Trigger subject load
+    loadSubjects(cls, sec || '');
+    // After subjects load, select the subject
+    setTimeout(() => {
+        const subjSelect = document.getElementById('subjectSelect');
+        if (subj) subjSelect.value = subj;
+        // Then load test numbers
+        loadTestNumbers(cls, sec || '', subj);
+        setTimeout(() => {
+            // Optionally select first test? Leave as "All Tests"
+        }, 300);
+    }, 300);
+}
+
+// ── Load Subjects ────────────────────────────────────────────
+async function loadSubjects(classVal, sectionVal) {
+    const subjSelect = document.getElementById('subjectSelect');
+    const note = document.getElementById('subjectNote');
+    if (!classVal) {
+        subjSelect.innerHTML = '<option value="">All Subjects</option>';
+        note.textContent = 'Select a class to load subjects';
+        return;
+    }
+    note.textContent = 'Loading subjects...';
+    try {
+        const url = `/api/class_report/subjects?class=${encodeURIComponent(classVal)}&section=${encodeURIComponent(sectionVal)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        subjSelect.innerHTML = '<option value="">All Subjects</option>';
+        if (data.subjects && data.subjects.length) {
+            data.subjects.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                subjSelect.appendChild(opt);
+            });
+            note.textContent = `${data.subjects.length} subject(s) available`;
+        } else {
+            note.textContent = 'No subjects found for this class/section';
+        }
+    } catch(e) {
+        subjSelect.innerHTML = '<option value="">All Subjects</option>';
+        note.textContent = 'Failed to load subjects';
+        console.error(e);
+    }
+}
+
+// ── Load Test Numbers ────────────────────────────────────────
+async function loadTestNumbers(classVal, sectionVal, subjectVal) {
+    const testSelect = document.getElementById('testNoSelect');
+    const note = document.getElementById('testNote');
+    if (!classVal || !subjectVal) {
+        testSelect.innerHTML = '<option value="">All Tests</option>';
+        note.textContent = 'Select class & subject to load test numbers';
+        return;
+    }
+    note.textContent = 'Loading test numbers...';
+    try {
+        const url = `/api/class_report/test_numbers?class=${encodeURIComponent(classVal)}&section=${encodeURIComponent(sectionVal)}&subject=${encodeURIComponent(subjectVal)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        testSelect.innerHTML = '<option value="">All Tests</option>';
+        if (data.test_numbers && data.test_numbers.length) {
+            data.test_numbers.forEach(tn => {
+                const opt = document.createElement('option');
+                opt.value = tn;
+                opt.textContent = tn;
+                testSelect.appendChild(opt);
+            });
+            note.textContent = `${data.test_numbers.length} test(s) available`;
+        } else {
+            note.textContent = 'No tests available for this subject';
+        }
+    } catch(e) {
+        testSelect.innerHTML = '<option value="">All Tests</option>';
+        note.textContent = 'Failed to load test numbers';
+        console.error(e);
+    }
+}
+
+// ── Event Listeners ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    const classSelect = document.getElementById('classSelect');
+    const sectionSelect = document.getElementById('sectionSelect');
+    const subjectSelect = document.getElementById('subjectSelect');
+
+    function onClassSectionChange() {
+        const cls = classSelect.value;
+        const sec = sectionSelect.value;
+        loadSubjects(cls, sec);
+        // Reset test dropdown
+        document.getElementById('testNoSelect').innerHTML = '<option value="">All Tests</option>';
+        document.getElementById('testNote').textContent = 'Select class & subject to load test numbers';
+    }
+
+    classSelect.addEventListener('change', onClassSectionChange);
+    sectionSelect.addEventListener('change', onClassSectionChange);
+
+    subjectSelect.addEventListener('change', function() {
+        const cls = classSelect.value;
+        const sec = sectionSelect.value;
+        const subj = this.value;
+        loadTestNumbers(cls, sec, subj);
+    });
+
+    // If teacher has a default assignment, trigger loading
+    {% if role == 'teacher' and assignments %}
+        const firstAssign = {{ assignments[0]|tojson }};
+        if (firstAssign.class) {
+            fillAssignment(firstAssign.class, firstAssign.section || '', firstAssign.subject);
+        }
+    {% endif %}
+});
+
+// ── Preview & Export ─────────────────────────────────────────
+async function previewReport() {
+    const fd = getFormData();
+    if (!fd.class) { showAlert('Please select a class', 'error'); return; }
+    document.getElementById('loadingOverlay').classList.add('active');
+    try {
+        const res = await fetch('/api/class_report/generate', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({...fd, format:'json'})
+        });
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('json')) {
+            const data = await res.json();
+            if (data.status === 'error') { showAlert(data.message, 'error'); return; }
+            renderPreview(data.students || []);
+        } else {
+            showAlert('Unexpected response', 'error');
+        }
+    } catch(e) { showAlert('Error: '+e.message, 'error'); }
+    document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+function renderPreview(students) {
+    const card = document.getElementById('previewCard');
+    const content = document.getElementById('previewContent');
+    if (!students.length) {
+        content.innerHTML = '<p style="text-align:center;color:#999;padding:30px">No data found for selected filters</p>';
+        card.style.display = 'block';
+        return;
+    }
+    const rows = students.map((s,i) => {
+        const pct = s.avg_percentage || 0;
+        const cls = pct>=75?'pct-high':pct>=50?'pct-mid':'pct-low';
+        const picHtml = s.picture
+            ? `<div class="avatar"><img src="/static/${s.picture}" alt="${s.name}"></div>`
+            : `<div class="avatar"><i class="fas fa-user"></i></div>`;
+        return `<tr>
+            <td>${i+1}</td>
+            <td><div class="student-cell">${picHtml}<span>${s.name}</span></div></td>
+            <td>${s.admission_no||'—'}</td>
+            <td>${s.class}${s.section||''}</td>
+            <td>${s.house||'—'}</td>
+            <td>${s.total_tests}</td>
+            <td><span class="pct-badge ${cls}">${s.score_ratio||'0/0'}</span></td>
+        </tr>`;
+    }).join('');
+    content.innerHTML = `<p style="color:#666;margin-bottom:10px;font-size:0.9rem;">Showing ${students.length} students</p>
+    <div style="overflow-x:auto;"><table class="preview-table">
+        <thead><tr><th>#</th><th>Name</th><th>Admission No</th><th>Class</th><th>House</th><th>Tests</th><th>Score</th></tr></thead>
+        <tbody>${rows}</tbody>
+    </table></div>`;
+    card.style.display = 'block';
+    card.scrollIntoView({behavior:'smooth'});
+}
+
+async function generateReport(format) {
+    const fd = getFormData();
+    if (!fd.class) { showAlert('Please select a class', 'error'); return; }
+
+    if (format === 'pdf') {
+        // Open HTML Printable Preview in new tab with browser print dialog box!
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/api/class_report/generate';
+        form.target = '_blank';
+
+        const payload = { ...fd, format: 'pdf' };
+        for (const key in payload) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = payload[key];
+            form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+        return;
+    }
+
+    document.getElementById('loadingOverlay').classList.add('active');
+    try {
+        const res = await fetch('/api/class_report/generate', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({...fd, format})
+        });
+        if (!res.ok) { showAlert('Generation failed', 'error'); return; }
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('json')) {
+            const data = await res.json();
+            if (data.status === 'error') showAlert(data.message, 'error');
+            else renderPreview(data.students || []);
+        } else {
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const disp = res.headers.get('content-disposition') || '';
+            const fnMatch = disp.match(/filename=(.+)/);
+            a.download = fnMatch ? fnMatch[1] : `class_report.xlsx`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showAlert('Report downloaded successfully!', 'success');
+        }
+    } catch(e) { showAlert('Error: '+e.message, 'error'); }
+    document.getElementById('loadingOverlay').classList.remove('active');
+}
+</script>
+<div class="footer" style="margin-top:30px; text-align:center; font-size:9pt; color:#666; border-top:1px solid #ccc; padding-top:10px; page-break-inside:avoid;">
+    Generated by RRB CBT | Developed by Gaurav Shukla & Team
+</div>
+</body>
+</html>
