@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ bulletin.title }} — {{ school_name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;display:flex;flex-direction:column;}
+.top-bar{background:linear-gradient(90deg,#1b5e20,#2e7d32);color:#fff;padding:12px 24px;
+         display:flex;align-items:center;gap:14px;box-shadow:0 3px 12px rgba(0,0,0,.2);}
+.top-bar img{height:40px;width:40px;border-radius:50%;border:2px solid rgba(255,255,255,.4);object-fit:cover;}
+.top-bar .logo-ph{height:40px;width:40px;border-radius:50%;background:rgba(255,255,255,.18);
+                   display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+.top-bar .sname{font-size:1.05rem;font-weight:700;}
+.back-link{margin-left:auto;background:rgba(255,255,255,.18);color:#fff;padding:6px 16px;
+            border-radius:20px;text-decoration:none;font-size:.82rem;border:1px solid rgba(255,255,255,.3);}
+.back-link:hover{background:rgba(255,255,255,.3);}
+
+.wrap{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:36px 20px;}
+.card{background:#fff;border-radius:16px;max-width:700px;width:100%;
+      box-shadow:0 6px 28px rgba(0,0,0,.10);overflow:hidden;}
+.card-accent{height:6px;background:linear-gradient(90deg,#1b5e20,#2e7d32);}
+.card-body{padding:32px 36px;}
+.meta-row{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.poster-badge{display:inline-flex;align-items:center;gap:6px;background:#e8f5e9;
+              color:#1b5e20;padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:600;}
+.poster-badge.teacher{background:#ede7f6;color:#4527a0;}
+.date-badge{display:inline-flex;align-items:center;gap:5px;background:#f5f5f5;
+             color:#666;padding:4px 12px;border-radius:20px;font-size:.78rem;}
+.class-badge{display:inline-flex;align-items:center;gap:5px;background:#e3f2fd;
+              color:#0d47a1;padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:600;}
+h1{font-size:1.5rem;color:#1b5e20;margin-bottom:16px;line-height:1.4;}
+.content{font-size:1rem;color:#333;line-height:1.75;white-space:pre-wrap;}
+.permalink-row{background:#f9fbe7;border:1px solid #c8e6c9;border-radius:10px;
+               padding:14px 18px;margin-top:28px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.permalink-row .url-box{flex:1;background:#fff;border:1px solid #e0e0e0;border-radius:8px;
+                         padding:8px 12px;font-size:.8rem;color:#555;word-break:break-all;
+                         font-family:monospace;min-width:0;}
+.copy-btn{background:#1b5e20;color:#fff;border:none;padding:8px 18px;border-radius:8px;
+           cursor:pointer;font-size:.82rem;font-weight:600;white-space:nowrap;flex-shrink:0;}
+.copy-btn:hover{background:#2e7d32;}
+</style>
+</head>
+<body>
+<div class="top-bar">
+    {% if logo_path %}
+    <img src="{{ url_for('static', filename=logo_path) }}" alt="Logo">
+    {% else %}
+    <div class="logo-ph"><i class="fas fa-graduation-cap"></i></div>
+    {% endif %}
+    <span class="sname">{{ school_name }}</span>
+    <a href="/" class="back-link"><i class="fas fa-home"></i> Home</a>
+</div>
+
+<div class="wrap">
+    <div class="card">
+        <div class="card-accent"></div>
+        <div class="card-body">
+            <div class="meta-row">
+                <span class="poster-badge {% if bulletin.poster_type == 'teacher' %}teacher{% endif %}">
+                    <i class="fas fa-user"></i> {{ bulletin.poster_name }}
+                </span>
+                <span class="date-badge">
+                    <i class="fas fa-calendar-alt"></i>
+                    {{ bulletin.created_at[:10] if bulletin.created_at else '' }}
+                </span>
+                {% if bulletin.target_class %}
+                <span class="class-badge">
+                    <i class="fas fa-graduation-cap"></i> Class {{ bulletin.target_class }}
+                </span>
+                {% endif %}
+            </div>
+
+            <h1>{{ bulletin.title }}</h1>
+            <div class="content">{{ bulletin.content }}</div>
+
+            <!-- Permalink section -->
+            <div class="permalink-row">
+                <div>
+                    <div style="font-size:.78rem;font-weight:600;color:#1b5e20;margin-bottom:3px;">
+                        <i class="fas fa-link"></i> Permanent Link
+                    </div>
+                    <div style="font-size:.72rem;color:#888;">Share this URL — it stays active permanently</div>
+                </div>
+                <div class="url-box" id="permalinkUrl">{{ request.url }}</div>
+                <button class="copy-btn" onclick="copyLink()">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+            </div>
+        </div>
+    </div>
+
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
+
+<script>
+function copyLink() {
+    const url = document.getElementById('permalinkUrl').textContent;
+    navigator.clipboard.writeText(url).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.style.background = '#28a745';
+        setTimeout(() => {
+            btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+            btn.style.background = '';
+        }, 2000);
+    }).catch(() => {
+        prompt('Copy this link:', url);
+    });
+}
+</script>
+</body>
+</html>
