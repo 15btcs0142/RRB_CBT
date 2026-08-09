@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; margin: 15mm; font-size: 10.5pt; color: #000; line-height: 1.5; }
+    .header { text-align: center; border-bottom: 2.5pt double #1b5e20; padding-bottom: 10px; margin-bottom: 14px; }
+    .logo { height: 65px; margin-bottom: 5px; }
+    .school-name { font-size: 17pt; font-weight: bold; color: #1b5e20; }
+    .exam-info { font-size: 10pt; color: #333; margin-top: 4px; }
+    .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; background: #f9fbe7; border: 1pt solid #c8e6c9; }
+    .meta-table td { padding: 5px 12px; font-size: 9.5pt; }
+    .meta-table td strong { color: #1b5e20; }
+    .section-title { background: #1b5e20; color: white; padding: 5px 13px; font-size: 10.5pt; font-weight: bold; margin: 16px 0 9px 0; }
+    .section-instruction { font-size: 9pt; color: #555; font-style: italic; margin-bottom: 9px; }
+    .question-block { margin-bottom: 11px; page-break-inside: avoid; }
+    .q-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .q-num { font-weight: bold; color: #1b5e20; min-width: 28px; }
+    .q-marks { background: #e8f5e9; color: #1b5e20; padding: 1px 7px; border-radius: 8px; font-size: 8.5pt; font-weight: bold; white-space: nowrap; }
+    .q-text { margin: 3px 0 7px 28px; }
+    .options-list { margin-left: 42px; }
+    .option-item { margin: 2.5px 0; }
+    .answer-lines { margin-left: 28px; }
+    .ans-line { border-bottom: 0.75pt dotted #aaa; height: 18px; margin: 3px 0; }
+    @media print { body { margin: 10mm; } .section-title { -webkit-print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+    {% if logo_base64 %}<img src="{{ logo_base64 }}" class="logo" alt="">{% endif %}
+    <div class="school-name">{{ school_name }}</div>
+    <div class="exam-info">Question Paper &nbsp;|&nbsp; {{ date }}</div>
+</div>
+
+<table class="meta-table">
+    <tr>
+        <td><strong>Class:</strong> {{ class_name }}</td>
+        <td><strong>Subject:</strong> {{ subject }}</td>
+        <td><strong>Chapter/Topic:</strong> {{ chapter }}</td>
+        <td><strong>Test No:</strong> {{ test_no }}</td>
+    </tr>
+    <tr>
+        <td><strong>Total Questions:</strong> {{ questions | length }}</td>
+        <td><strong>Total Marks:</strong> {{ total_marks }}</td>
+        <td><strong>Date:</strong> {{ date }}</td>
+        <td><strong>Time:</strong> ______ Min</td>
+    </tr>
+</table>
+
+{# ─── SECTION A : MCQ ─────────────────────────────────── #}
+{% set mcq_qs = questions | selectattr('question_type', 'equalto', 'MCQ') | list %}
+{% if not mcq_qs %}
+  {% set mcq_qs = questions | selectattr('question_type', 'undefined') | list %}
+  {% if not mcq_qs %}
+    {% set mcq_qs = questions | rejectattr('question_type', 'in', ['Assertion-Reason','Very Short','Short','Long','Case Study']) | list %}
+  {% endif %}
+{% endif %}
+
+{% if mcq_qs %}
+<div class="section-title">Section A &nbsp;—&nbsp; Multiple Choice Questions &nbsp;<span style="font-weight:normal;font-size:9pt;">[1 mark each]</span></div>
+{% for q in mcq_qs %}
+<div class="question-block">
+    <div class="q-header">
+        <span class="q-num">Q{{ loop.index }}.</span>
+        <span class="q-marks">1 M</span>
+    </div>
+    <div class="q-text">{{ q.question }}</div>
+    {% if q.get('image_path') %}
+    <div style="margin-left:28px;margin-bottom:6px;">
+        <img src="{{ url_for('static', filename=q.image_path, _external=True) }}" style="max-height:120px;border-radius:4px;">
+    </div>
+    {% endif %}
+    <div class="options-list">
+        {% if q.option_a %}<div class="option-item">(a)&nbsp; {{ q.option_a }}</div>{% endif %}
+        {% if q.option_b %}<div class="option-item">(b)&nbsp; {{ q.option_b }}</div>{% endif %}
+        {% if q.option_c %}<div class="option-item">(c)&nbsp; {{ q.option_c }}</div>{% endif %}
+        {% if q.option_d %}<div class="option-item">(d)&nbsp; {{ q.option_d }}</div>{% endif %}
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{# ─── SECTION B : ASSERTION-REASON ────────────────────── #}
+{% set ar_qs = questions | selectattr('question_type', 'equalto', 'Assertion-Reason') | list %}
+{% if ar_qs %}
+<div class="section-title">Section B &nbsp;—&nbsp; Assertion-Reason &nbsp;<span style="font-weight:normal;font-size:9pt;">[1 mark each]</span></div>
+<div class="section-instruction">Directions: Read both statements. Select the correct option from (a)–(d).</div>
+{% for q in ar_qs %}
+<div class="question-block">
+    <div class="q-header">
+        <span class="q-num">Q{{ loop.index }}.</span>
+        <span class="q-marks">1 M</span>
+    </div>
+    <div class="q-text">{{ q.question }}</div>
+    <div class="options-list">
+        {% if q.option_a %}<div class="option-item">(a)&nbsp; {{ q.option_a }}</div>{% endif %}
+        {% if q.option_b %}<div class="option-item">(b)&nbsp; {{ q.option_b }}</div>{% endif %}
+        {% if q.option_c %}<div class="option-item">(c)&nbsp; {{ q.option_c }}</div>{% endif %}
+        {% if q.option_d %}<div class="option-item">(d)&nbsp; {{ q.option_d }}</div>{% endif %}
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{# ─── SECTION C : VERY SHORT ───────────────────────────── #}
+{% set vs_qs = questions | selectattr('question_type', 'equalto', 'Very Short') | list %}
+{% if vs_qs %}
+<div class="section-title">Section C &nbsp;—&nbsp; Very Short Answer &nbsp;<span style="font-weight:normal;font-size:9pt;">[1 mark each]</span></div>
+{% for q in vs_qs %}
+<div class="question-block">
+    <div class="q-header">
+        <span class="q-num">Q{{ loop.index }}.</span>
+        <span class="q-marks">1 M</span>
+    </div>
+    <div class="q-text">{{ q.question }}</div>
+    <div class="answer-lines">
+        <div class="ans-line"></div>
+        <div class="ans-line"></div>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{# ─── SECTION D : SHORT ANSWER ─────────────────────────── #}
+{% set sh_qs = questions | selectattr('question_type', 'equalto', 'Short') | list %}
+{% if sh_qs %}
+<div class="section-title">Section D &nbsp;—&nbsp; Short Answer &nbsp;<span style="font-weight:normal;font-size:9pt;">[3 marks each]</span></div>
+{% for q in sh_qs %}
+<div class="question-block">
+    <div class="q-header">
+        <span class="q-num">Q{{ loop.index }}.</span>
+        <span class="q-marks">3 M</span>
+    </div>
+    <div class="q-text">{{ q.question }}</div>
+    <div class="answer-lines">
+        {% for i in range(5) %}<div class="ans-line"></div>{% endfor %}
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{# ─── SECTION E : LONG ANSWER ──────────────────────────── #}
+{% set lg_qs = questions | selectattr('question_type', 'equalto', 'Long') | list %}
+{% if lg_qs %}
+<div class="section-title">Section E &nbsp;—&nbsp; Long Answer &nbsp;<span style="font-weight:normal;font-size:9pt;">[5 marks each]</span></div>
+{% for q in lg_qs %}
+<div class="question-block">
+    <div class="q-header">
+        <span class="q-num">Q{{ loop.index }}.</span>
+        <span class="q-marks">5 M</span>
+    </div>
+    <div class="q-text">{{ q.question }}</div>
+    <div class="answer-lines">
+        {% for i in range(8) %}<div class="ans-line"></div>{% endfor %}
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{# ─── SECTION F : CASE STUDY ───────────────────────────── #}
+{% set cs_qs = questions | selectattr('question_type', 'equalto', 'Case Study') | list %}
+{% if cs_qs %}
+<div class="section-title">Section F &nbsp;—&nbsp; Case Study &nbsp;<span style="font-weight:normal;font-size:9pt;">[4 marks each]</span></div>
+{% for q in cs_qs %}
+<div class="question-block">
+    <div class="q-header">
+        <span class="q-num">Q{{ loop.index }}.</span>
+        <span class="q-marks">4 M</span>
+    </div>
+    <div class="q-text">{{ q.question }}</div>
+    <div class="answer-lines">
+        {% for i in range(7) %}<div class="ans-line"></div>{% endfor %}
+    </div>
+
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
+{% endfor %}
+{% endif %}
+
+</body>
+</html>
