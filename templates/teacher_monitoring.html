@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Monitoring - Teacher</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#f5f7fa,#c3cfe2);min-height:100vh;}
+        .header{background:linear-gradient(90deg,#667eea,#764ba2);color:white;padding:18px 30px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 15px rgba(0,0,0,0.2);}
+        .header h1{font-size:1.5rem;}
+        .back-btn{background:rgba(255,255,255,0.2);color:white;padding:8px 20px;border-radius:20px;text-decoration:none;transition:background 0.3s;}
+        .back-btn:hover{background:rgba(255,255,255,0.35);}
+        .container{max-width:1400px;margin:25px auto;padding:0 20px;}
+        .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin-bottom:25px;}
+        .stat-card{background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.08);text-align:center;border-top:4px solid;}
+        .stat-card.total{border-color:#667eea;} .stat-card.inprogress{border-color:#ff9800;} .stat-card.submitted{border-color:#28a745;} .stat-card.waiting{border-color:#6c757d;}
+        .stat-value{font-size:2.2rem;font-weight:700;}
+        .stat-card.total .stat-value{color:#667eea;} .stat-card.inprogress .stat-value{color:#ff9800;} .stat-card.submitted .stat-value{color:#28a745;} .stat-card.waiting .stat-value{color:#6c757d;}
+        .stat-label{color:#666;font-size:0.85rem;margin-top:4px;}
+        .table-card{background:white;border-radius:15px;box-shadow:0 5px 20px rgba(0,0,0,0.08);overflow:hidden;}
+        .table-header{padding:18px 25px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;flex-wrap:wrap;gap:10px;}
+        .table-header h3{color:#333;}
+        .live-badge{background:#d4edda;color:#155724;padding:5px 15px;border-radius:20px;font-size:0.85rem;font-weight:600;}
+        .live-badge.inactive{background:#f8d7da;color:#721c24;}
+        .search-box{padding:8px 15px;border:2px solid #eee;border-radius:20px;font-family:'Poppins',sans-serif;outline:none;transition:border-color 0.3s;}
+        .search-box:focus{border-color:#667eea;}
+        table{width:100%;border-collapse:collapse;}
+        th{background:#667eea;color:white;padding:12px 15px;text-align:left;font-size:0.88rem;}
+        td{padding:11px 15px;border-bottom:1px solid #f0f0f0;font-size:0.88rem;vertical-align:middle;}
+        tr:hover td{background:#fafafa;}
+        .student-cell{display:flex;align-items:center;gap:10px;}
+        .avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:white;font-size:0.9rem;flex-shrink:0;}
+        .avatar img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
+        .status-badge{padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:600;display:inline-block;}
+        .status-In.Progress,.status-In\.Progress{background:#fff3cd;color:#856404;}
+        .status-Submitted{background:#d4edda;color:#155724;}
+        .status-Not.Started,.status-Not\.Started{background:#e9ecef;color:#6c757d;}
+        .progress-bar{background:#e9ecef;border-radius:10px;height:8px;min-width:80px;}
+        .progress-fill{background:linear-gradient(90deg,#667eea,#764ba2);height:8px;border-radius:10px;transition:width 0.5s;}
+        .refresh-info{color:#999;font-size:0.8rem;}
+        .no-data{text-align:center;padding:50px;color:#999;}
+        .no-data i{font-size:3rem;margin-bottom:15px;display:block;}
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1><i class="fas fa-desktop"></i> Live Exam Monitoring</h1>
+    <div style="display:flex;align-items:center;gap:15px;">
+        <span class="refresh-info"><i class="fas fa-sync-alt"></i> Auto refresh: <span id="countdown">10</span>s</span>
+        <a href="/teacher/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="stats-row">
+        <div class="stat-card total"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total Students</div></div>
+        <div class="stat-card inprogress"><div class="stat-value" id="statProgress">0</div><div class="stat-label">In Progress</div></div>
+        <div class="stat-card submitted"><div class="stat-value" id="statSubmitted">0</div><div class="stat-label">Submitted</div></div>
+        <div class="stat-card waiting"><div class="stat-value" id="statWaiting">0</div><div class="stat-label">Not Started</div></div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-header">
+            <h3><i class="fas fa-users"></i> My Class Students</h3>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <span id="examBadge" class="live-badge inactive"><i class="fas fa-circle"></i> Exam Inactive</span>
+                <input type="text" class="search-box" id="searchBox" placeholder="Search student..." oninput="filterTable()">
+            </div>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                        <th>Answered</th>
+                        <th>Started At</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTable">
+                    <tr><td colspan="7" class="no-data"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
+
+<script>
+let allStudents = [];
+let totalQCount = 0;
+
+async function loadData() {
+    try {
+        const res = await fetch('/teacher/monitoring/data');
+        const data = await res.json();
+        allStudents = data.students || [];
+        renderTable(allStudents);
+        updateStats(allStudents);
+        const badge = document.getElementById('examBadge');
+        if (data.exam_is_active) {
+            badge.className = 'live-badge';
+            badge.innerHTML = '<i class="fas fa-circle" style="color:#28a745"></i> Exam Active';
+        } else {
+            badge.className = 'live-badge inactive';
+            badge.innerHTML = '<i class="fas fa-circle"></i> Exam Inactive';
+        }
+    } catch(e) { console.error(e); }
+}
+
+function updateStats(students) {
+    document.getElementById('statTotal').textContent = students.length;
+    document.getElementById('statProgress').textContent = students.filter(s=>s.status==='In Progress').length;
+    document.getElementById('statSubmitted').textContent = students.filter(s=>s.status==='Submitted').length;
+    document.getElementById('statWaiting').textContent = students.filter(s=>s.status==='Not Started').length;
+}
+
+function renderTable(students) {
+    const tbody = document.getElementById('studentTable');
+    if (!students.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="no-data"><i class="fas fa-user-slash"></i><br>No students found in your classes</td></tr>';
+        return;
+    }
+    tbody.innerHTML = students.map((s, i) => {
+        const answered = s.answered || 0;
+        const statusClass = 'status-' + (s.status || '').replace(' ', '.');
+        const picHtml = s.picture
+            ? `<div class="avatar"><img src="/static/${s.picture}" alt="${s.name}"></div>`
+            : `<div class="avatar"><i class="fas fa-user"></i></div>`;
+        const startTime = s.exam_started_at ? s.exam_started_at.slice(11,16) : '—';
+        return `<tr>
+            <td>${i+1}</td>
+            <td><div class="student-cell">${picHtml}<span>${s.name}</span></div></td>
+            <td>${s.class}${s.section||''}</td>
+            <td>${s.subject||'—'}</td>
+            <td><span class="status-badge ${statusClass}">${s.status||'—'}</span></td>
+            <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(answered*5,100)}%"></div></div>
+                    <span style="font-size:0.8rem;color:#666;">${answered}</span>
+                </div>
+            </td>
+            <td>${startTime}</td>
+        </tr>`;
+    }).join('');
+}
+
+function filterTable() {
+    const q = document.getElementById('searchBox').value.toLowerCase();
+    renderTable(allStudents.filter(s =>
+        s.name.toLowerCase().includes(q) || (s.class||'').toLowerCase().includes(q) || (s.subject||'').toLowerCase().includes(q)
+    ));
+}
+
+// Countdown + auto refresh
+let countdown = 10;
+setInterval(() => {
+    countdown--;
+    document.getElementById('countdown').textContent = countdown;
+    if (countdown <= 0) { countdown = 10; loadData(); }
+}, 1000);
+
+loadData();
+</script>
+</body>
+</html>
