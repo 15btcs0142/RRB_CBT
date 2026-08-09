@@ -1,0 +1,31 @@
+Question,Option A,Option B,Option C,Option D,correct_answer
+What is the full form of CPU?,Central Processing Unit,Control Processing Unit,Computer Processing Unit,Central Program Unit,Central Program Unit
+Which of the following is an input device?,Monitor,Keyboard,Printer,Speaker,Speaker
+Which language is used in ICSE Computer Applications?,Python,Java,C++,HTML,HTML
+What is the extension of Java bytecode files?,.java,.class,.exe,.txt,.txt
+Which of the following is a loop structure?,if,for,switch,case,case
+What is the default value of an int variable in Java?,0,1,null,undefined,undefined
+Which keyword is used to define a class in Java?,define,class,struct,object,object
+Which symbol is used for single-line comments in Java?,//,/*,#,--,--
+Which operator is used for logical AND?,&&,||,!,&,&
+What is the output of 5 % 2?,1,2,0,5,5
+Which method is used to take input in Java?,nextLine(),input(),read(),scan(),scan()
+Which class is used for input in Java?,Scanner,InputReader,Buffer,Reader,Reader
+Which of these is not a primitive data type?,int,float,String,char,char
+What is the size of int in Java?,2 bytes,4 bytes,8 bytes,1 byte,1 byte
+Which loop executes at least once?,for,while,do-while,if,if
+Which keyword is used to exit a loop?,stop,break,exit,return,return
+What is an array?,Collection of variables of same type,Collection of different types,A loop,A method,A method
+Which symbol is used for assignment?,=,==,!=,<=,<=
+Which operator is used for comparison?,==,=,&&,||,||
+What is the output of System.out.println(10+20);?,30,1020,Error,0,0
+Which keyword is used for inheritance?,extends,implements,inherits,super,super
+What is a constructor?,A method to destroy objects,A special method to initialize objects,A loop,A variable,A variable
+Which of these is a valid identifier?,1name,_name,name-1,#name,#name
+Which keyword is used to create an object?,new,create,object,make,make
+Which function is entry point of Java program?,start(),main(),run(),init(),init()
+What is the return type of main method?,int,void,String,float,float
+Which keyword is used to skip an iteration?,break,continue,skip,next,next
+Which of the following is a decision-making statement?,if,for,while,do,do
+What is string concatenation?,Joining strings,Deleting strings,Comparing strings,Sorting strings,Sorting strings
+Which package contains Scanner class?,java.util,java.io,java.lang,java.net,java.net
