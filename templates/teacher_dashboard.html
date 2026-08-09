@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teacher Dashboard - RRB CBT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .header h1 {
+            font-size: 1.8rem;
+        }
+        .header h1 i {
+            margin-right: 10px;
+        }
+        .teacher-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .teacher-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid white;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #667eea;
+        }
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: white;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .welcome-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .welcome-section h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .assignments {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        .assignment-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
+        .class-teacher-tag {
+            background: linear-gradient(135deg, #f093fb, #f5576c) !important;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .card i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .card h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .card a {
+            text-decoration: none;
+            color: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-chalkboard-teacher"></i> Teacher Dashboard</h1>
+        <div class="teacher-info">
+            {% if teacher.picture %}
+            <img src="{{ url_for('static', filename=teacher.picture) }}" class="teacher-pic" alt="Profile">
+            {% else %}
+            <div class="teacher-pic">
+                <i class="fas fa-user"></i>
+            </div>
+            {% endif %}
+            <div>
+                <strong>{{ session.teacher_name }}</strong><br>
+                <small>{{ session.teacher_mobile }}</small>
+            </div>
+            <a href="/teacher/logout" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="welcome-section">
+            <h2>Welcome, {{ session.teacher_name }}!</h2>
+            <p>Manage your classes, create tests, and track student progress</p>
+            
+            <div class="assignments">
+                <strong><i class="fas fa-tasks"></i> Your Assignments:</strong><br>
+                {% if assignments %}
+                    {% for assignment in assignments %}
+                        <span class="assignment-tag {% if assignment.is_class_teacher %}class-teacher-tag{% endif %}">
+                            {{ assignment.class }} - {{ assignment.subject }}
+                            {% if assignment.is_class_teacher %}
+                                <i class="fas fa-crown"></i>
+                            {% endif %}
+                        </span>
+                    {% endfor %}
+                {% else %}
+                    <p style="margin-top:10px; color:#999;">No assignments yet. Contact admin for assignments.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card"><a href="/teacher/create_test_v2">
+                <i class="fas fa-robot" style="color:#667eea;"></i>
+                <h3>AI Test Generator</h3>
+                <p>Generate MCQ and Assertion-Reason questions using Gemini AI</p>
+            </a></div>
+
+            <div class="card"><a href="/descriptive_paper">
+                <i class="fas fa-file-alt" style="color:#2e7d32;"></i>
+                <h3>Descriptive Paper</h3>
+                <p>Full question paper with school header — download as PDF or DOC</p>
+            </a></div>
+
+            <div class="card"><a href="/teacher/test_papers">
+                <i class="fas fa-upload" style="color:#e65100;"></i>
+                <h3>Test Papers</h3>
+                <p>Upload CSV question banks &amp; manage active tests</p>
+            </a></div>
+
+            <div class="card"><a href="/teacher/test_history">
+                <i class="fas fa-history" style="color:#6a1b9a;"></i>
+                <h3>Test History</h3>
+                <p>View all AI-generated tests and download printable PDFs</p>
+            </a></div>
+
+            <div class="card"><a href="/teacher/students">
+                <i class="fas fa-users" style="color:#0277bd;"></i>
+                <h3>My Students</h3>
+                <p>Add, edit and manage student profiles &amp; progress</p>
+            </a></div>
+
+            <div class="card"><a href="/teacher/monitoring">
+                <i class="fas fa-desktop" style="color:#00695c;"></i>
+                <h3>Live Monitoring</h3>
+                <p>Watch students in real-time during active exams</p>
+            </a></div>
+
+            <div class="card"><a href="/teacher/class_report">
+                <i class="fas fa-chart-bar" style="color:#558b2f;"></i>
+                <h3>Class Report</h3>
+                <p>Generate Excel &amp; PDF performance reports for your classes</p>
+            </a></div>
+
+            <div class="card"><a href="/admin/results">
+                <i class="fas fa-poll" style="color:#c62828;"></i>
+                <h3>Results</h3>
+                <p>View and analyse test results and student scores</p>
+            </a></div>
+
+            <div class="card"><a href="/teacher/profile">
+                <i class="fas fa-user-edit" style="color:#4527a0;"></i>
+                <h3>My Profile</h3>
+                <p>Update personal details, photo and change password</p>
+            </a></div>
+        </div>
+
+    <!-- Quick Bulletin Post -->
+    <div style="max-width:1400px;margin:20px auto;padding:0 30px 30px;">
+        <div style="background:white;border-radius:15px;padding:24px;box-shadow:0 5px 20px rgba(0,0,0,0.08);">
+            <h3 style="color:#333;margin-bottom:16px;"><i class="fas fa-bullhorn" style="color:#667eea;margin-right:8px;"></i> Post to Student Notice Board</h3>
+            <div id="bAlert" style="display:none;padding:10px 14px;border-radius:8px;margin-bottom:14px;"></div>
+            <form id="bForm" onsubmit="postBulletin(event)" style="display:grid;grid-template-columns:1fr 2fr 120px;gap:12px;align-items:end;">
+                <div>
+                    <label style="display:block;font-weight:500;margin-bottom:5px;font-size:0.85rem;color:#333;">Title</label>
+                    <input type="text" name="title" required placeholder="Announcement title" style="width:100%;padding:10px 12px;border:2px solid #e0e0e0;border-radius:9px;font-family:'Poppins',sans-serif;">
+                </div>
+                <div>
+                    <label style="display:block;font-weight:500;margin-bottom:5px;font-size:0.85rem;color:#333;">Message</label>
+                    <input type="text" name="content" required placeholder="Your message to students" style="width:100%;padding:10px 12px;border:2px solid #e0e0e0;border-radius:9px;font-family:'Poppins',sans-serif;">
+                </div>
+                <button type="submit" style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:11px 20px;border-radius:9px;cursor:pointer;font-weight:600;font-family:'Poppins',sans-serif;">
+                    <i class="fas fa-paper-plane"></i> Post
+                </button>
+            </form>
+        </div>
+    
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
+
+    <script>
+    async function postBulletin(e){
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const res = await fetch('/api/bulletins/post', {method:'POST', body:fd});
+        const data = await res.json();
+        const box = document.getElementById('bAlert');
+        box.style.display='block';
+        box.style.background = data.status==='success'?'#d4edda':'#f8d7da';
+        box.style.color = data.status==='success'?'#155724':'#721c24';
+        box.textContent = data.message;
+        if(data.status==='success') e.target.reset();
+        setTimeout(()=>box.style.display='none', 4000);
+    }
+    </script>
+</div>
+</body>
+</html>
