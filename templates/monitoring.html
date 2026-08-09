@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Monitoring - RRB CBT</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
+        
+        /* ─── TOP BAR ────────────────────────────────────────────────────── */
+        .topbar{
+            background:linear-gradient(90deg,#1a237e,#3949ab);
+            color:#fff;
+            padding:14px 28px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:10px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+            position:sticky;
+            top:0;
+            z-index:100;
+        }
+        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
+        .topbar h1 i{color:#667eea;}
+        .topbar a{
+            color:#fff;
+            text-decoration:none;
+            background:rgba(255,255,255,0.15);
+            padding:8px 20px;
+            border-radius:25px;
+            font-size:0.85rem;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            border:1px solid rgba(255,255,255,0.1);
+        }
+        .topbar a:hover{
+            background:rgba(255,255,255,0.25);
+            transform:translateY(-2px);
+        }
+        
+        /* ─── MARQUEE ────────────────────────────────────────────────────── */
+        .marquee-container{
+            background:rgba(255,255,255,0.92);
+            backdrop-filter:blur(8px);
+            padding:10px 20px;
+            max-width:1500px;
+            margin:16px auto 10px;
+            border-radius:50px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.06);
+            border-left:4px solid #3949ab;
+        }
+        .marquee-container marquee{font-size:0.9rem;color:#1a237e;font-weight:500;}
+        .marquee-container marquee i{margin:0 12px;color:#667eea;}
+        
+        .container{max-width:1500px;margin:20px auto;padding:0 20px;}
+        
+        /* ─── FILTER CARD ────────────────────────────────────────────────── */
+        .filter-card{
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            padding:20px 24px;
+            border-radius:16px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.06);
+            border:1px solid rgba(26,35,126,0.08);
+            margin-bottom:20px;
+            position:relative;
+            overflow:hidden;
+            transition:0.3s;
+        }
+        .filter-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+        .filter-card::before{
+            content:'';
+            position:absolute;
+            top:0;left:0;
+            width:100%;
+            height:4px;
+            background:linear-gradient(90deg,#1a237e,#667eea,#1a237e);
+            background-size:200% auto;
+            animation:shimmer 2.5s linear infinite;
+        }
+        @keyframes shimmer{
+            0%{background-position:0% center;}
+            100%{background-position:200% center;}
+        }
+        
+        .filter-bar{
+            display:flex;
+            align-items:center;
+            gap:16px;
+            flex-wrap:wrap;
+        }
+        .filter-group{
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+        .filter-group label{
+            font-weight:600;
+            color:#1a237e;
+            font-size:0.82rem;
+            display:flex;
+            align-items:center;
+            gap:4px;
+            white-space:nowrap;
+        }
+        .filter-group label i{color:#3949ab;font-size:0.9rem;}
+        .filter-group select,.filter-group input[type="date"]{
+            padding:8px 14px;
+            border:2px solid #e0e0e0;
+            border-radius:30px;
+            background:#fafafa;
+            font-size:0.85rem;
+            font-family:'Poppins',sans-serif;
+            cursor:pointer;
+            transition:all 0.3s;
+            min-width:130px;
+        }
+        .filter-group select:focus,.filter-group input[type="date"]:focus{
+            border-color:#3949ab;
+            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
+            outline:none;
+            background:#fff;
+        }
+        
+        .btn{
+            padding:8px 20px;
+            border:none;
+            border-radius:30px;
+            font-weight:600;
+            cursor:pointer;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            font-size:0.82rem;
+            font-family:'Poppins',sans-serif;
+        }
+        .btn-primary{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
+        }
+        .btn-primary:hover{
+            transform:translateY(-2px);
+            box-shadow:0 6px 16px rgba(26,35,126,0.3);
+        }
+        .btn-secondary{
+            background:#e8eaf6;
+            color:#1a237e;
+        }
+        .btn-secondary:hover{
+            background:#c5cae9;
+            transform:translateY(-2px);
+        }
+        .btn-danger{
+            background:linear-gradient(135deg,#c62828,#e53935);
+            color:#fff;
+        }
+        .btn-danger:hover{
+            transform:translateY(-2px);
+            box-shadow:0 6px 16px rgba(198,40,40,0.3);
+        }
+        .btn-sm{padding:5px 12px;font-size:0.72rem;}
+        
+        /* ─── STATS SUMMARY ─────────────────────────────────────────────── */
+        .stats-summary{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-left:auto;
+        }
+        .stat-item{
+            background:#e8eaf6;
+            padding:6px 16px;
+            border-radius:30px;
+            display:flex;
+            align-items:center;
+            gap:6px;
+            font-weight:500;
+            font-size:0.78rem;
+            color:#1a237e;
+            border:1px solid #c5cae9;
+        }
+        .stat-item i{color:#3949ab;font-size:0.9rem;}
+        .stat-item .num{font-weight:700;color:#1a237e;}
+        
+        .refresh-badge{
+            background:#e8eaf6;
+            padding:6px 14px;
+            border-radius:30px;
+            font-size:0.75rem;
+            display:flex;
+            align-items:center;
+            gap:6px;
+            color:#1a237e;
+            border:1px solid #c5cae9;
+        }
+        .refresh-badge i{color:#3949ab;animation:spin 2s linear infinite;}
+        @keyframes spin{100%{transform:rotate(360deg)}}
+        
+        /* ─── TABLE ────────────────────────────────────────────────────── */
+        .table-wrap{
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            border-radius:16px;
+            overflow:hidden;
+            border:1px solid rgba(26,35,126,0.08);
+            box-shadow:0 4px 16px rgba(0,0,0,0.06);
+        }
+        table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+        th{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
+            font-weight:600;
+            padding:14px 16px;
+            text-align:left;
+            white-space:nowrap;
+            position:sticky;
+            top:0;
+            z-index:5;
+        }
+        th i{margin-right:6px;opacity:0.7;}
+        td{padding:12px 16px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+        tr:hover td{background:#e8eaf6;}
+        
+        .badge{
+            background:#e8eaf6;
+            color:#1a237e;
+            padding:2px 10px;
+            border-radius:14px;
+            font-size:0.72rem;
+            font-weight:500;
+        }
+        .student-id{
+            font-family:'Courier New',monospace;
+            background:#f5f5f5;
+            padding:2px 8px;
+            border-radius:4px;
+            font-size:0.8rem;
+        }
+        .status-badge{
+            padding:4px 14px;
+            border-radius:30px;
+            font-weight:500;
+            font-size:0.75rem;
+            display:inline-block;
+            white-space:nowrap;
+        }
+        .status-Not-Started{background:#eceff1;color:#78909c;}
+        .status-In-Progress{background:#fff3e0;color:#e65100;}
+        .status-Submitted{background:#e8f5e9;color:#1b5e20;}
+        
+        .action-btns{display:flex;gap:6px;flex-wrap:wrap;}
+        .view-btn{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
+            border:none;
+            padding:5px 14px;
+            border-radius:30px;
+            font-weight:500;
+            font-size:0.72rem;
+            cursor:pointer;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:4px;
+            text-decoration:none;
+            font-family:'Poppins',sans-serif;
+        }
+        .view-btn:hover{
+            transform:translateY(-2px);
+            box-shadow:0 4px 12px rgba(26,35,126,0.3);
+        }
+        
+        .empty-state{
+            text-align:center;
+            padding:50px 20px;
+            color:#999;
+        }
+        .empty-state i{font-size:3rem;color:#ddd;display:block;margin-bottom:12px;}
+        
+        /* ─── TOAST FLASH ────────────────────────────────────────────────── */
+        .toast-flash{
+            position:fixed;
+            top:20px;right:20px;
+            padding:12px 24px;
+            border-radius:12px;
+            font-weight:600;
+            z-index:9999;
+            box-shadow:0 8px 24px rgba(0,0,0,0.15);
+            font-family:'Poppins',sans-serif;
+            font-size:0.9rem;
+            animation:slideIn 0.4s ease;
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+        .toast-flash.success{background:#e8f5e9;color:#1b5e20;border-left:4px solid #2e7d32;}
+        .toast-flash.error{background:#fce4ec;color:#c62828;border-left:4px solid #c62828;}
+        @keyframes slideIn{
+            from{opacity:0;transform:translateX(30px);}
+            to{opacity:1;transform:translateX(0);}
+        }
+        
+        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
+        @media(max-width:1200px){
+            .filter-bar{flex-direction:column;align-items:stretch;}
+            .filter-group{flex-wrap:wrap;}
+            .stats-summary{margin-left:0;justify-content:center;}
+        }
+        @media(max-width:768px){
+            .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
+            .topbar a{font-size:0.75rem;padding:6px 14px;}
+            .container{padding:0 12px;}
+            table{font-size:0.75rem;}
+            th,td{padding:8px 10px;}
+            .stat-item{font-size:0.7rem;padding:4px 12px;}
+            .marquee-container{padding:8px 14px;margin:10px auto;}
+            .marquee-container marquee{font-size:0.75rem;}
+        }
+        @media(max-width:480px){
+            .filter-group select,.filter-group input[type="date"]{min-width:100px;font-size:0.75rem;padding:6px 10px;}
+            .btn{font-size:0.72rem;padding:6px 14px;}
+            .action-btns{flex-direction:column;}
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
+    <div class="topbar">
+        <h1><i class="fas fa-desktop"></i> Live Monitoring</h1>
+        <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </div>
+
+    <!-- ─── MARQUEE ────────────────────────────────────────────────────── -->
+    <div class="marquee-container">
+        <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();">
+            <i class="fas fa-circle"></i> Real-time exam monitoring – updates every 5 seconds
+            <i class="fas fa-eye"></i> Track student progress live
+            <i class="fas fa-filter"></i> Filter by status, class, subject, or date
+            <i class="fas fa-chart-bar"></i> Summary stats updated dynamically
+        </marquee>
+    </div>
+
+    <div class="container">
+
+        <!-- ─── FILTER CARD ─────────────────────────────────────────────── -->
+        <div class="filter-card">
+            <div class="filter-bar">
+                <!-- Date Filter -->
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> Date:</label>
+                    <input type="date" id="filterDate" value="">
+                </div>
+
+                <!-- Status Filter -->
+                <div class="filter-group">
+                    <label><i class="fas fa-circle"></i> Status:</label>
+                    <select id="filterStatus">
+                        <option value="">All Status</option>
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Submitted">Submitted</option>
+                    </select>
+                </div>
+
+                <!-- Class Filter -->
+                <div class="filter-group">
+                    <label><i class="fas fa-graduation-cap"></i> Class:</label>
+                    <select id="filterClass">
+                        <option value="">All Classes</option>
+                    </select>
+                </div>
+
+                <!-- Subject Filter -->
+                <div class="filter-group">
+                    <label><i class="fas fa-book"></i> Subject:</label>
+                    <select id="filterSubject">
+                        <option value="">All Subjects</option>
+                    </select>
+                </div>
+
+                <!-- Buttons -->
+                <button class="btn btn-primary" id="applyFilterBtn">
+                    <i class="fas fa-filter"></i> Apply
+                </button>
+                <button class="btn btn-secondary" id="resetFilterBtn">
+                    <i class="fas fa-undo-alt"></i> Reset
+                </button>
+
+                <!-- Stats Summary -->
+                <div class="stats-summary" id="statsSummary">
+                    <div class="stat-item"><i class="fas fa-spinner fa-pulse"></i> Loading...</div>
+                </div>
+
+                <!-- Refresh Indicator -->
+                <div class="refresh-badge">
+                    <i class="fas fa-sync-alt"></i> Auto-refresh 5s
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── TABLE ────────────────────────────────────────────────────── -->
+        <div class="table-wrap">
+            <table id="monitorTable">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-user"></i> Name</th>
+                        <th><i class="fas fa-layer-group"></i> Class</th>
+                        <th><i class="fas fa-book"></i> Subject</th>
+                        <th><i class="fas fa-id-card"></i> ID</th>
+                        <th><i class="fas fa-network-wired"></i> IP</th>
+                        <th><i class="fas fa-circle"></i> Status</th>
+                        <th><i class="fas fa-calendar-day"></i> Exam Date</th>
+                        <th><i class="fas fa-cog"></i> Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="monitorBody"></tbody>
+            </table>
+        </div>
+
+    
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
+
+    <script>
+        // ─── STATE ─────────────────────────────────────────────────────────
+        let allStudents = [];
+        const $ = id => document.getElementById(id);
+        const filterDate = $('filterDate');
+        const filterStatus = $('filterStatus');
+        const filterClass = $('filterClass');
+        const filterSubject = $('filterSubject');
+        const applyFilterBtn = $('applyFilterBtn');
+        const resetFilterBtn = $('resetFilterBtn');
+        const monitorBody = $('monitorBody');
+        const statsSummary = $('statsSummary');
+        const today = new Date().toISOString().split('T')[0];
+        filterDate.value = today;
+
+        // ─── FETCH DATA ──────────────────────────────────────────────────
+        function fetchData() {
+            fetch('/admin/monitoring/data')
+                .then(res => res.json())
+                .then(data => {
+                    allStudents = data;
+                    populateFilterDropdowns(data);
+                    applyFilters();
+                })
+                .catch(err => console.error('Error fetching monitoring data:', err));
+        }
+
+        // ─── POPULATE DROPDOWNS ──────────────────────────────────────────
+        function populateFilterDropdowns(data) {
+            const classes = [...new Set(data.map(s => s.class))].filter(c => c).sort();
+            const subjects = [...new Set(data.map(s => s.subject))].filter(s => s).sort();
+
+            const classSelect = filterClass;
+            const subjectSelect = filterSubject;
+
+            const currentClass = classSelect.value;
+            const currentSubject = subjectSelect.value;
+
+            classSelect.innerHTML = '<option value="">All Classes</option>';
+            classes.forEach(c => { classSelect.innerHTML += `<option value="${c}">${c}</option>`; });
+            if (currentClass) classSelect.value = currentClass;
+
+            subjectSelect.innerHTML = '<option value="">All Subjects</option>';
+            subjects.forEach(s => { subjectSelect.innerHTML += `<option value="${s}">${s}</option>`; });
+            if (currentSubject) subjectSelect.value = currentSubject;
+        }
+
+        // ─── APPLY FILTERS ──────────────────────────────────────────────
+        function applyFilters() {
+            const dateVal = filterDate.value;
+            const statusVal = filterStatus.value;
+            const classVal = filterClass.value;
+            const subjectVal = filterSubject.value;
+
+            let filtered = allStudents.filter(s => {
+                if (dateVal) {
+                    const studentDate = s.exam_started_at ? s.exam_started_at.split(' ')[0] : null;
+                    if (studentDate !== dateVal) return false;
+                }
+                if (statusVal && s.status !== statusVal) return false;
+                if (classVal && s.class !== classVal) return false;
+                if (subjectVal && s.subject !== subjectVal) return false;
+                return true;
+            });
+
+            renderTable(filtered);
+            updateStats(filtered);
+        }
+
+        // ─── RENDER TABLE ─────────────────────────────────────────────────
+        function renderTable(students) {
+            if (students.length === 0) {
+                monitorBody.innerHTML = `<tr><td colspan="8" class="empty-state">
+                    <i class="fas fa-user-slash"></i>
+                    No students match the selected filters.
+                </td></tr>`;
+                return;
+            }
+
+            let html = '';
+            students.forEach(s => {
+                let statusClass = '';
+                if (s.status === 'Not Started') statusClass = 'status-Not-Started';
+                else if (s.status === 'In Progress') statusClass = 'status-In-Progress';
+                else if (s.status === 'Submitted') statusClass = 'status-Submitted';
+
+                const examDate = s.exam_started_at ? s.exam_started_at.split(' ')[0] : '—';
+
+                html += `
+                    <tr>
+                        <td><i class="fas fa-user-circle" style="margin-right:8px;color:#3949ab;"></i>${s.name}</td>
+                        <td><span class="badge">${s.class}</span></td>
+                        <td><span class="badge">${s.subject}</span></td>
+                        <td><code class="student-id">${s.student_id}</code></td>
+                        <td><i class="fas fa-ip"></i> ${s.ip}</td>
+                        <td><span class="status-badge ${statusClass}">${s.status}</span></td>
+                        <td>${examDate}</td>
+                        <td>
+                            <div class="action-btns">
+                                <a href="/admin/student/responses/${s.student_id}" class="view-btn" target="_blank">
+                                    <i class="fas fa-external-link-alt"></i> View
+                                </a>
+                                ${s.status === 'In Progress' ? `
+                                <button class="btn btn-danger btn-sm force-submit-btn"
+                                        onclick="forceSubmitStudent('${s.student_id}', '${s.name.replace(/'/g,'&#39;')}', this)">
+                                    <i class="fas fa-stop-circle"></i> Stop
+                                </button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            monitorBody.innerHTML = html;
+        }
+
+        // ─── UPDATE STATS ──────────────────────────────────────────────────
+        function updateStats(students) {
+            const total = students.length;
+            const notStarted = students.filter(s => s.status === 'Not Started').length;
+            const inProgress = students.filter(s => s.status === 'In Progress').length;
+            const submitted = students.filter(s => s.status === 'Submitted').length;
+
+            statsSummary.innerHTML = `
+                <div class="stat-item"><i class="fas fa-users"></i> Total: <span class="num">${total}</span></div>
+                <div class="stat-item"><i class="fas fa-hourglass-start"></i> Not Started: <span class="num">${notStarted}</span></div>
+                <div class="stat-item"><i class="fas fa-spinner"></i> In Progress: <span class="num">${inProgress}</span></div>
+                <div class="stat-item"><i class="fas fa-check-circle"></i> Submitted: <span class="num">${submitted}</span></div>
+            `;
+        }
+
+        // ─── RESET FILTERS ──────────────────────────────────────────────
+        function resetFilters() {
+            filterDate.value = today;
+            filterStatus.value = '';
+            filterClass.value = '';
+            filterSubject.value = '';
+            applyFilters();
+        }
+
+        // ─── SHOW TOAST ──────────────────────────────────────────────────
+        function showToast(message, type = 'success') {
+            const existing = document.querySelector('.toast-flash');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `toast-flash ${type}`;
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        // ─── FORCE SUBMIT ─────────────────────────────────────────────────
+        async function forceSubmitStudent(studentId, studentName, btn) {
+            if (!confirm(`Stop exam for ${studentName}?\n\nThis will submit their exam immediately with current answers.`)) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                const res = await fetch(`/admin/student/force_submit/${studentId}`, { method: 'POST' });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    const row = btn.closest('tr');
+                    row.querySelector('.status-badge').textContent = 'Submitted';
+                    row.querySelector('.status-badge').className = 'status-badge status-Submitted';
+                    btn.remove();
+                    showToast(`✓ ${studentName} submitted successfully`, 'success');
+                    // Refresh data after a moment
+                    setTimeout(fetchData, 1000);
+                } else {
+                    showToast(data.message || 'Failed to submit', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-stop-circle"></i> Stop';
+                }
+            } catch (e) {
+                showToast('Error: ' + e.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-stop-circle"></i> Stop';
+            }
+        }
+
+        // ─── EVENT LISTENERS ──────────────────────────────────────────────
+        applyFilterBtn.addEventListener('click', applyFilters);
+        resetFilterBtn.addEventListener('click', resetFilters);
+
+        // ─── INIT ──────────────────────────────────────────────────────────
+        fetchData();
+        setInterval(fetchData, 5000);
+    </script>
+</body>
+</html>
