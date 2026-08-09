@@ -1,0 +1,31 @@
+question,option a,option b,option c,option d,Correct_answer
+"Which of the following is a system software that manages computer hardware and software resources?","Application Software","Operating System","Utility Software","Device Driver",Operating System
+"What is the primary role of an Operating System?","To act as an interface between the user and the computer hardware","To create documents and spreadsheets","To play games and multimedia files","To design graphics and animations",To act as an interface between the user and the computer hardware
+"Which of the following is NOT a function of an Operating System?","Memory Management","File Management","Virus Protection","Process Management",Virus Protection
+"The function of an OS that keeps track of all files and folders on a computer is called:","Memory Management","Process Management","File Management","Device Management",File Management
+"Which type of operating system allows multiple users to work on the same computer at the same time?","Single-user OS","Multi-user OS","Real-time OS","Batch OS",Multi-user OS
+"MS-DOS is an example of which type of user interface?","Graphical User Interface (GUI)","Command Line Interface (CUI)","Menu-driven Interface","Touch-based Interface",Command Line Interface (CUI)
+"The process of starting or restarting a computer is known as:","Booting","Login","Multitasking","Formatting",Booting
+"Which of the following is an advantage of a Graphical User Interface (GUI) over a Command Line Interface (CUI)?","Requires learning complex commands","Provides a user-friendly experience with icons and menus","Is faster for typing commands","Consumes less memory",Provides a user-friendly experience with icons and menus
+"Windows, Linux, and macOS are examples of:","Application Software","System Software","Utility Software","Programming Software",System Software
+"Which of the following is a mobile operating system?","Windows 10","macOS","Android","Linux",Android
+"Which part of the OS is responsible for allocating and deallocating memory space to programs?","Process Management","Memory Management","File Management","I/O Management",Memory Management
+"A real-time operating system (RTOS) is typically used in:","Personal Computers","Smartphones","Robots and Scientific Instruments","Database Servers",Robots and Scientific Instruments
+"The background picture that appears on the desktop screen is called:","Icon","Taskbar","Wallpaper","Screen Saver",Wallpaper
+"Which operating system is known for being open-source and widely used in servers?","Windows","macOS","Linux","Unix",Linux
+"Which of the following best describes an Operating System?","A hardware component","A type of application software","A system software that manages hardware and software","A programming language",A system software that manages hardware and software
+"What does the acronym GUI stand for?","Graphical User Interface","General User Interface","Graphical Unit Interface","General Unit Interface",Graphical User Interface
+"The first program that runs on a computer when it is switched on is the:","BIOS","Operating System","Bootloader","Application Program",Bootloader
+"Which of the following is a single-user operating system?","Windows Server","Linux","macOS","MS-DOS",MS-DOS
+"Which function of the OS allows a user to run multiple applications simultaneously?","Time-sharing","Multitasking","Multiprocessing","Multithreading",Multitasking
+"The area on the desktop that stores deleted files temporarily is known as:","My Computer","Network Drive","Recycle Bin","Task Manager",Recycle Bin
+"Which of the following is NOT a common operating system?","Windows","Linux","Adobe Photoshop","Android",Adobe Photoshop
+"The user interface that uses text-based commands for interaction is called:","GUI","CUI","WUI","VUI",CUI
+"Which of the following is an example of a batch operating system?","Windows 10","macOS","Linux","IBM's OS/360",IBM's OS/360
+"The main purpose of an operating system's file management is to:","Manage the CPU's time","Control the allocation of memory","Organize and store data on storage devices","Manage input/output devices",Organize and store data on storage devices
+"Which type of operating system is designed to process data as it comes in, without any delay?","Batch OS","Time-sharing OS","Real-time OS","Network OS",Real-time OS
+"The kernel of an operating system is:","The user interface","The core part of the OS","An application program","A device driver",The core part of the OS
+"Which of the following is an advantage of a CUI over a GUI?","It is more user-friendly","It uses less memory and is faster","It has better graphics","It requires no training",It uses less memory and is faster
+"The operating system that is developed by Apple Inc. for its Mac computers is called:","Windows","Linux","macOS","Chrome OS",macOS
+"Which of the following is a function of the operating system related to security?","Creating files","Managing the taskbar","Providing user authentication","Changing desktop wallpaper",Providing user authentication
+"The software that acts as a bridge between the user and the computer's hardware is the:","Application Software","Operating System","Utility Software","Driver Software",Operating System
