@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Profile - Teacher</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
+        
+        /* ─── TOP BAR ────────────────────────────────────────────────────── */
+        .topbar{
+            background:linear-gradient(90deg,#1a237e,#3949ab);
+            color:#fff;
+            padding:14px 28px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:10px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+            position:sticky;
+            top:0;
+            z-index:100;
+        }
+        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
+        .topbar h1 i{color:#667eea;}
+        .topbar a{
+            color:#fff;
+            text-decoration:none;
+            background:rgba(255,255,255,0.15);
+            padding:8px 20px;
+            border-radius:25px;
+            font-size:0.85rem;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            border:1px solid rgba(255,255,255,0.1);
+        }
+        .topbar a:hover{
+            background:rgba(255,255,255,0.25);
+            transform:translateY(-2px);
+        }
+        
+        .container{max-width:900px;margin:24px auto;padding:0 20px;}
+        
+        /* ─── PROFILE HEADER ───────────────────────────────────────────── */
+        .profile-header{
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            border-radius:16px;
+            padding:28px 30px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.06);
+            border:1px solid rgba(26,35,126,0.08);
+            margin-bottom:24px;
+            display:flex;
+            align-items:center;
+            gap:25px;
+            flex-wrap:wrap;
+            transition:0.3s;
+        }
+        .profile-header:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+        
+        .pic-wrapper{position:relative;cursor:pointer;flex-shrink:0;}
+        .profile-pic{
+            width:110px;height:110px;border-radius:50%;
+            object-fit:cover;
+            border:4px solid #1a237e;
+        }
+        .pic-placeholder{
+            width:110px;height:110px;border-radius:50%;
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            display:flex;align-items:center;justify-content:center;
+            font-size:3rem;color:white;
+            border:4px solid #1a237e;
+        }
+        .pic-overlay{
+            position:absolute;bottom:0;right:0;
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:white;
+            width:34px;height:34px;
+            border-radius:50%;
+            display:flex;align-items:center;justify-content:center;
+            font-size:0.9rem;
+            cursor:pointer;
+            border:2px solid #fff;
+            transition:0.3s;
+        }
+        .pic-overlay:hover{transform:scale(1.1);}
+        
+        .profile-meta h2{color:#1a237e;font-size:1.4rem;margin-bottom:4px;}
+        .profile-meta p{color:#666;font-size:0.9rem;margin:3px 0;display:flex;align-items:center;gap:8px;}
+        .profile-meta p i{color:#3949ab;width:20px;}
+        .assignment-tag{
+            display:inline-block;
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:white;
+            padding:4px 14px;
+            border-radius:20px;
+            font-size:0.78rem;
+            margin:3px;
+        }
+        .ct-tag{
+            background:linear-gradient(135deg,#e65100,#ff9800)!important;
+        }
+        .ct-tag i{color:#ffd54f;}
+        
+        /* ─── CARDS ────────────────────────────────────────────────────── */
+        .card{
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            border-radius:16px;
+            padding:24px 28px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.06);
+            border:1px solid rgba(26,35,126,0.08);
+            margin-bottom:24px;
+            transition:0.3s;
+        }
+        .card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+        .card-header{
+            color:#1a237e;
+            font-size:1.05rem;
+            font-weight:600;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            border-bottom:2px dashed #e8eaf6;
+            padding-bottom:12px;
+            margin-bottom:18px;
+        }
+        .card-header i{color:#3949ab;}
+        
+        /* ─── PRIVACY NOTE ────────────────────────────────────────────── */
+        .privacy-note{
+            background:#e8eaf6;
+            border-left:4px solid #3949ab;
+            padding:12px 18px;
+            border-radius:10px;
+            color:#1a237e;
+            font-size:0.85rem;
+            margin-bottom:18px;
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+        .privacy-note i{font-size:1.1rem;color:#3949ab;}
+        
+        /* ─── FORM ────────────────────────────────────────────────────── */
+        .form-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+            gap:16px;
+        }
+        .form-group label{
+            display:block;
+            font-weight:500;
+            margin-bottom:5px;
+            color:#333;
+            font-size:0.85rem;
+        }
+        .form-group label i{color:#3949ab;margin-right:6px;width:16px;}
+        .form-group input,.form-group textarea{
+            width:100%;
+            padding:10px 14px;
+            border:2px solid #e0e0e0;
+            border-radius:10px;
+            font-family:'Poppins',sans-serif;
+            font-size:0.9rem;
+            transition:border-color 0.3s;
+            background:#fafafa;
+        }
+        .form-group input:focus,.form-group textarea:focus{
+            outline:none;
+            border-color:#3949ab;
+            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
+            background:#fff;
+        }
+        .form-group textarea{resize:vertical;min-height:80px;}
+        .form-group.full{grid-column:1/-1;}
+        
+        .btn{
+            padding:12px 30px;
+            border:none;
+            border-radius:10px;
+            cursor:pointer;
+            font-weight:600;
+            font-size:0.95rem;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            font-family:'Poppins',sans-serif;
+            width:100%;
+            justify-content:center;
+        }
+        .btn-primary{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
+        }
+        .btn-primary:hover{
+            transform:translateY(-2px);
+            box-shadow:0 6px 20px rgba(26,35,126,0.3);
+        }
+        .btn-primary:disabled{
+            opacity:0.6;
+            cursor:not-allowed;
+            transform:none;
+        }
+        
+        /* ─── ALERT ────────────────────────────────────────────────────── */
+        .alert{
+            padding:12px 18px;
+            border-radius:10px;
+            margin-bottom:18px;
+            display:none;
+            align-items:center;
+            gap:10px;
+        }
+        .alert-success{
+            background:#e8f5e9;
+            border-left:4px solid #2e7d32;
+            color:#1b5e20;
+        }
+        .alert-error{
+            background:#fce4ec;
+            border-left:4px solid #c62828;
+            color:#c62828;
+        }
+        
+        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
+        @media(max-width:768px){
+            .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
+            .topbar a{font-size:0.75rem;padding:6px 14px;}
+            .profile-header{flex-direction:column;text-align:center;padding:20px;}
+            .profile-meta p{justify-content:center;}
+            .container{padding:0 12px;}
+            .card{padding:16px 18px;}
+            .form-grid{grid-template-columns:1fr;}
+        }
+        @media(max-width:480px){
+            .profile-pic,.pic-placeholder{width:80px;height:80px;font-size:2rem;}
+            .pic-overlay{width:28px;height:28px;font-size:0.75rem;}
+            .profile-meta h2{font-size:1.1rem;}
+            .assignment-tag{font-size:0.7rem;padding:3px 10px;}
+            .btn{font-size:0.85rem;padding:10px 20px;}
+        }
+    </style>
+</head>
+<body>
+
+<!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
+<div class="topbar">
+    <h1><i class="fas fa-user-circle"></i> My Profile</h1>
+    <a href="/teacher/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
+</div>
+
+<div class="container">
+    <div id="alertBox" class="alert"></div>
+
+    <!-- ─── PROFILE HEADER ───────────────────────────────────────────── -->
+    <div class="profile-header">
+        <div class="pic-wrapper" onclick="document.getElementById('picInput').click()">
+            {% if teacher.picture %}
+            <img src="{{ url_for('static', filename=teacher.picture) }}" class="profile-pic" id="picPreview" alt="Profile">
+            {% else %}
+            <div class="pic-placeholder" id="picPreview"><i class="fas fa-user"></i></div>
+            {% endif %}
+            <div class="pic-overlay"><i class="fas fa-camera"></i></div>
+        </div>
+        <input type="file" id="picInput" accept="image/*" style="display:none" onchange="previewPic(this)">
+        
+        <div class="profile-meta">
+            <h2>{{ teacher.name }}</h2>
+            <p><i class="fas fa-mobile-alt"></i> {{ teacher.mobile }}</p>
+            {% if teacher.email %}<p><i class="fas fa-envelope"></i> {{ teacher.email }}</p>{% endif %}
+            <div style="margin-top:10px;">
+                {% for a in assignments %}
+                <span class="assignment-tag {% if a.is_class_teacher %}ct-tag{% endif %}">
+                    {{ a.class }}{% if a.section %}{{ a.section }}{% endif %} - {{ a.subject }}
+                    {% if a.is_class_teacher %} <i class="fas fa-crown"></i>{% endif %}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── EDIT FORM ──────────────────────────────────────────────────── -->
+    <div class="card">
+        <div class="card-header"><i class="fas fa-edit"></i> Edit My Details</div>
+        
+        <div class="privacy-note">
+            <i class="fas fa-lock"></i>
+            Your profile details are private. Only you and the Admin can view or edit this information.
+        </div>
+        
+        <form id="profileForm" onsubmit="saveProfile(event)">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Full Name</label>
+                    <input type="text" name="name" value="{{ teacher.name }}" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" name="email" value="{{ teacher.email or '' }}" placeholder="Optional">
+                </div>
+                <div class="form-group full">
+                    <label><i class="fas fa-map-marker-alt"></i> Address</label>
+                    <textarea name="address">{{ teacher.address or '' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> New Password</label>
+                    <input type="password" name="new_password" placeholder="Leave blank to keep current">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Confirm Password</label>
+                    <input type="password" id="confirmPwd" placeholder="Re-enter new password">
+                </div>
+            </div>
+            
+            <div style="margin-top:20px;">
+                <button type="submit" class="btn btn-primary" id="saveBtn">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
+
+<script>
+function previewPic(input) {
+    if (!input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const preview = document.getElementById('picPreview');
+        preview.outerHTML = `<img src="${e.target.result}" class="profile-pic" id="picPreview" alt="Profile">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function showAlert(msg, type) {
+    const box = document.getElementById('alertBox');
+    box.className = 'alert alert-' + type;
+    box.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}"></i> ${msg}`;
+    box.style.display = 'flex';
+    window.scrollTo(0,0);
+    setTimeout(()=>box.style.display='none', 5000);
+}
+
+async function saveProfile(e) {
+    e.preventDefault();
+    const form = e.target;
+    const pwd = form.new_password.value;
+    const confirm = document.getElementById('confirmPwd').value;
+    
+    if (pwd && pwd !== confirm) { 
+        showAlert('Passwords do not match!', 'error'); 
+        return; 
+    }
+
+    const formData = new FormData(form);
+    const picFile = document.getElementById('picInput').files[0];
+    if (picFile) formData.append('picture', picFile);
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        const res = await fetch('/teacher/profile', {method:'POST', body:formData});
+        const data = await res.json();
+        showAlert(data.message, data.status);
+        if (data.status === 'success') {
+            // Reload page after 2 seconds to show updated profile
+            setTimeout(() => location.reload(), 2000);
+        }
+    } catch(err) { 
+        showAlert('Error: '+err.message, 'error'); 
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+}
+</script>
+</body>
+</html>
