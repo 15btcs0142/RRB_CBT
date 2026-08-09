@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Question Paper - {{ school_name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- MathJax for LaTeX rendering -->
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.3;
+            color: #333;
+            background: white;
+            padding: 20px;
+        }
+        .header { text-align: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #2e7d32; }
+        .logo { margin-bottom: 5px; }
+        .logo img { max-height: 70px; }
+        .school-name { font-size: 24px; font-weight: 700; color: #1b5e20; text-transform: uppercase; }
+        .exam-info { display: flex; justify-content: space-between; margin: 15px 0; padding: 10px 15px; background: #f5f5f5; border-radius: 6px; font-size: 14px; }
+        .instructions { margin: 15px 0; padding: 10px 15px; background: #e8f5e9; border-left: 4px solid #2e7d32; border-radius: 4px; font-size: 13px; }
+        .question-item { margin-bottom: 18px; page-break-inside: avoid; border-bottom: 1px dashed #ccc; padding-bottom: 12px; }
+        .question-header { display: flex; align-items: baseline; margin-bottom: 6px; }
+        .question-number { font-weight: 700; color: #1b5e20; margin-right: 8px; }
+        .question-text { font-weight: 500; }
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 15px; margin-left: 25px; margin-top: 6px; }
+        .option { display: flex; align-items: baseline; }
+        .option-letter { font-weight: 600; margin-right: 6px; color: #555; }
+        .question-image { margin: 8px 0; text-align: center; }
+        .question-image img { max-width: 100%; max-height: 150px; }
+        .answer-key { page-break-before: always; margin-top: 30px; }
+        .answer-key h2 { text-align: center; color: #1b5e20; margin-bottom: 20px; border-bottom: 2px solid #2e7d32; padding-bottom: 8px; }
+        .answer-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .answer-table th, .answer-table td { border: 1px solid #333; padding: 8px 12px; }
+        .answer-table th { background: #2e7d32; color: white; }
+        .footer { margin-top: 20px; text-align: center; font-size: 0.7rem; color: #888; border-top: 1px solid #ddd; padding-top: 8px; }
+        .print-btn { position: fixed; top: 20px; right: 30px; padding: 12px 25px; background: #2e7d32; color: white; border: none; border-radius: 50px; font-weight: 600; cursor: pointer; z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        @media print {
+            .print-btn { display: none; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Print Button (hidden during actual printing) -->
+    <button class="print-btn" onclick="window.print()"><i class="fas fa-print"></i> Print / Save as PDF</button>
+
+    <!-- Header -->
+    <div class="header">
+        {% if logo_base64 %}
+        <div class="logo">
+            <img src="{{ logo_base64 }}" alt="{{ school_name }}">
+        </div>
+        {% endif %}
+        <div class="school-name">{{ school_name }}</div>
+    </div>
+
+    <!-- Exam Information -->
+    <div class="exam-info">
+        <div><strong>Class:</strong> {{ class_name }}</div>
+        <div><strong>Subject:</strong> {{ subject }}</div>
+        <div><strong>Date:</strong> {{ date }}</div>
+        <div><strong>Max Marks:</strong> {{ total_marks }}</div>
+    </div>
+
+    <div class="instructions">
+        <strong>Instructions:</strong> All questions are compulsory. Each carries 1 mark. No negative marking.
+    </div>
+
+    <!-- Questions (LaTeX rendered by MathJax) -->
+    <div class="questions-section">
+        {% for q in questions %}
+        <div class="question-item">
+            <div class="question-header">
+                <span class="question-number">Q{{ loop.index }}.</span>
+                <span class="question-text">{{ q.question }}</span>
+            </div>
+            {% if q.image_path %}
+            <div class="question-image">
+                <img src="{{ url_for('static', filename=q.image_path) }}" alt="Question Image">
+            </div>
+            {% endif %}
+            <div class="options">
+                <div class="option"><span class="option-letter">A.</span> {{ q.option_a }}</div>
+                <div class="option"><span class="option-letter">B.</span> {{ q.option_b }}</div>
+                <div class="option"><span class="option-letter">C.</span> {{ q.option_c }}</div>
+                <div class="option"><span class="option-letter">D.</span> {{ q.option_d }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Answer Key -->
+    <div class="answer-key">
+        <h2>Answer Key</h2>
+        <table class="answer-table">
+            <thead><tr><th>Q.No</th><th>Correct Option</th></tr></thead>
+            <tbody>
+            {% for q in questions %}
+            <tr><td>{{ loop.index }}</td><td>{{ q.correct_answer }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">Generated by RRB CBT | Developed by Gaurav Shukla &amp; Team</div>
+</body>
+</html>
