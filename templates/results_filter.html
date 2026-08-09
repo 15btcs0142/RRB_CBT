@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export Results - RRB CBT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
+        
+        /* ─── TOP BAR ────────────────────────────────────────────────────── */
+        .topbar{
+            background:linear-gradient(90deg,#1a237e,#3949ab);
+            color:#fff;
+            padding:14px 28px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:10px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+            position:sticky;
+            top:0;
+            z-index:100;
+        }
+        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
+        .topbar h1 i{color:#667eea;}
+        .topbar a{
+            color:#fff;
+            text-decoration:none;
+            background:rgba(255,255,255,0.15);
+            padding:8px 20px;
+            border-radius:25px;
+            font-size:0.85rem;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            border:1px solid rgba(255,255,255,0.1);
+        }
+        .topbar a:hover{
+            background:rgba(255,255,255,0.25);
+            transform:translateY(-2px);
+        }
+        
+        .container{max-width:960px;margin:24px auto;padding:0 20px;}
+        
+        /* ─── CARDS ────────────────────────────────────────────────────── */
+        .card{
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            border-radius:16px;
+            padding:24px 28px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.06);
+            border:1px solid rgba(26,35,126,0.08);
+            margin-bottom:24px;
+            transition:0.3s;
+        }
+        .card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+        .card-title{
+            font-size:1.1rem;
+            font-weight:600;
+            color:#1a237e;
+            margin-bottom:18px;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            border-bottom:2px dashed #e8eaf6;
+            padding-bottom:12px;
+        }
+        .card-title i{color:#3949ab;font-size:1.2rem;}
+        
+        .badge-info{
+            background:#e8eaf6;
+            color:#1a237e;
+            padding:4px 14px;
+            border-radius:20px;
+            font-size:0.75rem;
+            font-weight:600;
+            display:inline-block;
+            margin-left:auto;
+        }
+        
+        /* ─── FILTER GRID ────────────────────────────────────────────────── */
+        .filter-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+            gap:16px;
+            margin-bottom:8px;
+        }
+        .form-group label{
+            display:block;
+            font-weight:500;
+            color:#333;
+            margin-bottom:5px;
+            font-size:0.85rem;
+        }
+        .form-group label i{
+            color:#3949ab;
+            margin-right:5px;
+            width:18px;
+        }
+        .form-group select,.form-group input{
+            width:100%;
+            padding:10px 14px;
+            border:2px solid #e0e0e0;
+            border-radius:10px;
+            font-size:0.9rem;
+            transition:border-color .3s;
+            font-family:'Poppins',sans-serif;
+            background:#fafafa;
+        }
+        .form-group select:focus,.form-group input:focus{
+            border-color:#3949ab;
+            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
+            outline:none;
+            background:#fff;
+        }
+        .form-group select:disabled{
+            opacity:0.5;
+            cursor:not-allowed;
+        }
+        
+        /* ─── BUTTONS ────────────────────────────────────────────────────── */
+        .btn-row{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-top:20px;
+        }
+        .btn{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding:10px 24px;
+            border:none;
+            border-radius:30px;
+            font-weight:600;
+            font-size:0.85rem;
+            cursor:pointer;
+            transition:all .25s;
+            box-shadow:0 4px 10px rgba(0,0,0,.06);
+            text-decoration:none;
+            font-family:'Poppins',sans-serif;
+        }
+        .btn:hover:not(:disabled){
+            transform:translateY(-2px);
+            box-shadow:0 8px 20px rgba(0,0,0,.12);
+        }
+        .btn:disabled{
+            opacity:0.5;
+            cursor:not-allowed;
+            transform:none;
+            box-shadow:none;
+        }
+        .btn-excel{
+            background:#217346;
+            color:#fff;
+        }
+        .btn-excel:hover:not(:disabled){
+            background:#1a5c38;
+        }
+        .btn-pdf{
+            background:linear-gradient(135deg,#c62828,#e53935);
+            color:#fff;
+        }
+        .btn-pdf:hover:not(:disabled){
+            box-shadow:0 6px 16px rgba(198,40,40,0.3);
+        }
+        .btn-secondary{
+            background:#e8eaf6;
+            color:#1a237e;
+        }
+        .btn-secondary:hover:not(:disabled){
+            background:#c5cae9;
+        }
+        
+        /* ─── HINT ────────────────────────────────────────────────────── */
+        .hint{
+            font-size:0.8rem;
+            color:#888;
+            margin-top:12px;
+            display:flex;
+            align-items:center;
+            gap:6px;
+        }
+        .hint i{color:#3949ab;}
+        
+        /* ─── PRO TIP ────────────────────────────────────────────────────── */
+        .pro-tip{
+            display:flex;
+            align-items:center;
+            gap:14px;
+            color:#1a237e;
+        }
+        .pro-tip i{
+            font-size:1.5rem;
+            color:#e65100;
+        }
+        .pro-tip strong{font-weight:600;}
+        .pro-tip .text{font-size:0.9rem;}
+        
+        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
+        @media(max-width:768px){
+            .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
+            .topbar a{font-size:0.75rem;padding:6px 14px;}
+            .container{padding:0 12px;}
+            .card{padding:16px 18px;}
+            .filter-grid{grid-template-columns:1fr;}
+            .btn-row{flex-direction:column;}
+            .btn{width:100%;justify-content:center;}
+            .badge-info{margin-left:0;margin-top:4px;}
+            .pro-tip{flex-direction:column;text-align:center;}
+        }
+        @media(max-width:480px){
+            .card-title{font-size:0.95rem;flex-wrap:wrap;}
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
+    <div class="topbar">
+        <h1><i class="fas fa-file-export"></i> Export Results</h1>
+        <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </div>
+
+    <div class="container">
+
+        <!-- ─── FILTERS CARD ───────────────────────────────────────────── -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-sliders-h"></i> Filter Options
+                <span class="badge-info" id="recordCount">Select filters</span>
+            </div>
+            <form id="exportForm" action="/admin/export/results" method="GET">
+                <div class="filter-grid">
+                    <div class="form-group">
+                        <label for="filterClass"><i class="fas fa-graduation-cap"></i> Class</label>
+                        <select id="filterClass" name="class">
+                            <option value="All">All Classes</option>
+                            {% for c in classes %}
+                            <option value="{{ c }}">{{ c }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterSubject"><i class="fas fa-book"></i> Subject</label>
+                        <select id="filterSubject" name="subject">
+                            <option value="All">All Subjects</option>
+                            {% for s in subjects %}
+                            <option value="{{ s }}">{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterTestNo"><i class="fas fa-hashtag"></i> Test No</label>
+                        <select id="filterTestNo" name="test_no">
+                            <option value="">Select Test</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="startDate"><i class="fas fa-calendar-alt"></i> From Date</label>
+                        <input type="date" id="startDate" name="start_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate"><i class="fas fa-calendar-check"></i> To Date</label>
+                        <input type="date" id="endDate" name="end_date">
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button type="button" class="btn btn-excel" id="exportExcelBtn" disabled>
+                        <i class="fas fa-file-excel"></i> Export Excel
+                    </button>
+                    <button type="button" class="btn btn-pdf" id="exportPdfBtn" disabled>
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                    <button type="reset" class="btn btn-secondary" id="clearBtn">
+                        <i class="fas fa-undo-alt"></i> Clear Filters
+                    </button>
+                </div>
+                <div class="hint">
+                    <i class="fas fa-info-circle"></i> Select Class, Subject, and Test No to enable exports. Date filters are optional.
+                </div>
+            </form>
+        </div>
+
+        <!-- ─── PRO TIP CARD ────────────────────────────────────────────── -->
+        <div class="card" style="background:#e8eaf6;border-color:#c5cae9;">
+            <div class="pro-tip">
+                <i class="fas fa-lightbulb"></i>
+                <div>
+                    <strong>Pro Tip:</strong> 
+                    <span class="text">We auto‑select the first available class, subject, and test to get you started quickly.</span>
+                </div>
+            </div>
+        </div>
+
+    
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
+
+    <script>
+        // ─── DOM refs ──────────────────────────────────────────────────────
+        const classSelect = document.getElementById('filterClass');
+        const subjectSelect = document.getElementById('filterSubject');
+        const testNoSelect = document.getElementById('filterTestNo');
+        const startDate = document.getElementById('startDate');
+        const endDate = document.getElementById('endDate');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const recordCount = document.getElementById('recordCount');
+        const exportForm = document.getElementById('exportForm');
+
+        // ─── Helper: get the first non-"All" value from a select ──────────
+        function getFirstValue(selectElement) {
+            for (let opt of selectElement.options) {
+                if (opt.value && opt.value !== 'All' && opt.value !== '') {
+                    return opt.value;
+                }
+            }
+            return null;
+        }
+
+        // ─── Load Test Numbers ────────────────────────────────────────────
+        async function loadTestNumbers(classVal, subjectVal) {
+            testNoSelect.innerHTML = '<option value="">Select Test</option>';
+            if (!classVal || !subjectVal || classVal === 'All' || subjectVal === 'All') {
+                testNoSelect.disabled = true;
+                updateButtons();
+                return Promise.resolve();
+            }
+            testNoSelect.disabled = false;
+            try {
+                const res = await fetch(`/api/test_numbers?class=${encodeURIComponent(classVal)}&subject=${encodeURIComponent(subjectVal)}`);
+                const data = await res.json();
+                let testNos = data.test_numbers || [];
+                if (data.combined_tests) {
+                    data.combined_tests.forEach(ct => {
+                        if (ct.test_no) testNos.push(ct.test_no);
+                    });
+                }
+                const unique = [...new Set(testNos)].sort();
+                if (unique.length === 0) {
+                    testNoSelect.innerHTML = '<option value="">No tests available</option>';
+                } else {
+                    testNoSelect.innerHTML = '<option value="">Select Test</option>';
+                    unique.forEach(tn => {
+                        const opt = document.createElement('option');
+                        opt.value = tn;
+                        opt.textContent = tn;
+                        testNoSelect.appendChild(opt);
+                    });
+                }
+            } catch(e) {
+                console.error('Failed to load test numbers:', e);
+                testNoSelect.innerHTML = '<option value="">Error loading tests</option>';
+            }
+            updateButtons();
+            // Auto‑select first test if available
+            const testOptions = testNoSelect.options;
+            if (testOptions.length === 2) {
+                testNoSelect.value = testOptions[1].value;
+            }
+            updateButtons();
+            return Promise.resolve();
+        }
+
+        // ─── Update button states ─────────────────────────────────────────
+        function updateButtons() {
+            const testNo = testNoSelect.value;
+            const classVal = classSelect.value;
+            const subjectVal = subjectSelect.value;
+            const valid = classVal !== 'All' && subjectVal !== 'All' &&
+                          testNo !== '' && testNo !== 'Select Test' && testNo !== 'No tests available';
+            exportExcelBtn.disabled = !valid;
+            exportPdfBtn.disabled = !valid;
+            if (valid) {
+                recordCount.textContent = 'Ready to export ✅';
+                recordCount.style.background = '#e8f5e9';
+                recordCount.style.color = '#1b5e20';
+            } else {
+                recordCount.textContent = 'Select filters to enable';
+                recordCount.style.background = '#fff3e0';
+                recordCount.style.color = '#e65100';
+            }
+        }
+
+        // ─── Event listeners ──────────────────────────────────────────────
+        classSelect.addEventListener('change', () => {
+            const cls = classSelect.value;
+            const sub = subjectSelect.value;
+            testNoSelect.innerHTML = '<option value="">Select Test</option>';
+            if (cls !== 'All' && sub !== 'All') {
+                loadTestNumbers(cls, sub);
+            } else {
+                testNoSelect.disabled = true;
+                updateButtons();
+            }
+        });
+
+        subjectSelect.addEventListener('change', () => {
+            const cls = classSelect.value;
+            const sub = subjectSelect.value;
+            testNoSelect.innerHTML = '<option value="">Select Test</option>';
+            if (cls !== 'All' && sub !== 'All') {
+                loadTestNumbers(cls, sub);
+            } else {
+                testNoSelect.disabled = true;
+                updateButtons();
+            }
+        });
+
+        testNoSelect.addEventListener('change', updateButtons);
+
+        // ─── Export actions ───────────────────────────────────────────────
+        function buildExportUrl(format) {
+            const formData = new FormData(exportForm);
+            const params = new URLSearchParams();
+            for (let [key, value] of formData.entries()) {
+                if (value && value !== 'All' && value !== 'Select Test' && value !== 'No tests available') {
+                    params.append(key, value);
+                }
+            }
+            params.set('format', format);
+            if (params.get('test_no') === '') params.delete('test_no');
+            return `/admin/export/results?${params.toString()}`;
+        }
+
+        exportExcelBtn.addEventListener('click', () => {
+            const url = buildExportUrl('excel');
+            window.location.href = url;
+        });
+
+        exportPdfBtn.addEventListener('click', () => {
+            const url = buildExportUrl('pdf');
+            window.location.href = url;
+        });
+
+        // ─── Clear filters ────────────────────────────────────────────────
+        clearBtn.addEventListener('click', () => {
+            classSelect.value = 'All';
+            subjectSelect.value = 'All';
+            testNoSelect.innerHTML = '<option value="">Select Test</option>';
+            testNoSelect.disabled = true;
+            startDate.value = '';
+            endDate.value = '';
+            updateButtons();
+        });
+
+        // ─── Auto‑select on load ──────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Step 1: auto‑select first class if available (skip "All")
+            const firstClass = getFirstValue(classSelect);
+            if (firstClass) classSelect.value = firstClass;
+
+            // Step 2: auto‑select first subject if available
+            const firstSubject = getFirstValue(subjectSelect);
+            if (firstSubject) subjectSelect.value = firstSubject;
+
+            // Step 3: if both class and subject are now specific, load tests
+            const cls = classSelect.value;
+            const sub = subjectSelect.value;
+            if (cls !== 'All' && sub !== 'All') {
+                await loadTestNumbers(cls, sub);
+                // Step 4: auto‑select first test if exactly one exists
+                const testOptions = testNoSelect.options;
+                if (testOptions.length === 2) {
+                    testNoSelect.value = testOptions[1].value;
+                }
+                updateButtons();
+            } else {
+                testNoSelect.disabled = true;
+                updateButtons();
+            }
+        });
+    </script>
+</body>
+</html>
