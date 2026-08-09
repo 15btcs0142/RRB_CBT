@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Responses - RRB CBT</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e8edf5 0%, #c5cae9 100%);
+            animation: gradientShift 15s ease infinite;
+            background-size: 200% 200%;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* ─── Floating particles background ──────────────────────────── */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: rgba(26, 35, 126, 0.06);
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+        }
+
+        .particle:nth-child(1) { left: 10%; animation-duration: 12s; animation-delay: 0s; width: 12px; height: 12px; }
+        .particle:nth-child(2) { left: 20%; animation-duration: 15s; animation-delay: 2s; }
+        .particle:nth-child(3) { left: 30%; animation-duration: 10s; animation-delay: 1s; width: 6px; height: 6px; }
+        .particle:nth-child(4) { left: 40%; animation-duration: 18s; animation-delay: 3s; width: 14px; height: 14px; }
+        .particle:nth-child(5) { left: 50%; animation-duration: 13s; animation-delay: 0.5s; }
+        .particle:nth-child(6) { left: 60%; animation-duration: 16s; animation-delay: 2.5s; width: 10px; height: 10px; }
+        .particle:nth-child(7) { left: 70%; animation-duration: 11s; animation-delay: 1.5s; }
+        .particle:nth-child(8) { left: 80%; animation-duration: 14s; animation-delay: 3.5s; width: 8px; height: 8px; }
+        .particle:nth-child(9) { left: 90%; animation-duration: 17s; animation-delay: 0.8s; width: 16px; height: 16px; }
+        .particle:nth-child(10) { left: 95%; animation-duration: 12s; animation-delay: 2s; }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        /* ─── Watermark ────────────────────────────────────────────────── */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 6vw;
+            color: rgba(26, 35, 126, 0.04);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 0;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            user-select: none;
+        }
+
+        /* ─── Top Brand Bar ────────────────────────────────────────────── */
+        .brand-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 12px 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(26, 35, 126, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1300px;
+            margin: 0 auto 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .brand-bar .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-bar .brand .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(26, 35, 126, 0.2);
+        }
+
+        .brand-bar .brand .logo-placeholder {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a237e, #3949ab);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .brand-bar .brand .name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a237e;
+        }
+
+        .brand-bar .brand .tag {
+            font-size: 0.65rem;
+            color: #888;
+            font-weight: 400;
+        }
+
+        .brand-bar .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-bar .nav-links a {
+            color: #1a237e;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.85rem;
+            padding: 8px 16px;
+            border-radius: 30px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .brand-bar .nav-links a:hover {
+            background: #e8eaf6;
+            color: #1a237e;
+        }
+
+        .brand-bar .nav-links .back-btn {
+            background: linear-gradient(135deg, #1a237e, #3949ab);
+            color: white;
+        }
+
+        .brand-bar .nav-links .back-btn:hover {
+            background: linear-gradient(135deg, #0d1457, #1a237e);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);
+        }
+
+        /* ─── Container ──────────────────────────────────────────────────── */
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            z-index: 1;
+            position: relative;
+        }
+
+        /* ─── Student Info Card ────────────────────────────────────────── */
+        .student-info-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            padding: 24px 28px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(26, 35, 126, 0.08);
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 24px;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .student-info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #1a237e, #667eea, #1a237e);
+            background-size: 200% auto;
+            animation: shimmer 2.5s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f5f7fa;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            border: 1px solid #e8ecf0;
+        }
+
+        .info-item i {
+            color: #1a237e;
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .info-item strong {
+            color: #1a237e;
+        }
+
+        /* ─── Score Summary Card ────────────────────────────────────────── */
+        .score-summary-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            padding: 20px 24px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(26, 35, 126, 0.08);
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+        }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: #f5f7fa;
+            border: 1px solid #e8ecf0;
+            transition: transform 0.2s;
+        }
+
+        .score-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .score-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .score-icon.blue {
+            background: #e8eaf6;
+            color: #1a237e;
+        }
+
+        .score-icon.green {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .score-icon.red {
+            background: #fce4ec;
+            color: #c62828;
+        }
+
+        .score-icon.orange {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .score-icon.purple {
+            background: #ede7f6;
+            color: #6a1b9a;
+        }
+
+        .score-details h4 {
+            color: #888;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .score-details p {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            line-height: 1.2;
+        }
+
+        .score-details p .highlight-green {
+            color: #2e7d32;
+        }
+
+        .score-details p .highlight-red {
+            color: #c62828;
+        }
+
+        .score-details p .highlight-orange {
+            color: #e65100;
+        }
+
+        /* ─── Filter Bar ────────────────────────────────────────────────── */
+        .filter-bar {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            padding: 14px 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            border: 1px solid rgba(26, 35, 126, 0.08);
+        }
+
+        .filter-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #1a237e;
+            font-size: 0.85rem;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 6px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 30px;
+            background: white;
+            color: #555;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-btn i {
+            font-size: 0.8rem;
+        }
+
+        .filter-btn:hover {
+            border-color: #1a237e;
+            color: #1a237e;
+            background: #f5f7fa;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #1a237e, #3949ab);
+            color: white;
+            border-color: #1a237e;
+            box-shadow: 0 4px 12px rgba(26, 35, 126, 0.2);
+        }
+
+        .filter-count {
+            margin-left: auto;
+            color: #666;
+            font-weight: 500;
+            font-size: 0.85rem;
+            background: #f5f7fa;
+            padding: 4px 14px;
+            border-radius: 20px;
+        }
+
+        .filter-count span {
+            font-weight: 700;
+            color: #1a237e;
+        }
+
+        /* ─── Response Table ────────────────────────────────────────────── */
+        .response-table {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(26, 35, 126, 0.08);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.88rem;
+        }
+
+        th {
+            background: linear-gradient(135deg, #1a237e, #3949ab);
+            color: white;
+            font-weight: 600;
+            padding: 14px 16px;
+            text-align: left;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        th i {
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: top;
+            font-size: 0.85rem;
+        }
+
+        tr {
+            transition: all 0.2s ease;
+        }
+
+        tr:hover td {
+            background: #f5f7fa;
+        }
+
+        tr.hidden-row {
+            display: none;
+        }
+
+        .question-text {
+            max-width: 300px;
+            line-height: 1.5;
+        }
+
+        .options-list {
+            line-height: 1.8;
+            font-size: 0.82rem;
+        }
+
+        .options-list span {
+            display: block;
+        }
+
+        .selected-option {
+            font-weight: 600;
+        }
+
+        .selected-option span {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+        }
+
+        .selected-correct span {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .selected-incorrect span {
+            background: #fce4ec;
+            color: #c62828;
+        }
+
+        .selected-not span {
+            background: #f5f5f5;
+            color: #999;
+        }
+
+        .correct-badge {
+            color: #2e7d32;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #e8f5e9;
+            padding: 3px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .incorrect-badge {
+            color: #c62828;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #fce4ec;
+            padding: 3px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .correct-answer {
+            font-weight: 700;
+            color: #1a237e;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #ddd;
+            margin-bottom: 16px;
+        }
+
+        /* ─── Footer ────────────────────────────────────────────────────── */
+        .footer-note {
+            margin-top: 24px;
+            text-align: center;
+            color: #0123ff;
+            font-size: 0.7rem;
+            padding: 16px 0 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .footer-note i {
+            color: #1a237e;
+            margin-right: 4px;
+        }
+
+        /* ─── Responsive ────────────────────────────────────────────────── */
+        @media (max-width: 992px) {
+            .student-info-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .score-summary-card {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-count {
+                margin-left: 0;
+                text-align: center;
+            }
+
+            .brand-bar {
+                flex-direction: column;
+                text-align: center;
+                padding: 12px 16px;
+            }
+
+            .brand-bar .nav-links {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .watermark {
+                font-size: 10vw;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .score-summary-card {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                padding: 16px;
+            }
+
+            .score-item {
+                padding: 6px 10px;
+            }
+
+            .score-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+
+            .score-details p {
+                font-size: 1rem;
+            }
+
+            .info-item {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+            }
+
+            .brand-bar .brand .name {
+                font-size: 0.9rem;
+            }
+
+            .brand-bar .nav-links a {
+                font-size: 0.75rem;
+                padding: 6px 12px;
+            }
+
+            table {
+                font-size: 0.78rem;
+            }
+
+            th, td {
+                padding: 8px 10px;
+            }
+
+            .filter-btn {
+                font-size: 0.7rem;
+                padding: 4px 12px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .score-summary-card {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── Floating Particles ────────────────────────────────────────── -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- ─── Watermark ──────────────────────────────────────────────────── -->
+    <div class="watermark">RRB Group of Schools</div>
+
+    <!-- ─── Brand Bar ──────────────────────────────────────────────────── -->
+    <div class="brand-bar">
+        <div class="brand">
+            {% if logo_path %}
+                <img src="{{ url_for('static', filename=logo_path) }}" class="logo" alt="Logo">
+            {% else %}
+                <div class="logo-placeholder"><i class="fas fa-graduation-cap"></i></div>
+            {% endif %}
+            <div>
+                <div class="name">{{ school_name|default('RRB Group of Schools') }}</div>
+                <div class="tag">Student Response Viewer</div>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="javascript:history.back()" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+            <a href="{{ url_for('admin_dashboard') }}">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- ─── Container ───────────────────────────────────────────────────── -->
+    <div class="container">
+
+        <!-- Student Information Card -->
+        <div class="student-info-card">
+            <div class="info-item"><i class="fas fa-user-graduate"></i> <strong>Name:</strong> {{ student['name'] }}</div>
+            <div class="info-item"><i class="fas fa-id-card"></i> <strong>ID:</strong> {{ student['student_id'] }}</div>
+            <div class="info-item"><i class="fas fa-graduation-cap"></i> <strong>Class:</strong> {{ student['class'] }}</div>
+            <div class="info-item"><i class="fas fa-book-open"></i> <strong>Subject:</strong> {{ student['subject'] }}</div>
+            <div class="info-item"><i class="fas fa-circle"></i> <strong>Status:</strong> {{ student['status'] }}</div>
+            <div class="info-item"><i class="fas fa-network-wired"></i> <strong>IP:</strong> {{ student['ip'] }}</div>
+        </div>
+
+        <!-- Score Summary Card -->
+        <div class="score-summary-card">
+            <div class="score-item">
+                <div class="score-icon blue"><i class="fas fa-question-circle"></i></div>
+                <div class="score-details">
+                    <h4>Total Questions</h4>
+                    <p>{{ questions|length }}</p>
+                </div>
+            </div>
+            <div class="score-item">
+                <div class="score-icon green"><i class="fas fa-check-circle"></i></div>
+                <div class="score-details">
+                    <h4>Correct</h4>
+                    <p class="highlight-green">{{ questions|selectattr('is_correct', 'equalto', true)|list|length }}</p>
+                </div>
+            </div>
+            <div class="score-item">
+                <div class="score-icon red"><i class="fas fa-times-circle"></i></div>
+                <div class="score-details">
+                    <h4>Incorrect</h4>
+                    <p class="highlight-red">{{ questions|selectattr('selected')|selectattr('is_correct', 'equalto', false)|list|length }}</p>
+                </div>
+            </div>
+            <div class="score-item">
+                <div class="score-icon orange"><i class="fas fa-minus-circle"></i></div>
+                <div class="score-details">
+                    <h4>Not Attempted</h4>
+                    <p class="highlight-orange">{{ questions|rejectattr('selected')|list|length }}</p>
+                </div>
+            </div>
+            <div class="score-item">
+                <div class="score-icon purple"><i class="fas fa-percent"></i></div>
+                <div class="score-details">
+                    <h4>Score</h4>
+                    <p>
+                        {% set correct = questions|selectattr('is_correct', 'equalto', true)|list|length %}
+                        {% set total = questions|length %}
+                        {% if total > 0 %}
+                            {{ ((correct / total) * 100)|round(2) }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-label">
+                <i class="fas fa-filter"></i> Filter:
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all"><i class="fas fa-list"></i> All</button>
+                <button class="filter-btn" data-filter="correct"><i class="fas fa-check-circle"></i> Correct</button>
+                <button class="filter-btn" data-filter="incorrect"><i class="fas fa-times-circle"></i> Incorrect</button>
+                <button class="filter-btn" data-filter="not-attempted"><i class="fas fa-minus-circle"></i> Not Attempted</button>
+            </div>
+            <div class="filter-count">
+                Showing <span id="visibleCount">{{ questions|length }}</span> of {{ questions|length }}
+            </div>
+        </div>
+
+        <!-- Responses Table -->
+        <div class="response-table">
+            <div class="table-wrap">
+                <table id="responsesTable">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">#</th>
+                            <th>Question</th>
+                            <th style="min-width:160px;">Options</th>
+                            <th style="min-width:100px;">Selected</th>
+                            <th style="min-width:60px;">Correct</th>
+                            <th style="min-width:100px;">Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for q in questions %}
+                        <tr class="response-row" 
+                            data-correct="{{ 'true' if q.is_correct else 'false' }}"
+                            data-attempted="{{ 'true' if q.selected else 'false' }}">
+                            <td><strong>{{ loop.index }}</strong></td>
+                            <td class="question-text">{{ q.question }}</td>
+                            <td class="options-list">
+                                <span>A. {{ q.options.A }}</span>
+                                <span>B. {{ q.options.B }}</span>
+                                <span>C. {{ q.options.C }}</span>
+                                <span>D. {{ q.options.D }}</span>
+                            </td>
+                            <td class="selected-option">
+                                {% if q.selected %}
+                                    <span class="{% if q.is_correct %}selected-correct{% else %}selected-incorrect{% endif %}">
+                                        {{ q.selected }}
+                                    </span>
+                                {% else %}
+                                    <span class="selected-not">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="correct-answer">{{ q.correct }}</td>
+                            <td>
+                                {% if q.selected %}
+                                    {% if q.is_correct %}
+                                        <span class="correct-badge"><i class="fas fa-check-circle"></i> Correct</span>
+                                    {% else %}
+                                        <span class="incorrect-badge"><i class="fas fa-times-circle"></i> Incorrect</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span style="color:#999;">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            <i class="fas fa-shield-alt"></i>
+            RRB CBT &nbsp;·&nbsp; Developed By Gaurav Shukla &amp; Team <i class="fas fa-heart" style="color:#e53935;font-size:0.65rem;"></i>
+        </div>
+
+    </div>
+
+    <!-- ─── JavaScript ──────────────────────────────────────────────────── -->
+    <script>
+        (function() {
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const rows = document.querySelectorAll('.response-row');
+            const visibleCountSpan = document.getElementById('visibleCount');
+
+            function updateVisibleCount() {
+                const visibleRows = document.querySelectorAll('.response-row:not(.hidden-row)');
+                visibleCountSpan.textContent = visibleRows.length;
+            }
+
+            function filterRows(filterType) {
+                rows.forEach(row => {
+                    const isCorrect = row.dataset.correct === 'true';
+                    const isAttempted = row.dataset.attempted === 'true';
+                    
+                    let show = false;
+                    switch(filterType) {
+                        case 'all':
+                            show = true;
+                            break;
+                        case 'correct':
+                            show = isAttempted && isCorrect;
+                            break;
+                        case 'incorrect':
+                            show = isAttempted && !isCorrect;
+                            break;
+                        case 'not-attempted':
+                            show = !isAttempted;
+                            break;
+                        default:
+                            show = true;
+                    }
+                    
+                    row.classList.toggle('hidden-row', !show);
+                });
+                updateVisibleCount();
+            }
+
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    filterButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    filterRows(this.dataset.filter);
+                });
+            });
+
+            // Initial count
+            updateVisibleCount();
+        })();
+    </script>
+
+</body>
+</html>
