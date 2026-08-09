@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current Test Results - {{ school_name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Poppins',sans-serif;background:#f0f4f8;padding:30px;min-height:100vh;}
+        
+        .container{
+            max-width:1100px;
+            margin:0 auto;
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            padding:32px 36px;
+            border-radius:20px;
+            box-shadow:0 10px 40px rgba(0,0,0,0.08);
+            border:1px solid rgba(26,35,126,0.08);
+            position:relative;
+            overflow:hidden;
+        }
+        .container::before{
+            content:'';
+            position:absolute;
+            top:0;left:0;
+            width:100%;
+            height:4px;
+            background:linear-gradient(90deg,#1a237e,#667eea,#1a237e);
+            background-size:200% auto;
+            animation:shimmer 2.5s linear infinite;
+        }
+        @keyframes shimmer{
+            0%{background-position:0% center;}
+            100%{background-position:200% center;}
+        }
+        
+        /* ─── HEADER ────────────────────────────────────────────────────── */
+        .header{
+            text-align:center;
+            margin-bottom:22px;
+            padding-bottom:16px;
+            border-bottom:2px dashed #e8eaf6;
+        }
+        .header .logo{max-height:70px;margin-bottom:6px;}
+        .header .school-name{
+            font-size:26px;
+            font-weight:700;
+            color:#1a237e;
+            margin:4px 0;
+        }
+        .header .sub-info{
+            font-size:14px;
+            color:#888;
+            font-weight:500;
+        }
+        
+        /* ─── META GRID ────────────────────────────────────────────────── */
+        .meta-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+            gap:12px;
+            background:#e8eaf6;
+            padding:14px 18px;
+            border-radius:12px;
+            margin-bottom:22px;
+            border:1px solid #c5cae9;
+        }
+        .meta-item strong{color:#1a237e;}
+        .meta-item{color:#333;font-size:0.9rem;}
+        
+        /* ─── TABLE ────────────────────────────────────────────────────── */
+        .table-wrap{overflow-x:auto;margin:18px 0;}
+        table{width:100%;border-collapse:collapse;font-size:14px;}
+        th{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
+            padding:12px 14px;
+            text-align:left;
+            white-space:nowrap;
+            font-weight:600;
+        }
+        th i{margin-right:6px;opacity:0.7;}
+        td{padding:10px 14px;border-bottom:1px solid #f0f0f0;}
+        tr:hover td{background:#e8eaf6;}
+        tr:last-child td{border-bottom:none;}
+        
+        .rank-badge{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
+            padding:3px 14px;
+            border-radius:20px;
+            font-weight:600;
+            font-size:13px;
+            display:inline-block;
+        }
+        .rank-badge.gold{background:linear-gradient(135deg,#f57c00,#ffb74d);}
+        .rank-badge.silver{background:linear-gradient(135deg,#78909c,#b0bec5);}
+        .rank-badge.bronze{background:linear-gradient(135deg,#8d6e63,#a1887f);}
+        
+        /* ─── FOOTER ────────────────────────────────────────────────────── */
+        .footer{
+            margin-top:25px;
+            border-top:2px dashed #e8eaf6;
+            padding-top:18px;
+            text-align:center;
+            font-size:14px;
+            color:#888;
+        }
+        .signature{
+            display:flex;
+            justify-content:space-between;
+            margin-top:20px;
+            padding-top:18px;
+            border-top:1px dashed #ddd;
+        }
+        .signature .sig-line{
+            width:250px;
+            border-bottom:2px solid #1a237e;
+            margin-top:30px;
+            text-align:center;
+            font-size:13px;
+            color:#777;
+        }
+        .signature .sig-line .sig-label{background:#fff;padding:0 8px;display:inline-block;margin-top:-10px;}
+        
+        /* ─── BUTTONS ────────────────────────────────────────────────────── */
+        .btn-group{
+            display:flex;
+            gap:12px;
+            justify-content:center;
+            margin-top:20px;
+            flex-wrap:wrap;
+        }
+        .btn{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding:10px 24px;
+            border-radius:30px;
+            font-weight:600;
+            font-size:0.85rem;
+            border:none;
+            cursor:pointer;
+            text-decoration:none;
+            transition:.3s;
+            box-shadow:0 4px 12px rgba(0,0,0,0.06);
+            font-family:'Poppins',sans-serif;
+        }
+        .btn:hover{transform:translateY(-2px);}
+        .btn-excel{
+            background:#217346;
+            color:#fff;
+        }
+        .btn-excel:hover{background:#1a5c38;box-shadow:0 6px 16px rgba(33,115,70,0.3);}
+        .btn-pdf{
+            background:linear-gradient(135deg,#c62828,#e53935);
+            color:#fff;
+        }
+        .btn-pdf:hover{box-shadow:0 6px 16px rgba(198,40,40,0.3);}
+        .btn-print{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
+        }
+        .btn-print:hover{box-shadow:0 6px 16px rgba(26,35,126,0.3);}
+        .btn-back{
+            background:#e8eaf6;
+            color:#1a237e;
+        }
+        .btn-back:hover{background:#c5cae9;}
+        
+        /* ─── PRINT STYLES ────────────────────────────────────────────── */
+        @media print{
+            body{background:#fff;padding:10px;}
+            .container{box-shadow:none;padding:20px;border:none;}
+            .container::before{display:none;}
+            .btn-group,.btn-back,.no-print{display:none !important;}
+            .signature .sig-line{border-bottom-color:#000;}
+            .signature .sig-line .sig-label{background:#fff;}
+            th{background:#1a237e !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+            .rank-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+            .meta-grid{background:#e8eaf6 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+        }
+        
+        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
+        @media(max-width:768px){
+            body{padding:15px;}
+            .container{padding:16px 18px;}
+            table{font-size:12px;}
+            .meta-grid{grid-template-columns:1fr 1fr;}
+            .header .school-name{font-size:20px;}
+            .signature{flex-direction:column;align-items:center;gap:15px;}
+            .signature .sig-line{width:100%;}
+            .btn{padding:8px 16px;font-size:0.75rem;}
+        }
+        @media(max-width:480px){
+            .container{padding:12px 14px;}
+            .meta-grid{grid-template-columns:1fr;}
+            table{font-size:11px;}
+            th,td{padding:6px 8px;}
+            .header .school-name{font-size:17px;}
+            .btn{padding:6px 12px;font-size:0.7rem;}
+            .btn-group{gap:8px;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="printArea">
+    
+    <!-- ─── HEADER ──────────────────────────────────────────────────────── -->
+    <div class="header">
+        {% if logo_base64 %}
+        <img src="{{ logo_base64 }}" class="logo" alt="{{ school_name }}">
+        {% endif %}
+        <div class="school-name">{{ school_name }}</div>
+        <div class="sub-info"><i class="fas fa-file-alt" style="color:#3949ab;margin-right:6px;"></i> Current Test Results</div>
+    </div>
+
+    <!-- ─── META GRID ──────────────────────────────────────────────────── -->
+    <div class="meta-grid">
+        <div class="meta-item"><strong><i class="fas fa-graduation-cap" style="color:#3949ab;"></i> Class:</strong> {{ display_class }}</div>
+        <div class="meta-item"><strong><i class="fas fa-columns" style="color:#3949ab;"></i> Section:</strong> {{ display_section }}</div>
+        <div class="meta-item"><strong><i class="fas fa-book" style="color:#3949ab;"></i> Subject:</strong> {{ display_subject }}</div>
+        <div class="meta-item"><strong><i class="fas fa-hashtag" style="color:#3949ab;"></i> Test No:</strong> {{ display_test_no }}</div>
+        <div class="meta-item"><strong><i class="fas fa-calendar-alt" style="color:#3949ab;"></i> Date:</strong> {{ start_time[:10] if start_time else '—' }}</div>
+        <div class="meta-item"><strong><i class="fas fa-users" style="color:#3949ab;"></i> Total Students:</strong> {{ total_students }}</div>
+    </div>
+
+    <!-- ─── TABLE ───────────────────────────────────────────────────────── -->
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th><i class="fas fa-hashtag"></i> S.No.</th>
+                    <th><i class="fas fa-id-card"></i> Admission No</th>
+                    <th><i class="fas fa-user"></i> Student Name</th>
+                    <th><i class="fas fa-star"></i> Marks (out of {{ max_total_marks }})</th>
+                    <th><i class="fas fa-trophy"></i> Rank</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for res in results %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ res.admission_no or '—' }}</td>
+                    <td><i class="fas fa-user-circle" style="color:#3949ab;margin-right:6px;"></i>{{ res.name }}</td>
+                    <td><span style="background:#e8eaf6;padding:3px 14px;border-radius:20px;font-weight:600;color:#1a237e;">{{ res.score }} / {{ total_q_map.get(res.class + '_' + res.subject, res.total_questions or 0) }}</span></td>
+                    <td>
+                        {% if loop.index == 1 %}
+                            <span class="rank-badge gold">🥇 #{{ res.rank }}</span>
+                        {% elif loop.index == 2 %}
+                            <span class="rank-badge silver">🥈 #{{ res.rank }}</span>
+                        {% elif loop.index == 3 %}
+                            <span class="rank-badge bronze">🥉 #{{ res.rank }}</span>
+                        {% else %}
+                            <span class="rank-badge">#{{ res.rank }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ─── FOOTER ──────────────────────────────────────────────────────── -->
+    <div class="footer">
+        <div class="signature">
+            <div>
+                <div class="sig-line">
+                    <span class="sig-label">Signature of Subject Teacher</span>
+                </div>
+            </div>
+            <div style="text-align:right;font-size:13px;color:#888;">
+                <i class="far fa-calendar-alt" style="color:#3949ab;"></i> Generated on: {{ datetime.datetime.now().strftime('%d/%m/%Y %H:%M') }}
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── BUTTON GROUP ───────────────────────────────────────────────── -->
+    <div class="btn-group no-print">
+        <a href="{{ url_for('current_test_results', format='pdf') }}" class="btn btn-pdf" target="_blank">
+            <i class="fas fa-file-pdf"></i> Export PDF
+        </a>
+        <a href="{{ url_for('current_test_results', format='excel') }}" class="btn btn-excel">
+            <i class="fas fa-file-excel"></i> Export Excel
+        </a>
+        <button class="btn btn-print" onclick="window.print()">
+            <i class="fas fa-print"></i> Print / Save as PDF
+        </button>
+        <a href="{{ url_for('results_page') }}" class="btn btn-back">
+            <i class="fas fa-arrow-left"></i> Back to Results
+        </a>
+    </div>
+
+
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
+
+</body>
+</html>
