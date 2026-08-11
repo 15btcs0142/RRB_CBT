@@ -4,155 +4,572 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exam Submitted - RRB CBT</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e8edf5 0%, #c5cae9 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 12px 30px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* ── Floating particles background ────────────────────────── */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: rgba(26, 35, 126, 0.06);
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+        }
+
+        .particle:nth-child(1) { left: 10%; animation-duration: 12s; animation-delay: 0s; width: 12px; height: 12px; }
+        .particle:nth-child(2) { left: 20%; animation-duration: 15s; animation-delay: 2s; }
+        .particle:nth-child(3) { left: 30%; animation-duration: 10s; animation-delay: 1s; width: 6px; height: 6px; }
+        .particle:nth-child(4) { left: 40%; animation-duration: 18s; animation-delay: 3s; width: 14px; height: 14px; }
+        .particle:nth-child(5) { left: 50%; animation-duration: 13s; animation-delay: 0.5s; }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        /* ── Watermark ─────────────────────────────────────────────── */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 7vw;
+            color: rgba(26, 35, 126, 0.04);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 0;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            user-select: none;
+        }
+
+        /* ── FULL WIDTH RESPONSIVE HEADER BAR ──────────────────────── */
+        .brand-bar {
+            width: 100%;
+            position: sticky;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 28px;
+            background: linear-gradient(90deg, #1a237e, #3949ab);
+            color: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            flex-wrap: nowrap;
+            gap: 12px;
+        }
+
+        .brand-bar .brand {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-bar .brand .logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            flex-shrink: 0;
+        }
+
+        .brand-bar .brand .logo-placeholder {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.18);
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            font-family: 'Poppins', sans-serif;
+            color: white;
+            font-size: 0.95rem;
+            flex-shrink: 0;
         }
-        .card {
-            background: white;
-            padding: 40px;
+
+        .brand-bar .brand .name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1.2;
+        }
+
+        .brand-bar .brand .tag {
+            font-size: 0.68rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 400;
+        }
+
+        .brand-bar .right-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-bar .status-pill {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            padding: 5px 14px;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            max-width: 500px;
-            text-align: center;
-        }
-        .icon {
-            font-size: 5rem;
-            color: #2e7d32;
-            margin-bottom: 20px;
-        }
-        h2 {
-            color: #1b5e20;
-            margin-bottom: 20px;
-        }
-        p {
-            color: #666;
-            margin-bottom: 25px;
-        }
-        .btn {
-            padding: 14px 30px;
-            border: none;
-            border-radius: 50px;
+            font-size: 0.78rem;
             font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .brand-bar .status-pill i {
+            font-size: 0.85rem;
+            color: #81c784;
+        }
+
+        /* ── MAIN SUBMITTED CARD ────────────────────────────────────── */
+        .card {
+            background: #ffffff;
+            padding: 36px 30px;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(26, 35, 126, 0.08);
+            border: 1px solid rgba(26, 35, 126, 0.1);
+            max-width: 540px;
+            width: 100%;
+            text-align: center;
+            z-index: 1;
+            position: relative;
+            overflow: hidden;
+            margin-top: 32px;
+            margin-bottom: 20px;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #1b5e20, #43a047, #1b5e20);
+        }
+
+        .icon-circle {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            margin: 0 auto 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .icon-circle.success {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            color: #2e7d32;
+        }
+
+        .card h2 {
+            color: #1a237e;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .card .subtitle {
+            color: #64748b;
+            font-size: 0.88rem;
+            margin-bottom: 20px;
+        }
+
+        .exam-details {
+            background: #f0f4ff;
+            padding: 10px 18px;
+            border-radius: 30px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            color: #1a237e;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            border: 1px solid #c5cae9;
+        }
+
+        .card p {
+            color: #475569;
+            font-size: 0.92rem;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        /* Buttons & Actions */
+        .btn {
+            padding: 13px 26px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
             cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1a237e, #3949ab);
+            color: white;
+            box-shadow: 0 4px 15px rgba(26, 35, 126, 0.2);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(26, 35, 126, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+            opacity: 0.75;
+        }
+
+        .btn-success {
             background: linear-gradient(135deg, #2e7d32, #43a047);
             color: white;
-            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.2);
         }
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 15px rgba(46,125,50,0.3);
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(46, 125, 50, 0.3);
         }
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
+
+        .btn-hidden {
+            display: none !important;
         }
-        .message {
-            margin-top: 20px;
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 18px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.85rem;
             font-weight: 500;
+            transition: color 0.2s;
         }
-        .success { color: #2e7d32; }
-        .error { color: #d32f2f; }
+
+        .back-link:hover {
+            color: #1a237e;
+        }
+
+        .message {
+            margin-top: 14px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .message.success {
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+
+        .message.error {
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .message.warning {
+            background: #fffbe6;
+            color: #b7791f;
+            border: 1px solid #ffe58f;
+        }
+
+        .message.info {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+
+        .footer-note {
+            margin-top: 24px;
+            padding-top: 14px;
+            border-top: 1px dashed rgba(0, 0, 0, 0.1);
+            text-align: center;
+            font-size: 0.82rem;
+            color: #64748b;
+        }
+
+        /* ── RESPONSIVE MOBILE OVERRIDES ────────────────────────────── */
+        @media (max-width: 600px) {
+            .brand-bar {
+                padding: 8px 14px;
+            }
+
+            .brand-bar .brand .name {
+                font-size: 0.85rem;
+            }
+
+            .brand-bar .status-pill {
+                font-size: 0.68rem;
+                padding: 4px 10px;
+            }
+
+            .card {
+                padding: 24px 18px;
+                border-radius: 18px;
+                margin-top: 20px;
+            }
+
+            .icon-circle {
+                width: 60px;
+                height: 60px;
+                font-size: 1.8rem;
+                margin-bottom: 14px;
+            }
+
+            .card h2 {
+                font-size: 1.25rem;
+            }
+
+            .exam-details {
+                font-size: 0.78rem;
+                padding: 8px 12px;
+            }
+
+            .btn {
+                padding: 11px 20px;
+                font-size: 0.88rem;
+                border-radius: 10px;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <!-- ── Floating Particles ────────────────────────────────────────── -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- ── Watermark ──────────────────────────────────────────────────── -->
     <div class="watermark">RRB Group of Schools</div>
-    <div class="card">
-        <i class="fas fa-check-circle icon"></i>
-        <h2>Exam Submitted</h2>
-        <p>You have already submitted your exam for {{ session.get('class') }} - {{ session.get('subject') }}.</p>
-        
-        {% if pending %}
-            <button class="btn" disabled><i class="fas fa-hourglass-half"></i> Request Pending</button>
-            <p class="message" style="color: #f57c00;">Your reattempt request is awaiting admin approval.</p>
-        {% else %}
-            <button class="btn" id="requestBtn"><i class="fas fa-redo-alt"></i> Request Reattempt</button>
-            <p class="message" id="requestMessage"></p>
-        {% endif %}
-        <!-- After the existing request button -->
-        <button class="btn" id="startReattemptBtn" style="display:none; background: linear-gradient(135deg, #2e7d32, #43a047);">
-            <i class="fas fa-play"></i> Start Reattempt
-        </button>
-<p class="message" id="statusMessage"></p>
-        <div style="margin-top: 30px;">
-            <a href="{{ url_for('index') }}" style="color: #2e7d32; text-decoration: none;">
-                <i class="fas fa-arrow-left"></i> Back to Login
-            </a>
+
+    <!-- ── FULL WIDTH RESPONSIVE HEADER BAR ──────────────────────────── -->
+    <div class="brand-bar">
+        <div class="brand">
+            {% if logo_path %}
+                <img src="{{ url_for('static', filename=logo_path) }}" class="logo" alt="Logo">
+            {% else %}
+                <div class="logo-placeholder"><i class="fas fa-graduation-cap"></i></div>
+            {% endif %}
+            <div>
+                <div class="name">{{ school_name|default('RRB Group of Schools') }}</div>
+                <div class="tag">Computer Based Test</div>
+            </div>
+        </div>
+        <div class="right-info">
+            <div class="status-pill">
+                <i class="fas fa-check-circle"></i>
+                Submitted
+            </div>
         </div>
     </div>
 
+    <!-- ── MAIN SUBMITTED CARD ────────────────────────────────────────── -->
+    <div class="card">
+        <div class="icon-circle success">
+            <i class="fas fa-check-circle"></i>
+        </div>
+
+        <h2>Exam Submitted</h2>
+        <p class="subtitle">You have successfully completed your test</p>
+
+        <div class="exam-details">
+            <i class="fas fa-graduation-cap" style="color:#1a237e;"></i>
+            <span>{{ session.get('class', '—') }}</span>
+            <span style="opacity:0.3;">|</span>
+            <i class="fas fa-book" style="color:#1a237e;"></i>
+            <span>{{ session.get('subject', '—') }}</span>
+            {% if session.get('test_no') %}
+                <span style="opacity:0.3;">|</span>
+                <i class="fas fa-file-alt" style="color:#1a237e;"></i>
+                <span>{{ session.get('test_no') }}</span>
+            {% endif %}
+        </div>
+
+        <p>
+            You have successfully submitted your exam answers. Thank you!
+        </p>
+
+        {% if pending %}
+            <button class="btn btn-primary" disabled>
+                <i class="fas fa-hourglass-half"></i> Request Pending
+            </button>
+            <div class="message warning">
+                <i class="fas fa-clock"></i> Your reattempt request is awaiting admin approval.
+            </div>
+        {% else %}
+            <button class="btn btn-primary" id="requestBtn">
+                <i class="fas fa-redo-alt"></i> Request Reattempt
+            </button>
+            <div id="requestMessage"></div>
+        {% endif %}
+
+        <!-- Reattempt Button (hidden initially) -->
+        <button class="btn btn-success btn-hidden" id="startReattemptBtn">
+            <i class="fas fa-play"></i> Start Reattempt
+        </button>
+        <div id="statusMessage"></div>
+
+        <div>
+            <a href="{{ url_for('index') }}" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to Login
+            </a>
+        </div>
+
+        <!-- Footer Credit -->
+        <div class="footer-note">
+            <i class="fas fa-shield-alt" style="color:#1a237e;"></i> RRB CBT &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
+        </div>
+    </div>
+
+    <!-- JavaScript -->
     <script>
-        document.getElementById('requestBtn')?.addEventListener('click', function() {
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-            fetch('/request_reattempt', { method: 'POST' })
-                .then(res => res.json())
-                .then(data => {
-                    const msgDiv = document.getElementById('requestMessage');
-                    if (data.status === 'success') {
-                        msgDiv.className = 'message success';
-                        msgDiv.innerHTML = '<i class="fas fa-check"></i> ' + data.message;
-                        this.innerHTML = '<i class="fas fa-hourglass-half"></i> Request Pending';
-                    } else {
-                        msgDiv.className = 'message error';
-                        msgDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + data.message;
-                        this.disabled = false;
-                        this.innerHTML = '<i class="fas fa-redo-alt"></i> Request Reattempt';
-                    }
-                });
-        });
-        // After existing code
-        let pollInterval;
+        const requestBtn = document.getElementById('requestBtn');
         const startBtn = document.getElementById('startReattemptBtn');
         const statusMsg = document.getElementById('statusMessage');
+        const requestMsg = document.getElementById('requestMessage');
+        let pollInterval;
 
+        // Request Reattempt
+        if (requestBtn) {
+            requestBtn.addEventListener('click', function() {
+                this.disabled = true;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                requestMsg.innerHTML = '';
+
+                fetch('/request_reattempt', { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            requestMsg.className = 'message success';
+                            requestMsg.innerHTML = '<i class="fas fa-check"></i> ' + data.message;
+                            this.innerHTML = '<i class="fas fa-hourglass-half"></i> Request Pending';
+                            setTimeout(() => {
+                                pollInterval = setInterval(checkReattemptStatus, 5000);
+                                checkReattemptStatus();
+                            }, 1000);
+                        } else {
+                            requestMsg.className = 'message error';
+                            requestMsg.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + data.message;
+                            this.disabled = false;
+                            this.innerHTML = '<i class="fas fa-redo-alt"></i> Request Reattempt';
+                        }
+                    })
+                    .catch(() => {
+                        requestMsg.className = 'message error';
+                        requestMsg.innerHTML = '<i class="fas fa-exclamation-circle"></i> Network error. Please try again.';
+                        this.disabled = false;
+                        this.innerHTML = '<i class="fas fa-redo-alt"></i> Request Reattempt';
+                    });
+            });
+        }
+
+        // Check Reattempt Status
         function checkReattemptStatus() {
             fetch('/check_reattempt_status')
                 .then(res => res.json())
                 .then(data => {
                     if (data.can_start) {
-                        // Approved and exam active
-                        startBtn.style.display = 'inline-block';
-                        statusMsg.innerHTML = '<span class="success"><i class="fas fa-check"></i> Your reattempt has been approved! Click below to start.</span>';
-                        clearInterval(pollInterval);
+                        startBtn.classList.remove('btn-hidden');
+                        startBtn.style.display = 'inline-flex';
+                        statusMsg.className = 'message success';
+                        statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> Your reattempt has been approved! Click below to start.';
+                        if (pollInterval) clearInterval(pollInterval);
                     } else if (data.approved && !data.exam_active) {
-                        statusMsg.innerHTML = '<span style="color:#f57c00;"><i class="fas fa-hourglass-half"></i> Approved, but exam not started yet. Waiting...</span>';
+                        statusMsg.className = 'message warning';
+                        statusMsg.innerHTML = '<i class="fas fa-clock"></i> Approved, but exam has not started yet. Please wait...';
                     } else if (!data.approved && data.student_status === 'Not Started') {
-                        // Possibly already reset? But keep checking
-                        statusMsg.innerHTML = '';
+                        statusMsg.className = 'message info';
+                        statusMsg.innerHTML = '<i class="fas fa-info-circle"></i> Your reattempt is ready. Waiting for exam to start...';
                     } else {
-                        statusMsg.innerHTML = '';
+                        statusMsg.className = 'message info';
+                        statusMsg.innerHTML = '<i class="fas fa-clock"></i> Waiting for admin approval...';
                     }
-                });
+                })
+                .catch(() => {});
         }
 
-        // Start polling if there is a pending request or we're waiting
+        if (startBtn) {
+            startBtn.addEventListener('click', function() {
+                window.location.href = '/exam';
+            });
+        }
+
         {% if pending %}
             pollInterval = setInterval(checkReattemptStatus, 5000);
             checkReattemptStatus();
-        {% else %}
-            // After making a request, start polling
-            const requestBtn = document.getElementById('requestBtn');
-            requestBtn?.addEventListener('click', function() {
-                // After successful request, start polling
-                setTimeout(() => {
-                    pollInterval = setInterval(checkReattemptStatus, 5000);
-                    checkReattemptStatus();
-                }, 1000);
-            });
         {% endif %}
-
-        startBtn.addEventListener('click', function() {
-            window.location.href = '/exam';
-        });
     </script>
 </body>
 </html>
