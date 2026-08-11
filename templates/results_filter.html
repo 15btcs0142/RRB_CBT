@@ -1,750 +1,446 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Results - Hierarchical Filter</title>
+    <title>Advanced Filter & Results Export - RRB CBT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
+        
+        /* ─── TOP BAR ────────────────────────────────────────────────────── */
+        .topbar{
+            background:linear-gradient(90deg,#1a237e,#3949ab);
+            color:#fff;
+            padding:14px 28px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:10px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+            position:sticky;
+            top:0;
+            z-index:100;
         }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
+        .topbar h1 i{color:#667eea;}
+        .topbar a{
+            color:#fff;
+            text-decoration:none;
+            background:rgba(255,255,255,0.15);
+            padding:8px 20px;
+            border-radius:25px;
+            font-size:0.85rem;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            border:1px solid rgba(255,255,255,0.1);
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
+        .topbar a:hover{
+            background:rgba(255,255,255,0.25);
+            transform:translateY(-2px);
         }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
+        
+        .container{max-width:1100px;margin:24px auto;padding:0 20px;}
+        
+        /* ─── CARDS ────────────────────────────────────────────────────── */
+        .card{
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            border-radius:16px;
+            padding:24px 28px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.06);
+            border:1px solid rgba(26,35,126,0.08);
+            margin-bottom:24px;
+            transition:0.3s;
         }
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+        .card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+        .card-title{
+            font-size:1.1rem;
+            font-weight:600;
+            color:#1a237e;
+            margin-bottom:18px;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            border-bottom:2px dashed #e8eaf6;
+            padding-bottom:12px;
         }
-        .header p {
-            opacity: 0.9;
-            font-size: 1.1em;
+        .card-title i{color:#3949ab;font-size:1.2rem;}
+        
+        .badge-info{
+            background:#e8eaf6;
+            color:#1a237e;
+            padding:4px 14px;
+            border-radius:20px;
+            font-size:0.75rem;
+            font-weight:600;
+            display:inline-block;
+            margin-left:auto;
         }
-        .content {
-            padding: 40px;
+        
+        /* ─── FILTER GRID ────────────────────────────────────────────────── */
+        .filter-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+            gap:16px;
+            margin-bottom:8px;
         }
-        .filter-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
+        .form-group label{
+            display:block;
+            font-weight:500;
+            color:#333;
+            margin-bottom:5px;
+            font-size:0.85rem;
         }
-        .filter-group {
-            display: flex;
-            flex-direction: column;
+        .form-group label i{
+            color:#3949ab;
+            margin-right:5px;
+            width:18px;
         }
-        .filter-group label {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 1.1em;
+        .form-group select,.form-group input{
+            width:100%;
+            padding:10px 14px;
+            border:2px solid #e0e0e0;
+            border-radius:10px;
+            font-size:0.9rem;
+            transition:border-color .3s;
+            font-family:'Poppins',sans-serif;
+            background:#fafafa;
         }
-        .filter-group select,
-        .filter-group input {
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: all 0.3s ease;
-            cursor: pointer;
+        .form-group select:focus,.form-group input:focus{
+            border-color:#3949ab;
+            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
+            outline:none;
+            background:#fff;
         }
-        .filter-group select:hover,
-        .filter-group input:hover {
-            border-color: #667eea;
+        
+        /* ─── BUTTONS ────────────────────────────────────────────────────── */
+        .btn-row{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-top:20px;
         }
-        .filter-group select:focus,
-        .filter-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        .btn{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding:10px 24px;
+            border:none;
+            border-radius:30px;
+            font-weight:600;
+            font-size:0.85rem;
+            cursor:pointer;
+            transition:all .25s;
+            box-shadow:0 4px 10px rgba(0,0,0,.06);
+            text-decoration:none;
+            font-family:'Poppins',sans-serif;
         }
-        .filter-group select:disabled,
-        .filter-group input:disabled {
-            background-color: #f5f5f5;
-            cursor: not-allowed;
-            opacity: 0.6;
+        .btn:hover:not(:disabled){
+            transform:translateY(-2px);
+            box-shadow:0 8px 20px rgba(0,0,0,.12);
         }
-        .filter-group select option {
-            padding: 10px;
+        .btn-primary{
+            background:#4f46e5;
+            color:#fff;
         }
-        .button-group {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 30px;
-            flex-wrap: wrap;
+        .btn-primary:hover{
+            background:#4338ca;
         }
-        button {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .btn-excel{
+            background:#217346;
+            color:#fff;
         }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            flex: 1;
-            min-width: 150px;
+        .btn-excel:hover{
+            background:#1a5c38;
         }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        .btn-pdf{
+            background:linear-gradient(135deg,#c62828,#e53935);
+            color:#fff;
         }
-        .btn-export {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            flex: 1;
-            min-width: 150px;
+        .btn-pdf:hover{
+            box-shadow:0 6px 16px rgba(198,40,40,0.3);
         }
-        .btn-export:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(245, 87, 108, 0.3);
+        .btn-secondary{
+            background:#e8eaf6;
+            color:#1a237e;
         }
-        .btn-print {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            flex: 1;
-            min-width: 150px;
+        .btn-secondary:hover{
+            background:#c5cae9;
         }
-        .btn-print:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        
+        /* ─── HINT ────────────────────────────────────────────────────── */
+        .hint{
+            font-size:0.8rem;
+            color:#666;
+            margin-top:12px;
+            display:flex;
+            align-items:center;
+            gap:6px;
         }
-        .btn-reset {
-            background: #95989a;
-            color: white;
-            flex: 1;
-            min-width: 150px;
-        }
-        .btn-reset:hover {
-            background: #6c7072;
-            transform: translateY(-2px);
-        }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .results-section {
-            margin-top: 40px;
-            border-top: 2px solid #e0e0e0;
-            padding-top: 30px;
-        }
-        .results-info {
-            background: #f0f4ff;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid #667eea;
-        }
-        .results-info h3 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .results-info p {
-            color: #666;
-            font-size: 0.95em;
-            line-height: 1.6;
-        }
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .results-table thead {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .results-table th {
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-        }
-        .results-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .results-table tbody tr:hover {
-            background-color: #f5f5f5;
-        }
-        .results-table tbody tr:nth-child(even) {
-            background-color: #fafafa;
-        }
-        .results-table .score-good {
-            color: #4caf50;
-            font-weight: 600;
-        }
-        .results-table .score-average {
-            color: #ff9800;
-            font-weight: 600;
-        }
-        .results-table .score-poor {
-            color: #f44336;
-            font-weight: 600;
-        }
-        .no-results {
-            text-align: center;
-            padding: 40px 20px;
-            color: #999;
-            font-size: 1.1em;
-        }
-        .loading {
-            text-align: center;
-            padding: 40px;
-            font-size: 1.1em;
-            color: #667eea;
-        }
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s steps(4, end) infinite;
-        }
-        @keyframes dots {
-            0%, 20% { content: ''; }
-            40% { content: '.'; }
-            60% { content: '..'; }
-            80%, 100% { content: '...'; }
-        }
-        .breadcrumb {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            padding: 10px;
-            background: #f9f9f9;
-            border-radius: 8px;
-        }
-        .breadcrumb-item {
-            padding: 5px 12px;
-            background: #e0e0e0;
-            border-radius: 20px;
-            font-size: 0.9em;
-            color: #333;
-        }
-        .breadcrumb-item.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .breadcrumb-separator {
-            color: #999;
-            font-weight: bold;
-        }
-        .step-indicator {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-            gap: 10px;
-        }
-        .step {
-            flex: 1;
-            text-align: center;
-            padding: 15px;
-            background: #f0f0f0;
-            border-radius: 8px;
-            font-weight: 600;
-            color: #999;
-            position: relative;
-        }
-        .step.completed {
-            background: #e8f5e9;
-            color: #4caf50;
-        }
-        .step.active {
-            background: #e3f2fd;
-            color: #2196f3;
-            box-shadow: 0 0 0 2px #2196f3;
-        }
-        .step::after {
-            content: '';
-            position: absolute;
-            right: -10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 2px;
-            background: #ddd;
-        }
-        .step:last-child::after {
-            display: none;
-        }
-        @media print {
-            body {
-                background: white;
-            }
-            .button-group {
-                display: none;
-            }
-            .filter-section {
-                display: none;
-            }
-        }
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8em;
-            }
-            .content {
-                padding: 20px;
-            }
-            .filter-section {
-                grid-template-columns: 1fr;
-            }
-            .button-group {
-                flex-direction: column;
-            }
-            button {
-                width: 100%;
-            }
-            .results-table {
-                font-size: 0.9em;
-            }
-            .results-table th,
-            .results-table td {
-                padding: 8px;
-            }
-            .step-indicator {
-                flex-direction: column;
-            }
-            .step::after {
-                display: none;
-            }
+        .hint i{color:#3949ab;}
+        
+        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
+        @media(max-width:768px){
+            .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
+            .container{padding:0 12px;}
+            .card{padding:16px 18px;}
+            .filter-grid{grid-template-columns:1fr;}
+            .btn-row{flex-direction:column;}
+            .btn{width:100%;justify-content:center;}
         }
     </style>
 </head>
 <body>
+
+    <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
+    <div class="topbar">
+        <h1><i class="fas fa-filter"></i> Advanced Filter & Results Export</h1>
+        <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </div>
+
     <div class="container">
-        <div class="header">
-            <h1>📊 Results Filter</h1>
-            <p>Select Class → Subject → Test → Date to view and export results</p>
-        </div>
 
-        <div class="content">
-            <div class="step-indicator">
-                <div class="step active" id="step-class">Class</div>
-                <div class="step" id="step-subject">Subject</div>
-                <div class="step" id="step-test">Test</div>
-                <div class="step" id="step-date">Date</div>
-                <div class="step" id="step-results">Results</div>
+        <!-- ─── FILTERS CARD ───────────────────────────────────────────── -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-sliders-h"></i> Filter Criteria
+                <span class="badge-info" id="recordCount">Loading records...</span>
             </div>
-
-            <div id="breadcrumb-container" class="breadcrumb" style="display: none;"></div>
-
-            <form id="filterForm">
-                <div class="filter-section">
-                    <div class="filter-group">
-                        <label for="classSelect">📚 Step 1: Select Class</label>
-                        <select id="classSelect" required>
-                            <option value="">-- Choose a Class --</option>
+            <form id="exportForm">
+                <div class="filter-grid">
+                    <div class="form-group">
+                        <label for="filterClass"><i class="fas fa-graduation-cap"></i> Class</label>
+                        <select id="filterClass" name="class">
+                            <option value="All">All Classes</option>
+                            {% for c in classes %}
+                            <option value="{{ c }}">{{ c }}</option>
+                            {% endfor %}
                         </select>
                     </div>
-
-                    <div class="filter-group">
-                        <label for="subjectSelect">📖 Step 2: Select Subject</label>
-                        <select id="subjectSelect" disabled required>
-                            <option value="">-- Choose a Subject --</option>
+                    <div class="form-group">
+                        <label for="filterSubject"><i class="fas fa-book"></i> Subject</label>
+                        <select id="filterSubject" name="subject">
+                            <option value="All">All Subjects</option>
+                            {% for s in subjects %}
+                            <option value="{{ s }}">{{ s }}</option>
+                            {% endfor %}
                         </select>
                     </div>
-
-                    <div class="filter-group">
-                        <label for="testSelect">📝 Step 3: Select Test No</label>
-                        <select id="testSelect" disabled required>
-                            <option value="">-- Choose a Test No --</option>
+                    <div class="form-group">
+                        <label for="filterTestNo"><i class="fas fa-hashtag"></i> Test No</label>
+                        <select id="filterTestNo" name="test_no">
+                            <option value="">All Tests / Latest</option>
                         </select>
                     </div>
-
-                    <div class="filter-group">
-                        <label for="dateSelect">📅 Step 4: Select Date</label>
-                        <select id="dateSelect" disabled required>
-                            <option value="">-- Choose a Date --</option>
-                        </select>
+                    <div class="form-group">
+                        <label for="startDate"><i class="fas fa-calendar-alt"></i> From Date</label>
+                        <input type="date" id="startDate" name="start_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate"><i class="fas fa-calendar-check"></i> To Date</label>
+                        <input type="date" id="endDate" name="end_date">
                     </div>
                 </div>
 
-                <div class="button-group">
-                    <button type="button" class="btn-primary" id="viewBtn" onclick="loadResults()" disabled>View Results</button>
-                    <button type="button" class="btn-export" id="exportBtn" onclick="exportToExcel()" disabled>📥 Export Excel</button>
-                    <button type="button" class="btn-print" id="printBtn" onclick="printResults()" disabled>🖨️ Print PDF</button>
-                    <button type="reset" class="btn-reset" onclick="resetForm()">Reset</button>
+                <div class="btn-row">
+                    <button type="button" class="btn btn-primary" id="previewBtn">
+                        <i class="fas fa-eye"></i> Live Preview
+                    </button>
+                    <button type="button" class="btn btn-excel" id="exportExcelBtn">
+                        <i class="fas fa-file-excel"></i> Export Excel
+                    </button>
+                    <button type="button" class="btn btn-pdf" id="exportPdfBtn">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                    <button type="reset" class="btn btn-secondary" id="clearBtn">
+                        <i class="fas fa-undo-alt"></i> Clear Filters
+                    </button>
+                </div>
+                <div class="hint">
+                    <i class="fas fa-info-circle"></i> Select Class, Subject, or Test No to filter records in real-time.
                 </div>
             </form>
+        </div>
 
-            <div id="resultsContainer" class="results-section" style="display: none;">
-                <div id="resultsInfo" class="results-info"></div>
-                <table id="resultsTable" class="results-table">
+        <!-- ─── LIVE PREVIEW DATA TABLE CARD ──────────────────────────── -->
+        <div class="card" id="previewCard">
+            <div class="card-title">
+                <i class="fas fa-table"></i> Filtered Student Results Preview
+                <span class="badge-info" id="previewCount">0 Students</span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.88rem;" id="previewTable">
                     <thead>
-                        <tr>
-                            <th>Student ID</th>
-                            <th>Name</th>
-                            <th>Class</th>
-                            <th>Subject</th>
-                            <th>Score</th>
-                            <th>Percentage</th>
-                            <th>Test Date</th>
+                        <tr style="background:#1a237e; color:#fff; text-align:left;">
+                            <th style="padding:10px 12px;">#</th>
+                            <th style="padding:10px 12px;">Student ID</th>
+                            <th style="padding:10px 12px;">Name</th>
+                            <th style="padding:10px 12px;">Class (Sec)</th>
+                            <th style="padding:10px 12px;">Subject</th>
+                            <th style="padding:10px 12px;">Test No</th>
+                            <th style="padding:10px 12px;">Score</th>
+                            <th style="padding:10px 12px;">Percentage</th>
                         </tr>
                     </thead>
-                    <tbody id="resultsBody"></tbody>
+                    <tbody id="previewTbody">
+                        <tr>
+                            <td colspan="8" style="text-align:center; padding:20px; color:#666;">
+                                <i class="fas fa-spinner fa-spin"></i> Loading preview data...
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         </div>
+
+        <footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+            Developed by Gaurav Shukla &amp; Team
+        </footer>
     </div>
 
     <script>
-        // Initialize
-        loadClasses();
+        const classSelect = document.getElementById('filterClass');
+        const subjectSelect = document.getElementById('filterSubject');
+        const testNoSelect = document.getElementById('filterTestNo');
+        const startDate = document.getElementById('startDate');
+        const endDate = document.getElementById('endDate');
+        const previewBtn = document.getElementById('previewBtn');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const recordCount = document.getElementById('recordCount');
+        const exportForm = document.getElementById('exportForm');
 
-        // Load classes on page load
-        function loadClasses() {
-            fetch('/api/admin/results/get_classes')
-                .then(response => response.json())
-                .then(data => {
-                    const classSelect = document.getElementById('classSelect');
-                    classSelect.innerHTML = '<option value="">-- Choose a Class --</option>';
-                    data.classes.forEach(cls => {
-                        const option = document.createElement('option');
-                        option.value = cls;
-                        option.textContent = cls;
-                        classSelect.appendChild(option);
-                    });
-                })
-                .catch(error => console.error('Error loading classes:', error));
-        }
-
-        // Class selection change event
-        document.getElementById('classSelect').addEventListener('change', function() {
-            const selectedClass = this.value;
-            const subjectSelect = document.getElementById('subjectSelect');
-            const testSelect = document.getElementById('testSelect');
-            const dateSelect = document.getElementById('dateSelect');
-
-            subjectSelect.innerHTML = '<option value="">-- Choose a Subject --</option>';
-            testSelect.innerHTML = '<option value="">-- Choose a Test No --</option>';
-            dateSelect.innerHTML = '<option value="">-- Choose a Date --</option>';
-
-            if (selectedClass) {
-                subjectSelect.disabled = false;
-                updateStep('class', true);
-                updateStep('subject', false);
-                
-                fetch(`/api/admin/results/get_subjects/${encodeURIComponent(selectedClass)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        data.subjects.forEach(subject => {
-                            const option = document.createElement('option');
-                            option.value = subject;
-                            option.textContent = subject;
-                            subjectSelect.appendChild(option);
-                        });
-                    })
-                    .catch(error => console.error('Error loading subjects:', error));
-            } else {
-                subjectSelect.disabled = true;
-                testSelect.disabled = true;
-                dateSelect.disabled = true;
-                updateStep('class', false);
-            }
-
-            updateBreadcrumb();
-            document.getElementById('resultsContainer').style.display = 'none';
-        });
-
-        // Subject selection change event
-        document.getElementById('subjectSelect').addEventListener('change', function() {
-            const selectedClass = document.getElementById('classSelect').value;
-            const selectedSubject = this.value;
-            const testSelect = document.getElementById('testSelect');
-            const dateSelect = document.getElementById('dateSelect');
-
-            testSelect.innerHTML = '<option value="">-- Choose a Test No --</option>';
-            dateSelect.innerHTML = '<option value="">-- Choose a Date --</option>';
-
-            if (selectedSubject) {
-                testSelect.disabled = false;
-                updateStep('subject', true);
-                updateStep('test', false);
-
-                fetch(`/api/admin/results/get_test_numbers/${encodeURIComponent(selectedClass)}/${encodeURIComponent(selectedSubject)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        data.test_numbers.forEach(testNo => {
-                            const option = document.createElement('option');
-                            option.value = testNo;
-                            option.textContent = testNo;
-                            testSelect.appendChild(option);
-                        });
-                    })
-                    .catch(error => console.error('Error loading test numbers:', error));
-            } else {
-                testSelect.disabled = true;
-                dateSelect.disabled = true;
-                updateStep('subject', false);
-            }
-
-            updateBreadcrumb();
-            document.getElementById('resultsContainer').style.display = 'none';
-        });
-
-        // Test selection change event
-        document.getElementById('testSelect').addEventListener('change', function() {
-            const selectedClass = document.getElementById('classSelect').value;
-            const selectedSubject = document.getElementById('subjectSelect').value;
-            const selectedTest = this.value;
-            const dateSelect = document.getElementById('dateSelect');
-
-            dateSelect.innerHTML = '<option value="">-- Choose a Date --</option>';
-
-            if (selectedTest) {
-                dateSelect.disabled = false;
-                updateStep('test', true);
-                updateStep('date', false);
-
-                fetch(`/api/admin/results/get_dates/${encodeURIComponent(selectedClass)}/${encodeURIComponent(selectedSubject)}/${encodeURIComponent(selectedTest)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        data.dates.forEach(date => {
-                            const option = document.createElement('option');
-                            option.value = date;
-                            option.textContent = date;
-                            dateSelect.appendChild(option);
-                        });
-                    })
-                    .catch(error => console.error('Error loading dates:', error));
-            } else {
-                dateSelect.disabled = true;
-                updateStep('test', false);
-            }
-
-            updateBreadcrumb();
-            document.getElementById('resultsContainer').style.display = 'none';
-        });
-
-        // Date selection change event
-        document.getElementById('dateSelect').addEventListener('change', function() {
-            const selectedDate = this.value;
-            
-            if (selectedDate) {
-                updateStep('date', true);
-                updateStep('results', false);
-                document.getElementById('viewBtn').disabled = false;
-                document.getElementById('exportBtn').disabled = false;
-                document.getElementById('printBtn').disabled = false;
-            } else {
-                updateStep('date', false);
-                document.getElementById('viewBtn').disabled = true;
-                document.getElementById('exportBtn').disabled = true;
-                document.getElementById('printBtn').disabled = true;
-            }
-
-            updateBreadcrumb();
-            document.getElementById('resultsContainer').style.display = 'none';
-        });
-
-        // Load and display results
-        function loadResults() {
-            const selectedClass = document.getElementById('classSelect').value;
-            const selectedSubject = document.getElementById('subjectSelect').value;
-            const selectedTest = document.getElementById('testSelect').value;
-            const selectedDate = document.getElementById('dateSelect').value;
-
-            if (!selectedClass || !selectedSubject || !selectedTest || !selectedDate) {
-                alert('Please complete all filter selections');
-                return;
-            }
-
-            const resultsContainer = document.getElementById('resultsContainer');
-            resultsContainer.innerHTML = '<div class="loading"></div>';
-            resultsContainer.style.display = 'block';
-
-            const params = new URLSearchParams({
-                class: selectedClass,
-                subject: selectedSubject,
-                test_no: selectedTest,
-                date: selectedDate
-            });
-
-            fetch(`/api/admin/results/get_filtered_results?${params}`)
-                .then(response => response.json())
-                .then(data => {
-                    updateStep('results', true);
-                    displayResults(data);
-                })
-                .catch(error => {
-                    console.error('Error loading results:', error);
-                    resultsContainer.innerHTML = '<div class="no-results">Error loading results. Please try again.</div>';
+        async function loadTestNumbers(classVal, subjectVal) {
+            testNoSelect.innerHTML = '<option value="">All Tests / Latest</option>';
+            if (!classVal || classVal === 'All') return;
+            try {
+                const res = await fetch(`/api/test_numbers?class=${encodeURIComponent(classVal)}&subject=${encodeURIComponent(subjectVal === 'All' ? '' : subjectVal)}`);
+                const data = await res.json();
+                const testNos = data.test_numbers || [];
+                testNos.forEach(tn => {
+                    const opt = document.createElement('option');
+                    opt.value = tn;
+                    opt.textContent = tn;
+                    testNoSelect.appendChild(opt);
                 });
+            } catch(e) { /* silent */ }
         }
 
-        // Display results in table
-        function displayResults(data) {
-            const resultsContainer = document.getElementById('resultsContainer');
-            const resultsInfo = document.getElementById('resultsInfo');
-            const resultsBody = document.getElementById('resultsBody');
+        async function loadPreview() {
+            const classVal = classSelect.value;
+            const subjectVal = subjectSelect.value;
+            const testNo = testNoSelect.value;
+            const sDate = startDate.value;
+            const eDate = endDate.value;
 
-            if (data.results.length === 0) {
-                resultsContainer.innerHTML = '<div class="no-results">No results found for the selected filters.</div>';
-                return;
-            }
+            const params = new URLSearchParams();
+            if (classVal && classVal !== 'All') params.append('class', classVal);
+            if (subjectVal && subjectVal !== 'All') params.append('subject', subjectVal);
+            if (testNo && testNo !== 'Select Test' && testNo !== 'All Tests / Latest') params.append('test_no', testNo);
+            if (sDate) params.append('start_date', sDate);
+            if (eDate) params.append('end_date', eDate);
+            params.append('format', 'json');
 
-            // Display filter info
-            const filterInfo = `
-                <h3>📋 Results Summary</h3>
-                <p><strong>Class:</strong> ${data.filters.class} | 
-                   <strong>Subject:</strong> ${data.filters.subject} | 
-                   <strong>Test:</strong> ${data.filters.test_no} | 
-                   <strong>Date:</strong> ${data.filters.date} | 
-                   <strong>Total Students:</strong> ${data.count}</p>
-            `;
-            resultsInfo.innerHTML = filterInfo;
+            const previewCard = document.getElementById('previewCard');
+            const previewTbody = document.getElementById('previewTbody');
+            const previewCount = document.getElementById('previewCount');
 
-            // Clear table body
-            resultsBody.innerHTML = '';
+            previewCard.style.display = 'block';
+            previewTbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#666;"><i class="fas fa-spinner fa-spin"></i> Loading student records...</td></tr>';
 
-            // Populate table
-            data.results.forEach(result => {
-                const row = document.createElement('tr');
-                const percentage = result.percentage ? parseFloat(result.percentage).toFixed(1) : 'N/A';
-                let scoreClass = '';
-                if (percentage !== 'N/A') {
-                    if (percentage >= 75) scoreClass = 'score-good';
-                    else if (percentage >= 50) scoreClass = 'score-average';
-                    else scoreClass = 'score-poor';
+            try {
+                const res = await fetch(`/admin/export/results?${params.toString()}`);
+                const data = await res.json();
+                const results = data.results || [];
+                results.sort((a, b) => (a.name || '').trim().localeCompare((b.name || '').trim(), undefined, { sensitivity: 'base' }));
+
+                recordCount.textContent = `${results.length} student${results.length !== 1 ? 's' : ''} found`;
+                recordCount.style.background = results.length > 0 ? '#e8f5e9' : '#fff3e0';
+                recordCount.style.color = results.length > 0 ? '#1b5e20' : '#e65100';
+                previewCount.textContent = `${results.length} Student${results.length !== 1 ? 's' : ''}`;
+
+                if (results.length === 0) {
+                    previewTbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:#888;"><i class="fas fa-info-circle" style="font-size:1.4rem; color:#f57c00; margin-bottom:8px; display:block;"></i>No student records found for the selected criteria. Try selecting "All Classes" or clearing date filters.</td></tr>';
+                    return;
                 }
 
-                row.innerHTML = `
-                    <td>${result.student_id}</td>
-                    <td>${result.name}</td>
-                    <td>${result.class}</td>
-                    <td>${result.subject}</td>
-                    <td>${result.score}/${result.total_questions}</td>
-                    <td class="${scoreClass}">${percentage}%</td>
-                    <td>${result.test_date ? result.test_date.substring(0, 10) : 'N/A'}</td>
-                `;
-                resultsBody.appendChild(row);
-            });
+                let html = '';
+                results.forEach((r, idx) => {
+                    const pct = r.percentage ? parseFloat(r.percentage).toFixed(1) : 'N/A';
+                    const clsSec = `${r.class || ''} ${r.section ? '(' + r.section + ')' : ''}`.trim();
+                    const badgeBg = parseFloat(pct) >= 40 ? '#e8f5e9' : '#ffebee';
+                    const badgeColor = parseFloat(pct) >= 40 ? '#2e7d32' : '#c62828';
 
-            resultsContainer.style.display = 'block';
-        }
-
-        // Export to Excel
-        function exportToExcel() {
-            const selectedClass = document.getElementById('classSelect').value;
-            const selectedSubject = document.getElementById('subjectSelect').value;
-            const selectedTest = document.getElementById('testSelect').value;
-            const selectedDate = document.getElementById('dateSelect').value;
-
-            const params = new URLSearchParams({
-                class: selectedClass,
-                subject: selectedSubject,
-                test_no: selectedTest,
-                date: selectedDate
-            });
-
-            // Use existing export endpoint
-            window.location.href = `/admin/export/results?${params.toString().replace(/test_no=/, 'chapter=')}`;
-        }
-
-        // Print PDF
-        function printResults() {
-            window.print();
-        }
-
-        // Reset form
-        function resetForm() {
-            document.getElementById('filterForm').reset();
-            document.getElementById('subjectSelect').disabled = true;
-            document.getElementById('testSelect').disabled = true;
-            document.getElementById('dateSelect').disabled = true;
-            document.getElementById('viewBtn').disabled = true;
-            document.getElementById('exportBtn').disabled = true;
-            document.getElementById('printBtn').disabled = true;
-            document.getElementById('resultsContainer').style.display = 'none';
-            document.getElementById('breadcrumb-container').style.display = 'none';
-            
-            // Reset steps
-            for (let i = 1; i <= 5; i++) {
-                updateStep(['class', 'subject', 'test', 'date', 'results'][i-1], false);
+                    html += `<tr style="border-bottom:1px solid #e2e8f0;">
+                        <td style="padding:10px 12px; font-weight:600; color:#64748b;">${idx + 1}</td>
+                        <td style="padding:10px 12px; font-family:monospace; font-weight:600; color:#1e293b;">${r.student_id || ''}</td>
+                        <td style="padding:10px 12px; font-weight:600; color:#0f172a;">${r.name || ''}</td>
+                        <td style="padding:10px 12px; color:#475569;">${clsSec}</td>
+                        <td style="padding:10px 12px; color:#475569;">${r.subject || ''}</td>
+                        <td style="padding:10px 12px; color:#475569;">${r.test_no || '—'}</td>
+                        <td style="padding:10px 12px; font-weight:600; color:#1d4ed8;">${r.score || 0} / ${r.total_questions || 0}</td>
+                        <td style="padding:10px 12px;"><span style="background:${badgeBg}; color:${badgeColor}; padding:3px 10px; border-radius:12px; font-weight:bold; font-size:0.8rem;">${pct}%</span></td>
+                    </tr>`;
+                });
+                previewTbody.innerHTML = html;
+            } catch(e) {
+                console.error('Preview error:', e);
+                previewTbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#c62828;"><i class="fas fa-exclamation-triangle"></i> Failed to load student preview.</td></tr>';
             }
-            updateStep('class', false);
         }
 
-        // Update step indicator
-        function updateStep(stepName, completed) {
-            const stepMap = {
-                'class': 'step-class',
-                'subject': 'step-subject',
-                'test': 'step-test',
-                'date': 'step-date',
-                'results': 'step-results'
-            };
-
-            const stepElement = document.getElementById(stepMap[stepName]);
-            if (stepElement) {
-                if (completed) {
-                    stepElement.classList.add('completed');
-                    stepElement.classList.remove('active');
-                } else {
-                    stepElement.classList.remove('completed');
-                    stepElement.classList.remove('active');
+        function buildExportUrl(format) {
+            const formData = new FormData(exportForm);
+            const params = new URLSearchParams();
+            for (let [key, value] of formData.entries()) {
+                if (value && value !== 'All' && value !== 'Select Test' && value !== 'All Tests / Latest') {
+                    params.append(key, value);
                 }
             }
+            params.set('format', format);
+            return `/admin/export/results?${params.toString()}`;
         }
 
-        // Update breadcrumb
-        function updateBreadcrumb() {
-            const breadcrumbContainer = document.getElementById('breadcrumb-container');
-            const selectedClass = document.getElementById('classSelect').value;
-            const selectedSubject = document.getElementById('subjectSelect').value;
-            const selectedTest = document.getElementById('testSelect').value;
-            const selectedDate = document.getElementById('dateSelect').value;
+        classSelect.addEventListener('change', () => {
+            loadTestNumbers(classSelect.value, subjectSelect.value);
+            loadPreview();
+        });
+        subjectSelect.addEventListener('change', () => {
+            loadTestNumbers(classSelect.value, subjectSelect.value);
+            loadPreview();
+        });
+        testNoSelect.addEventListener('change', loadPreview);
+        startDate.addEventListener('change', loadPreview);
+        endDate.addEventListener('change', loadPreview);
 
-            let breadcrumb = '';
+        previewBtn.addEventListener('click', loadPreview);
 
-            if (selectedClass) {
-                breadcrumb += `<span class="breadcrumb-item active">${selectedClass}</span>`;
-                if (selectedSubject) {
-                    breadcrumb += '<span class="breadcrumb-separator">→</span>';
-                    breadcrumb += `<span class="breadcrumb-item active">${selectedSubject}</span>`;
-                    if (selectedTest) {
-                        breadcrumb += '<span class="breadcrumb-separator">→</span>';
-                        breadcrumb += `<span class="breadcrumb-item active">${selectedTest}</span>`;
-                        if (selectedDate) {
-                            breadcrumb += '<span class="breadcrumb-separator">→</span>';
-                            breadcrumb += `<span class="breadcrumb-item active">${selectedDate}</span>`;
-                        }
-                    }
-                }
-            }
+        exportExcelBtn.addEventListener('click', () => {
+            const url = buildExportUrl('excel');
+            window.location.href = url;
+        });
 
-            if (breadcrumb) {
-                breadcrumbContainer.innerHTML = breadcrumb;
-                breadcrumbContainer.style.display = 'flex';
-            } else {
-                breadcrumbContainer.style.display = 'none';
-            }
-        }
+        exportPdfBtn.addEventListener('click', () => {
+            const url = buildExportUrl('pdf');
+            window.open(url, '_blank');
+        });
+
+        clearBtn.addEventListener('click', () => {
+            setTimeout(() => {
+                testNoSelect.innerHTML = '<option value="">All Tests / Latest</option>';
+                loadPreview();
+            }, 50);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPreview();
+        });
     </script>
 </body>
 </html>
