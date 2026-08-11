@@ -1,185 +1,639 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<style>
-    * { box-sizing: border-box; }
-    body { font-family: Arial, Helvetica, sans-serif; margin: 15mm; font-size: 10.5pt; color: #000; line-height: 1.5; }
-    .header { text-align: center; border-bottom: 2.5pt double #1b5e20; padding-bottom: 10px; margin-bottom: 14px; }
-    .logo { height: 65px; margin-bottom: 5px; }
-    .school-name { font-size: 17pt; font-weight: bold; color: #1b5e20; }
-    .exam-info { font-size: 10pt; color: #333; margin-top: 4px; }
-    .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; background: #f9fbe7; border: 1pt solid #c8e6c9; }
-    .meta-table td { padding: 5px 12px; font-size: 9.5pt; }
-    .meta-table td strong { color: #1b5e20; }
-    .section-title { background: #1b5e20; color: white; padding: 5px 13px; font-size: 10.5pt; font-weight: bold; margin: 16px 0 9px 0; }
-    .section-instruction { font-size: 9pt; color: #555; font-style: italic; margin-bottom: 9px; }
-    .question-block { margin-bottom: 11px; page-break-inside: avoid; }
-    .q-header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .q-num { font-weight: bold; color: #1b5e20; min-width: 28px; }
-    .q-marks { background: #e8f5e9; color: #1b5e20; padding: 1px 7px; border-radius: 8px; font-size: 8.5pt; font-weight: bold; white-space: nowrap; }
-    .q-text { margin: 3px 0 7px 28px; }
-    .options-list { margin-left: 42px; }
-    .option-item { margin: 2.5px 0; }
-    .answer-lines { margin-left: 28px; }
-    .ans-line { border-bottom: 0.75pt dotted #aaa; height: 18px; margin: 3px 0; }
-    @media print { body { margin: 10mm; } .section-title { -webkit-print-color-adjust: exact; } }
-</style>
+    <title>Advanced Test Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#f5f7fa,#c3cfe2);min-height:100vh;}
+        .header{background:linear-gradient(90deg,#667eea,#764ba2);color:white;padding:15px 28px;display:flex;justify-content:space-between;align-items:center;}
+        .header h1{font-size:1.3rem;}
+        .hbtns{display:flex;gap:8px;}
+        .hbtn{background:rgba(255,255,255,0.2);color:white;padding:7px 16px;border-radius:20px;text-decoration:none;font-size:.85rem;transition:background .2s;}
+        .hbtn:hover{background:rgba(255,255,255,.35);}
+        .container{max-width:960px;margin:22px auto;padding:0 18px;}
+        .card{background:white;border-radius:14px;padding:24px;box-shadow:0 4px 18px rgba(0,0,0,.08);margin-bottom:20px;}
+        .card h3{color:#333;margin-bottom:18px;padding-bottom:8px;border-bottom:2px solid #eee;display:flex;align-items:center;gap:8px;}
+        /* Tabs */
+        .tabs{display:flex;gap:8px;margin-bottom:22px;}
+        .tab{padding:9px 22px;border:none;border-radius:22px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:600;font-size:.88rem;transition:all .3s;background:white;color:#555;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+        .tab.active{background:linear-gradient(135deg,#667eea,#764ba2);color:white;}
+        .tab-content{display:none;} .tab-content.active{display:block;}
+        /* Form */
+        .fg{margin-bottom:13px;}
+        .fg label{display:block;font-weight:500;margin-bottom:5px;color:#333;font-size:.85rem;}
+        .fg label i{color:#667eea;margin-right:4px;}
+        .fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.9rem;transition:border-color .25s;}
+        .fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.1);}
+        .fg textarea{min-height:75px;resize:vertical;}
+        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;}
+        /* Question type grid */
+        .qt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin:14px 0;}
+        .qt-card{background:#f8f9fa;border:2px solid #e0e0e0;border-radius:11px;padding:13px;text-align:center;transition:all .25s;}
+        .qt-card.active{border-color:#667eea;background:#f0f0ff;}
+        .qt-card i{font-size:1.5rem;color:#667eea;display:block;margin-bottom:5px;}
+        .qt-card .ql{font-weight:600;font-size:.8rem;color:#333;margin-bottom:7px;}
+        .qt-card input[type=number]{width:68px;padding:5px;border:2px solid #e0e0e0;border-radius:6px;text-align:center;font-family:'Poppins',sans-serif;}
+        .qt-card input:focus{outline:none;border-color:#667eea;}
+        .total-badge{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:4px 14px;border-radius:18px;font-weight:600;font-size:.88rem;display:inline-block;}
+        /* Output mode */
+        .mode-row{display:flex;gap:12px;margin:14px 0;}
+        .mode-btn{flex:1;padding:13px;border:2px solid #e0e0e0;border-radius:11px;cursor:pointer;text-align:center;transition:all .25s;background:white;}
+        .mode-btn.selected{border-color:#667eea;background:#f0f0ff;}
+        .mode-btn i{font-size:1.6rem;color:#667eea;display:block;margin-bottom:5px;}
+        .mode-btn .ml{font-weight:600;font-size:.86rem;color:#333;}
+        .mode-btn .ms{font-size:.74rem;color:#666;margin-top:2px;}
+        /* Remark box */
+        .remark-box{background:#f3f0ff;border:2px dashed #667eea55;border-radius:11px;padding:16px;}
+        .remark-box .rl{font-weight:600;color:#667eea;margin-bottom:7px;font-size:.88rem;display:flex;align-items:center;gap:6px;}
+        .remark-box textarea{background:transparent;border:none;width:100%;font-family:'Poppins',sans-serif;font-size:.88rem;resize:vertical;min-height:65px;}
+        .remark-box textarea:focus{outline:none;}
+        /* Buttons */
+        .gen-btn{width:100%;padding:13px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:9px;font-size:.95rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:transform .2s;margin-top:16px;}
+        .gen-btn:hover{transform:translateY(-2px);}
+        .gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+        /* Upload zone */
+        .upload-zone{border:2px dashed #667eea;border-radius:11px;padding:28px;text-align:center;background:#f8f9ff;cursor:pointer;transition:all .25s;}
+        .upload-zone:hover{background:#f0f0ff;}
+        .upload-zone i{font-size:2.2rem;color:#667eea;display:block;margin-bottom:7px;}
+        /* Alert/loading */
+        .alert{padding:11px 15px;border-radius:8px;margin-bottom:14px;display:none;}
+        .alert-success{background:#d4edda;border-left:4px solid #28a745;color:#155724;}
+        .alert-error{background:#f8d7da;border-left:4px solid #dc3545;color:#721c24;}
+        .loading{display:none;text-align:center;padding:18px;}
+        .loading i{font-size:2.2rem;color:#667eea;animation:spin 1s linear infinite;}
+        @keyframes spin{100%{transform:rotate(360deg)}}
+        /* Duplicate warning */
+        .dup-warn{background:#fff3cd;border-left:4px solid #ffc107;color:#856404;padding:9px 13px;border-radius:8px;margin-top:6px;font-size:.83rem;display:none;}
+    </style>
 </head>
 <body>
-
 <div class="header">
-    {% if logo_base64 %}<img src="{{ logo_base64 }}" class="logo" alt="">{% endif %}
-    <div class="school-name">{{ school_name }}</div>
-    <div class="exam-info">Question Paper &nbsp;|&nbsp; {{ date }}</div>
-</div>
-
-<table class="meta-table">
-    <tr>
-        <td><strong>Class:</strong> {{ class_name }}</td>
-        <td><strong>Subject:</strong> {{ subject }}</td>
-        <td><strong>Chapter/Topic:</strong> {{ chapter }}</td>
-        <td><strong>Test No:</strong> {{ test_no }}</td>
-    </tr>
-    <tr>
-        <td><strong>Total Questions:</strong> {{ questions | length }}</td>
-        <td><strong>Total Marks:</strong> {{ total_marks }}</td>
-        <td><strong>Date:</strong> {{ date }}</td>
-        <td><strong>Time:</strong> ______ Min</td>
-    </tr>
-</table>
-
-{# ─── SECTION A : MCQ ─────────────────────────────────── #}
-{% set mcq_qs = questions | selectattr('question_type', 'equalto', 'MCQ') | list %}
-{% if not mcq_qs %}
-  {% set mcq_qs = questions | selectattr('question_type', 'undefined') | list %}
-  {% if not mcq_qs %}
-    {% set mcq_qs = questions | rejectattr('question_type', 'in', ['Assertion-Reason','Very Short','Short','Long','Case Study']) | list %}
-  {% endif %}
-{% endif %}
-
-{% if mcq_qs %}
-<div class="section-title">Section A &nbsp;—&nbsp; Multiple Choice Questions &nbsp;<span style="font-weight:normal;font-size:9pt;">[1 mark each]</span></div>
-{% for q in mcq_qs %}
-<div class="question-block">
-    <div class="q-header">
-        <span class="q-num">Q{{ loop.index }}.</span>
-        <span class="q-marks">1 M</span>
-    </div>
-    <div class="q-text">{{ q.question }}</div>
-    {% if q.get('image_path') %}
-    <div style="margin-left:28px;margin-bottom:6px;">
-        <img src="{{ url_for('static', filename=q.image_path, _external=True) }}" style="max-height:120px;border-radius:4px;">
-    </div>
-    {% endif %}
-    <div class="options-list">
-        {% if q.option_a %}<div class="option-item">(a)&nbsp; {{ q.option_a }}</div>{% endif %}
-        {% if q.option_b %}<div class="option-item">(b)&nbsp; {{ q.option_b }}</div>{% endif %}
-        {% if q.option_c %}<div class="option-item">(c)&nbsp; {{ q.option_c }}</div>{% endif %}
-        {% if q.option_d %}<div class="option-item">(d)&nbsp; {{ q.option_d }}</div>{% endif %}
+    <h1><i class="fas fa-magic"></i> Advanced Test Generator</h1>
+    <div class="hbtns">
+        <a href="/teacher/test_history" class="hbtn"><i class="fas fa-history"></i> History</a>
+        <a href="/teacher/dashboard"    class="hbtn"><i class="fas fa-arrow-left"></i> Dashboard</a>
     </div>
 </div>
-{% endfor %}
-{% endif %}
 
-{# ─── SECTION B : ASSERTION-REASON ────────────────────── #}
-{% set ar_qs = questions | selectattr('question_type', 'equalto', 'Assertion-Reason') | list %}
-{% if ar_qs %}
-<div class="section-title">Section B &nbsp;—&nbsp; Assertion-Reason &nbsp;<span style="font-weight:normal;font-size:9pt;">[1 mark each]</span></div>
-<div class="section-instruction">Directions: Read both statements. Select the correct option from (a)–(d).</div>
-{% for q in ar_qs %}
-<div class="question-block">
-    <div class="q-header">
-        <span class="q-num">Q{{ loop.index }}.</span>
-        <span class="q-marks">1 M</span>
-    </div>
-    <div class="q-text">{{ q.question }}</div>
-    <div class="options-list">
-        {% if q.option_a %}<div class="option-item">(a)&nbsp; {{ q.option_a }}</div>{% endif %}
-        {% if q.option_b %}<div class="option-item">(b)&nbsp; {{ q.option_b }}</div>{% endif %}
-        {% if q.option_c %}<div class="option-item">(c)&nbsp; {{ q.option_c }}</div>{% endif %}
-        {% if q.option_d %}<div class="option-item">(d)&nbsp; {{ q.option_d }}</div>{% endif %}
-    </div>
-</div>
-{% endfor %}
-{% endif %}
-
-{# ─── SECTION C : VERY SHORT ───────────────────────────── #}
-{% set vs_qs = questions | selectattr('question_type', 'equalto', 'Very Short') | list %}
-{% if vs_qs %}
-<div class="section-title">Section C &nbsp;—&nbsp; Very Short Answer &nbsp;<span style="font-weight:normal;font-size:9pt;">[1 mark each]</span></div>
-{% for q in vs_qs %}
-<div class="question-block">
-    <div class="q-header">
-        <span class="q-num">Q{{ loop.index }}.</span>
-        <span class="q-marks">1 M</span>
-    </div>
-    <div class="q-text">{{ q.question }}</div>
-    <div class="answer-lines">
-        <div class="ans-line"></div>
-        <div class="ans-line"></div>
-    </div>
-</div>
-{% endfor %}
-{% endif %}
-
-{# ─── SECTION D : SHORT ANSWER ─────────────────────────── #}
-{% set sh_qs = questions | selectattr('question_type', 'equalto', 'Short') | list %}
-{% if sh_qs %}
-<div class="section-title">Section D &nbsp;—&nbsp; Short Answer &nbsp;<span style="font-weight:normal;font-size:9pt;">[3 marks each]</span></div>
-{% for q in sh_qs %}
-<div class="question-block">
-    <div class="q-header">
-        <span class="q-num">Q{{ loop.index }}.</span>
-        <span class="q-marks">3 M</span>
-    </div>
-    <div class="q-text">{{ q.question }}</div>
-    <div class="answer-lines">
-        {% for i in range(5) %}<div class="ans-line"></div>{% endfor %}
-    </div>
-</div>
-{% endfor %}
-{% endif %}
-
-{# ─── SECTION E : LONG ANSWER ──────────────────────────── #}
-{% set lg_qs = questions | selectattr('question_type', 'equalto', 'Long') | list %}
-{% if lg_qs %}
-<div class="section-title">Section E &nbsp;—&nbsp; Long Answer &nbsp;<span style="font-weight:normal;font-size:9pt;">[5 marks each]</span></div>
-{% for q in lg_qs %}
-<div class="question-block">
-    <div class="q-header">
-        <span class="q-num">Q{{ loop.index }}.</span>
-        <span class="q-marks">5 M</span>
-    </div>
-    <div class="q-text">{{ q.question }}</div>
-    <div class="answer-lines">
-        {% for i in range(8) %}<div class="ans-line"></div>{% endfor %}
-    </div>
-</div>
-{% endfor %}
-{% endif %}
-
-{# ─── SECTION F : CASE STUDY ───────────────────────────── #}
-{% set cs_qs = questions | selectattr('question_type', 'equalto', 'Case Study') | list %}
-{% if cs_qs %}
-<div class="section-title">Section F &nbsp;—&nbsp; Case Study &nbsp;<span style="font-weight:normal;font-size:9pt;">[4 marks each]</span></div>
-{% for q in cs_qs %}
-<div class="question-block">
-    <div class="q-header">
-        <span class="q-num">Q{{ loop.index }}.</span>
-        <span class="q-marks">4 M</span>
-    </div>
-    <div class="q-text">{{ q.question }}</div>
-    <div class="answer-lines">
-        {% for i in range(7) %}<div class="ans-line"></div>{% endfor %}
+<div class="container">
+    <div id="alertBox" class="alert"></div>
+    <div id="loadingBox" class="loading">
+        <i class="fas fa-spinner"></i>
+        <p style="margin-top:10px;color:#667eea;font-weight:600;">Gemini AI is generating questions…</p>
     </div>
 
-<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
-</footer>
-</div>
-{% endfor %}
-{% endif %}
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('ai',this)">
+            <i class="fas fa-robot"></i> AI Generate
+        </button>
+        <button class="tab" onclick="switchTab('multi',this)">
+            <i class="fas fa-layer-group"></i> Multi-Subject
+        </button>
+        <button class="tab" onclick="switchTab('existing',this)">
+            <i class="fas fa-search"></i> Use Existing Test
+        </button>
+        <button class="tab" onclick="switchTab('upload',this)">
+            <i class="fas fa-upload"></i> Upload CSV
+        </button>
+    </div>
 
+    <!-- ── AI TAB ──────────────────────────────────────── -->
+    <div id="ai-tab" class="tab-content active">
+        <div class="card">
+            <h3><i class="fas fa-cog" style="color:#667eea"></i> Test Configuration</h3>
+            <form id="aiForm" onsubmit="generateAI(event)">
+
+                <div class="form-grid">
+                    <!-- Class: only assigned classes (#3) -->
+                    <div class="fg">
+                        <label><i class="fas fa-graduation-cap"></i> Class *</label>
+                        <select name="class" id="classSelect" required onchange="updateSubjects(this.value); checkDuplicate();">
+                            <option value="">Select Class</option>
+                            {% for cls in class_subject_map.keys() | sort %}
+                            <option value="{{ cls }}">Class {{ cls }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Subject: filtered by class (#2 #3) -->
+                    <div class="fg">
+                        <label><i class="fas fa-book"></i> Subject *</label>
+                        <select name="subject" id="subjectSelect" required onchange="checkDuplicate()">
+                            <option value="">Select Subject</option>
+                        </select>
+                    </div>
+
+                    <div class="fg">
+                        <label><i class="fas fa-bookmark"></i> Chapter / Topic *</label>
+                        <input type="text" name="chapter" required placeholder="e.g. Thermodynamics">
+                    </div>
+
+                    <div class="fg">
+                        <label><i class="fas fa-hashtag"></i> Test Number *</label>
+                        <input type="text" name="test_no" id="testNoInput" required
+                               placeholder="e.g. Test01" onblur="checkDuplicate()">
+                        <div id="dupWarn" class="dup-warn">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span id="dupMsg"></span>
+                        </div>
+                    </div>
+
+                    <div class="fg">
+                        <label><i class="fas fa-layer-group"></i> Section</label>
+                        <select name="section" id="sectionSelect">
+                            <option value="">All / Default</option>
+                            {% for a in assignments %}
+                            {% if a.section %}
+                            <option value="{{ a.section }}">{{ a.section }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Question types -->
+                <div style="margin-top:4px;">
+                    <label style="font-weight:600;color:#333;font-size:.88rem;display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                        <i class="fas fa-list-ol" style="color:#667eea"></i>
+                        Question Types &amp; Quantities
+                        <span class="total-badge" id="totalBadge">Total: 0</span>
+                    </label>
+                    <div class="qt-grid">
+                        <div class="qt-card" id="card-mcq">
+                            <i class="fas fa-check-circle"></i>
+                            <div class="ql">MCQ</div>
+                            <input type="number" name="mcq_count" min="0" max="50" value="0" onchange="updateTotal()">
+                        </div>
+                        <div class="qt-card" id="card-ar">
+                            <i class="fas fa-balance-scale"></i>
+                            <div class="ql">Assertion-Reason</div>
+                            <input type="number" name="assertion_count" min="0" max="20" value="0" onchange="updateTotal()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Output mode -->
+                <div>
+                    <label style="font-weight:600;color:#333;font-size:.88rem;margin-bottom:7px;display:block;">
+                        <i class="fas fa-share-square" style="color:#667eea"></i> Output Mode
+                    </label>
+                    <div class="mode-row">
+                        <div class="mode-btn selected" id="mode-cbt">
+                            <i class="fas fa-desktop"></i>
+                            <div class="ml">CBT Online Exam</div>
+                            <div class="ms">Push MCQs to exam module</div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="output_mode" id="outputMode" value="cbt">
+                </div>
+
+                <!-- Remark box -->
+                <div class="remark-box" style="margin-top:14px;">
+                    <div class="rl"><i class="fas fa-lightbulb"></i> Teacher Instructions (Remark Box)</div>
+                    <textarea name="remark" placeholder="e.g. Focus on Thermodynamics Laws&#10;Include HOTS questions&#10;Use balanced difficulty&#10;Mix easy and hard questions"></textarea>
+                </div>
+
+                <button type="submit" class="gen-btn" id="genBtn">
+                    <i class="fas fa-magic"></i> Generate with Gemini AI
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── UPLOAD TAB ──────────────────────────────────── -->
+    <div id="upload-tab" class="tab-content">
+        <div class="card">
+            <h3><i class="fas fa-upload" style="color:#667eea"></i> Upload CSV Question Paper</h3>
+            <form id="uploadForm" onsubmit="uploadCSV(event)">
+                <div class="form-grid">
+                    <div class="fg">
+                        <label><i class="fas fa-graduation-cap"></i> Class *</label>
+                        <select name="class" id="uploadClassSel" required onchange="updateUploadSubjects(this.value)">
+                            <option value="">Select Class</option>
+                            {% for cls in class_subject_map.keys() | sort %}
+                            <option value="{{ cls }}">Class {{ cls }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-book"></i> Subject *</label>
+                        <select name="subject" id="uploadSubjectSel" required>
+                            <option value="">Select Subject</option>
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-bookmark"></i> Chapter</label>
+                        <input type="text" name="chapter" placeholder="Chapter name">
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-hashtag"></i> Test Number</label>
+                        <input type="text" name="test_no" placeholder="e.g. Test01">
+                    </div>
+                </div>
+                <a href="/api/csv_template" download style="background:#e8f5e9;color:#1b5e20;border:1px solid #c8e6c9;padding:7px 16px;border-radius:20px;text-decoration:none;font-size:.82rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
+                        <i class="fas fa-download"></i> Download CSV Template
+                    </a>
+                    <div class="upload-zone" onclick="document.getElementById('csvFile').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p id="csvFileName">Click to select CSV file</p>
+                    <small style="color:#888;">Columns: question, question_type, option_a, option_b, option_c, option_d, correct_answer</small>
+                </div>
+                <input type="file" id="csvFile" name="csv_file" accept=".csv" style="display:none"
+                       onchange="document.getElementById('csvFileName').textContent=this.files[0]?.name||'Click to select'">
+                <button type="submit" class="gen-btn" style="margin-top:14px;">
+                    <i class="fas fa-upload"></i> Upload Questions
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── FEAT-006: MULTI-SUBJECT TAB ─────────────────────── -->
+    <div id="multi-tab" class="tab-content">
+        <div class="card">
+            <h3><i class="fas fa-layer-group" style="color:#667eea"></i> Multi-Subject Test Generator</h3>
+            <p style="color:#666;font-size:.88rem;margin-bottom:18px;">
+                Create a single test paper that spans multiple subjects. Set the number of questions per subject — Gemini AI generates all sections and merges them into one test.
+            </p>
+            <div class="form-grid" style="margin-bottom:16px;">
+                <div class="fg">
+                    <label><i class="fas fa-graduation-cap"></i> Class *</label>
+                    <select id="multiClass" required onchange="updateMultiClass(this.value)">
+                        <option value="">Select Class</option>
+                        {% for cls in class_subject_map.keys() | sort %}
+                        <option value="{{ cls }}">Class {{ cls }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="fg">
+                    <label><i class="fas fa-hashtag"></i> Test Number *</label>
+                    <input type="text" id="multiTestNo" placeholder="e.g. Combined_Test01" required>
+                </div>
+                <div class="fg">
+                    <label><i class="fas fa-bookmark"></i> Exam Title / Chapter</label>
+                    <input type="text" id="multiChapter" placeholder="e.g. Monthly Assessment">
+                </div>
+            </div>
+
+            <div style="background:#f0f0ff;border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <strong style="font-size:.88rem;color:#333;"><i class="fas fa-plus-circle" style="color:#667eea"></i> Subjects</strong>
+                    <button type="button" onclick="addSubjectRow()"
+                            style="background:#667eea;color:#fff;border:none;padding:6px 14px;border-radius:20px;cursor:pointer;font-size:.8rem;font-weight:600;">
+                        + Add Subject
+                    </button>
+                </div>
+                <div id="multiSubjectRows">
+                    <!-- Rows injected by JS -->
+                </div>
+                <div style="margin-top:8px;font-size:.8rem;color:#888;">
+                    Total Questions: <strong id="multiTotal" style="color:#667eea;">0</strong>
+                </div>
+            </div>
+
+            <div class="remark-box" style="margin-bottom:14px;">
+                <div class="rl"><i class="fas fa-lightbulb"></i> Remarks / Instructions</div>
+                <textarea id="multiRemark" placeholder="e.g. Equal difficulty across all subjects. 30% HOTS questions."></textarea>
+            </div>
+
+            <button class="gen-btn" onclick="generateMultiSubject()">
+                <i class="fas fa-magic"></i> Generate Multi-Subject Test
+            </button>
+        </div>
+    </div>
+
+    <!-- ── FEAT-008: EXISTING TEST TAB ──────────────────────── -->
+    <div id="existing-tab" class="tab-content">
+        <div class="card">
+            <h3><i class="fas fa-search" style="color:#667eea"></i> Select & Assign Existing Test</h3>
+            <p style="color:#666;font-size:.88rem;margin-bottom:18px;">
+                Browse tests already created by any teacher for this class/subject. Assign them directly — no duplicate questions created.
+            </p>
+            <div class="form-grid" style="margin-bottom:16px;">
+                <div class="fg">
+                    <label><i class="fas fa-graduation-cap"></i> Class *</label>
+                    <select id="existingClass" onchange="loadSharedTests()">
+                        <option value="">Select Class</option>
+                        {% for cls in class_subject_map.keys() | sort %}
+                        <option value="{{ cls }}">Class {{ cls }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="fg">
+                    <label><i class="fas fa-book"></i> Subject *</label>
+                    <select id="existingSubject" onchange="loadSharedTests()">
+                        <option value="">Select Subject</option>
+                    </select>
+                </div>
+                <div class="fg">
+                    <label><i class="fas fa-layer-group"></i> Assign to Section</label>
+                    <input type="text" id="assignSection" placeholder="e.g. A, B (optional)">
+                </div>
+            </div>
+
+            <div id="sharedTestsContainer">
+                <div style="text-align:center;padding:30px;color:#bbb;font-size:.88rem;">
+                    <i class="fas fa-search" style="font-size:2rem;display:block;margin-bottom:10px;"></i>
+                    Select a class and subject to browse available tests
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /.container -->
+
+<script>
+// Class → Subject mapping (Features #2 & #3)
+const csMap = {{ class_subject_map | tojson | safe }};
+
+// ── FEAT-006: Multi-subject helpers ──────────────────────────────────
+let multiSubjectCount = 0;
+function updateMultiClass(cls) {
+    document.getElementById('multiSubjectRows').innerHTML = '';
+    multiSubjectCount = 0;
+    updateMultiTotal();
+    if (cls) addSubjectRow();
+}
+function addSubjectRow() {
+    const cls  = document.getElementById('multiClass').value;
+    const subs = csMap[cls] || [];
+    if (!subs.length) { alert('Select a class first.'); return; }
+    multiSubjectCount++;
+    const id  = 'msr-' + multiSubjectCount;
+    const row = document.createElement('div');
+    row.id    = id;
+    row.style.cssText = 'display:grid;grid-template-columns:1fr 120px 36px;gap:8px;align-items:center;margin-bottom:8px;';
+    row.innerHTML = `
+        <select style="padding:8px 10px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.88rem;">
+            <option value="">Select Subject</option>
+            ${subs.map(s=>`<option value="${s}">${s}</option>`).join('')}
+        </select>
+        <input type="number" min="1" max="50" value="10" placeholder="Questions"
+               style="padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;text-align:center;"
+               oninput="updateMultiTotal()">
+        <button type="button" onclick="document.getElementById('${id}').remove();updateMultiTotal();"
+                style="background:#fde;color:#dc3545;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:1rem;">×</button>`;
+    document.getElementById('multiSubjectRows').appendChild(row);
+    updateMultiTotal();
+}
+function updateMultiTotal() {
+    let total = 0;
+    document.querySelectorAll('#multiSubjectRows input[type=number]').forEach(i => total += parseInt(i.value)||0);
+    document.getElementById('multiTotal').textContent = total;
+}
+
+async function generateMultiSubject() {
+    const cls    = document.getElementById('multiClass').value;
+    const testNo = document.getElementById('multiTestNo').value.trim();
+    const chapter = document.getElementById('multiChapter').value.trim();
+    const remark = document.getElementById('multiRemark').value.trim();
+    const rows   = document.querySelectorAll('#multiSubjectRows > div');
+    if (!cls || !testNo || !rows.length) {
+        showAlert('Fill in Class, Test Number, and add at least one subject.', 'error');
+        return;
+    }
+
+    const subjects = [];
+    for (const row of rows) {
+        const subj = row.querySelector('select').value;
+        const cnt  = parseInt(row.querySelector('input').value) || 0;
+        if (subj && cnt > 0) subjects.push({subject: subj, count: cnt});
+    }
+    if (!subjects.length) { showAlert('Add at least one subject with question count.', 'error'); return; }
+
+    document.getElementById('loadingBox').style.display = 'block';
+    document.getElementById('alertBox').style.display   = 'none';
+
+    try {
+        const fd = new FormData();
+        fd.append('class',        cls);
+        fd.append('section',      '');
+        fd.append('test_no',      testNo);
+        fd.append('title',        chapter || testNo);
+        fd.append('remark',       remark);
+        fd.append('subjects_json', JSON.stringify(subjects));
+
+        const res  = await fetch('/api/generate_combined_test', {method:'POST', body:fd});
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            showAlert(data.message, 'success');
+            document.getElementById('multiSubjectRows').innerHTML = '';
+            document.getElementById('multiTestNo').value  = '';
+            document.getElementById('multiChapter').value = '';
+            document.getElementById('multiRemark').value  = '';
+            updateMultiTotal();
+        } else {
+            showAlert(data.message || 'Generation failed', 'error');
+        }
+    } catch(e) {
+        showAlert('Error: ' + e.message, 'error');
+    } finally {
+        document.getElementById('loadingBox').style.display = 'none';
+    }
+}
+
+// ── FEAT-008: Shared test pool ────────────────────────────────────────
+function updateExistingSubjects(cls) {
+    const subs = csMap[cls] || [];
+    const sel  = document.getElementById('existingSubject');
+    sel.innerHTML = '<option value="">Select Subject</option>';
+    subs.forEach(s => { const o=document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o); });
+}
+document.getElementById('existingClass').addEventListener('change', function() {
+    updateExistingSubjects(this.value);
+    document.getElementById('sharedTestsContainer').innerHTML = '';
+});
+
+async function loadSharedTests() {
+    const cls  = document.getElementById('existingClass').value;
+    const subj = document.getElementById('existingSubject').value;
+    if (!cls || !subj) return;
+    const container = document.getElementById('sharedTestsContainer');
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:#999;"><i class="fas fa-spinner fa-spin"></i> Loading…</div>';
+    try {
+        const res  = await fetch(`/api/shared_tests?class=${encodeURIComponent(cls)}&subject=${encodeURIComponent(subj)}`);
+        const data = await res.json();
+        if (!data.tests.length) {
+            container.innerHTML = '<div style="text-align:center;padding:30px;color:#bbb;font-size:.88rem;">No existing tests found for this class/subject.</div>';
+            return;
+        }
+        container.innerHTML = `<div style="display:grid;gap:10px;">` + data.tests.map(t => `
+            <div style="background:#f9f9f9;border:1.5px solid #e0e0e0;border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div>
+                    <div style="font-weight:700;font-size:.92rem;color:#333;">${t.filename}</div>
+                    <div style="font-size:.78rem;color:#888;margin-top:3px;">
+                        <i class="fas fa-question-circle"></i> ${t.question_count} questions
+                        &nbsp;·&nbsp; <i class="fas fa-user"></i> ${t.creator_name}
+                        &nbsp;·&nbsp; <i class="fas fa-calendar"></i> ${(t.created_at||'').slice(0,10)}
+                        ${t.is_active ? '&nbsp;·&nbsp;<span style="background:#d4edda;color:#155724;padding:1px 8px;border-radius:10px;font-size:.74rem;">Active</span>' : ''}
+                    </div>
+                </div>
+                <button onclick="assignExistingTest(${t.id},'${t.filename.replace(/'/g,'\\\'')}')"
+                        style="background:#667eea;color:#fff;border:none;padding:8px 18px;border-radius:20px;cursor:pointer;font-size:.82rem;font-weight:600;white-space:nowrap;">
+                    <i class="fas fa-link"></i> Assign
+                </button>
+            </div>`).join('') + '</div>';
+    } catch(e) {
+        container.innerHTML = '<div style="color:#dc3545;padding:20px;">Failed to load tests.</div>';
+    }
+}
+
+async function assignExistingTest(paperId, name) {
+    const section = document.getElementById('assignSection').value.trim();
+    const fd = new FormData();
+    fd.append('paper_id', paperId);
+    fd.append('section', section);
+    const res  = await fetch('/api/assign_existing_test', {method:'POST', body:fd});
+    const data = await res.json();
+    showAlert(data.message, data.status === 'success' ? 'success' : 'error');
+}
+
+</script>
+<script>
+// Original scripts follow — class/subject map and tab switching
+
+function updateSubjects(cls) {
+    const subs = csMap[cls] || [];
+    const sel  = document.getElementById('subjectSelect');
+    sel.innerHTML = '<option value="">Select Subject</option>';
+    subs.forEach(s => {
+        const o = document.createElement('option');
+        o.value = s; o.textContent = s;
+        sel.appendChild(o);
+    });
+    if (subs.length === 1) sel.value = subs[0];
+}
+
+function updateUploadSubjects(cls) {
+    const subs = csMap[cls] || [];
+    const sel  = document.getElementById('uploadSubjectSel');
+    sel.innerHTML = '<option value="">Select Subject</option>';
+    subs.forEach(s => {
+        const o = document.createElement('option');
+        o.value = s; o.textContent = s;
+        sel.appendChild(o);
+    });
+    if (subs.length === 1) sel.value = subs[0];
+}
+
+// Feature #5 — Duplicate test_no warning
+let dupTimer = null;
+async function checkDuplicate() {
+    clearTimeout(dupTimer);
+    dupTimer = setTimeout(async () => {
+        const cls     = document.getElementById('classSelect').value;
+        const subject = document.getElementById('subjectSelect').value;
+        const testNo  = document.getElementById('testNoInput').value.trim();
+        const warn    = document.getElementById('dupWarn');
+        const msg     = document.getElementById('dupMsg');
+        if (!cls || !subject || !testNo) { warn.style.display='none'; return; }
+        try {
+            const res  = await fetch(`/api/check_test_no?class=${encodeURIComponent(cls)}&subject=${encodeURIComponent(subject)}&test_no=${encodeURIComponent(testNo)}`);
+            const data = await res.json();
+            if (data.exists) {
+                const details = data.details.map(d =>
+                    `Section ${d.section||'—'} (by ${d.teacher_name||'Admin'} on ${(d.created_at||'').slice(0,10)})`
+                ).join('; ');
+                msg.textContent = `⚠ Test No "${testNo}" already exists for ${subject}: ${details}. Consider using a different number.`;
+                warn.style.display = 'block';
+            } else {
+                warn.style.display = 'none';
+            }
+        } catch(e) { warn.style.display='none'; }
+    }, 600);
+}
+
+// Output mode toggle
+function selectMode(m) {
+    document.getElementById('outputMode').value = m;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('mode-'+m).classList.add('selected');
+}
+
+// Total questions counter
+function updateTotal() {
+    const inputs = document.querySelectorAll('.qt-card input[type=number]');
+    let total = 0;
+    inputs.forEach(inp => {
+        const v = parseInt(inp.value)||0;
+        total += v;
+        inp.closest('.qt-card').classList.toggle('active', v > 0);
+    });
+    document.getElementById('totalBadge').textContent = 'Total: ' + total;
+}
+
+function switchTab(tab, btn) {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(tab+'-tab').classList.add('active');
+}
+
+function showAlert(msg, type) {
+    const box = document.getElementById('alertBox');
+    box.className = 'alert alert-'+type;
+    box.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}"></i> ${msg}`;
+    box.style.display = 'block';
+    window.scrollTo(0,0);
+    setTimeout(() => box.style.display='none', 8000);
+}
+
+// Feature #6 — AI generate with print_preview redirect
+async function generateAI(e) {
+    e.preventDefault();
+    const total = parseInt(document.getElementById('totalBadge').textContent.replace('Total: ',''));
+    if (total === 0) { showAlert('Please enter at least 1 question quantity', 'error'); return; }
+
+    const form     = e.target;
+    const formData = new FormData(form);
+    formData.append('method','ai');
+
+    document.getElementById('loadingBox').style.display = 'block';
+    document.getElementById('genBtn').disabled = true;
+
+    try {
+        const res  = await fetch('/teacher/create_test_v2', {method:'POST', body:formData});
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            if (data.mode === 'print' && data.preview_url) {
+                // Feature #6: open print preview in new tab
+                showAlert(data.message + ' — Opening print preview…', 'success');
+                setTimeout(() => window.open(data.preview_url, '_blank'), 600);
+            } else {
+                showAlert(data.message, 'success');
+                form.reset();
+                updateTotal();
+                document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));
+                document.getElementById('mode-cbt').classList.add('selected');
+                document.getElementById('outputMode').value='cbt';
+            }
+        } else {
+            showAlert(data.message || 'Generation failed', 'error');
+        }
+    } catch(err) { showAlert('Error: '+err.message, 'error'); }
+
+    document.getElementById('loadingBox').style.display = 'none';
+    document.getElementById('genBtn').disabled = false;
+}
+
+async function uploadCSV(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    formData.append('method','upload');
+    try {
+        const res  = await fetch('/teacher/create_test_v2', {method:'POST', body:formData});
+        const data = await res.json();
+        showAlert(data.message, data.status);
+        if (data.status==='success') {
+            e.target.reset();
+            document.getElementById('csvFileName').textContent='Click to select CSV file';
+        }
+    } catch(err) { showAlert('Error: '+err.message, 'error'); }
+}
+</script>
 </body>
 </html>
