@@ -7,78 +7,321 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#f5f7fa,#e8f5e9);min-height:100vh;}
-        .header{background:linear-gradient(90deg,#1b5e20,#2e7d32);color:white;padding:15px 28px;display:flex;justify-content:space-between;align-items:center;}
-        .header h1{font-size:1.3rem;}
-        .hbtns{display:flex;gap:8px;}
-        .hbtn{background:rgba(255,255,255,.2);color:white;padding:7px 16px;border-radius:20px;text-decoration:none;font-size:.85rem;}
-        .hbtn:hover{background:rgba(255,255,255,.35);}
+        body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
+        
+        /* ─── TOP BAR ────────────────────────────────────────────────────── */
+        .topbar{
+            background:linear-gradient(90deg,#1a237e,#3949ab);
+            color:#fff;
+            padding:14px 28px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:10px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+            position:sticky;
+            top:0;
+            z-index:100;
+        }
+        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
+        .topbar h1 i{color:#667eea;}
+        .topbar a{
+            color:#fff;
+            text-decoration:none;
+            background:rgba(255,255,255,0.15);
+            padding:8px 20px;
+            border-radius:25px;
+            font-size:0.85rem;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            border:1px solid rgba(255,255,255,0.1);
+        }
+        .topbar a:hover{
+            background:rgba(255,255,255,0.25);
+            transform:translateY(-2px);
+        }
+        
         .container{max-width:960px;margin:22px auto;padding:0 18px;}
-        .card{background:white;border-radius:14px;padding:24px;box-shadow:0 4px 18px rgba(0,0,0,.08);margin-bottom:20px;}
-        .card h3{color:#333;margin-bottom:18px;padding-bottom:8px;border-bottom:2px solid #eee;display:flex;align-items:center;gap:8px;}
-        /* Admin filter banner */
-        .admin-banner{background:linear-gradient(135deg,#e8f5e9,#f9fbe7);border:1.5px solid #c8e6c9;border-radius:11px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px;}
-        .admin-banner i{font-size:1.6rem;color:#2e7d32;}
-        .admin-banner p{font-size:.88rem;color:#1b5e20;}
-        .admin-banner strong{font-size:.95rem;}
-        /* Tabs */
+        
+        /* ─── CARDS ────────────────────────────────────────────────────── */
+        .card{
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            border-radius:16px;
+            padding:24px 26px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.06);
+            border:1px solid rgba(26,35,126,0.08);
+            margin-bottom:20px;
+            transition:0.3s;
+        }
+        .card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+        .card-header{
+            color:#1a237e;
+            font-size:1.05rem;
+            font-weight:600;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            border-bottom:2px dashed #e8eaf6;
+            padding-bottom:10px;
+            margin-bottom:16px;
+        }
+        .card-header i{color:#3949ab;}
+        
+        /* ─── ADMIN BANNER ────────────────────────────────────────────── */
+        .admin-banner{
+            background:linear-gradient(135deg,#e8eaf6,#f3f0ff);
+            border:1.5px solid #c5cae9;
+            border-radius:12px;
+            padding:14px 20px;
+            margin-bottom:18px;
+            display:flex;
+            align-items:center;
+            gap:14px;
+        }
+        .admin-banner i{font-size:1.6rem;color:#3949ab;}
+        .admin-banner p{font-size:.88rem;color:#1a237e;margin:0;}
+        .admin-banner strong{font-size:.95rem;color:#1a237e;}
+        
+        /* ─── TABS ────────────────────────────────────────────────────── */
         .tabs{display:flex;gap:8px;margin-bottom:22px;}
-        .tab{padding:9px 22px;border:none;border-radius:22px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:600;font-size:.88rem;transition:all .3s;background:white;color:#555;box-shadow:0 2px 8px rgba(0,0,0,.08);}
-        .tab.active{background:linear-gradient(135deg,#1b5e20,#2e7d32);color:white;}
+        .tab{
+            padding:9px 22px;
+            border:none;
+            border-radius:22px;
+            cursor:pointer;
+            font-family:'Poppins',sans-serif;
+            font-weight:600;
+            font-size:.88rem;
+            transition:all .3s;
+            background:white;
+            color:#555;
+            box-shadow:0 2px 8px rgba(0,0,0,.06);
+        }
+        .tab.active{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:white;
+        }
         .tab-content{display:none;} .tab-content.active{display:block;}
-        /* Form */
+        
+        /* ─── FORM ────────────────────────────────────────────────────── */
         .fg{margin-bottom:13px;}
-        .fg label{display:block;font-weight:500;margin-bottom:5px;color:#333;font-size:.85rem;}
-        .fg label i{color:#2e7d32;margin-right:4px;}
-        .fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.9rem;transition:border-color .25s;}
-        .fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:#2e7d32;}
+        .fg label{
+            display:block;
+            font-weight:500;
+            margin-bottom:5px;
+            color:#333;
+            font-size:.85rem;
+        }
+        .fg label i{color:#3949ab;margin-right:4px;width:18px;}
+        .fg input,.fg select,.fg textarea{
+            width:100%;
+            padding:9px 14px;
+            border:2px solid #e0e0e0;
+            border-radius:10px;
+            font-family:'Poppins',sans-serif;
+            font-size:.9rem;
+            transition:border-color .25s;
+            background:#fafafa;
+        }
+        .fg input:focus,.fg select:focus,.fg textarea:focus{
+            outline:none;
+            border-color:#3949ab;
+            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
+            background:#fff;
+        }
         .fg textarea{min-height:75px;resize:vertical;}
-        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;}
-        /* Question types */
+        .fg select:disabled{opacity:0.5;cursor:not-allowed;}
+        
+        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+        
+        /* ─── QUESTION TYPES ──────────────────────────────────────────── */
         .qt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin:14px 0;}
-        .qt-card{background:#f8f9fa;border:2px solid #e0e0e0;border-radius:11px;padding:13px;text-align:center;transition:all .25s;}
-        .qt-card.active{border-color:#2e7d32;background:#f0faf0;}
-        .qt-card i{font-size:1.5rem;color:#2e7d32;display:block;margin-bottom:5px;}
+        .qt-card{
+            background:#f8f9fa;
+            border:2px solid #e0e0e0;
+            border-radius:11px;
+            padding:13px;
+            text-align:center;
+            transition:all .25s;
+        }
+        .qt-card.active{border-color:#3949ab;background:#e8eaf6;}
+        .qt-card i{font-size:1.5rem;color:#3949ab;display:block;margin-bottom:5px;}
         .qt-card .ql{font-weight:600;font-size:.8rem;color:#333;margin-bottom:7px;}
-        .qt-card input[type=number]{width:68px;padding:5px;border:2px solid #e0e0e0;border-radius:6px;text-align:center;font-family:'Poppins',sans-serif;}
-        .total-badge{background:linear-gradient(135deg,#1b5e20,#2e7d32);color:white;padding:4px 14px;border-radius:18px;font-weight:600;font-size:.88rem;display:inline-block;}
-        /* Mode */
+        .qt-card input[type=number]{
+            width:68px;
+            padding:5px;
+            border:2px solid #e0e0e0;
+            border-radius:6px;
+            text-align:center;
+            font-family:'Poppins',sans-serif;
+            background:white;
+        }
+        .qt-card input[type=number]:focus{
+            outline:none;
+            border-color:#3949ab;
+        }
+        
+        .total-badge{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:white;
+            padding:4px 14px;
+            border-radius:18px;
+            font-weight:600;
+            font-size:.88rem;
+            display:inline-block;
+        }
+        
+        /* ─── OUTPUT MODE ──────────────────────────────────────────────── */
         .mode-row{display:flex;gap:12px;margin:14px 0;}
-        .mode-btn{flex:1;padding:13px;border:2px solid #e0e0e0;border-radius:11px;cursor:pointer;text-align:center;transition:all .25s;background:white;}
-        .mode-btn.selected{border-color:#2e7d32;background:#f0faf0;}
-        .mode-btn i{font-size:1.6rem;color:#2e7d32;display:block;margin-bottom:5px;}
+        .mode-btn{
+            flex:1;
+            padding:13px;
+            border:2px solid #e0e0e0;
+            border-radius:11px;
+            cursor:pointer;
+            text-align:center;
+            transition:all .25s;
+            background:white;
+        }
+        .mode-btn.selected{border-color:#3949ab;background:#e8eaf6;}
+        .mode-btn i{font-size:1.6rem;color:#3949ab;display:block;margin-bottom:5px;}
         .mode-btn .ml{font-weight:600;font-size:.86rem;color:#333;}
         .mode-btn .ms{font-size:.74rem;color:#666;margin-top:2px;}
-        /* Remark */
-        .remark-box{background:#f0faf0;border:2px dashed #2e7d3255;border-radius:11px;padding:16px;}
-        .remark-box .rl{font-weight:600;color:#2e7d32;margin-bottom:7px;font-size:.88rem;display:flex;align-items:center;gap:6px;}
-        .remark-box textarea{background:transparent;border:none;width:100%;font-family:'Poppins',sans-serif;font-size:.88rem;resize:vertical;min-height:65px;}
+        
+        /* ─── REMARK BOX ────────────────────────────────────────────── */
+        .remark-box{
+            background:#e8eaf6;
+            border:2px dashed #c5cae9;
+            border-radius:11px;
+            padding:16px;
+            margin-top:14px;
+        }
+        .remark-box .rl{
+            font-weight:600;
+            color:#1a237e;
+            margin-bottom:7px;
+            font-size:.88rem;
+            display:flex;
+            align-items:center;
+            gap:6px;
+        }
+        .remark-box textarea{
+            background:transparent;
+            border:none;
+            width:100%;
+            font-family:'Poppins',sans-serif;
+            font-size:.88rem;
+            resize:vertical;
+            min-height:65px;
+        }
         .remark-box textarea:focus{outline:none;}
-        /* Buttons */
-        .gen-btn{width:100%;padding:13px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:white;border:none;border-radius:9px;font-size:.95rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:transform .2s;margin-top:16px;}
+        
+        /* ─── BUTTONS ────────────────────────────────────────────────── */
+        .gen-btn{
+            width:100%;
+            padding:13px;
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:white;
+            border:none;
+            border-radius:10px;
+            font-size:.95rem;
+            font-weight:600;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:9px;
+            transition:transform .2s;
+            margin-top:16px;
+            font-family:'Poppins',sans-serif;
+        }
         .gen-btn:hover{transform:translateY(-2px);}
         .gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-        .upload-zone{border:2px dashed #2e7d32;border-radius:11px;padding:28px;text-align:center;background:#f0faf0;cursor:pointer;}
-        .upload-zone:hover{background:#e8f5e9;}
-        .upload-zone i{font-size:2.2rem;color:#2e7d32;display:block;margin-bottom:7px;}
-        .alert{padding:11px 15px;border-radius:8px;margin-bottom:14px;display:none;}
-        .alert-success{background:#d4edda;border-left:4px solid #28a745;color:#155724;}
-        .alert-error  {background:#f8d7da;border-left:4px solid #dc3545;color:#721c24;}
-        .loading{display:none;text-align:center;padding:18px;}
-        .loading i{font-size:2.2rem;color:#2e7d32;animation:spin 1s linear infinite;}
+        
+        /* ─── UPLOAD ZONE ────────────────────────────────────────────── */
+        .upload-zone{
+            border:2px dashed #3949ab;
+            border-radius:11px;
+            padding:28px;
+            text-align:center;
+            background:#f5f7fa;
+            cursor:pointer;
+            transition:all .3s;
+        }
+        .upload-zone:hover{background:#e8eaf6;border-color:#1a237e;}
+        .upload-zone i{font-size:2.2rem;color:#3949ab;display:block;margin-bottom:7px;}
+        
+        /* ─── ALERTS ────────────────────────────────────────────────── */
+        .alert{
+            padding:12px 18px;
+            border-radius:10px;
+            margin-bottom:14px;
+            display:none;
+            align-items:center;
+            gap:10px;
+        }
+        .alert-success{
+            background:#e8f5e9;
+            border-left:4px solid #2e7d32;
+            color:#1b5e20;
+        }
+        .alert-error{
+            background:#fce4ec;
+            border-left:4px solid #c62828;
+            color:#c62828;
+        }
+        
+        .loading{
+            display:none;
+            text-align:center;
+            padding:18px;
+        }
+        .loading i{
+            font-size:2.2rem;
+            color:#3949ab;
+            animation:spin 1s linear infinite;
+        }
+        .loading p{color:#1a237e;font-weight:600;margin-top:10px;}
         @keyframes spin{100%{transform:rotate(360deg)}}
+        
+        .test-note{font-size:.78rem;color:#666;margin-top:4px;}
+        .test-note i{color:#3949ab;}
+        select option:disabled{color:#ccc;}
+        
+        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
+        @media(max-width:768px){
+            .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
+            .topbar a{font-size:0.75rem;padding:6px 14px;}
+            .container{padding:0 12px;}
+            .card{padding:16px 18px;}
+            .mode-row{flex-direction:column;}
+            .qt-grid{grid-template-columns:1fr 1fr;}
+        }
+        @media(max-width:480px){
+            .qt-grid{grid-template-columns:1fr;}
+            .admin-banner{flex-direction:column;text-align:center;}
+            .form-grid{grid-template-columns:1fr;}
+        }
     </style>
 </head>
 <body>
-<div class="header">
-    <h1><i class="fas fa-magic"></i> Admin – Test Generator</h1>
-    <div class="hbtns">
-        <a href="/admin/test_history" class="hbtn"><i class="fas fa-history"></i> History</a>
-        <a href="/admin/dashboard"    class="hbtn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+
+<!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
+<div class="topbar">
+    <h1><i class="fas fa-magic"></i> Test Generator</h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="/admin/test_history"><i class="fas fa-history"></i> History</a>
+        <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
     </div>
 </div>
 
 <div class="container">
+    
+    <!-- Admin Banner -->
     <div class="admin-banner">
         <i class="fas fa-shield-alt"></i>
         <div>
@@ -90,37 +333,43 @@
     <div id="alertBox" class="alert"></div>
     <div id="loadingBox" class="loading">
         <i class="fas fa-spinner"></i>
-        <p style="margin-top:10px;color:#2e7d32;font-weight:600;">Gemini AI is generating questions…</p>
+        <p>Gemini AI is generating questions…</p>
     </div>
 
+    <!-- ─── TABS ──────────────────────────────────────────────────────── -->
     <div class="tabs">
         <button class="tab active" onclick="switchTab('ai',this)"><i class="fas fa-robot"></i> AI Generate</button>
         <button class="tab" onclick="switchTab('upload',this)"><i class="fas fa-upload"></i> Upload CSV</button>
     </div>
 
-    <!-- AI TAB -->
+    <!-- ─── AI TAB ───────────────────────────────────────────────────── -->
     <div id="ai-tab" class="tab-content active">
         <div class="card">
-            <h3><i class="fas fa-cog" style="color:#2e7d32"></i> Test Configuration — All Classes</h3>
+            <div class="card-header"><i class="fas fa-cog"></i> Test Configuration — All Classes</div>
             <form id="aiForm" onsubmit="generateAI(event)">
                 <div class="form-grid">
-                    <!-- Admin: free-text OR dropdown for class/subject (Feature #8 - unrestricted) -->
                     <div class="fg">
                         <label><i class="fas fa-graduation-cap"></i> Class *</label>
-                        <input type="text" name="class" id="classInput" required placeholder="Any class, e.g. 11, 12, 8" list="classList">
-                        <datalist id="classList">
-                            {% for p in all_pairs %}
-                            <option value="{{ p.class }}">{{ p.class }}</option>
+                        <select name="class" id="classSelect" required>
+                            <option value="">Select Class</option>
+                            {% for i in range(1,13) %}
+                            <option value="{{ i }}">{{ i }}</option>
                             {% endfor %}
-                        </datalist>
+                        </select>
                     </div>
                     <div class="fg">
                         <label><i class="fas fa-layer-group"></i> Section</label>
-                        <input type="text" name="section" placeholder="e.g. A (optional)">
+                        <select name="section" id="sectionSelect">
+                            <option value="">None</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
                     </div>
                     <div class="fg">
                         <label><i class="fas fa-book"></i> Subject *</label>
-                        <input type="text" name="subject" required placeholder="Any subject, e.g. Chemistry" list="subjectList">
+                        <input type="text" name="subject" id="subjectInput" required placeholder="e.g. Chemistry" list="subjectList">
                         <datalist id="subjectList">
                             {% set seen = [] %}
                             {% for p in all_pairs %}
@@ -137,14 +386,17 @@
                     </div>
                     <div class="fg">
                         <label><i class="fas fa-hashtag"></i> Test Number *</label>
-                        <input type="text" name="test_no" required placeholder="e.g. Test01">
+                        <select name="test_no" id="testNoSelect" required>
+                            <option value="">Select Class & Subject first</option>
+                        </select>
+                        <div class="test-note"><i class="fas fa-info-circle"></i> Used Test Numbers are disabled</div>
                     </div>
                 </div>
 
-                <!-- Question types -->
+                <!-- Question Types -->
                 <div style="margin-top:4px;">
                     <label style="font-weight:600;color:#333;font-size:.88rem;display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                        <i class="fas fa-list-ol" style="color:#2e7d32"></i>
+                        <i class="fas fa-list-ol" style="color:#3949ab;"></i>
                         Question Types &amp; Quantities
                         <span class="total-badge" id="totalBadge">Total: 0</span>
                     </label>
@@ -156,10 +408,10 @@
                     </div>
                 </div>
 
-                <!-- Output mode -->
+                <!-- Output Mode -->
                 <div>
                     <label style="font-weight:600;color:#333;font-size:.88rem;margin-bottom:7px;display:block;">
-                        <i class="fas fa-share-square" style="color:#2e7d32"></i> Output Mode
+                        <i class="fas fa-share-square" style="color:#3949ab;"></i> Output Mode
                     </label>
                     <div class="mode-row">
                         <div class="mode-btn selected" id="mode-cbt" onclick="selectMode('cbt')">
@@ -176,8 +428,8 @@
                     <input type="hidden" name="output_mode" id="outputMode" value="cbt">
                 </div>
 
-                <!-- Remark box -->
-                <div class="remark-box" style="margin-top:14px;">
+                <!-- Remark Box -->
+                <div class="remark-box">
                     <div class="rl"><i class="fas fa-lightbulb"></i> Instructions / Remark</div>
                     <textarea name="remark" placeholder="e.g. CBSE 2024 pattern, include PYQ-style, focus on Chapters 3-5, 40% HOTS…"></textarea>
                 </div>
@@ -189,22 +441,34 @@
         </div>
     </div>
 
-    <!-- UPLOAD TAB -->
+    <!-- ─── UPLOAD TAB ───────────────────────────────────────────────── -->
     <div id="upload-tab" class="tab-content">
         <div class="card">
-            <h3><i class="fas fa-upload" style="color:#2e7d32"></i> Upload CSV</h3>
+            <div class="card-header"><i class="fas fa-upload"></i> Upload CSV</div>
             <form id="uploadForm" onsubmit="uploadCSV(event)">
                 <div class="form-grid">
                     <div class="fg">
                         <label><i class="fas fa-graduation-cap"></i> Class *</label>
-                        <input type="text" name="class" required placeholder="e.g. 11" list="classList2">
-                        <datalist id="classList2">
-                            {% for p in all_pairs %}<option value="{{ p.class }}">{% endfor %}
-                        </datalist>
+                        <select name="class" id="uploadClassSelect" required>
+                            <option value="">Select Class</option>
+                            {% for i in range(1,13) %}
+                            <option value="{{ i }}">{{ i }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-layer-group"></i> Section</label>
+                        <select name="section" id="uploadSectionSelect">
+                            <option value="">None</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
                     </div>
                     <div class="fg">
                         <label><i class="fas fa-book"></i> Subject *</label>
-                        <input type="text" name="subject" required placeholder="e.g. Physics" list="subjectList2">
+                        <input type="text" name="subject" id="uploadSubjectInput" required placeholder="e.g. Physics" list="subjectList2">
                         <datalist id="subjectList2">
                             {% set seen2 = [] %}
                             {% for p in all_pairs %}{% if p.subject not in seen2 %}
@@ -217,36 +481,146 @@
                     </div>
                     <div class="fg">
                         <label><i class="fas fa-hashtag"></i> Test Number</label>
-                        <input type="text" name="test_no" placeholder="e.g. Test01">
+                        <select name="test_no" id="uploadTestNoSelect">
+                            <option value="">Select Class & Subject first</option>
+                        </select>
                     </div>
                 </div>
-                <div class="upload-zone" onclick="document.getElementById('csvFile').click()">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p id="csvFileName">Click to select CSV file</p>
-                    <small style="color:#888;">Columns: question, question_type, option_a–d, correct_answer</small>
+                
+                <!-- Dual Upload Zone: English (Compulsory) & Hindi (Optional) -->
+                <style>
+                    .dual-upload-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                        gap: 16px;
+                        margin: 18px 0;
+                    }
+                    .upload-card-box {
+                        border-radius: 12px;
+                        padding: 22px 18px;
+                        text-align: center;
+                        cursor: pointer;
+                        transition: all 0.25s ease;
+                        position: relative;
+                    }
+                    .upload-card-box.compulsory {
+                        border: 2px solid #2563eb;
+                        background: #f0f7ff;
+                        box-shadow: 0 2px 10px rgba(37,99,235,0.06);
+                    }
+                    .upload-card-box.compulsory:hover {
+                        border-color: #1d4ed8;
+                        background: #e0f2fe;
+                        transform: translateY(-2px);
+                    }
+                    .upload-card-box.optional {
+                        border: 2px dashed #94a3b8;
+                        background: #f8fafc;
+                    }
+                    .upload-card-box.optional:hover {
+                        border-color: #64748b;
+                        background: #f1f5f9;
+                        transform: translateY(-2px);
+                    }
+                    .upload-card-title {
+                        font-weight: 600;
+                        font-size: 0.95rem;
+                        margin-bottom: 6px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                    }
+                    .upload-card-box.compulsory .upload-card-title { color: #1e40af; }
+                    .upload-card-box.optional .upload-card-title { color: #475569; }
+                    .badge-comp {
+                        background: #2563eb;
+                        color: white;
+                        font-size: 0.72rem;
+                        padding: 3px 9px;
+                        border-radius: 12px;
+                        font-weight: 600;
+                    }
+                    .badge-opt {
+                        background: #94a3b8;
+                        color: white;
+                        font-size: 0.72rem;
+                        padding: 3px 9px;
+                        border-radius: 12px;
+                        font-weight: 600;
+                    }
+                    .upload-card-icon {
+                        font-size: 2rem;
+                        margin-bottom: 8px;
+                    }
+                    .upload-card-box.compulsory .upload-card-icon { color: #2563eb; }
+                    .upload-card-box.optional .upload-card-icon { color: #64748b; }
+                    .file-label-text {
+                        font-size: 0.86rem;
+                        font-weight: 500;
+                        color: #334155;
+                        margin-top: 4px;
+                        word-break: break-all;
+                    }
+                </style>
+
+                <div class="dual-upload-grid">
+                    <!-- Left Box: English CSV (Compulsory) -->
+                    <div class="upload-card-box compulsory" onclick="document.getElementById('englishCsv').click()">
+                        <div class="upload-card-icon"><i class="fas fa-file-csv"></i></div>
+                        <div class="upload-card-title">
+                            <i class="fas fa-language"></i> Upload English CSV <span class="badge-comp">Compulsory</span>
+                        </div>
+                        <p id="englishFileName" class="file-label-text">Click to select English CSV file</p>
+                        <small style="color:#64748b; font-size:0.78rem;">Required: Questions, option a–d, correct option</small>
+                        <input type="file" id="englishCsv" name="english_csv" accept=".csv" required style="display:none"
+                               onchange="document.getElementById('englishFileName').textContent=this.files[0]?.name || 'Click to select English CSV file'">
+                    </div>
+
+                    <!-- Right Box: Hindi CSV (Optional) -->
+                    <div class="upload-card-box optional" onclick="document.getElementById('hindiCsv').click()">
+                        <div class="upload-card-icon"><i class="fas fa-file-csv"></i></div>
+                        <div class="upload-card-title">
+                            <i class="fas fa-language"></i> Upload Hindi CSV <span class="badge-opt">Optional</span>
+                        </div>
+                        <p id="hindiFileName" class="file-label-text">Click to select Hindi CSV file</p>
+                        <small style="color:#64748b; font-size:0.78rem;">Optional: Hindi Question & Option Translations</small>
+                        <input type="file" id="hindiCsv" name="hindi_csv" accept=".csv" style="display:none"
+                               onchange="document.getElementById('hindiFileName').textContent=this.files[0]?.name || 'Click to select Hindi CSV file'">
+                    </div>
                 </div>
-                <input type="file" id="csvFile" name="csv_file" accept=".csv" style="display:none"
-                       onchange="document.getElementById('csvFileName').textContent=this.files[0]?.name">
-                <button type="submit" class="gen-btn" style="margin-top:14px;">
-                    <i class="fas fa-upload"></i> Upload Questions
-                </button>
+
+                <div style="text-align:center; margin-top:18px;">
+                    <button type="submit" class="gen-btn" style="min-width:220px;">
+                        <i class="fas fa-upload"></i> Upload Questions
+                    </button>
+                </div>
             </form>
         </div>
     </div>
+
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
 </div>
 
 <script>
+// ─── SWITCH TABS ──────────────────────────────────────────────
 function switchTab(tab, btn) {
     document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(tab+'-tab').classList.add('active');
 }
+
+// ─── OUTPUT MODE ──────────────────────────────────────────────
 function selectMode(m) {
     document.getElementById('outputMode').value = m;
     document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));
     document.getElementById('mode-'+m).classList.add('selected');
 }
+
+// ─── TOTAL QUESTIONS ──────────────────────────────────────────
 function updateTotal() {
     const inputs = document.querySelectorAll('.qt-card input[type=number]');
     let total = 0;
@@ -256,14 +630,95 @@ function updateTotal() {
     });
     document.getElementById('totalBadge').textContent = 'Total: '+total;
 }
+
+// ─── ALERT ─────────────────────────────────────────────────────
 function showAlert(msg, type) {
     const box = document.getElementById('alertBox');
     box.className = 'alert alert-'+type;
     box.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}"></i> ${msg}`;
-    box.style.display = 'block';
+    box.style.display = 'flex';
     window.scrollTo(0,0);
     setTimeout(()=>box.style.display='none', 8000);
 }
+
+// ─── FETCH EXISTING TEST NUMBERS ─────────────────────────────
+async function fetchTestNumbers(classVal, subjectVal) {
+    if (!classVal || !subjectVal) return [];
+    try {
+        const res = await fetch(`/api/test_numbers?class=${encodeURIComponent(classVal)}&subject=${encodeURIComponent(subjectVal)}`);
+        const data = await res.json();
+        const existing = [];
+        if (data.test_numbers) existing.push(...data.test_numbers);
+        if (data.combined_tests) {
+            data.combined_tests.forEach(ct => {
+                if (ct.test_no) existing.push(ct.test_no);
+            });
+        }
+        return existing;
+    } catch(e) {
+        console.error('Failed to fetch test numbers:', e);
+        return [];
+    }
+}
+
+// ─── POPULATE TEST NUMBER DROPDOWN ──────────────────────────
+function populateTestNoSelect(selectId, existingTests) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    const maxTest = 20;
+    let html = '<option value="">Select Test Number</option>';
+    for (let i=1; i<=maxTest; i++) {
+        const num = String(i).padStart(2, '0');
+        const val = 'Test' + num;
+        const disabled = existingTests.includes(val) ? 'disabled' : '';
+        html += `<option value="${val}" ${disabled}>${val} ${disabled ? '✔ (Used)' : ''}</option>`;
+    }
+    select.innerHTML = html;
+}
+
+// ─── UPDATE DROPDOWNS ────────────────────────────────────────
+async function updateTestNumbers(classVal, subjectVal, selectId) {
+    if (!classVal || !subjectVal) {
+        const select = document.getElementById(selectId);
+        if (select) select.innerHTML = '<option value="">Select Class & Subject first</option>';
+        return;
+    }
+    const existing = await fetchTestNumbers(classVal, subjectVal);
+    populateTestNoSelect(selectId, existing);
+}
+
+// ─── WIRE EVENTS ──────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    // AI tab
+    const classSelect = document.getElementById('classSelect');
+    const subjectInput = document.getElementById('subjectInput');
+    const testNoSelect = 'testNoSelect';
+    
+    function updateAITestNo() {
+        const cls = classSelect.value;
+        const sub = subjectInput.value.trim();
+        updateTestNumbers(cls, sub, testNoSelect);
+    }
+    classSelect.addEventListener('change', updateAITestNo);
+    subjectInput.addEventListener('input', updateAITestNo);
+    subjectInput.addEventListener('blur', updateAITestNo);
+    
+    // Upload tab
+    const uploadClass = document.getElementById('uploadClassSelect');
+    const uploadSubjectInput = document.getElementById('uploadSubjectInput');
+    const uploadTestNo = 'uploadTestNoSelect';
+    
+    function updateUploadTestNo() {
+        const cls = uploadClass.value;
+        const sub = uploadSubjectInput.value.trim();
+        updateTestNumbers(cls, sub, uploadTestNo);
+    }
+    uploadClass.addEventListener('change', updateUploadTestNo);
+    uploadSubjectInput.addEventListener('input', updateUploadTestNo);
+    uploadSubjectInput.addEventListener('blur', updateUploadTestNo);
+});
+
+// ─── GENERATE AI ──────────────────────────────────────────────
 async function generateAI(e) {
     e.preventDefault();
     const total = parseInt(document.getElementById('totalBadge').textContent.replace('Total: ',''));
@@ -275,6 +730,24 @@ async function generateAI(e) {
     try {
         const res  = await fetch('/admin/create_test',{method:'POST',body:formData});
         const data = await res.json();
+        if (res.status === 429 || data.rate_limit) {
+            document.getElementById('loadingBox').style.display = 'none';
+            let seconds = data.retry_after || 60;
+            const btn = document.getElementById('genBtn');
+            btn.disabled = true;
+            let timer = setInterval(() => {
+                showAlert(`Server rate limit reached (13 req/min). Retrying available in ${seconds}s...`, 'error');
+                btn.innerHTML = `<i class="fas fa-hourglass-half fa-spin"></i> Retry in ${seconds}s`;
+                seconds--;
+                if (seconds < 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fas fa-magic"></i> Generate Paper`;
+                    showAlert('Rate limit reset. You can generate tests now.', 'success');
+                }
+            }, 1000);
+            return;
+        }
         if (data.status==='success') {
             if (data.mode==='print' && data.preview_url) {
                 showAlert(data.message+' — Opening print preview…','success');
@@ -285,12 +758,18 @@ async function generateAI(e) {
                 document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));
                 document.getElementById('mode-cbt').classList.add('selected');
                 document.getElementById('outputMode').value='cbt';
+                const cls = document.getElementById('classSelect').value;
+                const sub = document.getElementById('subjectInput').value.trim();
+                if (cls && sub) updateTestNumbers(cls, sub, 'testNoSelect');
+                else document.getElementById('testNoSelect').innerHTML = '<option value="">Select Class & Subject first</option>';
             }
         } else { showAlert(data.message||'Generation failed','error'); }
     } catch(err) { showAlert('Error: '+err.message,'error'); }
     document.getElementById('loadingBox').style.display='none';
     document.getElementById('genBtn').disabled=false;
 }
+
+// ─── UPLOAD CSV ──────────────────────────────────────────────
 async function uploadCSV(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -299,7 +778,12 @@ async function uploadCSV(e) {
         const res  = await fetch('/admin/create_test',{method:'POST',body:formData});
         const data = await res.json();
         showAlert(data.message, data.status);
-        if (data.status==='success') {e.target.reset(); document.getElementById('csvFileName').textContent='Click to select CSV file';}
+        if (data.status==='success') {
+            e.target.reset();
+            if (document.getElementById('englishFileName')) document.getElementById('englishFileName').textContent='Click to select English CSV file';
+            if (document.getElementById('hindiFileName')) document.getElementById('hindiFileName').textContent='Click to select Hindi CSV file';
+            document.getElementById('uploadTestNoSelect').innerHTML = '<option value="">Select Class & Subject first</option>';
+        }
     } catch(err) { showAlert('Error: '+err.message,'error'); }
 }
 </script>
