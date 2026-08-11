@@ -419,9 +419,16 @@ function updatePaletteButton(index) {
 }
 
 function refreshQuestionStatus(index) {
-    const status = markedForReview.has(index)
-        ? 'Marked for Review'
-        : (responses[index] ? 'Answered' : 'Not Answered');
+    const hasAns = responses[index] !== undefined && responses[index] !== null && responses[index] !== '';
+    const isMarked = markedForReview.has(index);
+    let status = 'Not Answered';
+    if (isMarked && hasAns) {
+        status = 'Answered & Marked for Review';
+    } else if (isMarked) {
+        status = 'Marked for Review';
+    } else if (hasAns) {
+        status = 'Answered';
+    }
     const statusEl = document.getElementById('currentStatus');
     if (statusEl) statusEl.textContent = status;
 }
@@ -527,12 +534,28 @@ function loadQuestion(index) {
         }
     }
 
+    if (translationState === 'hi') {
+        if (q.question_hi && q.question_hi.trim() !== '') {
+            applyTranslation(index, {
+                question: q.question_hi,
+                option_a: q.option_a_hi || q.option_a,
+                option_b: q.option_b_hi || q.option_b,
+                option_c: q.option_c_hi || q.option_c,
+                option_d: q.option_d_hi || q.option_d
+            });
+        } else if (translationCache[index]?.hi) {
+            applyTranslation(index, translationCache[index].hi);
+        }
+    }
+
     questions.forEach((_, i) => updatePaletteButton(i));
 }
 
-function selectOption(qIndex, option) {
+function selectOption(qIndex, option, keepMarked = false) {
     responses[qIndex] = option;
-    markedForReview.delete(qIndex);
+    if (!keepMarked) {
+        markedForReview.delete(qIndex);
+    }
     refreshQuestionStatus(qIndex);
     
     fetch('/save_answer', {
@@ -564,9 +587,7 @@ function saveCurrentAndNext() {
     const selectedRadio = document.querySelector('input[name="option"]:checked');
     if (selectedRadio) {
         const option = selectedRadio.value;
-        if (responses[currentIndex] !== option) {
-            selectOption(currentIndex, option);
-        }
+        selectOption(currentIndex, option, false);
     }
     
     if (currentIndex < questions.length - 1) {
@@ -578,8 +599,20 @@ function saveCurrentAndNext() {
 
 function markForReviewAndNext() {
     markedForReview.add(currentIndex);
-    updatePaletteButton(currentIndex);
-    saveCurrentAndNext();
+    const selectedRadio = document.querySelector('input[name="option"]:checked');
+    if (selectedRadio) {
+        const option = selectedRadio.value;
+        selectOption(currentIndex, option, true);
+    } else {
+        refreshQuestionStatus(currentIndex);
+        updatePaletteButton(currentIndex);
+    }
+    
+    if (currentIndex < questions.length - 1) {
+        loadQuestion(currentIndex + 1);
+    } else {
+        alert('This is the last question.');
+    }
 }
 
 function clearResponse() {
@@ -699,6 +732,23 @@ async function toggleTranslation() {
         return;
     }
 
+    // 1. Check if database already has Hindi text for this question (q.question_hi)
+    if (q.question_hi && q.question_hi.trim() !== '') {
+        const hiObj = {
+            question: q.question_hi,
+            option_a: q.option_a_hi || q.option_a,
+            option_b: q.option_b_hi || q.option_b,
+            option_c: q.option_c_hi || q.option_c,
+            option_d: q.option_d_hi || q.option_d
+        };
+        translationCache[currentIndex] = translationCache[currentIndex] || {};
+        translationCache[currentIndex].hi = hiObj;
+        translationState = 'hi';
+        document.getElementById('translateLabel').textContent = 'ENGLISH';
+        applyTranslation(currentIndex, hiObj);
+        return;
+    }
+
     // If Hindi already cached for this question → use it
     if (translationCache[currentIndex]?.hi) {
         translationState = 'hi';
@@ -733,7 +783,7 @@ Do not add any explanation or markdown.
 Input JSON:
 ${JSON.stringify(textsToTranslate)}`;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
