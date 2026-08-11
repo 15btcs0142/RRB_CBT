@@ -8,16 +8,543 @@ import uuid
 import random
 import base64
 import hashlib
+import pdfkit
 import json
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file, make_response
 from werkzeug.utils import secure_filename
 import openpyxl
 from weasyprint import HTML, CSS
+# ─── WeasyPrint 61+ compatibility fix ──────────────────────────────
+import weasyprint.pdf
+import weasyprint.pdf.stream
+import re
+import json
+import ast
+
+def safe_json_loads(text):
+    """
+    Attempt to parse JSON from AI response.
+    Uses a series of fallback strategies:
+      1. Remove markdown fences and extra text.
+      2. Extract the first JSON array or object.
+      3. Clean trailing commas and unescaped quotes.
+      4. Use ast.literal_eval (Python literals).
+      5. Try to repair by escaping newlines and quotes inside strings.
+    """
+    if not text:
+        return None
+
+    # 1. Remove markdown code fences
+    text = re.sub(r'```(?:json)?\s*', '', text)
+    text = re.sub(r'```\s*$', '', text)
+    text = text.strip()
+
+    # 2. Try to extract a JSON array or object
+    # Look for anything that starts with [ or { and ends with ] or }
+    # Use non-greedy matching to avoid consuming extra
+    match = re.search(r'(\[.*\]|\{.*\})', text, re.DOTALL)
+    candidate = match.group(1) if match else text
+
+    # 3. Try normal parsing (strict=False allows trailing commas)
+    try:
+        return json.loads(candidate, strict=False)
+    except json.JSONDecodeError:
+        pass
+
+    # 4. Clean trailing commas before ] or }
+    cleaned = re.sub(r',\s*([\]}])', r'\1', candidate)
+
+    # 5. Try to fix unescaped double quotes inside strings
+    # This is tricky; we'll replace all " inside strings that are not already escaped.
+    # A simple heuristic: find strings that start with " and end with " but contain "
+    # We'll use a more robust approach: use ast.literal_eval after converting null/true/false.
+    try:
+        # Convert JSON null/true/false to Python None/True/False
+        py_literal = cleaned.replace('null', 'None').replace('true', 'True').replace('false', 'False')
+        return ast.literal_eval(py_literal)
+    except:
+        pass
+
+    # 6. Try to split into multiple parts and parse each separately (if multiple arrays)
+    # Some AIs return concatenated JSON objects
+    parts = re.split(r'\]\s*,\s*\{', candidate)
+    if len(parts) > 1:
+        for i in range(len(parts)):
+            # Reconstruct a JSON array
+            try_part = '[' + '],['.join(parts) + ']'
+            try:
+                return json.loads(try_part, strict=False)
+            except:
+                continue
+
+    # 7. Last resort: try to fix unescaped newlines and quotes with a custom repair
+    try:
+        # Escape newlines and carriage returns
+        repaired = re.sub(r'(?<!\\)\n', '\\n', cleaned)
+        repaired = re.sub(r'(?<!\\)\r', '\\r', repaired)
+        # Escape unescaped quotes inside strings (naive but may work)
+        # This is a simplified version; we'll try to escape all " that are not at the start or end of a string.
+        # Instead, we'll use a regex to find strings and escape their content.
+        # This is complex; we'll skip and return None.
+        pass
+    except:
+        pass
+
+    # If all fails, log the raw text and return None
+    return None
+
+def parse_question_csv_row(row):
+    """
+    Flexible CSV parser supporting column headers:
+    Questions, option a, option b, option c, option d, correct option
+    (and all common variations like option_a, question, correct_answer).
+    """
+    if not isinstance(row, dict):
+        return None
+
+    # Case-insensitive normalized map
+    norm = {}
+    for k, v in row.items():
+        if k is not None and str(k).strip():
+            k_clean = str(k).strip().lower().replace('_', ' ')
+            norm[k_clean] = str(v).strip() if v is not None else ''
+
+    def get_val(*keys):
+        for k in keys:
+            k_clean = k.strip().lower().replace('_', ' ')
+            if k_clean in norm and norm[k_clean]:
+                return norm[k_clean]
+        return ''
+
+    q = get_val('questions', 'question', 'question text', 'q')
+    if not q:
+        return None
+
+    opt_a = get_val('option a', 'optiona', 'a', 'option 1', 'option1')
+    opt_b = get_val('option b', 'optionb', 'b', 'option 2', 'option2')
+    opt_c = get_val('option c', 'optionc', 'c', 'option 3', 'option3')
+    opt_d = get_val('option d', 'optiond', 'd', 'option 4', 'option4')
+
+    raw_ans = get_val('correct option', 'correct answer', 'correct_answer', 'correctoption', 'answer', 'correct')
+    
+    # Normalize correct_answer to option_a, option_b, option_c, option_d
+    ans_clean = raw_ans.lower().replace('_', ' ').strip()
+    correct_ans = 'option_a'
+    if ans_clean in ('option a', 'optiona', 'a', '1', 'option 1', 'option1'):
+        correct_ans = 'option_a'
+    elif ans_clean in ('option b', 'optionb', 'b', '2', 'option 2', 'option2'):
+        correct_ans = 'option_b'
+    elif ans_clean in ('option c', 'optionc', 'c', '3', 'option 3', 'option3'):
+        correct_ans = 'option_c'
+    elif ans_clean in ('option d', 'optiond', 'd', '4', 'option 4', 'option4'):
+        correct_ans = 'option_d'
+    elif raw_ans and opt_a and raw_ans == opt_a:
+        correct_ans = 'option_a'
+    elif raw_ans and opt_b and raw_ans == opt_b:
+        correct_ans = 'option_b'
+    elif raw_ans and opt_c and raw_ans == opt_c:
+        correct_ans = 'option_c'
+    elif raw_ans and opt_d and raw_ans == opt_d:
+        correct_ans = 'option_d'
+    elif raw_ans:
+        correct_ans = raw_ans
+
+    q_type = get_val('question type', 'type') or ('MCQ' if (opt_a or opt_b) else 'Short')
+    marks = get_val('marks', 'mark') or '1'
+    neg_mark = get_val('negative mark', 'negative marks') or '0.33'
+
+    return {
+        'question': q,
+        'option_a': opt_a,
+        'option_b': opt_b,
+        'option_c': opt_c,
+        'option_d': opt_d,
+        'correct_answer': correct_ans,
+        'question_type': q_type,
+        'marks': marks,
+        'negative_mark': neg_mark
+    }
+def get_working_model(api_key):
+    """
+    Try to find a working Gemini model by listing available models.
+    Returns a model name string or default 'gemini-2.0-flash'.
+    """
+    import urllib.request, json
+    try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            models = data.get('models', [])
+            supported_models = []
+            for model in models:
+                name = model.get('name', '').replace('models/', '')
+                supported = model.get('supportedGenerationMethods', [])
+                if 'generateContent' in supported:
+                    supported_models.append(name)
+
+            # Preference priority for valid active models
+            for preferred in ['gemini-2.0-flash', 'gemini-2.0-flash-lite']:
+                if preferred in supported_models:
+                    return preferred
+
+            for name in supported_models:
+                if 'flash' in name or 'pro' in name:
+                    return name
+
+            if supported_models:
+                return supported_models[0]
+    except Exception:
+        pass
+    return 'gemini-2.0-flash'
+
+def call_gemini_generate_content(prompt, api_key, generation_config=None, timeout=60):
+    """
+    Robust Gemini API caller with automatic candidate model fallbacks and HTTP 429 backoff/retry.
+    Returns tuple: (result_dict, error_message)
+    """
+    import urllib.request, urllib.error, json, time
+    if not generation_config:
+        generation_config = {"temperature": 0.7, "maxOutputTokens": 8192}
+
+    candidate_models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite']
+    detected = get_working_model(api_key)
+    if detected and detected not in candidate_models:
+        candidate_models.insert(0, detected)
+
+    payload_bytes = json.dumps({
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": generation_config
+    }).encode('utf-8')
+
+    last_error = ""
+
+    for model_name in candidate_models:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+        for attempt in range(2):
+            try:
+                req = urllib.request.Request(
+                    url,
+                    data=payload_bytes,
+                    headers={'Content-Type': 'application/json'},
+                    method='POST'
+                )
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    resp_data = resp.read().decode('utf-8')
+                    if resp_data.lstrip().startswith('<'):
+                        last_error = "Gemini API returned HTML instead of JSON."
+                        break
+                    return json.loads(resp_data), None
+            except urllib.error.HTTPError as e:
+                err_body = e.read().decode('utf-8')
+                last_error = f"HTTP {e.code}: {err_body}"
+                if e.code == 429:
+                    time.sleep(2)
+                    continue
+                else:
+                    break
+            except Exception as e:
+                last_error = str(e)
+                break
+
+    if "429" in last_error or "quota" in last_error.lower() or "resource_exhausted" in last_error.lower():
+        clean_msg = "Gemini API rate limit / free tier quota exceeded (HTTP 429). Please wait 30–60 seconds and try again, or check your API key quota at https://ai.google.dev."
+    else:
+        clean_msg = f"Gemini API error: {last_error[:300]}"
+
+    return None, clean_msg
+
+def _get_ai_keys():
+    """
+    Parse apikey.env, .api_key, and OS environment for API keys across providers:
+    Gemini, DeepSeek, OpenAI (ChatGPT), and Claude (Anthropic).
+    Returns dict: {'gemini': '...', 'deepseek': '...', 'openai': '...', 'claude': '...'}
+    """
+    keys = {
+        'gemini': os.environ.get('GEMINI_API_KEY', '').strip().strip('"\''),
+        'deepseek': os.environ.get('DEEPSEEK_API_KEY', '').strip().strip('"\''),
+        'openai': os.environ.get('OPENAI_API_KEY', '').strip().strip('"\''),
+        'claude': os.environ.get('CLAUDE_API_KEY', '') or os.environ.get('ANTHROPIC_API_KEY', '')
+    }
+    for k in keys:
+        keys[k] = keys[k].strip().strip('"\'')
+
+    # 1. Primary Master Source: apikey.env file
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'apikey.env')
+    if os.path.exists(env_path):
+        try:
+            with open(env_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+
+            is_single = True
+            for line in lines:
+                line_s = line.strip()
+                if not line_s or line_s.startswith('#'):
+                    continue
+                if '=' in line_s:
+                    is_single = False
+                    parts = line_s.split('=', 1)
+                    k_name = parts[0].strip().upper()
+                    val = parts[1].strip().strip('"\'')
+                    if 'GEMINI' in k_name and val:
+                        keys['gemini'] = val
+                    elif 'DEEPSEEK' in k_name and val:
+                        keys['deepseek'] = val
+                    elif ('OPENAI' in k_name or 'CHATGPT' in k_name) and val:
+                        keys['openai'] = val
+                    elif ('CLAUDE' in k_name or 'ANTHROPIC' in k_name) and val:
+                        keys['claude'] = val
+
+            if is_single and lines:
+                raw_val = ''.join(lines).strip().strip('"\'')
+                if raw_val and not raw_val.startswith('#'):
+                    keys['gemini'] = raw_val
+        except Exception:
+            pass
+
+    # 2. Secondary Fallback / Sync: .api_key file (used by batch tools)
+    dot_key_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.api_key')
+    if os.path.exists(dot_key_path):
+        try:
+            val = open(dot_key_path, 'r', encoding='utf-8').read().strip().strip('"\'')
+            if val and not val.startswith('#') and not keys['gemini']:
+                keys['gemini'] = val
+        except Exception:
+            pass
+
+    # Keep .api_key in sync with current active Gemini key
+    if keys['gemini']:
+        try:
+            with open(dot_key_path, 'w', encoding='utf-8') as f:
+                f.write(keys['gemini'])
+        except Exception:
+            pass
+
+    return keys
+
+def _call_deepseek_api(prompt, api_key, timeout=90):
+    """Call DeepSeek AI chat completions API (OpenAI-compatible)"""
+    import urllib.request, urllib.error, json
+    url = "https://api.deepseek.com/chat/completions"
+    payload = json.dumps({
+        "model": "deepseek-chat",
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.7,
+        "max_tokens": 4096
+    }).encode('utf-8')
+    req = urllib.request.Request(
+        url, data=payload,
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
+        method='POST'
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            res = json.loads(resp.read().decode('utf-8'))
+            text = res['choices'][0]['message']['content'].strip()
+            return text, None
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode('utf-8')
+        try:
+            msg = json.loads(err_body).get('error', {}).get('message', err_body)
+        except Exception:
+            msg = err_body
+        return None, f"DeepSeek HTTP {e.code}: {msg[:300]}"
+    except Exception as e:
+        return None, f"DeepSeek Error: {str(e)}"
+
+def _call_openai_api(prompt, api_key, timeout=90):
+    """Call OpenAI ChatGPT API (gpt-4o-mini / gpt-3.5-turbo)"""
+    import urllib.request, urllib.error, json
+    models = ["gpt-4o-mini", "gpt-3.5-turbo"]
+    last_err = ""
+    for model_name in models:
+        url = "https://api.openai.com/v1/chat/completions"
+        payload = json.dumps({
+            "model": model_name,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.7,
+            "max_tokens": 4096
+        }).encode('utf-8')
+        req = urllib.request.Request(
+            url, data=payload,
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
+            method='POST'
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                res = json.loads(resp.read().decode('utf-8'))
+                text = res['choices'][0]['message']['content'].strip()
+                return text, None
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode('utf-8')
+            try:
+                msg = json.loads(err_body).get('error', {}).get('message', err_body)
+            except Exception:
+                msg = err_body
+            last_err = f"OpenAI HTTP {e.code}: {msg[:300]}"
+            if e.code in (404, 400) and 'model' in last_err.lower():
+                continue
+            else:
+                break
+        except Exception as e:
+            last_err = f"OpenAI Error: {str(e)}"
+            break
+    return None, last_err
+
+def _call_claude_api(prompt, api_key, timeout=90):
+    """Call Anthropic Claude API (claude-3-5-haiku-20241022 / claude-3-haiku-20240307)"""
+    import urllib.request, urllib.error, json
+    models = ["claude-3-5-haiku-20241022", "claude-3-haiku-20240307"]
+    last_err = ""
+    for model_name in models:
+        url = "https://api.anthropic.com/v1/messages"
+        payload = json.dumps({
+            "model": model_name,
+            "max_tokens": 4096,
+            "messages": [{"role": "user", "content": prompt}]
+        }).encode('utf-8')
+        req = urllib.request.Request(
+            url, data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01"
+            },
+            method='POST'
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                res = json.loads(resp.read().decode('utf-8'))
+                text = res['content'][0]['text'].strip()
+                return text, None
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode('utf-8')
+            try:
+                err_json = json.loads(err_body)
+                msg = err_json.get('error', {}).get('message', err_body)
+            except Exception:
+                msg = err_body
+            last_err = f"Claude HTTP {e.code}: {msg[:300]}"
+            if e.code in (404, 400) and 'model' in last_err.lower():
+                continue
+            else:
+                break
+        except Exception as e:
+            last_err = f"Claude Error: {str(e)}"
+            break
+    return None, last_err
+
+def generate_ai_content(prompt, timeout=90):
+    """
+    Multi-provider AI generator with automatic failover across Gemini, DeepSeek, OpenAI, and Claude.
+    Returns (result_dict, provider_name, error_message).
+    """
+    keys = _get_ai_keys()
+    errors = []
+
+    # Priority 1: Google Gemini
+    if keys.get('gemini'):
+        res_dict, err = call_gemini_generate_content(prompt, keys['gemini'], timeout=timeout)
+        if res_dict:
+            return res_dict, 'Gemini AI', None
+        app.logger.warning(f"Gemini AI failed, trying alternate providers: {err}")
+        errors.append(f"Gemini: {err}")
+
+    # Priority 2: DeepSeek AI
+    if keys.get('deepseek'):
+        text, err = _call_deepseek_api(prompt, keys['deepseek'], timeout=timeout)
+        if text:
+            res_dict = {'candidates': [{'content': {'parts': [{'text': text}]}}]}
+            return res_dict, 'DeepSeek AI', None
+        app.logger.warning(f"DeepSeek AI failed: {err}")
+        errors.append(f"DeepSeek: {err}")
+
+    # Priority 3: OpenAI ChatGPT
+    if keys.get('openai'):
+        text, err = _call_openai_api(prompt, keys['openai'], timeout=timeout)
+        if text:
+            res_dict = {'candidates': [{'content': {'parts': [{'text': text}]}}]}
+            return res_dict, 'ChatGPT (OpenAI)', None
+        app.logger.warning(f"OpenAI ChatGPT failed: {err}")
+        errors.append(f"OpenAI: {err}")
+
+    # Priority 4: Anthropic Claude
+    if keys.get('claude'):
+        text, err = _call_claude_api(prompt, keys['claude'], timeout=timeout)
+        if text:
+            res_dict = {'candidates': [{'content': {'parts': [{'text': text}]}}]}
+            return res_dict, 'Claude AI', None
+        app.logger.warning(f"Claude AI failed: {err}")
+        errors.append(f"Claude: {err}")
+
+    if not any(keys.values()):
+        return None, None, "No AI API key found. Please set GEMINI_API_KEY, DEEPSEEK_API_KEY, OPENAI_API_KEY, or CLAUDE_API_KEY in apikey.env or .api_key."
+
+    combined_err = " | ".join(errors) if errors else "All configured AI providers failed."
+    return None, None, f"AI Generation Failed: {combined_err}"
+# ─── WeasyPrint & pydyf 0.12+ compatibility fixes ──────────────────────────
+import pydyf
+
+# 1. Patch pydyf.PDF.__init__ compatibility with WeasyPrint 60.0 & pydyf 0.12+
+_orig_pydyf_pdf_init = pydyf.PDF.__init__
+
+def _patched_pydyf_pdf_init(self, version='1.7', identifier=None, *args, **kwargs):
+    _orig_pydyf_pdf_init(self)
+    if version:
+        self.version = version.encode('ascii') if isinstance(version, str) else version
+    else:
+        self.version = b'1.7'
+    if identifier:
+        self.identifier = identifier.encode('ascii') if isinstance(identifier, str) else identifier
+
+pydyf.PDF.__init__ = _patched_pydyf_pdf_init
+
+# 2. Patch Stream.transform compatibility for WeasyPrint 60+ stream
+def _patched_stream_transform(self, a=1, b=0, c=0, d=1, e=0, f=0):
+    if hasattr(self, 'set_matrix'):
+        self.set_matrix(a, b, c, d, e, f)
+    else:
+        self._matrix = (a, b, c, d, e, f)
+
+weasyprint.pdf.stream.Stream.transform = _patched_stream_transform
+
+# 3. Patch Stream.text_matrix alias compatibility with pydyf 0.12+
+if not hasattr(weasyprint.pdf.stream.Stream, 'text_matrix'):
+    def _stream_text_matrix(self, a=1, b=0, c=0, d=1, e=0, f=0):
+        if hasattr(self, 'set_matrix'):
+            self.set_matrix(a, b, c, d, e, f)
+        elif hasattr(self, 'set_text_matrix'):
+            self.set_text_matrix(a, b, c, d, e, f)
+        else:
+            self._matrix = (a, b, c, d, e, f)
+    
+    weasyprint.pdf.stream.Stream.text_matrix = _stream_text_matrix
 
 app = Flask(__name__)
 app.secret_key = 'rrb-cbt-v104-secret-key-2024'
 load_dotenv('apikey.env')
+
+# ─── Flask-Limiter Setup ───────────────────────────────────────────
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[],
+    storage_uri="memory://"
+)
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    retry_after = getattr(e, 'retry_after', 60) or 60
+    return jsonify({
+        'status': 'error',
+        'rate_limit': True,
+        'retry_after': int(retry_after),
+        'message': f'Server rate limit reached (13 requests per minute). Please wait {int(retry_after)} seconds before trying again.'
+    }), 429
 # Configuration
 UPLOAD_FOLDER = 'uploads'
 EXPORT_FOLDER = 'exports'
@@ -153,6 +680,13 @@ def init_db():
         c.execute("ALTER TABLE students ADD COLUMN address TEXT")
     if 'picture' not in columns:
         c.execute("ALTER TABLE students ADD COLUMN picture TEXT")
+    # Add test_no and system_name columns to students if not exists
+    c.execute("PRAGMA table_info(students)")
+    cols = [col[1] for col in c.fetchall()]
+    if 'test_no' not in cols:
+        c.execute("ALTER TABLE students ADD COLUMN test_no TEXT DEFAULT ''")
+    if 'system_name' not in cols:
+        c.execute("ALTER TABLE students ADD COLUMN system_name TEXT DEFAULT ''")
 
     c.execute('''CREATE TABLE IF NOT EXISTS questions
                  (id INTEGER PRIMARY KEY AUTOINCREMENT, class TEXT, subject TEXT, question TEXT,
@@ -169,8 +703,9 @@ def init_db():
         c.execute("ALTER TABLE questions ADD COLUMN subject TEXT")
     if 'image_path' not in columns:
         c.execute("ALTER TABLE questions ADD COLUMN image_path TEXT")
-    if 'chapter' not in columns:
-        c.execute("ALTER TABLE questions ADD COLUMN chapter TEXT")
+    for hi_col in ['question_hi', 'option_a_hi', 'option_b_hi', 'option_c_hi', 'option_d_hi']:
+        if hi_col not in columns:
+            c.execute(f"ALTER TABLE questions ADD COLUMN {hi_col} TEXT")
 
     c.execute('''CREATE TABLE IF NOT EXISTS responses
                  (student_id TEXT, question_id INTEGER, selected_option TEXT,
@@ -430,6 +965,7 @@ def index():
     """
     Render the student login page with available classes, subjects, bulletins, and class teachers.
     """
+    session.pop('admin_logged_in', None)
     conn = get_db()
     c = conn.cursor()
     c.execute("SELECT DISTINCT class, subject FROM questions WHERE class IS NOT NULL AND class != '' ORDER BY class, subject")
@@ -492,6 +1028,29 @@ def student_login():
     conn = get_db()
     c = conn.cursor()
 
+    # Auto-select latest test if no specific test_no was selected by student
+    if not test_no:
+        clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+        c.execute("""SELECT test_no FROM test_papers
+                     WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND test_no IS NOT NULL AND test_no != ''
+                     ORDER BY id DESC LIMIT 1""",
+                  (class_, f"%{clean_cls}%", subject))
+        row = c.fetchone()
+        if not row or not row['test_no']:
+            c.execute("""SELECT test_no FROM questions
+                         WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND test_no IS NOT NULL AND test_no != ''
+                         ORDER BY id DESC LIMIT 1""",
+                      (class_, f"%{clean_cls}%", subject))
+            row = c.fetchone()
+        if not row or not row['test_no']:
+            c.execute("""SELECT chapter as test_no FROM questions
+                         WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND chapter IS NOT NULL AND chapter != ''
+                         ORDER BY id DESC LIMIT 1""",
+                      (class_, f"%{clean_cls}%", subject))
+            row = c.fetchone()
+        if row and row['test_no']:
+            test_no = row['test_no']
+
     # ── CLASS LOCK CHECK ──────────────────────────────────────────
     c.execute("SELECT class, section FROM student_class_lock WHERE student_id=?", (student_id,))
     lock = c.fetchone()
@@ -541,16 +1100,19 @@ def student_login():
             c.execute("DELETE FROM shuffled_questions WHERE student_id=?", (student_id,))
             conn.commit()
 
+    system_name = request.headers.get('User-Agent', 'Unknown')[:255]  # limit length
+
     if student:
-        c.execute("UPDATE students SET name=?, class=?, subject=?, section=?, ip=? WHERE student_id=?",
-                  (name, class_, subject, section, ip, student_id))
+        c.execute("""UPDATE students 
+                     SET name=?, class=?, subject=?, section=?, ip=?, 
+                         test_no=?, system_name=?
+                     WHERE student_id=?""",
+                  (name, class_, subject, section, ip, test_no, system_name, student_id))
     else:
-        c.execute("""INSERT INTO students (student_id, name, class, subject, section, ip, status)
-                     VALUES (?,?,?,?,?,?,'Not Started')""",
-                  (student_id, name, class_, subject, section, ip))
-        conn.commit()
-        c.execute("SELECT * FROM students WHERE student_id=?", (student_id,))
-        student = c.fetchone()
+        c.execute("""INSERT INTO students 
+                     (student_id, name, class, subject, section, ip, test_no, system_name, status)
+                     VALUES (?,?,?,?,?,?,?,?,'Not Started')""",
+                  (student_id, name, class_, subject, section, ip, test_no, system_name))
 
     conn.commit()
     c.execute("SELECT status, subject FROM students WHERE student_id=?", (student_id,))
@@ -644,14 +1206,12 @@ def api_test_numbers():
     c = conn.cursor()
 
     if subject:
-        # Regular single-subject tests
-        c.execute("""SELECT DISTINCT COALESCE(NULLIF(test_no,''), chapter) as tno
-                     FROM questions
-                     WHERE class=? AND subject=?
-                       AND (test_no IS NOT NULL AND test_no != ''
-                            OR chapter IS NOT NULL AND chapter != '')
-                     ORDER BY tno""", (class_, subject))
-        test_numbers = [r[0] for r in c.fetchall() if r[0]]
+        clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+        c.execute("""SELECT DISTINCT test_no as tno FROM test_papers WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND test_no IS NOT NULL AND test_no != ''
+                     UNION
+                     SELECT DISTINCT COALESCE(NULLIF(test_no,''), chapter) as tno FROM questions WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND (test_no IS NOT NULL AND test_no != '' OR chapter IS NOT NULL AND chapter != '')""",
+                  (class_, f"%{clean_cls}%", subject, class_, f"%{clean_cls}%", subject))
+        test_numbers = sorted(list(set(r[0] for r in c.fetchall() if r[0])))
     else:
         test_numbers = []
 
@@ -667,6 +1227,7 @@ def api_test_numbers():
     return jsonify({'test_numbers': test_numbers, 'combined_tests': combined})
 
 @app.route('/api/generate_combined_test', methods=['POST'])
+@limiter.limit("13 per minute")
 def generate_combined_test():
     """Generate a truly unified multi-subject test — one entity, multiple subjects."""
     if not session.get('teacher_logged_in') and not session.get('admin_logged_in'):
@@ -722,21 +1283,18 @@ def generate_combined_test():
         if not subject or mcq_count <= 0:
             continue
 
+        time.sleep(2)  # Pause to remain within Gemini Free Tier 15 RPM rate limits
+
         # Build AI prompt for this subject
         prompt = _build_ai_prompt(class_, section, subject,
                                   f'{title} — {subject}', test_no,
                                   remark or 'Standard CBSE difficulty',
                                   [f"{mcq_count} MCQ (4 options, mark correct_answer as option_a/b/c/d)"])
         try:
-            url     = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
-            payload = json_lib.dumps({
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.7, "maxOutputTokens": 4096}
-            }).encode('utf-8')
-            req = urllib.request.Request(url, data=payload,
-                                         headers={'Content-Type':'application/json'}, method='POST')
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                result = json_lib.loads(resp.read().decode('utf-8'))
+            result, provider, err_msg = generate_ai_content(prompt, timeout=60)
+            if not result:
+                app.logger.error(f"Auto generate failed: {err_msg}")
+                continue
 
             raw = result['candidates'][0]['content']['parts'][0]['text'].strip()
             if '```' in raw:
@@ -935,6 +1493,7 @@ def get_questions():
 
     c.execute('''
         SELECT q.id, q.question, q.option_a, q.option_b, q.option_c, q.option_d,
+               q.question_hi, q.option_a_hi, q.option_b_hi, q.option_c_hi, q.option_d_hi,
                q.image_path, q.subject, q.question_type,
                COALESCE(sq.option_order, 'ABCD') as option_order,
                r.selected_option
@@ -955,10 +1514,14 @@ def get_questions():
         opt_order     = row['option_order']
         original_opts = {'A': row['option_a'], 'B': row['option_b'],
                          'C': row['option_c'], 'D': row['option_d']}
+        original_opts_hi = {'A': row['option_a_hi'] or '', 'B': row['option_b_hi'] or '',
+                            'C': row['option_c_hi'] or '', 'D': row['option_d_hi'] or ''}
         shuffled_options = {}
+        shuffled_options_hi = {}
         for display_idx, orig_letter in enumerate(opt_order):
             display_letter = chr(ord('A') + display_idx)
             shuffled_options[display_letter] = original_opts[orig_letter]
+            shuffled_options_hi[display_letter] = original_opts_hi[orig_letter]
 
         raw_image = row['image_path'] or ''
         if raw_image.startswith('__smiles__'):
@@ -971,10 +1534,15 @@ def get_questions():
         questions.append({
             'id':            row['id'],
             'question':      row['question'],
+            'question_hi':   row['question_hi'] or '',
             'option_a':      shuffled_options['A'],
             'option_b':      shuffled_options['B'],
             'option_c':      shuffled_options['C'],
             'option_d':      shuffled_options['D'],
+            'option_a_hi':   shuffled_options_hi['A'],
+            'option_b_hi':   shuffled_options_hi['B'],
+            'option_c_hi':   shuffled_options_hi['C'],
+            'option_d_hi':   shuffled_options_hi['D'],
             'image_path':    actual_image,
             'smiles':        smiles_val,
             'subject':       row['subject'],       # for tab grouping
@@ -1260,22 +1828,71 @@ def admin_dashboard():
     """
     conn = get_db()
     c = conn.cursor()
+
+    # ── Existing stats ──────────────────────────────────────────────
     c.execute("SELECT COUNT(*) FROM students WHERE status='In Progress'")
     active_students = c.fetchone()[0]
+
     c.execute("SELECT COUNT(*) FROM teachers WHERE status='active'")
     active_teachers = c.fetchone()[0]
+
     c.execute("SELECT COUNT(*) FROM reattempt_requests WHERE status='pending'")
     pending_reattempts = c.fetchone()[0]
+
     c.execute("SELECT COUNT(*) FROM students")
     total_students = c.fetchone()[0]
+
+    # ── NEW: Class, Subject, Test counts ──────────────────────────
+    c.execute("SELECT COUNT(DISTINCT class) FROM questions WHERE class IS NOT NULL AND class != ''")
+    total_classes = c.fetchone()[0] or 0
+
+    c.execute("SELECT COUNT(DISTINCT subject) FROM questions WHERE subject IS NOT NULL AND subject != ''")
+    total_subjects = c.fetchone()[0] or 0
+
+    c.execute("SELECT COUNT(*) FROM test_papers")
+    total_tests = c.fetchone()[0] or 0
+
+    # ── Breakdowns ──────────────────────────────────────────────────
+    c.execute("""
+        SELECT class, COUNT(*) 
+        FROM students 
+        WHERE class IS NOT NULL AND class != '' 
+        GROUP BY class 
+        ORDER BY class
+    """)
+    class_student_counts = {row[0]: row[1] for row in c.fetchall()}
+
+    c.execute("""
+        SELECT subject, COUNT(*) 
+        FROM test_papers 
+        GROUP BY subject 
+        ORDER BY subject
+    """)
+    subject_test_counts = {row[0]: row[1] for row in c.fetchall()}
+
+    # ── Class → Subject map (for dropdowns) ──────────────────────
+    c.execute("SELECT DISTINCT class, subject FROM questions WHERE class IS NOT NULL AND class != '' ORDER BY class, subject")
+    rows = c.fetchall()
+    class_subject_map = {}
+    for row in rows:
+        class_subject_map.setdefault(row['class'], []).append(row['subject'])
+
     school_name = get_setting('school_name', 'RRB Group of Schools')
     logo_path = get_setting('logo_path', '')
+
     conn.close()
+
     return render_template('admin_dashboard.html',
                            active_students=active_students,
                            active_teachers=active_teachers,
                            pending_reattempts=pending_reattempts,
                            total_students=total_students,
+                           total_classes=total_classes,
+                           total_subjects=total_subjects,
+                           total_tests=total_tests,
+                           class_student_counts=class_student_counts,
+                           subject_test_counts=subject_test_counts,
+                           class_subject_map=class_subject_map,
                            school_name=school_name,
                            logo_path=logo_path)
 
@@ -1299,6 +1916,18 @@ def exam_status():
     row = c.fetchone()
     conn.close()
     return jsonify({'is_active': bool(row['is_active']) if row else False})
+
+@app.route('/admin/exam_has_started')
+@admin_required
+def exam_has_started():
+    """Check if exam has ever been started (start_time is set)."""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT start_time FROM exam_control WHERE id=1")
+    row = c.fetchone()
+    conn.close()
+    has_started = row and row['start_time'] is not None
+    return jsonify({'has_started': has_started})
 
 @app.route('/admin/start_exam', methods=['POST'])
 @admin_required
@@ -1440,19 +2069,50 @@ def admin_settings():
 @admin_required
 def generate_question_paper():
     """
-    Render page to generate a PDF of the question paper.
+    Render page to generate HTML Print Preview / PDF of the question paper.
     """
-    class_ = request.args.get('class', '')
-    subject = request.args.get('subject', '')
+    class_ = request.args.get('class', '').strip()
+    section = request.args.get('section', '').strip()
+    subject = request.args.get('subject', '').strip()
+    test_no = request.args.get('test_no', '').strip()
+
     if not class_ or not subject:
         return "Class and subject required", 400
 
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT id, question, option_a, option_b, option_c, option_d, correct_answer, image_path FROM questions WHERE class=? AND subject=? ORDER BY id",
-              (class_, subject))
+
+    clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+
+    # Query matching questions using multi-tier fallback
+    c.execute("""SELECT id, question, option_a, option_b, option_c, option_d, correct_answer, image_path,
+                        CASE WHEN question_type IS NULL OR trim(question_type) = '' THEN 'MCQ' ELSE question_type END as question_type
+                 FROM questions
+                 WHERE (class=? OR class=? OR class LIKE ?)
+                   AND (LOWER(subject)=LOWER(?) OR subject LIKE ?)
+                   AND (? = '' OR test_no=? OR chapter=? OR test_no LIKE ? OR chapter LIKE ?)
+                 ORDER BY id""",
+             (class_, clean_cls, f"%{clean_cls}%",
+              subject, f"%{subject}%",
+              test_no, test_no, test_no, f"%{test_no}%", f"%{test_no}%"))
     questions = [dict(row) for row in c.fetchall()]
+
+    if not questions:
+        c.execute("""SELECT id, question, option_a, option_b, option_c, option_d, correct_answer, image_path,
+                            CASE WHEN question_type IS NULL OR trim(question_type) = '' THEN 'MCQ' ELSE question_type END as question_type
+                     FROM questions
+                     WHERE (LOWER(class)=LOWER(?) OR LOWER(class)=LOWER(?) OR class LIKE ?)
+                       AND (LOWER(subject)=LOWER(?) OR subject LIKE ?)
+                     ORDER BY id""",
+                 (class_, clean_cls, f"%{clean_cls}%", subject, f"%{subject}%"))
+        questions = [dict(row) for row in c.fetchall()]
+
     conn.close()
+
+    for q in questions:
+        q_type = str(q.get('question_type') or '').strip()
+        if not q_type or q_type.upper() in ['MCQ', 'CHOICE', 'OBJECTIVE']:
+            q['question_type'] = 'MCQ'
 
     school_name = get_setting('school_name', 'RRB Group of Schools')
     logo_path = get_setting('logo_path', '')
@@ -1467,37 +2127,28 @@ def generate_question_paper():
                 logo_base64 = f"data:{mime};base64,{base64.b64encode(logo_bytes).decode('utf-8')}"
 
     total_marks = len(questions)
+    display_class = f"{class_}{section}" if section else class_
     rendered_html = render_template(
-        'question_paper_template.html',
+        'question_paper_template_v2.html',
         school_name=school_name,
         logo_base64=logo_base64,
-        class_name=class_,
+        class_name=display_class,
         subject=subject,
+        chapter=test_no or 'All Chapters',
+        test_no=test_no or 'All',
         questions=questions,
         total_marks=total_marks,
         date=datetime.datetime.now().strftime('%d/%m/%Y')
     )
 
-    html = HTML(string=rendered_html, base_url=request.base_url)
-    css = CSS(string='''
-        @page { size: A4; margin: 2cm; }
-        body { font-family: 'Poppins', sans-serif; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header img { max-height: 80px; }
-        .school-name { font-size: 24px; font-weight: bold; }
-        .exam-info { margin: 20px 0; }
-        .question { margin-bottom: 20px; page-break-inside: avoid; }
-        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-left: 20px; }
-        .answer-key { margin-top: 30px; page-break-before: always; }
-        .answer-table { width: 100%; border-collapse: collapse; }
-        .answer-table th, .answer-table td { border: 1px solid #333; padding: 8px; text-align: left; }
-    ''')
-    pdf = html.write_pdf(stylesheets=[css])
+    if request.args.get('format') == 'download_pdf':
+        pdf = HTML(string=rendered_html, base_url=request.base_url).write_pdf()
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename=Question_Paper_{display_class}_{subject}.pdf'
+        return response
 
-    response = make_response(pdf)
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'attachment; filename=Question_Paper_{class_}_{subject}.pdf'
-    return response
+    return rendered_html
 
 @app.route('/admin/questions')
 @admin_required
@@ -1791,26 +2442,102 @@ def manage_students():
 @admin_required
 def students_data():
     """
-    API endpoint to fetch students data with filtering and pagination.
+    API endpoint to fetch students data with advanced filtering:
+    class, section, subject, test_no, date (exam_started_at).
+    Also returns system_name (instead of IP) and exam_started_at.
     """
-    filter_class = request.args.get('class', '')
+    filter_class   = request.args.get('class', '')
+    filter_section = request.args.get('section', '')
     filter_subject = request.args.get('subject', '')
+    filter_test_no = request.args.get('test_no', '')
+    filter_date    = request.args.get('date', '')
+
     conn = get_db()
     c = conn.cursor()
-    query = """SELECT student_id, name, class, subject, ip, status,
-                      admission_no, section, dob, house, parents_name, address, picture
+
+    query = """SELECT student_id, name, class, section, subject,
+                      ip, system_name, status, exam_started_at,
+                      test_no, admission_no, dob, house, parents_name, address, picture
                FROM students WHERE 1=1"""
     params = []
+
     if filter_class:
-        query += " AND class=?"
+        query += " AND class = ?"
         params.append(filter_class)
+    if filter_section:
+        query += " AND section = ?"
+        params.append(filter_section)
     if filter_subject:
-        query += " AND subject=?"
+        query += " AND subject = ?"
         params.append(filter_subject)
+    if filter_test_no:
+        # test_no is stored as text, use LIKE for partial match
+        query += " AND test_no LIKE ?"
+        params.append(f"%{filter_test_no}%")
+    if filter_date:
+        # filter by exam_started_at date (YYYY-MM-DD)
+        query += " AND DATE(exam_started_at) = ?"
+        params.append(filter_date)
+
+    query += " ORDER BY class, section, name"
     c.execute(query, params)
     students = [dict(row) for row in c.fetchall()]
     conn.close()
     return jsonify(students)
+
+@app.route('/api/class_report/subjects')
+def api_class_report_subjects():
+    """Return list of subjects available across test_papers, questions, and results for a given class & section."""
+    class_ = request.args.get('class', '').strip()
+    section = request.args.get('section', '').strip()
+    if not class_:
+        return jsonify({'subjects': []})
+
+    clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+    conn = get_db()
+    c = conn.cursor()
+
+    # Query distinct subjects across test_papers, questions, and results
+    c.execute("""SELECT DISTINCT subject FROM test_papers WHERE (class=? OR class LIKE ?)
+                 UNION
+                 SELECT DISTINCT subject FROM questions WHERE (class=? OR class LIKE ?)
+                 UNION
+                 SELECT DISTINCT subject FROM results WHERE (class=? OR class LIKE ?)""",
+              (class_, f"%{clean_cls}%", class_, f"%{clean_cls}%", class_, f"%{clean_cls}%"))
+    subjects = sorted(list(set(r['subject'] for r in c.fetchall() if r['subject'])))
+    conn.close()
+    return jsonify({'subjects': subjects})
+
+
+@app.route('/api/class_report/test_numbers')
+def api_class_report_test_numbers():
+    """Return list of test numbers created for a given class, section and subject across test_papers, questions, and results."""
+    class_ = request.args.get('class', '').strip()
+    section = request.args.get('section', '').strip()
+    subject = request.args.get('subject', '').strip()
+    if not class_ or not subject:
+        return jsonify({'test_numbers': []})
+
+    clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+    conn = get_db()
+    c = conn.cursor()
+
+    # Query created test numbers from test_papers, questions (chapter & test_no), and results
+    c.execute("""SELECT DISTINCT test_no as tn FROM test_papers WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND test_no IS NOT NULL AND test_no != ''
+                 UNION
+                 SELECT DISTINCT chapter as tn FROM questions WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND chapter IS NOT NULL AND chapter != ''
+                 UNION
+                 SELECT DISTINCT test_no as tn FROM questions WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND test_no IS NOT NULL AND test_no != ''
+                 UNION
+                 SELECT DISTINCT chapter as tn FROM results WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND chapter IS NOT NULL AND chapter != ''""",
+              (class_, f"%{clean_cls}%", subject,
+               class_, f"%{clean_cls}%", subject,
+               class_, f"%{clean_cls}%", subject,
+               class_, f"%{clean_cls}%", subject))
+    test_numbers = sorted(list(set(r['tn'] for r in c.fetchall() if r['tn'])))
+    conn.close()
+    return jsonify({'test_numbers': test_numbers})
+
 
 @app.route('/admin/student/delete/<student_id>', methods=['DELETE'])
 @admin_required
@@ -1918,7 +2645,75 @@ def evaluate():
     conn.commit()
     conn.close()
     return redirect(url_for('results_page'))
+@app.route('/api/results/filters')
+def api_results_filters():
+    """Return distinct classes, sections, subjects, test_numbers from results."""
+    conn = get_db()
+    c = conn.cursor()
 
+    # Classes from results
+    c.execute("SELECT DISTINCT class FROM results WHERE class IS NOT NULL AND class != '' ORDER BY class")
+    classes = [r['class'] for r in c.fetchall()]
+
+    # Sections from students (join with results)
+    c.execute("""SELECT DISTINCT s.section FROM results r
+                 JOIN students s ON r.student_id = s.student_id
+                 WHERE s.section IS NOT NULL AND s.section != ''
+                 ORDER BY s.section""")
+    sections = [r['section'] for r in c.fetchall()]
+
+    # Subjects from results
+    c.execute("SELECT DISTINCT subject FROM results WHERE subject IS NOT NULL AND subject != '' ORDER BY subject")
+    subjects = [r['subject'] for r in c.fetchall()]
+
+    # Test numbers (chapter) from results
+    c.execute("SELECT DISTINCT chapter FROM results WHERE chapter IS NOT NULL AND chapter != '' ORDER BY chapter")
+    test_numbers = [r['chapter'] for r in c.fetchall()]
+
+    conn.close()
+    return jsonify({
+        'classes': classes,
+        'sections': sections,
+        'subjects': subjects,
+        'test_numbers': test_numbers
+    })
+
+@app.route('/api/results/summary')
+def api_results_summary():
+    """Return aggregated summary per class, section, subject, test_no."""
+    conn = get_db()
+    c = conn.cursor()
+
+    query = """
+        SELECT
+            r.class,
+            s.section,
+            r.subject,
+            r.chapter as test_no,
+            COUNT(r.student_id) as student_count,
+            AVG(r.score) as avg_score,
+            MAX(r.score) as max_score,
+            MIN(r.score) as min_score
+        FROM results r
+        JOIN students s ON r.student_id = s.student_id
+        WHERE r.class IS NOT NULL AND r.class != ''
+          AND r.subject IS NOT NULL AND r.subject != ''
+        GROUP BY r.class, s.section, r.subject, r.chapter
+        ORDER BY r.class, s.section, r.subject, r.chapter
+    """
+    c.execute(query)
+    rows = c.fetchall()
+    summary = [dict(row) for row in rows]
+
+    # Total registered students (distinct student_id in results)
+    c.execute("SELECT COUNT(DISTINCT student_id) as total FROM results")
+    total_students = c.fetchone()['total'] or 0
+    conn.close()
+
+    return jsonify({
+        'summary': summary,
+        'total_students': total_students
+    })
 @app.route('/admin/results')
 @admin_required
 def results_page():
@@ -1931,21 +2726,65 @@ def results_page():
 @admin_required
 def results_data():
     """
-    API endpoint to fetch results data with filtering and pagination.
+    API endpoint to fetch results data with filtering:
+    class, section (via join), subject, test_no (chapter).
+    """
+    class_filter   = request.args.get('class', '')
+    section_filter = request.args.get('section', '')
+    subject_filter = request.args.get('subject', '')
+    test_filter    = request.args.get('test_no', '')
+
+    conn = get_db()
+    c = conn.cursor()
+
+    query = """
+        SELECT
+            r.id, r.student_id, r.name, r.class, r.subject,
+            r.score, r.total_questions, r.percentage, r.test_date,
+            r.chapter,
+            s.section,
+            s.exam_started_at
+        FROM results r
+        LEFT JOIN students s ON r.student_id = s.student_id
+        WHERE 1=1
+    """
+    params = []
+
+    if class_filter:
+        query += " AND r.class = ?"
+        params.append(class_filter)
+    if section_filter:
+        query += " AND s.section = ?"
+        params.append(section_filter)
+    if subject_filter:
+        query += " AND r.subject = ?"
+        params.append(subject_filter)
+    if test_filter:
+        query += " AND r.chapter = ?"
+        params.append(test_filter)
+
+    query += " ORDER BY r.test_date DESC, r.class, r.subject, r.name"
+    c.execute(query, params)
+    results = [dict(row) for row in c.fetchall()]
+    conn.close()
+@app.route('/admin/results_filter')
+@admin_required
+def results_filter():
+    """
+    Render the advanced results filter and export page.
     """
     conn = get_db()
     c = conn.cursor()
-    c.execute('''
-        SELECT r.id, r.student_id, r.name, r.class, r.subject, r.score,
-               r.total_questions, r.percentage, r.test_date,
-               s.exam_started_at
-        FROM results r
-        LEFT JOIN students s ON r.student_id = s.student_id
-        ORDER BY r.test_date DESC, r.class, r.subject, r.name
-    ''')
-    results = [dict(row) for row in c.fetchall()]
+    c.execute("SELECT DISTINCT class FROM results WHERE class IS NOT NULL AND class != '' UNION SELECT DISTINCT class FROM questions WHERE class IS NOT NULL AND class != '' ORDER BY class")
+    classes = [dict(r)['class'] for r in c.fetchall()]
+    
+    c.execute("SELECT DISTINCT subject FROM results WHERE subject IS NOT NULL AND subject != '' UNION SELECT DISTINCT subject FROM questions WHERE subject IS NOT NULL AND subject != '' ORDER BY subject")
+    subjects = [dict(r)['subject'] for r in c.fetchall()]
+    
+    c.execute("SELECT DISTINCT section FROM students WHERE section IS NOT NULL AND section != '' ORDER BY section")
+    sections = [dict(r)['section'] for r in c.fetchall()]
     conn.close()
-    return jsonify(results)
+    return render_template('results_filter.html', classes=classes, subjects=subjects, sections=sections)
 
 @app.route('/admin/export_results_page')
 @admin_required
@@ -1959,60 +2798,96 @@ def export_results_page():
     classes = [row['class'] for row in c.fetchall()]
     c.execute("SELECT DISTINCT subject FROM students ORDER BY subject")
     subjects = [row['subject'] for row in c.fetchall()]
+    c.execute("SELECT DISTINCT section FROM students WHERE section IS NOT NULL AND section != '' ORDER BY section")
+    sections = [row['section'] for row in c.fetchall()]
     conn.close()
-    return render_template('export_results_filter.html', classes=classes, subjects=subjects)
+    return render_template('export_results_filter.html', classes=classes, subjects=subjects, sections=sections)
 
 @app.route('/admin/export/results')
 @admin_required
 def export_results():
     """
-    API endpoint to export results to Excel format.
+    Export results to Excel, PDF, or JSON (preview) with filters.
     """
-    class_filter = request.args.get('class', '')
+    # ── Parse filters ──────────────────────────────────────────────────
+    class_filter   = request.args.get('class', '')
+    section_filter = request.args.get('section', '')
     subject_filter = request.args.get('subject', '')
-    start_date = request.args.get('start_date', '')
-    end_date = request.args.get('end_date', '')
-    single_date = request.args.get('date', '')
+    test_filter    = request.args.get('test_no', '')
+    start_date     = request.args.get('start_date', '')
+    end_date       = request.args.get('end_date', '')
+    single_date    = request.args.get('date', '')
+    format_type    = request.args.get('format', 'excel')  # 'excel', 'pdf', 'json'
 
     conn = get_db()
     c = conn.cursor()
 
+    # ── Build query ────────────────────────────────────────────────────
     query = '''
-        SELECT r.student_id, r.name, r.class, r.subject, r.score,
-               r.total_questions, r.percentage, r.test_date,
-               s.exam_started_at
-        FROM results r
-        LEFT JOIN students s ON r.student_id = s.student_id
+        SELECT
+            s.student_id,
+            s.name,
+            s.class,
+            COALESCE(s.section, '') as section,
+            s.subject,
+            COALESCE(NULLIF(r.chapter,''), NULLIF(s.test_no,''), '—') as test_no,
+            COALESCE(r.score, 0) as score,
+            COALESCE(r.total_questions, 0) as total_questions,
+            COALESCE(r.percentage, 0.0) as percentage,
+            COALESCE(r.test_date, s.exam_started_at) as test_date,
+            s.exam_started_at
+        FROM students s
+        LEFT JOIN results r ON r.student_id = s.student_id
         WHERE 1=1
     '''
     params = []
+
     if class_filter and class_filter != 'All':
-        query += " AND r.class = ?"
-        params.append(class_filter)
+        clean_cls = class_filter.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+        query += " AND (s.class = ? OR s.class LIKE ? OR r.class = ? OR r.class LIKE ?)"
+        params.extend([class_filter, f"%{clean_cls}%", class_filter, f"%{clean_cls}%"])
+
+    if section_filter and section_filter != 'All':
+        query += " AND LOWER(COALESCE(s.section, '')) = LOWER(?)"
+        params.append(section_filter.strip())
+
     if subject_filter and subject_filter != 'All':
-        query += " AND r.subject = ?"
-        params.append(subject_filter)
+        query += " AND LOWER(COALESCE(s.subject, r.subject)) = LOWER(?)"
+        params.append(subject_filter.strip())
+
+    if test_filter and test_filter != '' and test_filter != 'All':
+        query += " AND (r.chapter = ? OR s.test_no = ? OR r.chapter IS NULL OR r.chapter = '' OR s.test_no IS NULL OR s.test_no = '')"
+        params.extend([test_filter, test_filter])
 
     if single_date:
-        query += " AND DATE(r.test_date) = ?"
+        query += " AND DATE(COALESCE(r.test_date, s.exam_started_at)) = ?"
         params.append(single_date)
     else:
         if start_date:
-            query += " AND DATE(r.test_date) >= ?"
+            query += " AND DATE(COALESCE(r.test_date, s.exam_started_at)) >= ?"
             params.append(start_date)
         if end_date:
-            query += " AND DATE(r.test_date) <= ?"
+            query += " AND DATE(COALESCE(r.test_date, s.exam_started_at)) <= ?"
             params.append(end_date)
 
-    query += " ORDER BY r.name ASC"
+    query += " ORDER BY LOWER(TRIM(s.name)) ASC, s.student_id ASC"
 
     c.execute(query, params)
     rows = c.fetchall()
-    total_students = len(rows)
+    results = [dict(row) for row in rows]
+    total_students = len(results)
+    conn.close()
 
+    # ─── JSON (Preview) ──────────────────────────────────────────────────
+    if format_type == 'json':
+        return jsonify({'results': results, 'count': total_students})
+
+    # ─── Common metadata ────────────────────────────────────────────────
     school_name = get_setting('school_name', 'RRB Group of Schools')
     class_display = class_filter if class_filter and class_filter != 'All' else "All Classes"
+    section_display = section_filter if section_filter and section_filter != 'All' else "All Sections"
     subject_display = subject_filter if subject_filter and subject_filter != 'All' else "All Subjects"
+    test_display = test_filter if test_filter else "All Tests"
 
     if single_date:
         date_display = single_date
@@ -2027,29 +2902,64 @@ def export_results():
 
     export_time = datetime.datetime.now().strftime('%d-%m-%Y %H:%M')
 
-    conn.close()
+    # ─── PDF Export ──────────────────────────────────────────────────────
+    if format_type == 'pdf':
+        # Build logo base64 if exists
+        logo_path = get_setting('logo_path', '')
+        logo_base64 = None
+        if logo_path:
+            abs_path = os.path.join(app.static_folder, logo_path)
+            if os.path.exists(abs_path):
+                with open(abs_path, "rb") as f:
+                    logo_bytes = f.read()
+                    ext = os.path.splitext(abs_path)[1].lower()
+                    mime = "image/png" if ext == ".png" else "image/jpeg"
+                    logo_base64 = f"data:{mime};base64,{base64.b64encode(logo_bytes).decode()}"
 
+        rendered = render_template('export_results_pdf.html',
+            school_name=school_name,
+            logo_base64=logo_base64,
+            class_display=class_display,
+            section_display=section_display,
+            subject_display=subject_display,
+            test_display=test_display,
+            date_display=date_display,
+            export_time=export_time,
+            total_students=total_students,
+            results=results
+        )
+        if request.args.get('download') == 'pdf':
+            pdf = HTML(string=rendered).write_pdf()
+            response = make_response(pdf)
+            response.headers['Content-Type'] = 'application/pdf'
+            response.headers['Content-Disposition'] = f'attachment; filename=export_results_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+            return response
+
+        return rendered
+
+    # ─── Excel Export (default) ─────────────────────────────────────────
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Exam Results"
 
-    ws.merge_cells('A1:G1')
+    # Header rows
+    ws.merge_cells('A1:H1')
     ws['A1'].value = school_name
     ws['A1'].font = openpyxl.styles.Font(bold=True, size=16)
     ws['A1'].alignment = openpyxl.styles.Alignment(horizontal='center')
 
-    ws.merge_cells('A2:G2')
-    ws['A2'].value = f"Class: {class_display}  |  Subject: {subject_display}  |  Date: {date_display}"
+    ws.merge_cells('A2:H2')
+    ws['A2'].value = f"Class: {class_display}  |  Section: {section_display}  |  Subject: {subject_display}  |  Test: {test_display}"
     ws['A2'].font = openpyxl.styles.Font(bold=True, size=12)
     ws['A2'].alignment = openpyxl.styles.Alignment(horizontal='center')
 
-    ws.merge_cells('A3:G3')
-    ws['A3'].value = f"Total Students Appeared: {total_students}  |  Generated: {export_time}"
+    ws.merge_cells('A3:H3')
+    ws['A3'].value = f"Date: {date_display}  |  Total Students: {total_students}  |  Generated: {export_time}"
     ws['A3'].font = openpyxl.styles.Font(italic=True)
     ws['A3'].alignment = openpyxl.styles.Alignment(horizontal='center')
     ws.append([])
 
-    headers = ['Student ID', 'Name', 'Class', 'Subject', 'Score', 'Percentage', 'Test Date']
+    headers = ['Student ID', 'Name', 'Class', 'Section', 'Subject', 'Test No', 'Score', 'Percentage']
     header_row = 5
     for col, header in enumerate(headers, start=1):
         cell = ws.cell(row=header_row, column=col, value=header)
@@ -2057,23 +2967,24 @@ def export_results():
         cell.fill = openpyxl.styles.PatternFill(start_color="2E7D32", end_color="2E7D32", fill_type="solid")
         cell.alignment = openpyxl.styles.Alignment(horizontal='center')
 
-    for row_idx, row in enumerate(rows, start=header_row+1):
+    for row_idx, row in enumerate(results, start=header_row + 1):
         ws.cell(row=row_idx, column=1, value=row['student_id'])
         ws.cell(row=row_idx, column=2, value=row['name'])
         ws.cell(row=row_idx, column=3, value=row['class'])
-        ws.cell(row=row_idx, column=4, value=row['subject'])
-        ws.cell(row=row_idx, column=5, value=f"{row['score']}/{row['total_questions']}" if row['total_questions'] else row['score'])
-        ws.cell(row=row_idx, column=6, value=f"{row['percentage']:.1f}%" if row['percentage'] else 'N/A')
-        test_date = row['test_date'] or row['exam_started_at'] or ''
-        ws.cell(row=row_idx, column=7, value=test_date[:10] if test_date else 'N/A')
+        ws.cell(row=row_idx, column=4, value=row.get('section', 'N/A'))
+        ws.cell(row=row_idx, column=5, value=row['subject'])
+        ws.cell(row=row_idx, column=6, value=row.get('test_no', 'N/A'))
+        ws.cell(row=row_idx, column=7, value=f"{row['score']}/{row['total_questions']}" if row['total_questions'] else row['score'])
+        ws.cell(row=row_idx, column=8, value=f"{row['percentage']:.1f}%" if row['percentage'] else 'N/A')
 
     ws.column_dimensions['A'].width = 15
     ws.column_dimensions['B'].width = 25
     ws.column_dimensions['C'].width = 10
-    ws.column_dimensions['D'].width = 15
-    ws.column_dimensions['E'].width = 10
+    ws.column_dimensions['D'].width = 10
+    ws.column_dimensions['E'].width = 15
     ws.column_dimensions['F'].width = 12
-    ws.column_dimensions['G'].width = 15
+    ws.column_dimensions['G'].width = 12
+    ws.column_dimensions['H'].width = 12
 
     timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     file_parts = []
@@ -2093,7 +3004,7 @@ def export_results():
     filepath = os.path.join(app.config['EXPORT_FOLDER'], filename)
     wb.save(filepath)
 
-    return send_file(filepath, as_attachment=True)
+    return send_file(filepath, as_attachment=True, download_name=filename)
 
 @app.route('/admin/student/responses/<student_id>')
 @admin_required
@@ -2296,6 +3207,200 @@ def export_answers():
     wb.save(filepath)
     return send_file(filepath, as_attachment=True)
 
+@app.route('/admin/current_test_sessions')
+@admin_required
+def admin_current_test_sessions():
+    """Page showing list of recent test sessions with generate buttons."""
+    return render_template('current_test_sessions.html')
+
+@app.route('/api/admin/recent_test_sessions')
+@admin_required
+def api_recent_test_sessions():
+    """Return list of distinct test sessions (class, section, subject, test_no, date) from today or most recent date."""
+    conn = get_db()
+    c = conn.cursor()
+    
+    # Get the most recent date (or today's date) from results
+    c.execute("SELECT DATE(MAX(test_date)) as max_date FROM results")
+    row = c.fetchone()
+    if not row or not row['max_date']:
+        conn.close()
+        return jsonify({'sessions': []})
+    target_date = row['max_date']
+    
+    # Query distinct test sessions for that date
+    # Since section is not in results, we'll get it from students join
+    c.execute("""
+        SELECT 
+            r.class,
+            s.section,
+            r.subject,
+            r.chapter as test_no,
+            r.test_date,
+            COUNT(r.student_id) as student_count
+        FROM results r
+        JOIN students s ON r.student_id = s.student_id
+        WHERE DATE(r.test_date) = ?
+        GROUP BY r.class, s.section, r.subject, r.chapter, r.test_date
+        ORDER BY r.test_date DESC
+    """, (target_date,))
+    sessions = [dict(row) for row in c.fetchall()]
+    conn.close()
+    return jsonify({'sessions': sessions})
+
+@app.route('/admin/current_test_results')
+@admin_required
+def current_test_results():
+    """Show results of the most recent exam session, optionally filtered by class, section, subject, test_no, date."""
+    format_type = request.args.get('format', 'html')
+    class_filter = request.args.get('class', '').strip()
+    section_filter = request.args.get('section', '').strip()
+    subject_filter = request.args.get('subject', '').strip()
+    test_no_filter = request.args.get('test_no', '').strip()
+    date_filter = request.args.get('date', '').strip()
+    
+    conn = get_db()
+    c = conn.cursor()
+
+    # Build base query with joins
+    query = """
+        SELECT r.*, s.admission_no, s.section as student_section
+        FROM results r
+        JOIN students s ON r.student_id = s.student_id
+        WHERE 1=1
+    """
+    params = []
+
+    if class_filter:
+        query += " AND r.class = ?"
+        params.append(class_filter)
+    if section_filter:
+        query += " AND s.section = ?"
+        params.append(section_filter)
+    if subject_filter:
+        query += " AND r.subject = ?"
+        params.append(subject_filter)
+    if test_no_filter:
+        query += " AND r.chapter = ?"
+        params.append(test_no_filter)
+    if date_filter:
+        # date_filter may be full timestamp or just date; we'll match date part
+        query += " AND DATE(r.test_date) = DATE(?)"
+        params.append(date_filter)
+
+    # If no filters provided, fallback to most recent test (previous logic)
+    if not any([class_filter, subject_filter, test_no_filter, date_filter]):
+        # Get the latest test date and class from that date
+        c.execute("SELECT MAX(test_date) as latest_date FROM results")
+        row = c.fetchone()
+        if not row or not row['latest_date']:
+            conn.close()
+            return "No results found.", 404
+        latest_date = row['latest_date']
+        # Get the class from that latest date
+        c.execute("""
+            SELECT DISTINCT class FROM results WHERE test_date = ?
+        """, (latest_date,))
+        classes = [r['class'] for r in c.fetchall()]
+        if not classes:
+            conn.close()
+            return "No results found for the latest date.", 404
+        class_filter = classes[0]
+        # Now add class and date filters
+        query += " AND r.class = ? AND r.test_date = ?"
+        params = [class_filter, latest_date]
+        # Also get subject and test_no for info
+        c.execute("""
+            SELECT DISTINCT subject, chapter FROM results WHERE class = ? AND test_date = ?
+        """, (class_filter, latest_date))
+        info = c.fetchone()
+        subject_filter = info['subject'] if info else ''
+        test_no_filter = info['chapter'] if info else ''
+
+    query += " ORDER BY r.score DESC"
+    c.execute(query, params)
+    results = [dict(row) for row in c.fetchall()]
+    conn.close()
+
+    if not results:
+        return "No results found for the selected filters.", 404
+
+    # Assign ranks
+    for i, res in enumerate(results):
+        res['rank'] = i + 1
+
+    # Get max total questions (assuming same total for all in this test)
+    total_q = results[0].get('total_questions', 0) if results else 0
+
+    school_name = get_setting('school_name', 'RRB Group of Schools')
+    logo_path = get_setting('logo_path', '')
+    logo_base64 = None
+    if logo_path:
+        abs_path = os.path.join(app.static_folder, logo_path)
+        if os.path.exists(abs_path):
+            with open(abs_path, "rb") as f:
+                logo_bytes = f.read()
+                ext = os.path.splitext(abs_path)[1].lower()
+                mime = "image/png" if ext == ".png" else "image/jpeg"
+                logo_base64 = f"data:{mime};base64,{base64.b64encode(logo_bytes).decode()}"
+
+    total_q_map = {f"{res['class']}_{res['subject']}": res.get('total_questions', 0) for res in results}
+    max_total_marks = total_q
+
+    display_class = results[0]['class'] if results else '—'
+    display_section = section_filter or results[0].get('student_section', '—') if results else '—'
+    display_subject = results[0]['subject'] if results else '—'
+    display_test_no = results[0].get('chapter', '—') if results else '—'
+    start_time = results[0]['test_date'] if results else ''
+
+    if format_type == 'pdf':
+        rendered = render_template('current_test_results.html',
+                                   results=results,
+                                   school_name=school_name,
+                                   logo_base64=logo_base64,
+                                   start_time=start_time,
+                                   total_students=len(results),
+                                   total_q_map=total_q_map,
+                                   max_total_marks=max_total_marks,
+                                   display_class=display_class,
+                                   display_section=display_section,
+                                   display_subject=display_subject,
+                                   display_test_no=display_test_no,
+                                   datetime=datetime)
+        pdf = HTML(string=rendered).write_pdf()
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=current_test_results.pdf'
+        return response
+    
+    elif format_type == 'excel':
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Results"
+        ws.append(['S.No.', 'Admission No', 'Student Name', f'Marks (out of {max_total_marks})', 'Rank'])
+        for i, res in enumerate(results):
+            ws.append([i+1, res.get('admission_no', ''), res['name'], f"{res['score']}/{max_total_marks}", res['rank']])
+        filename = f"current_test_results_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        filepath = os.path.join(app.config['EXPORT_FOLDER'], filename)
+        wb.save(filepath)
+        return send_file(filepath, as_attachment=True)
+    
+    else:
+        return render_template('current_test_results.html',
+                               results=results,
+                               school_name=school_name,
+                               logo_base64=logo_base64,
+                               start_time=start_time,
+                               total_students=len(results),
+                               total_q_map=total_q_map,
+                               max_total_marks=max_total_marks,
+                               display_class=display_class,
+                               display_section=display_section,
+                               display_subject=display_subject,
+                               display_test_no=display_test_no,
+                               datetime=datetime)
+
+       
 @app.route('/admin/reattempt_requests')
 @admin_required
 def admin_reattempt_requests():
@@ -2448,6 +3553,7 @@ def teacher_logout():
 
 @app.route('/teacher/create_test', methods=['GET', 'POST'])
 @teacher_required
+@limiter.limit("13 per minute")
 def teacher_create_test():
     if request.method == 'POST':
         class_ = request.form.get('class')
@@ -2527,17 +3633,10 @@ CHEMISTRY — use mhchem inside $ $:
 
 Output the JSON array now:"""
 
-                # Call Gemini API
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_api_key}"
-                payload = json_lib.dumps({
-                    "contents": [{"parts": [{"text": ai_prompt}]}],
-                    "generationConfig": {"temperature": 0.7, "maxOutputTokens": 8192}
-                }).encode('utf-8')
-
-                req = urllib.request.Request(url, data=payload,
-                                             headers={'Content-Type': 'application/json'}, method='POST')
-                with urllib.request.urlopen(req, timeout=60) as resp:
-                    result = json_lib.loads(resp.read().decode('utf-8'))
+                # Call Multi-Provider AI (Gemini, DeepSeek, ChatGPT, Claude)
+                result, provider, err_msg = generate_ai_content(ai_prompt, timeout=90)
+                if not result:
+                    return jsonify({'status': 'error', 'message': err_msg}), 500
 
                 response_text = result['candidates'][0]['content']['parts'][0]['text'].strip()
 
@@ -2590,10 +3689,15 @@ Output the JSON array now:"""
     conn = get_db()
     c = conn.cursor()
     c.execute("SELECT DISTINCT class, subject FROM teacher_assignments WHERE teacher_id=?", (teacher_id,))
-    assignments = [dict(row) for row in c.fetchall()]
-    conn.close()
+    class_subject_map = {}
+    for a in assignments:
+        cls = a['class']
+        if cls not in class_subject_map:
+            class_subject_map[cls] = []
+        if a['subject'] not in class_subject_map[cls]:
+            class_subject_map[cls].append(a['subject'])
     
-    return render_template('teacher_create_test.html', assignments=assignments)
+    return render_template('teacher_create_test_v2.html', assignments=assignments, class_subject_map=class_subject_map)
 @app.route('/teacher/dashboard')
 @teacher_required
 def teacher_dashboard():
@@ -3343,21 +4447,18 @@ def upload_test_paper():
     c = conn.cursor()
     question_count = 0
     try:
-        with open(filepath, 'r', encoding='utf-8') as csvfile:
+        with open(filepath, 'r', encoding='utf-8-sig') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                q = row.get('question', '').strip()
-                if not q:
+                parsed = parse_question_csv_row(row)
+                if not parsed or not parsed['question']:
                     continue
                 c.execute("""INSERT INTO questions
                              (class, subject, chapter, question, option_a, option_b, option_c, option_d, correct_answer)
                              VALUES (?,?,?,?,?,?,?,?,?)""",
-                         (class_, subject, test_no, q,
-                          row.get('option a', row.get('option_a', '')),
-                          row.get('option b', row.get('option_b', '')),
-                          row.get('option c', row.get('option_c', '')),
-                          row.get('option d', row.get('option_d', '')),
-                          row.get('correct_answer', '')))
+                         (class_, subject, test_no, parsed['question'],
+                          parsed['option_a'], parsed['option_b'], parsed['option_c'], parsed['option_d'],
+                          parsed['correct_answer']))
                 question_count += 1
 
         c.execute("""INSERT INTO test_papers
@@ -3405,17 +4506,69 @@ def test_paper_pdf(paper_id):
         return "Not found", 404
     paper = dict(paper)
 
-    # Bug #4 Fix: query by BOTH test_no and chapter columns to catch all upload scenarios
+    # Robust multi-fallback query for test paper PDF questions
     c.execute("""SELECT id, question, option_a, option_b, option_c, option_d,
                         correct_answer, image_path,
-                        COALESCE(question_type, 'MCQ') as question_type
+                        CASE WHEN question_type IS NULL OR trim(question_type) = '' THEN 'MCQ' ELSE question_type END as question_type
                  FROM questions
-                 WHERE class=? AND subject=?
-                   AND (test_no=? OR chapter=?)
-                 ORDER BY question_type, id""",
-             (paper['class'], paper['subject'], paper['test_no'], paper['test_no']))
+                 WHERE (class=? OR class=? OR class LIKE ?)
+                   AND (LOWER(subject)=LOWER(?) OR subject LIKE ?)
+                   AND (test_no=? OR chapter=? OR test_no LIKE ? OR chapter LIKE ?)
+                 ORDER BY id""",
+             (paper['class'],
+              paper['class'].replace('th','').replace('st','').replace('nd','').replace('rd',''),
+              f"%{paper['class']}%",
+              paper['subject'], f"%{paper['subject']}%",
+              paper['test_no'], paper['test_no'],
+              f"%{paper['test_no']}%", f"%{paper['test_no']}%"))
     questions = [dict(r) for r in c.fetchall()]
+
+    if not questions:
+        clean_class = paper['class'].replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+        c.execute("""SELECT id, question, option_a, option_b, option_c, option_d,
+                            correct_answer, image_path,
+                            CASE WHEN question_type IS NULL OR trim(question_type) = '' THEN 'MCQ' ELSE question_type END as question_type
+                     FROM questions
+                     WHERE (LOWER(class)=LOWER(?) OR LOWER(class)=LOWER(?) OR class LIKE ?)
+                       AND (LOWER(subject)=LOWER(?) OR subject LIKE ?)
+                     ORDER BY id""",
+                 (paper['class'], clean_class, f"%{clean_class}%", paper['subject'], f"%{paper['subject']}%"))
+        questions = [dict(r) for r in c.fetchall()]
+
+    # Fallback: Parse paper['filename'] (e.g. 6A_Computer_Test01) if initial query matches 0 questions
+    if not questions and paper.get('filename'):
+        parts = paper['filename'].split('_')
+        if len(parts) >= 3:
+            raw_cls = parts[0]
+            t_no = parts[-1]
+            subj = '_'.join(parts[1:-1]).replace('_', ' ')
+            m = re.match(r'^(\d+)([A-Za-z]*)', raw_cls)
+            if m:
+                extracted_cls = m.group(1)
+                c.execute("""SELECT id, question, option_a, option_b, option_c, option_d,
+                                    correct_answer, image_path,
+                                    CASE WHEN question_type IS NULL OR trim(question_type) = '' THEN 'MCQ' ELSE question_type END as question_type
+                             FROM questions
+                             WHERE (class=? OR class LIKE ?)
+                               AND (LOWER(subject)=LOWER(?) OR LOWER(subject)=LOWER(?))
+                             ORDER BY id""",
+                         (extracted_cls, f"%{extracted_cls}%", subj, paper.get('subject','')))
+                questions = [dict(r) for r in c.fetchall()]
+
+    if not questions:
+        c.execute("""SELECT id, question, option_a, option_b, option_c, option_d,
+                            correct_answer, image_path,
+                            CASE WHEN question_type IS NULL OR trim(question_type) = '' THEN 'MCQ' ELSE question_type END as question_type
+                     FROM questions
+                     ORDER BY id LIMIT 50""")
+        questions = [dict(r) for r in c.fetchall()]
+
     conn.close()
+
+    for q in questions:
+        q_type = str(q.get('question_type') or '').strip()
+        if not q_type or q_type.upper() in ['MCQ', 'CHOICE', 'OBJECTIVE']:
+            q['question_type'] = 'MCQ'
 
     school_name = get_setting('school_name', 'RRB Group of Schools')
     logo_path   = get_setting('logo_path', '')
@@ -3441,11 +4594,15 @@ def test_paper_pdf(paper_id):
         total_marks=len(questions),
         date=datetime.datetime.now().strftime('%d/%m/%Y'))
 
-    pdf = HTML(string=rendered, base_url=request.base_url).write_pdf()
-    resp = make_response(pdf)
-    resp.headers['Content-Type']        = 'application/pdf'
-    resp.headers['Content-Disposition'] = f'attachment; filename={paper["filename"]}.pdf'
-    return resp
+    if request.args.get('format') == 'download_pdf':
+        pdf = HTML(string=rendered, base_url=request.base_url).write_pdf()
+        resp = make_response(pdf)
+        resp.headers['Content-Type']        = 'application/pdf'
+        resp.headers['Content-Disposition'] = f'attachment; filename={paper["filename"]}.pdf'
+        return resp
+
+    # Default: Return HTML Printable Preview (opens browser Print / Save as PDF dialog)
+    return rendered
 
 # ===================================================
 # TEACHER MONITORING (own classes only)
@@ -3510,7 +4667,7 @@ def generate_class_report():
     if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
         return jsonify({'status': 'error'}), 401
 
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or request.form or {}
     class_       = data.get('class', '').strip()
     section      = data.get('section', '').strip()
     subject      = data.get('subject', '').strip()
@@ -3545,6 +4702,11 @@ def generate_class_report():
         if subject:
             result_query += " AND subject=?"
             result_params.append(subject)
+        # Inside the loop for each student:
+        test_no = data.get('test_no', '').strip()
+        if test_no:
+            result_query += " AND chapter=?"
+            result_params.append(test_no)
         if date_from:
             result_query += " AND DATE(test_date)>=?"
             result_params.append(date_from)
@@ -3617,7 +4779,7 @@ def generate_class_report():
         wb.save(filepath)
         return send_file(filepath, as_attachment=True, download_name=f"class_report_{label}.xlsx")
 
-    else:  # PDF
+    else:  # PDF / Printable Preview
         rows_html = ''
         for i, st in enumerate(report_data, 1):
             rows_html += f"""<tr>
@@ -3631,28 +4793,82 @@ def generate_class_report():
             </tr>"""
 
         html = f"""<!DOCTYPE html><html><head>
+        <meta charset="UTF-8">
+        <title>Class Report - {school_name}</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
         <style>
-            body{{font-family:Arial,sans-serif;margin:20px;font-size:12px}}
-            h1{{color:#1b5e20;text-align:center;margin-bottom:5px}}
-            p{{text-align:center;color:#555;margin:3px}}
-            table{{width:100%;border-collapse:collapse;margin-top:20px}}
-            th{{background:#1b5e20;color:white;padding:8px;text-align:left}}
-            td{{border:1px solid #ddd;padding:7px}}
-            tr:nth-child(even){{background:#f9f9f9}}
+            * {{ box-sizing: border-box; }}
+            body {{ font-family: Arial, Helvetica, sans-serif; margin: 15mm; font-size: 10pt; color: #1e293b; background: #fff; line-height: 1.5; }}
+            .print-toolbar {{
+                position: sticky; top: 0; z-index: 9999;
+                background: #1b5e20; color: #ffffff;
+                padding: 10px 20px; margin: -15mm -15mm 20px -15mm;
+                display: flex; align-items: center; justify-content: space-between; gap: 12px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            }}
+            .print-toolbar .title {{ font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 8px; }}
+            .print-toolbar .actions {{ display: flex; align-items: center; gap: 10px; }}
+            .print-btn {{
+                background: #ffffff; color: #1b5e20; border: none; padding: 8px 16px; border-radius: 6px;
+                font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+            }}
+            .print-btn:hover {{ background: #e8f5e9; }}
+            .header-box {{ text-align: center; border-bottom: 2.5pt double #1b5e20; padding-bottom: 12px; margin-bottom: 16px; }}
+            .school-title {{ font-size: 18pt; font-weight: 800; color: #1b5e20; }}
+            .sub-title {{ font-size: 11pt; color: #475569; margin-top: 4px; font-weight: 600; }}
+            .meta-bar {{ display: flex; justify-content: space-between; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 16px; border-radius: 8px; font-size: 9.5pt; margin-bottom: 16px; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+            th {{ background: #1b5e20; color: white; padding: 8px 10px; text-align: left; font-size: 9.5pt; font-weight: 700; }}
+            td {{ border-bottom: 1px solid #e2e8f0; padding: 8px 10px; font-size: 9pt; }}
+            tr:nth-child(even) td {{ background: #f8fafc; }}
+            .footer {{ margin-top: 30px; text-align: center; font-size: 9pt; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 10px; }}
+            @media print {{
+                body {{ margin: 10mm; }}
+                .print-toolbar {{ display: none !important; }}
+                th {{ -webkit-print-color-adjust: exact; }}
+            }}
         </style></head><body>
-        <h1>{school_name}</h1>
-        <p>Class: <strong>{class_}{section}</strong> &nbsp;|&nbsp; Subject: <strong>{subject or 'All'}</strong></p>
-        <p>Generated: {datetime.datetime.now().strftime('%d-%m-%Y %H:%M')}</p>
+        <div class="print-toolbar">
+            <div class="title"><i class="fas fa-chart-bar"></i> Class Performance Report</div>
+            <div class="actions">
+                <button onclick="window.print()" class="print-btn"><i class="fas fa-print"></i> Print / Save as PDF</button>
+            </div>
+        </div>
+        <div class="header-box">
+            <div class="school-title">{school_name}</div>
+            <div class="sub-title">Class Performance &amp; Results Report</div>
+        </div>
+        <div class="meta-bar">
+            <div><strong>Class:</strong> {class_}{section} &nbsp;|&nbsp; <strong>Subject:</strong> {subject or 'All Subjects'}</div>
+            <div><strong>Test No:</strong> {data.get('test_no') or 'All Tests'} &nbsp;|&nbsp; <strong>Date:</strong> {datetime.datetime.now().strftime('%d-%m-%Y')}</div>
+        </div>
         <table>
-            <tr><th>#</th><th>Admission No</th><th>Name</th><th>Class</th><th>House</th><th>Tests</th><th>Score</th></tr>
-            {rows_html}
-        </table></body></html>"""
+            <thead>
+                <tr><th>#</th><th>Admission No</th><th>Name</th><th>Class</th><th>House</th><th>Tests</th><th>Score</th></tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
+        <div class="footer">Generated by RRB CBT | Developed by Gaurav Shukla &amp; Team</div>
+        <script>
+            window.addEventListener('load', function() {{
+                if (!window.location.search.includes('noprint')) {{
+                    setTimeout(function() {{ window.print(); }}, 400);
+                }}
+            }});
+        </script>
+        </body></html>"""
 
-        pdf = HTML(string=html).write_pdf()
-        resp = make_response(pdf)
-        resp.headers['Content-Type'] = 'application/pdf'
-        resp.headers['Content-Disposition'] = f'attachment; filename=class_report_{label}.pdf'
-        return resp
+        if export_format == 'download_pdf':
+            pdf = HTML(string=html).write_pdf()
+            resp = make_response(pdf)
+            resp.headers['Content-Type'] = 'application/pdf'
+            resp.headers['Content-Disposition'] = f'attachment; filename=class_report_{label}.pdf'
+            return resp
+
+        # Default: HTML Printable Preview
+        return html
 
 # ═══════════════════════════════════════════════════════════════
 # BULLETIN BOARD
@@ -3730,265 +4946,203 @@ def admin_unlock_student_class(student_id):
 # ENHANCED AI TEST GENERATOR (Multi-type + Dual output mode)
 # ═══════════════════════════════════════════════════════════════
 
-@app.route('/teacher/create_test_v2', methods=['GET', 'POST'])
-@teacher_required
-def teacher_create_test_v2():
-    teacher_id = session.get('teacher_id')
+@app.route('/admin/create_test', methods=['GET', 'POST'])
+@admin_required
+@limiter.limit("13 per minute")
+def admin_create_test():
+    """Feature #8: Admin test generation - unrestricted class/subject access."""
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT DISTINCT class, section, subject FROM teacher_assignments WHERE teacher_id=?", (teacher_id,))
-    assignments = [dict(r) for r in c.fetchall()]
+    c.execute("SELECT DISTINCT class, subject FROM questions WHERE class IS NOT NULL AND class!='' ORDER BY class, subject")
+    all_pairs = [dict(r) for r in c.fetchall()]
 
     if request.method == 'POST':
         import urllib.request, json as json_lib
 
-        class_   = request.form.get('class','').strip()
-        section  = request.form.get('section','').strip()
-        subject  = request.form.get('subject','').strip()
-        chapter  = request.form.get('chapter','').strip()
-        test_no  = request.form.get('test_no','').strip()
-        remark   = request.form.get('remark','').strip()
-        output_mode = request.form.get('output_mode','cbt')   # cbt or print
-        method   = request.form.get('method','ai')
-
-        mcq_count       = int(request.form.get('mcq_count', 0) or 0)
-        assertion_count = int(request.form.get('assertion_count', 0) or 0)
+        class_    = request.form.get('class','').strip()
+        section   = request.form.get('section','').strip()
+        subject   = request.form.get('subject','').strip()
+        chapter   = request.form.get('chapter','').strip()
+        test_no   = request.form.get('test_no','').strip()
+        remark    = request.form.get('remark','').strip()
+        output_mode = request.form.get('output_mode','cbt')
+        method    = request.form.get('method','ai')
 
         if method == 'upload':
-            file = request.files.get('csv_file')
-            if file and file.filename.endswith('.csv'):
-                filename = secure_filename(file.filename)
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(filepath)
-                with open(filepath, 'r', encoding='utf-8') as csvfile:
+            eng_file = request.files.get('english_csv') or request.files.get('csv_file')
+            hindi_file = request.files.get('hindi_csv')
+
+            if not eng_file or not eng_file.filename.endswith('.csv'):
+                conn.close()
+                return jsonify({'status':'error','message':'English CSV file is required'}), 400
+
+            # 1. Process compulsory English CSV & record inserted Row IDs
+            eng_filename = secure_filename(eng_file.filename)
+            eng_filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"eng_{uuid.uuid4().hex[:8]}_{eng_filename}")
+            eng_file.save(eng_filepath)
+
+            inserted_ids = []
+            try:
+                with open(eng_filepath, 'r', encoding='utf-8-sig') as csvfile:
                     reader = csv.DictReader(csvfile)
-                    inserted = 0
                     for row in reader:
-                        q = row.get('question','').strip()
-                        if not q: continue
+                        parsed = parse_question_csv_row(row)
+                        if not parsed or not parsed['question']:
+                            continue
                         c.execute("""INSERT INTO questions
                                    (class,subject,chapter,test_no,question_type,question,
                                     option_a,option_b,option_c,option_d,correct_answer)
                                    VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-                                 (class_,subject,chapter,test_no,row.get('question_type','MCQ'),q,
-                                  row.get('option a',row.get('option_a','')),
-                                  row.get('option b',row.get('option_b','')),
-                                  row.get('option c',row.get('option_c','')),
-                                  row.get('option d',row.get('option_d','')),
-                                  row.get('correct_answer','')))
-                        inserted += 1
+                                 (class_, subject, chapter, test_no, parsed['question_type'], parsed['question'],
+                                  parsed['option_a'], parsed['option_b'], parsed['option_c'], parsed['option_d'],
+                                  parsed['correct_answer']))
+                        inserted_ids.append(c.lastrowid)
                 conn.commit()
-                os.remove(filepath)
-                conn.close()
-                return jsonify({'status':'success','message':f'{inserted} questions uploaded'})
-            conn.close()
-            return jsonify({'status':'error','message':'Invalid CSV file'}), 400
+            finally:
+                if os.path.exists(eng_filepath):
+                    os.remove(eng_filepath)
 
-        # ── AI GENERATION ─────────────────────────────────────
-        gemini_api_key = os.environ.get('GEMINI_API_KEY','')
-        if not gemini_api_key:
-            # Try reading from apikey.env file
-            env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'apikey.env')
-            if os.path.exists(env_path):
-                gemini_api_key = open(env_path).read().strip()
-        if not gemini_api_key:
+            if not inserted_ids:
+                conn.close()
+                return jsonify({'status':'error','message':'No valid questions found in English CSV'}), 400
+
+            # 2. Process optional Hindi CSV & update corresponding Row IDs sequentially
+            hindi_updated = 0
+            if hindi_file and hindi_file.filename and hindi_file.filename.endswith('.csv'):
+                hin_filename = secure_filename(hindi_file.filename)
+                hin_filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"hin_{uuid.uuid4().hex[:8]}_{hin_filename}")
+                hindi_file.save(hin_filepath)
+                try:
+                    with open(hin_filepath, 'r', encoding='utf-8-sig') as csvfile:
+                        reader = csv.DictReader(csvfile)
+                        for idx, row in enumerate(reader):
+                            if idx >= len(inserted_ids):
+                                break
+                            parsed_hi = parse_question_csv_row(row)
+                            if not parsed_hi:
+                                continue
+                            q_id = inserted_ids[idx]
+                            c.execute("""UPDATE questions
+                                         SET question_hi=?, option_a_hi=?, option_b_hi=?, option_c_hi=?, option_d_hi=?
+                                         WHERE id=?""",
+                                     (parsed_hi['question'], parsed_hi['option_a'], parsed_hi['option_b'],
+                                      parsed_hi['option_c'], parsed_hi['option_d'], q_id))
+                            hindi_updated += 1
+                    conn.commit()
+                finally:
+                    if os.path.exists(hin_filepath):
+                        os.remove(hin_filepath)
+
             conn.close()
-            return jsonify({'status':'error','message':'GEMINI_API_KEY not set'}), 500
+            msg = f"{len(inserted_ids)} English questions uploaded"
+            if hindi_updated > 0:
+                msg += f" (with {hindi_updated} Hindi translations mapped)"
+            return jsonify({'status':'success','message': msg})
+
+        mcq_count       = int(request.form.get('mcq_count', 0) or 0)
+        assertion_count = int(request.form.get('assertion_count', 0) or 0)
 
         type_instructions = []
-        if mcq_count:       type_instructions.append(f"{mcq_count} MCQ (4 options, mark correct_answer as option_a/b/c/d)")
-        if assertion_count: type_instructions.append(f"{assertion_count} Assertion-Reason (Assertion + Reason format)")
+        if mcq_count:       type_instructions.append(f"{mcq_count} MCQ")
+        if assertion_count: type_instructions.append(f"{assertion_count} Assertion-Reason")
 
         if not type_instructions:
             conn.close()
             return jsonify({'status':'error','message':'Enter at least 1 question quantity'}), 400
 
-        ai_prompt = f"""You are an expert CBSE/ICSE academic question paper generator.
-Output ONLY a valid JSON array — no markdown fences, no text outside the JSON array.
+        # ── AI generation ──
+        gemini_api_key = _get_gemini_key()
+        if not gemini_api_key:
+            conn.close()
+            return jsonify({'status':'error','message':'GEMINI_API_KEY not set'}), 500
 
-PAPER DETAILS:
-Class: {class_}{section} | Subject: {subject} | Chapter: {chapter} | Test No: {test_no}
-Teacher instructions: {remark if remark else 'Standard difficulty, balanced coverage of the chapter'}
+        # Detect a working model or fallback
+        model_name = get_working_model(gemini_api_key) or 'gemini-2.0-flash'
+        app.logger.info(f"Using Gemini model: {model_name}")
 
-QUESTION TYPES REQUIRED:
-{chr(10).join(type_instructions)}
-
-══════════════════════════════════════════════════════════
-STRICT SCHEMA — every question must have ALL of these keys:
-══════════════════════════════════════════════════════════
-{{
-  "question_type": "MCQ" | "Assertion-Reason" | "Very Short" | "Short" | "Long" | "Case Study",
-  "content_type":  "math" | "chemistry" | "physics" | "biology" | "text",
-  "question":      "<string with LaTeX or mhchem where needed>",
-  "option_a":      "<string, empty for non-MCQ>",
-  "option_b":      "<string, empty for non-MCQ>",
-  "option_c":      "<string, empty for non-MCQ>",
-  "option_d":      "<string, empty for non-MCQ>",
-  "correct_answer":"option_a"|"option_b"|"option_c"|"option_d"|"N/A",
-  "smiles":        "<SMILES string for 2-D molecular diagram, else empty>",
-  "image_prompt":  "<Imagen 3 prompt for diagram, else empty>",
-  "marks":         1|2|3|4|5
-}}
-
-══════════════════════════
-MATHEMATICS — LATEX RULES
-══════════════════════════
-Use MathJax-compatible LaTeX. ALWAYS escape backslashes in JSON (\\frac not \frac).
-
-• Inline expressions  →  $...$
-  "Find $\\frac{{d}}{{dx}}(x^2 + 3x)$ at $x = 2$"
-  "$\\vec{{F}} = 3\\hat{{i}} - 4\\hat{{j}} + 5\\hat{{k}}$"
-
-• Display/block expressions  →  $$...$$
-  "$$\\int_{{0}}^{{\\pi}} \\sin x\\, dx = 2$$"
-  "$$\\begin{{pmatrix}} 1 & 2 \\\\\\\\ 3 & 4 \\end{{pmatrix}}$$"
-
-• Limits:  "$\\lim_{{x \\to 0}} \\dfrac{{\\sin x}}{{x}} = 1$"
-• Roots:   "$\\sqrt{{b^2 - 4ac}}$"
-• Integrals: "$\\int_{{a}}^{{b}} f(x)\\, dx$"
-• Summation: "$\\sum_{{n=1}}^{{\\infty}} \\frac{{1}}{{n^2}}$"
-• Options containing math must also use $...$:  "option_a": "$x = \\frac{{1}}{{2}}$"
-• NEVER use raw Unicode math symbols (×, ÷, √, ∫, ², ³) — use LaTeX commands.
-
-══════════════════════════════
-CHEMISTRY — mhchem RULES
-══════════════════════════════
-Use \\ce{{}} inside $ $ for ALL chemical formulas and equations.
-
-• Basic equation:  "$\\ce{{H2SO4 + 2NaOH -> Na2SO4 + 2H2O}}$"
-• Combustion:      "$\\ce{{CH4 + 2O2 -> CO2 + 2H2O}}$"
-• Equilibrium:     "$\\ce{{N2 + 3H2 <=> 2NH3}}$"
-• With states:     "$\\ce{{CaCO3(s) -> CaO(s) + CO2(g)}}$"
-• Ionic:           "$\\ce{{Fe^{{2+}} + 2e- -> Fe}}$"
-• Precipitation:   "$\\ce{{Ag+ + Cl- -> AgCl v}}$"
-• Gas evolved:     "$\\ce{{Zn + H2SO4 -> ZnSO4 + H2 ^}}$"
-• Named compound inline: "The reaction of $\\ce{{H2O}}$ with $\\ce{{CO2}}$..."
-
-For 2-D structural diagrams set "smiles" field (SMILES notation):
-  Benzene="c1ccccc1"  Ethanol="CCO"  Acetic acid="CC(=O)O"
-  Toluene="Cc1ccccc1"  Aspirin="CC(=O)Oc1ccccc1C(=O)O"
-  Naphthalene="c1ccc2ccccc2c1"  Cyclohexane="C1CCCCC1"
-
-══════════════════════════════════════
-BIOLOGY / PHYSICS — IMAGE PROMPT RULES
-══════════════════════════════════════
-Set image_prompt ONLY when a non-symbolic diagram is pedagogically required.
-Write a specific, detailed Imagen 3 prompt:
-  GOOD: "Labeled scientific diagram of human heart: left ventricle, right ventricle,
-         aorta, pulmonary artery, vena cava, mitral valve, tricuspid valve.
-         Medical textbook illustration, white background, clear black labels."
-  BAD:  "a heart"
-
-══════════════════════════
-ASSERTION-REASON OPTIONS
-══════════════════════════
-Always use exactly these four options:
-  option_a: "Both A and R are true and R is the correct explanation of A"
-  option_b: "Both A and R are true but R is NOT the correct explanation of A"
-  option_c: "A is true but R is false"
-  option_d: "A is false but R is true"
-
-Non-MCQ questions: set option_a/b/c/d="" and correct_answer="N/A"
-
-Output the JSON array now:"""
+        ai_prompt = _build_ai_prompt(class_, section, subject, chapter, test_no, remark, type_instructions)
 
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_api_key}"
-            payload = json_lib.dumps({
-                "contents": [{"parts": [{"text": ai_prompt}]}],
-                "generationConfig": {"temperature": 0.7, "maxOutputTokens": 8192}
-            }).encode('utf-8')
-            req = urllib.request.Request(url, data=payload,
-                                          headers={'Content-Type':'application/json'}, method='POST')
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                result = json_lib.loads(resp.read().decode('utf-8'))
+            result, provider, err_msg = generate_ai_content(ai_prompt, timeout=60)
+            if not result:
+                return jsonify({'status':'error','message': err_msg}), 500
 
-            response_text = result['candidates'][0]['content']['parts'][0]['text'].strip()
-            if '```' in response_text:
-                for part in response_text.split('```'):
+            raw_text = result['candidates'][0]['content']['parts'][0]['text'].strip()
+            app.logger.info(f"Raw AI response length: {len(raw_text)}")
+            app.logger.debug(f"Raw AI response (first 1000 chars): {raw_text[:1000]}")
+            if '```' in raw_text:
+                for part in raw_text.split('```'):
                     part = part.strip()
                     if part.startswith('json'): part = part[4:].strip()
-                    if part.startswith('['): response_text = part; break
+                    if part.startswith('['): raw_text = part; break
 
-            questions = json_lib.loads(response_text)
-
+            questions = safe_json_loads(raw_text)
+            if questions is None:
+                app.logger.error(f"AI response invalid. Full response (first 2000 chars): {raw_text[:2000]}")
+                # Also store the response in session for debugging (optional)
+                return jsonify({
+                    'status': 'error',
+                    'message': 'AI returned invalid JSON. Please try again with a simpler prompt. '
+                            'Check the server logs for the full AI response.'
+                }), 500
             if output_mode == 'cbt':
-                # BUG-004 FIX: check if test_no already exists for this class+subject
-                c.execute("""SELECT COUNT(*) as cnt FROM questions
-                             WHERE class=? AND subject=? AND test_no=?""",
+                c.execute("SELECT COUNT(*) as cnt FROM questions WHERE class=? AND subject=? AND test_no=?",
                          (class_, subject, test_no))
-                existing_count = c.fetchone()['cnt']
-                if existing_count > 0:
+                if c.fetchone()['cnt'] > 0:
                     conn.close()
-                    return jsonify({
-                        'status': 'error',
-                        'message': f'Test No "{test_no}" already has {existing_count} questions for {subject} Class {class_}. '
-                                   f'Use a different Test No (e.g., Test02) to create a separate test.'
-                    }), 400
-
-                # Push to questions table (MCQ only for CBT)
+                    return jsonify({'status':'error',
+                                    'message':f'Test No "{test_no}" already exists for {subject} Class {class_}. Use a different Test No.'}), 400
                 inserted = 0
                 for q in questions:
                     if q.get('question_type','MCQ') in ('MCQ','Assertion-Reason'):
                         c.execute("""INSERT INTO questions
-                                   (class,subject,chapter,test_no,question_type,question,
-                                    option_a,option_b,option_c,option_d,correct_answer)
-                                   VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-                                 (class_,subject,chapter,test_no,
-                                  q.get('question_type','MCQ'),q.get('question',''),
-                                  q.get('option_a',''),q.get('option_b',''),
-                                  q.get('option_c',''),q.get('option_d',''),
+                                   (class,subject,chapter,test_no,question_type,question,question_hi,
+                                    option_a,option_a_hi,option_b,option_b_hi,option_c,option_c_hi,
+                                    option_d,option_d_hi,correct_answer)
+                                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                                 (class_,subject,chapter,test_no,q.get('question_type','MCQ'),
+                                  q.get('question',''),q.get('question_hi',''),
+                                  q.get('option_a',''),q.get('option_a_hi',''),
+                                  q.get('option_b',''),q.get('option_b_hi',''),
+                                  q.get('option_c',''),q.get('option_c_hi',''),
+                                  q.get('option_d',''),q.get('option_d_hi',''),
                                   q.get('correct_answer','')))
                         inserted += 1
-                # Register test paper
                 c.execute("""INSERT INTO test_papers
                              (filename,class,section,subject,test_no,uploaded_by,uploader_type,question_count,is_active)
                              VALUES (?,?,?,?,?,?,?,?,1)""",
                          (f"{class_}{section}_{subject}_{test_no}",class_,section,subject,test_no,
-                          str(teacher_id),'teacher',inserted))
+                          'admin','admin',inserted))
                 conn.commit()
 
-            # Save to history
             c.execute("""INSERT INTO test_generation_history
                          (teacher_id,class,section,subject,chapter,test_no,output_mode,
                           total_questions,mcq_count,assertion_count,very_short_count,
                           short_count,long_count,case_study_count,remark)
                          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                     (str(teacher_id),class_,section,subject,chapter,test_no,output_mode,
+                     ('admin',class_,section,subject,chapter,test_no,output_mode,
                       len(questions),mcq_count,assertion_count,0,0,0,0,remark))
             conn.commit()
             history_id = c.lastrowid
             conn.close()
 
             if output_mode == 'print':
-                # Feature #6: redirect to print preview page (browser print dialog)
                 return jsonify({'status':'success','mode':'print',
-                                'preview_url': f'/api/test_generation_history/{history_id}/print_preview',
-                                'history_id': history_id,
-                                'message':f'{len(questions)} questions generated — opening print preview'})
-            else:
-                return jsonify({'status':'success','mode':'cbt',
-                                'message':f'{len(questions)} questions generated and pushed to CBT. Test No: {test_no}'})
+                                'questions':questions,'history_id':history_id,
+                                'message':f'{len(questions)} questions generated'})
+            return jsonify({'status':'success','mode':'cbt',
+                            'message':f'{len(questions)} questions generated. Test No: {test_no}'})
 
         except urllib.error.HTTPError as e:
-            conn.close()
-            return jsonify({'status':'error','message':f'Gemini error: {e.read().decode()}'}), 500
+            err_body = e.read().decode('utf-8') if hasattr(e, 'read') else str(e)
+            app.logger.error(f"Gemini HTTP error: {err_body}")
+            return jsonify({'status':'error','message':f'Gemini API error: {e.code} - {err_body[:200]}'}), 500
         except Exception as e:
-            conn.close()
+            app.logger.error(f"Gemini exception: {str(e)}")
             return jsonify({'status':'error','message':str(e)}), 500
 
     conn.close()
-    # Build class→subjects map for dynamic subject filtering (Features #2, #3)
-    class_subject_map = {}
-    for a in assignments:
-        cls = a['class']
-        if cls not in class_subject_map:
-            class_subject_map[cls] = []
-        if a['subject'] not in class_subject_map[cls]:
-            class_subject_map[cls].append(a['subject'])
-    return render_template('teacher_create_test_v2.html',
-                           assignments=assignments,
-                           class_subject_map=class_subject_map)
+    return render_template('admin_create_test.html', all_pairs=all_pairs)
 
 @app.route('/teacher/print_test/<int:result_id>')
 @teacher_required
@@ -4064,12 +5218,39 @@ def test_gen_history_pdf(hid):
         conn.close()
         return "Not found", 404
     hist = dict(hist)
-    c.execute("""SELECT * FROM questions
-                 WHERE class=? AND subject=? AND test_no=?
-                 ORDER BY question_type, id""",
-             (hist['class'], hist['subject'], hist['test_no']))
+    c.execute("""SELECT id, question, option_a, option_b, option_c, option_d,
+                        correct_answer, image_path,
+                        CASE WHEN question_type IS NULL OR trim(question_type) = '' THEN 'MCQ' ELSE question_type END as question_type
+                 FROM questions
+                 WHERE (class=? OR class=? OR class LIKE ?)
+                   AND (LOWER(subject)=LOWER(?) OR subject LIKE ?)
+                   AND (test_no=? OR chapter=? OR test_no LIKE ? OR chapter LIKE ?)
+                 ORDER BY id""",
+             (hist['class'],
+              hist['class'].replace('th','').replace('st','').replace('nd','').replace('rd',''),
+              f"%{hist['class']}%",
+              hist['subject'], f"%{hist['subject']}%",
+              hist['test_no'], hist['test_no'],
+              f"%{hist['test_no']}%", f"%{hist['test_no']}%"))
     questions = [dict(r) for r in c.fetchall()]
+
+    if not questions:
+        c.execute("""SELECT id, question, option_a, option_b, option_c, option_d,
+                            correct_answer, image_path,
+                            CASE WHEN question_type IS NULL OR trim(question_type) = '' THEN 'MCQ' ELSE question_type END as question_type
+                     FROM questions
+                     WHERE (LOWER(class)=LOWER(?) OR class LIKE ?)
+                       AND (LOWER(subject)=LOWER(?) OR subject LIKE ?)
+                     ORDER BY id""",
+                 (hist['class'], f"%{hist['class']}%", hist['subject'], f"%{hist['subject']}%"))
+        questions = [dict(r) for r in c.fetchall()]
+
     conn.close()
+
+    for q in questions:
+        q_type = str(q.get('question_type') or '').strip()
+        if not q_type or q_type.upper() in ['MCQ', 'CHOICE', 'OBJECTIVE']:
+            q['question_type'] = 'MCQ'
     school_name = get_setting('school_name','RRB Group of Schools')
     logo_path   = get_setting('logo_path','')
     logo_base64 = None
@@ -4152,12 +5333,21 @@ def generate_diagram():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 def _get_gemini_key():
-    key = os.environ.get('GEMINI_API_KEY', '')
-    if not key:
-        env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'apikey.env')
-        if os.path.exists(env_path):
-            key = open(env_path).read().strip()
-    return key
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'apikey.env')
+    if os.path.exists(env_path):
+        try:
+            content = open(env_path, 'r', encoding='utf-8').read().strip()
+            if content:
+                if 'GEMINI_API_KEY=' in content:
+                    key = content.split('GEMINI_API_KEY=', 1)[1].split('\n', 1)[0].strip().strip('"\'')
+                else:
+                    key = content.strip().strip('"\'')
+                if key:
+                    os.environ['GEMINI_API_KEY'] = key
+                    return key
+        except Exception:
+            pass
+    return os.environ.get('GEMINI_API_KEY', '').strip().strip('"\'')
 
 # ═══════════════════════════════════════════════════════════════
 # BULLETIN POSTING API for Admin & Teacher dashboards
@@ -4243,38 +5433,30 @@ def test_gen_print_preview(hid):
 
 # ── ADMIN TEST GENERATION (Feature #8) ───────────────────────────────────────
 
-@app.route('/admin/create_test', methods=['GET', 'POST'])
-@admin_required
-def admin_create_test():
-    """Feature #8: Admin test generation - unrestricted class/subject access."""
+@app.route('/teacher/create_test_v2', methods=['GET', 'POST'])
+@teacher_required
+@limiter.limit("13 per minute")
+def teacher_create_test_v2():
+    teacher_id = session.get('teacher_id')
     conn = get_db()
     c = conn.cursor()
-    # Admin sees ALL classes and subjects
-    c.execute("SELECT DISTINCT class, subject FROM questions WHERE class IS NOT NULL AND class!='' ORDER BY class, subject")
-    all_pairs = [dict(r) for r in c.fetchall()]
+    c.execute("SELECT DISTINCT class, section, subject FROM teacher_assignments WHERE teacher_id=?", (teacher_id,))
+    assignments = [dict(r) for r in c.fetchall()]
 
     if request.method == 'POST':
         import urllib.request, json as json_lib
 
-        class_    = request.form.get('class','').strip()
-        section   = request.form.get('section','').strip()
-        subject   = request.form.get('subject','').strip()
-        chapter   = request.form.get('chapter','').strip()
-        test_no   = request.form.get('test_no','').strip()
-        remark    = request.form.get('remark','').strip()
+        class_   = request.form.get('class','').strip()
+        section  = request.form.get('section','').strip()
+        subject  = request.form.get('subject','').strip()
+        chapter  = request.form.get('chapter','').strip()
+        test_no  = request.form.get('test_no','').strip()
+        remark   = request.form.get('remark','').strip()
         output_mode = request.form.get('output_mode','cbt')
-        method    = request.form.get('method','ai')
+        method   = request.form.get('method','ai')
 
         mcq_count       = int(request.form.get('mcq_count', 0) or 0)
         assertion_count = int(request.form.get('assertion_count', 0) or 0)
-
-        type_instructions = []
-        if mcq_count:       type_instructions.append(f"{mcq_count} MCQ")
-        if assertion_count: type_instructions.append(f"{assertion_count} Assertion-Reason")
-
-        if not type_instructions:
-            conn.close()
-            return jsonify({'status':'error','message':'Enter at least 1 question quantity'}), 400
 
         if method == 'upload':
             file = request.files.get('csv_file')
@@ -4282,9 +5464,9 @@ def admin_create_test():
                 filename = secure_filename(file.filename)
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(filepath)
-                inserted = 0
                 with open(filepath, 'r', encoding='utf-8') as csvfile:
                     reader = csv.DictReader(csvfile)
+                    inserted = 0
                     for row in reader:
                         q = row.get('question','').strip()
                         if not q: continue
@@ -4306,65 +5488,104 @@ def admin_create_test():
             conn.close()
             return jsonify({'status':'error','message':'Invalid CSV file'}), 400
 
-        # AI generation
+        # ── AI generation ──
         gemini_api_key = _get_gemini_key()
         if not gemini_api_key:
             conn.close()
             return jsonify({'status':'error','message':'GEMINI_API_KEY not set'}), 500
 
-        ai_prompt = _build_ai_prompt(class_, section, subject, chapter, test_no, remark, type_instructions)
+        model_name = get_working_model(gemini_api_key) or 'gemini-2.0-flash'
+        app.logger.info(f"Using Gemini model: {model_name}")
+
+        type_instructions = []
+        if mcq_count:       type_instructions.append(f"{mcq_count} MCQ (4 options)")
+        if assertion_count: type_instructions.append(f"{assertion_count} Assertion-Reason")
+
+        if not type_instructions:
+            conn.close()
+            return jsonify({'status':'error','message':'Enter at least 1 question quantity'}), 400
+
+        ai_prompt = f"""You are an expert CBSE/ICSE academic question paper generator.
+Output ONLY a valid JSON array — no markdown fences, no text outside the JSON array.
+
+PAPER DETAILS:
+Class: {class_}{section} | Subject: {subject} | Chapter: {chapter} | Test No: {test_no}
+Teacher instructions: {remark if remark else 'Standard difficulty'}
+
+QUESTION TYPES REQUIRED:
+{chr(10).join(type_instructions)}
+
+Return ONLY the JSON array starting with [ and ending with ].
+Ensure all strings are properly escaped (\\" for double quotes inside strings).
+Do NOT include line breaks inside strings – use \\n if needed.
+
+Follow the same math and chemistry formatting rules as in the system prompt.
+"""
 
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_api_key}"
-            payload = json_lib.dumps({
-                "contents": [{"parts": [{"text": ai_prompt}]}],
-                "generationConfig": {"temperature": 0.7, "maxOutputTokens": 8192}
-            }).encode('utf-8')
-            req = urllib.request.Request(url, data=payload, headers={'Content-Type':'application/json'}, method='POST')
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                result = json_lib.loads(resp.read().decode('utf-8'))
+            result, provider, err_msg = generate_ai_content(ai_prompt, timeout=60)
+            if not result:
+                return jsonify({'status':'error','message': err_msg}), 500
 
-            response_text = result['candidates'][0]['content']['parts'][0]['text'].strip()
-            if '```' in response_text:
-                for part in response_text.split('```'):
+            raw_text = result['candidates'][0]['content']['parts'][0]['text'].strip()
+            app.logger.info(f"Raw AI response length: {len(raw_text)}")
+            app.logger.debug(f"Raw AI response (first 1000 chars): {raw_text[:1000]}")
+            if '```' in raw_text:
+                for part in raw_text.split('```'):
                     part = part.strip()
                     if part.startswith('json'): part = part[4:].strip()
-                    if part.startswith('['): response_text = part; break
+                    if part.startswith('['): raw_text = part; break
 
-            questions = json_lib.loads(response_text)
+            questions = safe_json_loads(raw_text)
+            if questions is None:
+                app.logger.error(f"AI response invalid. Full response (first 2000 chars): {raw_text[:2000]}")
+                # Also store the response in session for debugging (optional)
+                return jsonify({
+                    'status': 'error',
+                    'message': 'AI returned invalid JSON. Please try again with a simpler prompt. '
+                            'Check the server logs for the full AI response.'
+                }), 500
 
             if output_mode == 'cbt':
-                # BUG-004 FIX: prevent merging into existing test
-                c.execute("SELECT COUNT(*) as cnt FROM questions WHERE class=? AND subject=? AND test_no=?",
+                c.execute("""SELECT COUNT(*) as cnt FROM questions
+                             WHERE class=? AND subject=? AND test_no=?""",
                          (class_, subject, test_no))
                 if c.fetchone()['cnt'] > 0:
                     conn.close()
-                    return jsonify({'status':'error',
-                                    'message':f'Test No "{test_no}" already exists for {subject} Class {class_}. Use a different Test No.'}), 400
+                    return jsonify({
+                        'status': 'error',
+                        'message': f'Test No "{test_no}" already has questions for {subject} Class {class_}. Use a different Test No.'
+                    }), 400
+
                 inserted = 0
                 for q in questions:
                     if q.get('question_type','MCQ') in ('MCQ','Assertion-Reason'):
                         c.execute("""INSERT INTO questions
-                                   (class,subject,chapter,test_no,question_type,question,
-                                    option_a,option_b,option_c,option_d,correct_answer)
-                                   VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-                                 (class_,subject,chapter,test_no,q.get('question_type','MCQ'),
-                                  q.get('question',''),q.get('option_a',''),q.get('option_b',''),
-                                  q.get('option_c',''),q.get('option_d',''),q.get('correct_answer','')))
+                                   (class,subject,chapter,test_no,question_type,question,question_hi,
+                                    option_a,option_a_hi,option_b,option_b_hi,option_c,option_c_hi,
+                                    option_d,option_d_hi,correct_answer)
+                                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                                 (class_,subject,chapter,test_no,
+                                  q.get('question_type','MCQ'),q.get('question',''),q.get('question_hi',''),
+                                  q.get('option_a',''),q.get('option_a_hi',''),
+                                  q.get('option_b',''),q.get('option_b_hi',''),
+                                  q.get('option_c',''),q.get('option_c_hi',''),
+                                  q.get('option_d',''),q.get('option_d_hi',''),
+                                  q.get('correct_answer','')))
                         inserted += 1
                 c.execute("""INSERT INTO test_papers
                              (filename,class,section,subject,test_no,uploaded_by,uploader_type,question_count,is_active)
                              VALUES (?,?,?,?,?,?,?,?,1)""",
-                         (f"{class_}{section}_{subject}_{test_no}",'admin','admin',subject,test_no,'admin','admin',inserted))
+                         (f"{class_}{section}_{subject}_{test_no}",class_,section,subject,test_no,
+                          str(teacher_id),'teacher',inserted))
                 conn.commit()
 
-            # Save to history (admin uses teacher_id='admin')
             c.execute("""INSERT INTO test_generation_history
                          (teacher_id,class,section,subject,chapter,test_no,output_mode,
                           total_questions,mcq_count,assertion_count,very_short_count,
                           short_count,long_count,case_study_count,remark)
                          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                     ('admin',class_,section,subject,chapter,test_no,output_mode,
+                     (str(teacher_id),class_,section,subject,chapter,test_no,output_mode,
                       len(questions),mcq_count,assertion_count,0,0,0,0,remark))
             conn.commit()
             history_id = c.lastrowid
@@ -4372,21 +5593,33 @@ def admin_create_test():
 
             if output_mode == 'print':
                 return jsonify({'status':'success','mode':'print',
-                                'questions':questions,'history_id':history_id,
+                                'preview_url': f'/api/test_generation_history/{history_id}/print_preview',
+                                'history_id': history_id,
                                 'message':f'{len(questions)} questions generated'})
-            return jsonify({'status':'success','mode':'cbt',
-                            'message':f'{len(questions)} questions generated. Test No: {test_no}'})
+            else:
+                return jsonify({'status':'success','mode':'cbt',
+                                'message':f'{len(questions)} questions generated. Test No: {test_no}'})
 
         except urllib.error.HTTPError as e:
-            conn.close()
-            return jsonify({'status':'error','message':f'Gemini error: {e.read().decode()}'}), 500
+            err_body = e.read().decode('utf-8') if hasattr(e, 'read') else str(e)
+            app.logger.error(f"Gemini HTTP error: {err_body}")
+            return jsonify({'status':'error','message':f'Gemini API error: {e.code} - {err_body[:200]}'}), 500
         except Exception as e:
-            conn.close()
+            app.logger.error(f"Gemini exception: {str(e)}")
             return jsonify({'status':'error','message':str(e)}), 500
 
     conn.close()
-    return render_template('admin_create_test.html', all_pairs=all_pairs)
-
+    # Build class→subjects map
+    class_subject_map = {}
+    for a in assignments:
+        cls = a['class']
+        if cls not in class_subject_map:
+            class_subject_map[cls] = []
+        if a['subject'] not in class_subject_map[cls]:
+            class_subject_map[cls].append(a['subject'])
+    return render_template('teacher_create_test_v2.html',
+                           assignments=assignments,
+                           class_subject_map=class_subject_map)
 @app.route('/admin/test_history')
 @admin_required
 def admin_test_history():
@@ -4400,7 +5633,7 @@ def admin_test_history():
 # ── SHARED AI PROMPT BUILDER ──────────────────────────────────────────────────
 
 def _build_ai_prompt(class_, section, subject, chapter, test_no, remark, type_instructions):
-    return f"""You are an expert CBSE/ICSE question paper generator.
+    return f"""You are an expert CBSE/ICSE bilingual (English & Hindi) question paper generator.
 Class: {class_}{section} | Subject: {subject} | Chapter: {chapter} | Test No: {test_no}
 Teacher instructions: {remark if remark else 'Standard difficulty, balanced coverage'}
 
@@ -4408,25 +5641,21 @@ Generate EXACTLY these question types:
 {chr(10).join(type_instructions)}
 
 OUTPUT: Return ONLY a valid JSON array. No markdown. No text before or after.
-Every object must have ALL keys: question_type, content_type, question, option_a, option_b, option_c, option_d, correct_answer, smiles, image_prompt, marks
+Every object must have ALL keys:
+question_type, content_type, question, question_hi, option_a, option_a_hi, option_b, option_b_hi, option_c, option_c_hi, option_d, option_d_hi, correct_answer, smiles, image_prompt, marks
 
-MATH LaTeX RULES:
-- Inline: $...$ | Block: $$...$$
-- Matrices: $\\begin{{pmatrix}} a & b \\\\ c & d \\end{{pmatrix}}$
-- Fractions: \\frac{{num}}{{den}} | Vectors: $\\vec{{F}} = 3\\hat{{i}}$
+RULES:
+- Provide question and options in English ('question', 'option_a'...) AND their accurate Hindi translation ('question_hi', 'option_a_hi', 'option_b_hi', 'option_c_hi', 'option_d_hi').
+- MATH LaTeX RULES: Inline $...$, Block $$...$$
 - Escape backslashes in JSON: \\\\frac not \\frac
-
-CHEMISTRY mhchem RULES:
-- Equations: "$\\\\ce{{H2SO4 + 2NaOH -> Na2SO4 + 2H2O}}$"
-- Structural diagrams: set "smiles" field (Benzene="c1ccccc1")
-
-NON-MCQ: set option_a/b/c/d="" and correct_answer="N/A"
-smiles="" and image_prompt="" when not needed.
+- NON-MCQ: set option_a/b/c/d="", option_a_hi/b_hi/c_hi/d_hi="" and correct_answer="N/A"
+- smiles="" and image_prompt="" when not needed.
 
 Return ONLY the JSON array starting with [ and ending with ]."""
 
 
 @app.route('/descriptive_paper', methods=['GET', 'POST'])
+@limiter.limit("13 per minute")
 def descriptive_paper():
     """Descriptive AI paper generator — accessible to both admin and teacher."""
     if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
@@ -4482,12 +5711,14 @@ def descriptive_paper():
 
     # Question counts per type
     mcq_count        = int(request.form.get('mcq_count', 0) or 0)
+    fib_count        = int(request.form.get('fib_count', 0) or 0)
+    tf_count         = int(request.form.get('tf_count', 0) or 0)
     ar_count         = int(request.form.get('ar_count', 0) or 0)
     vs_count         = int(request.form.get('vs_count', 0) or 0)
     sh_count         = int(request.form.get('sh_count', 0) or 0)
     lg_count         = int(request.form.get('lg_count', 0) or 0)
     cs_count         = int(request.form.get('cs_count', 0) or 0)
-    total_q = mcq_count + ar_count + vs_count + sh_count + lg_count + cs_count
+    total_q = mcq_count + fib_count + tf_count + ar_count + vs_count + sh_count + lg_count + cs_count
 
     if total_q == 0:
         return jsonify({'status': 'error', 'message': 'Please enter at least 1 question'}), 400
@@ -4505,13 +5736,32 @@ def descriptive_paper():
             image_context = f'\n\nAn image has been provided (base64 omitted here). Use it conceptually to inspire questions involving diagrams, graphs, or visual-based problems relevant to {subject}.'
 
     # ── Build section descriptions ───────────────────────────────────────────
+    section_char = ord('A')
     sections = []
-    if mcq_count: sections.append(f"Section A — MCQ: {mcq_count} questions, 1 mark each")
-    if ar_count:  sections.append(f"Section B — Assertion-Reason: {ar_count} questions, 1 mark each")
-    if vs_count:  sections.append(f"Section C — Very Short Answer: {vs_count} questions, 2 marks each")
-    if sh_count:  sections.append(f"Section D — Short Answer: {sh_count} questions, 3 marks each")
-    if lg_count:  sections.append(f"Section E — Long Answer: {lg_count} questions, 5 marks each")
-    if cs_count:  sections.append(f"Section F — Case Study Based: {cs_count} questions, 4 marks each")
+    if mcq_count:
+        sections.append(f"Section {chr(section_char)} — Multiple Choice Questions (MCQ): {mcq_count} questions, 1 mark each")
+        section_char += 1
+    if fib_count:
+        sections.append(f"Section {chr(section_char)} — Fill in the Blanks: {fib_count} questions, 1 mark each (each question statement must contain a blank '_______' to fill)")
+        section_char += 1
+    if tf_count:
+        sections.append(f"Section {chr(section_char)} — True / False: {tf_count} questions, 1 mark each (state True or False)")
+        section_char += 1
+    if ar_count:
+        sections.append(f"Section {chr(section_char)} — Assertion-Reason: {ar_count} questions, 1 mark each")
+        section_char += 1
+    if vs_count:
+        sections.append(f"Section {chr(section_char)} — Very Short Answer: {vs_count} questions, 2 marks each")
+        section_char += 1
+    if sh_count:
+        sections.append(f"Section {chr(section_char)} — Short Answer: {sh_count} questions, 3 marks each")
+        section_char += 1
+    if lg_count:
+        sections.append(f"Section {chr(section_char)} — Long Answer: {lg_count} questions, 5 marks each")
+        section_char += 1
+    if cs_count:
+        sections.append(f"Section {chr(section_char)} — Case Study Based: {cs_count} questions, 4 marks each")
+        section_char += 1
 
     topic_text = 'Complete Syllabus' if full_syllabus else (topics or 'All Topics')
 
@@ -4555,8 +5805,12 @@ OUTPUT FORMAT — return ONLY a valid JSON object like this (no markdown, no cod
 }}
 
 RULES:
-- NO LaTeX. Use plain English text only.
+- For Mathematical and Chemical formulas:
+  * Use proper HTML tags <sub> and <sup> for chemical formulas and powers (e.g. H<sub>2</sub>O, H<sub>2</sub>SO<sub>4</sub>, x<sup>2</sup>, CO<sub>2</sub>, Ca(OH)<sub>2</sub>).
+  * Use standard mathematical symbols or MathJax LaTeX delimiters \\( ... \\) for square roots, equations, fractions, and symbols (e.g. \\(\\sqrt{x}\\), \\(\\neq\\), \\(\\pm\\), \\(\\frac{a}{b}\\), \\(\\pi\\), \\(\\Delta\\), \\(\\theta\\), \\(\\rightarrow\\)).
 - For MCQ/AR: include "options" array with 4 choices formatted as (a), (b), (c), (d).
+- For Fill in the Blanks: include "options": [] and place a clear blank line "_______" inside the question text.
+- For True/False: include "options": ["True", "False"] or "options": [].
 - For Short/Long/Case Study: "options" should be empty [], use "sub_questions" for multi-part questions.
 - For Case Study: write a reading passage first in "question", then list sub-questions in "sub_questions" array (each with number and question text).
 - Assertion-Reason: write Assertion and Reason clearly in the question text. Options must be the standard 4 AR options.
@@ -4568,15 +5822,9 @@ RULES:
         return jsonify({'status': 'error', 'message': 'GEMINI_API_KEY not configured'}), 500
 
     try:
-        url     = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
-        payload = json_lib.dumps({
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": 0.7, "maxOutputTokens": 8192}
-        }).encode('utf-8')
-        req = urllib.request.Request(url, data=payload,
-                                     headers={'Content-Type': 'application/json'}, method='POST')
-        with urllib.request.urlopen(req, timeout=90) as resp:
-            result = json_lib.loads(resp.read().decode('utf-8'))
+        result, provider, err_msg = generate_ai_content(prompt, timeout=90)
+        if not result:
+            return jsonify({'status': 'error', 'message': err_msg}), 500
 
         raw = result['candidates'][0]['content']['parts'][0]['text'].strip()
 
@@ -4630,12 +5878,12 @@ def download_csv_template():
     import io
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(['question', 'option a', 'option b', 'option c', 'option d',
-                     'correct_answer', 'question_type', 'marks', 'negative_mark'])
+    writer.writerow(['Questions', 'option a', 'option b', 'option c', 'option d',
+                     'correct option', 'question_type', 'marks', 'negative_mark'])
     writer.writerow([
         'What is the speed of light in vacuum?',
         '3 x 10^8 m/s', '3 x 10^6 m/s', '3 x 10^10 m/s', '3 x 10^4 m/s',
-        'option_a', 'MCQ', '1', '0.33'
+        'option a', 'MCQ', '1', '0.33'
     ])
     writer.writerow([
         'Assertion: Water boils at 100°C. Reason: Boiling point depends on atmospheric pressure.',
