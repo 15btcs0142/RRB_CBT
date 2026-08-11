@@ -3,1288 +3,515 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - RRB CBT</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ─── RESET & BASE ──────────────────────────────────────────────── */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        :root {
-            --primary: #1a237e;
-            --primary-light: #3949ab;
-            --primary-lighter: #667eea;
-            --primary-dark: #0d1457;
-            --sidebar-width: 260px;
-            --sidebar-collapsed: 72px;
-            --header-h: 64px;
-            --radius: 14px;
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-        }
         body {
-            font-family: 'Poppins', sans-serif;
-            background: #f0f4f8;
-            min-height: 100vh;
-            display: flex;
-            overflow: hidden;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+            animation: gradientShift 15s ease infinite;
+            background-size: 200% 200%;
         }
 
-        /* ─── SIDEBAR ───────────────────────────────────────────────────── */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: linear-gradient(180deg, #0d1457 0%, #1a237e 50%, #3949ab 100%);
-            color: #fff;
-            height: 100vh;
-            position: fixed;
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .admin-nav {
+            background: linear-gradient(90deg, #1b5e20, #2e7d32, #1b5e20);
+            background-size: 200% auto;
+            animation: navGlow 5s linear infinite;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        @keyframes navGlow {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .marquee-container {
+            background: rgba(255,255,255,0.9);
+            padding: 10px 20px;
+            margin: 20px auto 10px;
+            max-width: 1200px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #2e7d32;
+            backdrop-filter: blur(5px);
+        }
+
+        .marquee-container marquee {
+            font-size: 1.1rem;
+            color: #1b5e20;
+            font-weight: 500;
+        }
+
+        .marquee-container i {
+            margin: 0 15px;
+            color: #ff9800;
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            z-index: 1;
+            position: relative;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 18px 16px;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            border: 1px solid rgba(46,125,50,0.15);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
             top: 0;
             left: 0;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            transition: width 0.3s ease, transform 0.3s ease;
-            overflow: hidden;
-            box-shadow: 4px 0 25px rgba(0, 0, 0, 0.15);
-        }
-        .sidebar-header {
-            padding: 16px 18px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            min-height: var(--header-h);
-            flex-shrink: 0;
-        }
-        .sidebar-header .logo-img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255, 255, 255, 0.25);
-            flex-shrink: 0;
-        }
-        .sidebar-header .logo-ph {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.12);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .sidebar-header .brand-text {
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-        .sidebar-header .brand-text .name {
-            font-size: 1rem;
-            font-weight: 700;
-            text-overflow: ellipsis;
-            overflow: hidden;
-        }
-        .sidebar-header .brand-text .tag {
-            font-size: .62rem;
-            opacity: .7;
-            font-weight: 400;
-        }
-        .sidebar-toggle {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 8px;
-            transition: background 0.2s;
-            flex-shrink: 0;
-        }
-        .sidebar-toggle:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        /* ─── SIDEBAR NAV ───────────────────────────────────────────────── */
-        .sidebar-nav {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 12px 0 20px;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
-        }
-        .sidebar-nav::-webkit-scrollbar {
-            width: 4px;
-        }
-        .sidebar-nav::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 4px;
-        }
-        .sidebar-nav .nav-section {
-            padding: 0 12px;
-            margin-bottom: 6px;
-        }
-        .sidebar-nav .nav-section .section-label {
-            font-size: .6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            opacity: .4;
-            padding: 8px 10px 4px;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 10px 14px;
-            border-radius: 10px;
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-bottom: 1px;
-            font-size: .88rem;
-            font-weight: 500;
-            white-space: nowrap;
-            position: relative;
-            border: none;
-            background: none;
             width: 100%;
-            text-align: left;
-        }
-        .nav-item i {
-            width: 22px;
-            text-align: center;
-            font-size: 1.05rem;
-            flex-shrink: 0;
-        }
-        .nav-item .nav-label {
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: #fff;
-        }
-        .nav-item.active {
-            background: rgba(255, 255, 255, 0.14);
-            color: #fff;
-            box-shadow: inset 3px 0 0 #667eea;
-        }
-        .nav-item .badge-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #f44336;
-            flex-shrink: 0;
-            animation: pulse-dot 1.5s ease-in-out infinite;
-        }
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.8); }
-        }
-        .nav-item .badge-count {
-            background: #f44336;
-            color: #fff;
-            font-size: .65rem;
-            font-weight: 700;
-            padding: 1px 8px;
-            border-radius: 12px;
-            flex-shrink: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2e7d32, #81c784, #2e7d32);
+            background-size: 200% auto;
+            animation: shimmer 2s linear infinite;
         }
 
-        /* ─── SIDEBAR COLLAPSED ────────────────────────────────────────── */
-        .sidebar.collapsed {
-            width: var(--sidebar-collapsed);
-        }
-        .sidebar.collapsed .brand-text,
-        .sidebar.collapsed .nav-label,
-        .sidebar.collapsed .section-label,
-        .sidebar.collapsed .badge-count,
-        .sidebar.collapsed .badge-dot,
-        .sidebar.collapsed .sidebar-footer .logout-btn span {
-            display: none;
-        }
-        .sidebar.collapsed .nav-item {
-            justify-content: center;
-            padding: 12px;
-        }
-        .sidebar.collapsed .nav-item i {
-            font-size: 1.2rem;
-            width: auto;
-        }
-        .sidebar.collapsed .sidebar-header {
-            justify-content: center;
-            padding: 16px 8px;
-        }
-        .sidebar.collapsed .sidebar-header .logo-img,
-        .sidebar.collapsed .sidebar-header .logo-ph {
-            width: 36px;
-            height: 36px;
-        }
-        .sidebar .sidebar-toggle {
-            display: block !important;
-        }
-        .sidebar.collapsed .sidebar-toggle {
-            position: absolute;
-            right: 4px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.08);
-            padding: 6px 8px;
-            border-radius: 8px;
-        }
-        .sidebar.collapsed .sidebar-toggle:hover {
-            background: rgba(255, 255, 255, 0.16);
+        @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
         }
 
-        /* ─── SIDEBAR FOOTER ───────────────────────────────────────────── */
-        .sidebar-footer {
-            padding: 12px 16px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-            flex-shrink: 0;
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.15);
+            border-color: #2e7d32;
         }
-        .sidebar-footer .logout-btn {
+
+        .card h3 {
+            color: #1b5e20;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            border-radius: 10px;
-            color: rgba(255, 255, 255, 0.6);
-            text-decoration: none;
-            font-size: .85rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            background: none;
-            border: none;
-            width: 100%;
-            cursor: pointer;
+            gap: 8px;
+            border-bottom: 2px dashed #c8e6c9;
+            padding-bottom: 8px;
         }
-        .sidebar-footer .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: #fff;
-        }
-        .sidebar-footer .logout-btn i {
-            width: 22px;
+
+        .card h3 i {
+            color: #2e7d32;
+            font-size: 1.6rem;
+            width: 28px;
             text-align: center;
         }
-        .sidebar.collapsed .sidebar-footer .logout-btn {
-            justify-content: center;
-            padding: 12px;
-        }
-        .sidebar.collapsed .sidebar-footer .logout-btn i {
-            font-size: 1.2rem;
-            width: auto;
-        }
 
-        /* ─── MAIN CONTENT ──────────────────────────────────────────────── */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            flex: 1;
-            height: 100vh;
-            overflow: hidden;
+        .card form, .card .btn-group {
             display: flex;
             flex-direction: column;
-            transition: margin-left 0.3s ease;
-        }
-        .sidebar.collapsed~.main-content {
-            margin-left: var(--sidebar-collapsed);
-        }
-
-        /* ─── TOP BAR ───────────────────────────────────────────────────── */
-        .topbar {
-            background: #fff;
-            padding: 12px 28px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #e8ecf0;
-            flex-shrink: 0;
-            min-height: var(--header-h);
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-        }
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        .topbar-left .hamburger {
-            background: none;
-            border: none;
-            font-size: 1.4rem;
-            color: #333;
-            cursor: pointer;
-            padding: 4px 6px;
-            border-radius: 8px;
-            display: none;
-        }
-        .topbar-left .hamburger:hover {
-            background: #f0f0f0;
-        }
-        .topbar-left .page-title {
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: #1a1a2e;
-        }
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 18px;
-        }
-        .topbar-right .clock {
-            font-size: .85rem;
-            color: #555;
-            background: #f5f7fa;
-            padding: 6px 14px;
-            border-radius: 20px;
-            white-space: nowrap;
-        }
-        .topbar-right .notif-btn {
-            position: relative;
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            color: #555;
-            cursor: pointer;
-            padding: 6px 10px;
-            border-radius: 10px;
-            transition: background 0.2s;
-        }
-        .topbar-right .notif-btn:hover {
-            background: #f0f0f0;
-        }
-        .topbar-right .notif-btn .badge {
-            position: absolute;
-            top: -2px;
-            right: -2px;
-            background: #f44336;
-            color: #fff;
-            font-size: .6rem;
-            font-weight: 700;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-        .topbar-right .notif-btn .badge.show {
-            display: flex;
-        }
-        .topbar-right .admin-info {
-            display: flex;
-            align-items: center;
             gap: 10px;
-            font-size: .85rem;
-            color: #333;
-            font-weight: 500;
-        }
-        .topbar-right .admin-info .avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #1a237e, #3949ab);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-weight: 600;
-            font-size: .9rem;
-        }
-
-        /* ─── CONTENT PANEL ────────────────────────────────────────────── */
-        .content-panel {
             flex: 1;
-            overflow-y: auto;
-            padding: 24px 28px 30px;
-            background: #f0f4f8;
-            position: relative;
-        }
-        .content-panel::-webkit-scrollbar {
-            width: 6px;
-        }
-        .content-panel::-webkit-scrollbar-thumb {
-            background: #c8d0d8;
-            border-radius: 4px;
-        }
-        .content-panel::-webkit-scrollbar-track {
-            background: transparent;
         }
 
-        /* ─── PANEL SECTIONS ───────────────────────────────────────────── */
-        .panel-section {
-            display: none;
-            animation: fadeIn 0.25s ease;
-        }
-        .panel-section.active {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ─── IFRAME PANEL ─────────────────────────────────────────────── */
-        .iframe-panel {
-            display: none;
-            width: 100%;
-            height: 100%;
-            min-height: 500px;
-            border: none;
-            border-radius: var(--radius);
-            background: #fff;
-            box-shadow: var(--shadow);
-        }
-        .iframe-panel.active {
-            display: block;
-        }
-
-        /* ─── DASHBOARD STATS ──────────────────────────────────────────── */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 18px;
-            margin-bottom: 28px;
-        }
-        .stat-card {
-            background: #fff;
-            border-radius: var(--radius);
-            padding: 20px 22px;
-            box-shadow: var(--shadow);
-            border-top: 4px solid var(--primary-light);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            transition: transform 0.2s;
-        }
-        .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-        }
-        .stat-card .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-        .stat-card .stat-icon.blue {
-            background: #e8eaf6;
-            color: #1a237e;
-        }
-        .stat-card .stat-icon.light-blue {
-            background: #e3f2fd;
-            color: #1565c0;
-        }
-        .stat-card .stat-icon.orange {
-            background: #fff3e0;
-            color: #ff9800;
-        }
-        .stat-card .stat-icon.purple {
-            background: #ede7f6;
-            color: #667eea;
-        }
-        .stat-card .stat-info .stat-number {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #1a1a2e;
-            line-height: 1.2;
-        }
-        .stat-card .stat-info .stat-label {
-            font-size: .78rem;
-            color: #888;
+        .card label {
             font-weight: 500;
-        }
-
-        /* ─── CLASS & SUBJECT BREAKDOWN ────────────────────────────────── */
-        .breakdown-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-top: 8px;
-            margin-bottom: 28px;
-        }
-        .breakdown-box {
-            background: #fff;
-            border-radius: var(--radius);
-            padding: 18px 20px 20px;
-            box-shadow: var(--shadow);
-        }
-        .breakdown-box h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1a1a2e;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 2px dashed #e8eaf6;
-            padding-bottom: 8px;
-        }
-        .breakdown-box h3 i {
-            color: var(--primary-light);
-        }
-        .breakdown-box .break-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px solid #f5f5f5;
-            font-size: .9rem;
-        }
-        .breakdown-box .break-item:last-child {
-            border-bottom: none;
-        }
-        .breakdown-box .break-item .label {
             color: #555;
-        }
-        .breakdown-box .break-item .value {
-            font-weight: 600;
-            color: #1a1a2e;
+            font-size: 0.9rem;
         }
 
-        /* ─── SUMMARY TABLE ────────────────────────────────────────────── */
-        .summary-box {
-            background: #fff;
-            border-radius: var(--radius);
-            padding: 18px 20px 20px;
-            box-shadow: var(--shadow);
-            margin-bottom: 28px;
-        }
-        .summary-box h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1a1a2e;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 2px dashed #e8eaf6;
-            padding-bottom: 8px;
-        }
-        .summary-box h3 i {
-            color: var(--primary-light);
-        }
-        .summary-box .total-badge {
-            background: #e8eaf6;
-            color: #1a237e;
-            padding: 2px 12px;
-            border-radius: 20px;
-            font-size: .8rem;
-            font-weight: 600;
-            margin-left: 10px;
-        }
-        .summary-table-wrap {
-            max-height: 280px;
-            overflow-y: auto;
-            overflow-x: auto;
-        }
-        .summary-table-wrap table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: .88rem;
-        }
-        .summary-table-wrap th {
-            background: linear-gradient(135deg, #1a237e, #3949ab);
-            color: #fff;
-            padding: 10px 12px;
-            text-align: left;
-            white-space: nowrap;
-            position: sticky;
-            top: 0;
-            z-index: 2;
-        }
-        .summary-table-wrap td {
-            padding: 8px 12px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .summary-table-wrap tr:hover td {
-            background: #e8eaf6;
-        }
-        .summary-empty {
-            text-align: center;
-            padding: 20px;
-            color: #999;
-        }
-
-        /* ─── NOTIFICATION DROPDOWN ────────────────────────────────────── */
-        .notif-dropdown {
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            width: 340px;
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
-            display: none;
-            overflow: hidden;
-            z-index: 999;
-        }
-        .notif-dropdown.open {
-            display: block;
-        }
-        .notif-dropdown .notif-header {
-            background: linear-gradient(90deg, #1a237e, #3949ab);
-            color: #fff;
-            padding: 12px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .notif-dropdown .notif-header strong {
-            font-size: .9rem;
-        }
-        .notif-dropdown .notif-header span {
-            font-size: .7rem;
-            opacity: .7;
-        }
-        .notif-dropdown .notif-body {
-            max-height: 300px;
-            overflow-y: auto;
-            padding: 6px 0;
-        }
-        .notif-dropdown .notif-body .notif-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1px;
-            background: #eee;
-        }
-        .notif-dropdown .notif-body .notif-stats>div {
-            background: #fff;
-            padding: 12px 14px;
-            text-align: center;
-        }
-        .notif-dropdown .notif-body .notif-stats .num {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-        .notif-dropdown .notif-body .notif-stats .num.blue {
-            color: #1a237e;
-        }
-        .notif-dropdown .notif-body .notif-stats .num.light-blue {
-            color: #1565c0;
-        }
-        .notif-dropdown .notif-body .notif-stats .num.orange {
-            color: #ff9800;
-        }
-        .notif-dropdown .notif-body .notif-stats .num.red {
-            color: #dc3545;
-        }
-        .notif-dropdown .notif-body .notif-stats .lbl {
-            font-size: .7rem;
-            color: #888;
-            margin-top: 2px;
-        }
-        .notif-dropdown .notif-body .pending-list {
-            padding: 8px 12px;
-        }
-        .notif-dropdown .notif-body .pending-list .pending-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px 0;
-            border-bottom: 1px solid #f5f5f5;
-            font-size: .8rem;
-        }
-        .notif-dropdown .notif-body .pending-list .pending-item .review-link {
-            background: #dc3545;
-            color: #fff;
-            padding: 2px 10px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: .7rem;
-            font-weight: 600;
-        }
-        .notif-dropdown .notif-footer {
-            padding: 10px 16px;
-            border-top: 1px solid #eee;
-            text-align: right;
-        }
-        .notif-dropdown .notif-footer a {
-            color: #1a237e;
-            font-size: .8rem;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .notif-dropdown .notif-footer a:hover {
-            text-decoration: underline;
-        }
-        .notif-dropdown .notif-timestamp {
-            padding: 6px 14px;
-            text-align: center;
-            font-size: .7rem;
-            color: #aaa;
-            border-top: 1px solid #f5f5f5;
-        }
-
-        /* ─── EXAM CONTROL ─────────────────────────────────────────────── */
-        .exam-form input[type="number"] {
-            width: 100%;
+        .card input[type="number"] {
             padding: 10px 12px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
-            font-family: 'Poppins', sans-serif;
-            font-size: .92rem;
-            background: #fafafa;
-            transition: border-color 0.3s;
-        }
-        .exam-form input[type="number"]:focus {
-            border-color: var(--primary-light);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(57, 73, 171, 0.1);
-        }
-        .btn-submit {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 40px;
-            font-weight: 700;
-            font-size: .95rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #fff;
-            background: linear-gradient(90deg, #1a237e, #3949ab);
-            font-family: 'Poppins', sans-serif;
-        }
-        .btn-submit:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(26, 35, 126, 0.3);
-        }
-        .btn-submit:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .btn-stop {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 40px;
-            font-weight: 700;
-            font-size: .95rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #fff;
-            background: linear-gradient(90deg, #c62828, #e53935);
-            text-align: center;
-            text-decoration: none;
-            font-family: 'Poppins', sans-serif;
-            margin-top: 8px;
-        }
-        .btn-stop:hover:not(.disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(198, 40, 40, 0.3);
-        }
-        .btn-stop.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-            pointer-events: none;
+            font-size: 0.95rem;
+            transition: all 0.3s;
         }
 
-        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
-        @media (max-width: 1024px) {
-            .breakdown-grid {
+        .card input[type="number"]:focus {
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46,125,50,0.2);
+            outline: none;
+        }
+
+        .btn, .btn-green, .btn-red, .btn-purple, .btn-orange {
+            display: inline-block;
+            padding: 10px 16px;
+            margin: 3px 0;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            color: white;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+            letter-spacing: 0.3px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, #2e7d32, #43a047);
+        }
+
+        .btn-green:hover {
+            background: linear-gradient(135deg, #1b5e20, #2e7d32);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(46,125,50,0.3);
+        }
+
+        .btn-red {
+            background: linear-gradient(135deg, #d32f2f, #e53935);
+        }
+
+        .btn-red:hover {
+            background: linear-gradient(135deg, #b71c1c, #c62828);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(211,47,47,0.3);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #546e7a, #78909c);
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #37474f, #546e7a);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(84,110,122,0.3);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            text-align: center;
+            padding: 12px;
+            color: #555;
+            font-weight: 500;
+            margin-top: 20px;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(5px);
+            border-radius: 50px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .status-bar i {
+            color: #2e7d32;
+            margin: 0 5px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .dashboard-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (max-width: 900px) {
+            .dashboard-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 600px) {
+            .dashboard-container {
                 grid-template-columns: 1fr;
-            }
-        }
-        @media (max-width: 820px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: var(--sidebar-width);
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .main-content {
-                margin-left: 0 !important;
-            }
-            .topbar-left .hamburger {
-                display: block;
-            }
-            .topbar-left .page-title {
-                font-size: 1rem;
-            }
-            .topbar {
-                padding: 10px 16px;
-            }
-            .content-panel {
-                padding: 16px 16px 24px;
-            }
-            .stats-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 12px;
-            }
-            .stat-card {
-                padding: 14px 16px;
-            }
-            .stat-card .stat-info .stat-number {
-                font-size: 1.4rem;
-            }
-            .notif-dropdown {
-                width: 300px;
-                right: -40px;
-            }
-        }
-        @media (max-width: 580px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            .topbar-right .clock {
-                font-size: .7rem;
-                padding: 4px 10px;
-            }
-            .topbar-right .admin-info .avatar {
-                width: 30px;
-                height: 30px;
-                font-size: .75rem;
-            }
-            .topbar {
-                padding: 8px 12px;
-                min-height: 56px;
-            }
-            .content-panel {
-                padding: 12px 12px 20px;
-            }
-            .stat-card .stat-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 1.2rem;
-            }
-            .notif-dropdown {
-                width: 280px;
-                right: -60px;
-            }
-            .sidebar {
-                width: 240px;
-            }
-            .sidebar.open {
-                width: 240px;
-            }
-            .breakdown-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        @media (max-width: 400px) {
-            .stat-card {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-            .stat-card .stat-info .stat-number {
-                font-size: 1.2rem;
-            }
-        }
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.35);
-            z-index: 999;
-            backdrop-filter: blur(2px);
-        }
-        .sidebar-overlay.open {
-            display: block;
-        }
-        @media (min-width: 821px) {
-            .sidebar-overlay {
-                display: none !important;
+                padding: 20px;
             }
         }
     </style>
 </head>
 <body>
-
-    <!-- ─── SIDEBAR OVERLAY (mobile) ────────────────────────────────── -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
-
-    <!-- ─── SIDEBAR ───────────────────────────────────────────────────── -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            {% if logo_path %}
-            <img src="{{ url_for('static', filename=logo_path) }}" class="logo-img" alt="Logo">
-            {% else %}
-            <div class="logo-ph"><i class="fas fa-graduation-cap"></i></div>
-            {% endif %}
-            <div class="brand-text">
-                <div class="name">{{ school_name|default('School') }}</div>
-                <div class="tag">Admin Panel</div>
-            </div>
-            <button class="sidebar-toggle" onclick="toggleSidebarCollapse()" title="Toggle collapse">
-                <i class="fas fa-chevron-left"></i>
+    <div class="watermark">RRB Group of Schools</div>
+    <nav class="admin-nav" style="padding:0 24px;display:flex;align-items:center;gap:16px;min-height:64px;">
+        <!-- FEAT-002: School logo left -->
+        {% if logo_path %}
+        <img src="{{ url_for('static', filename=logo_path) }}"
+             style="height:44px;width:44px;border-radius:50%;border:2px solid rgba(255,255,255,.4);object-fit:cover;flex-shrink:0;">
+        {% else %}
+        <div style="height:44px;width:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fas fa-graduation-cap" style="font-size:1.3rem;"></i>
+        </div>
+        {% endif %}
+        <!-- School name + admin label -->
+        <div style="flex:1;min-width:0;">
+            <div style="font-size:1.05rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ school_name }}</div>
+            <div style="font-size:.72rem;opacity:.8;">Administrator Dashboard</div>
+        </div>
+        <!-- FEAT-003: Live notification bell -->
+        <div style="position:relative;margin-right:4px;">
+            <button id="notifBell" onclick="toggleNotifPanel()"
+                    style="background:rgba(255,255,255,.18);border:none;color:#fff;padding:8px 12px;
+                           border-radius:20px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;gap:6px;">
+                <i class="fas fa-bell"></i>
+                <span id="notifBadge" style="background:#dc3545;color:#fff;border-radius:50%;
+                       width:18px;height:18px;font-size:.7rem;font-weight:700;display:none;
+                       align-items:center;justify-content:center;">0</span>
             </button>
+            <!-- Notification panel -->
+            <div id="notifPanel" style="display:none;position:absolute;top:calc(100% + 8px);right:0;
+                 width:320px;background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.25);
+                 z-index:9999;overflow:hidden;">
+                <div style="background:linear-gradient(90deg,#1b5e20,#2e7d32);color:#fff;padding:12px 16px;
+                             display:flex;justify-content:space-between;align-items:center;">
+                    <strong style="font-size:.92rem;"><i class="fas fa-bell" style="margin-right:6px;"></i>Live Notifications</strong>
+                    <span style="font-size:.72rem;opacity:.8;" id="notifRefreshLabel">Auto-refresh 3s</span>
+                </div>
+                <div id="notifContent" style="max-height:340px;overflow-y:auto;padding:10px 0;">
+                    <div style="text-align:center;padding:24px;color:#bbb;font-size:.88rem;">
+                        <i class="fas fa-spinner fa-spin"></i> Loading…
+                    </div>
+                </div>
+                <div style="padding:10px 16px;border-top:1px solid #eee;text-align:right;">
+                    <a href="/admin/reattempt_requests" style="color:#2e7d32;font-size:.82rem;font-weight:600;text-decoration:none;">
+                        View All Reattempts →
+                    </a>
+                </div>
+            </div>
         </div>
+        <!-- Admin logout -->
+        <a href="/admin/logout" style="background:rgba(255,255,255,.18);color:#fff;padding:8px 16px;
+           border-radius:20px;text-decoration:none;font-size:.84rem;white-space:nowrap;border:1px solid rgba(255,255,255,.3);">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </nav>
 
-        <nav class="sidebar-nav">
-            <div class="nav-section">
-                <div class="section-label">Main</div>
-                <button class="nav-item active" data-panel="dashboard" data-type="static">
-                    <i class="fas fa-th-large"></i>
-                    <span class="nav-label">Dashboard</span>
-                </button>
-                <button class="nav-item" data-panel="exam-control" data-type="static">
-                    <i class="fas fa-play-circle"></i>
-                    <span class="nav-label">Exam Control</span>
-                </button>
-                <button class="nav-item" data-panel="questions" data-type="iframe" data-url="/admin/questions">
-                    <i class="fas fa-database"></i>
-                    <span class="nav-label">Questions</span>
-                </button>
-                <button class="nav-item" data-panel="reattempts" data-type="iframe" data-url="/admin/reattempt_requests">
-                    <i class="fas fa-redo-alt"></i>
-                    <span class="nav-label">Reattempts</span>
-                    <span class="badge-count" id="reattemptBadgeSide">0</span>
-                </button>
-                <button class="nav-item" data-panel="teachers" data-type="iframe" data-url="/admin/teachers">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    <span class="nav-label">Teachers</span>
-                </button>
-                <button class="nav-item" data-panel="notice" data-type="iframe" data-url="/admin/bulletins">
-                    <i class="fas fa-bullhorn"></i>
-                    <span class="nav-label">Notice Board</span>
-                </button>
-            </div>
+    <div class="marquee-container">
+        <marquee behavior="scroll" direction="left" scrollamount="6" onmouseover="this.stop();" onmouseout="this.start();">
+            <i class="fas fa-circle"></i> Welcome, Administrator! 
+            <i class="fas fa-users"></i> Manage exams efficiently with RRB CBT 
+            <i class="fas fa-chart-line"></i> Real-time monitoring & evaluation 
+            <i class="fas fa-shield-alt"></i> Secure offline system 
+            <i class="fas fa-star"></i> Developed by Gaurav Shukla
+        </marquee>
+    </div>
 
-            <div class="nav-section">
-                <div class="section-label">Content</div>
-                <button class="nav-item" data-panel="test-papers" data-type="iframe" data-url="/admin/test_papers">
-                    <i class="fas fa-file-alt"></i>
-                    <span class="nav-label">Test Papers</span>
-                </button>
-                <button class="nav-item" data-panel="test-generator" data-type="iframe" data-url="/admin/create_test">
-                    <i class="fas fa-magic"></i>
-                    <span class="nav-label">Test Generator</span>
-                </button>
-                <button class="nav-item" data-panel="students" data-type="iframe" data-url="/admin/students">
-                    <i class="fas fa-user-graduate"></i>
-                    <span class="nav-label">Students</span>
-                </button>
-            </div>
-
-            <div class="nav-section">
-                <div class="section-label">Reports &amp; Analytics</div>
-                <button class="nav-item" data-panel="class-report" data-type="iframe" data-url="/admin/class_report">
-                    <i class="fas fa-chart-bar"></i>
-                    <span class="nav-label">Class Report</span>
-                </button>
-                <button class="nav-item" data-panel="current-test-sessions" data-type="iframe" data-url="/admin/current_test_sessions">
-                    <i class="fas fa-clock"></i>
-                    <span class="nav-label">Current Test Sessions</span>
-                </button>
-                <button class="nav-item" data-panel="monitoring" data-type="iframe" data-url="/admin/monitoring">
-                    <i class="fas fa-desktop"></i>
-                    <span class="nav-label">Monitoring</span>
-                </button>
-                <button class="nav-item" data-panel="evaluation" data-type="iframe" data-url="/admin/evaluate">
-                    <i class="fas fa-check-double"></i>
-                    <span class="nav-label">Evaluation</span>
-                </button>
-                <button class="nav-item" data-panel="advanced-filter" data-type="iframe" data-url="/admin/results_filter">
-                    <i class="fas fa-filter"></i>
-                    <span class="nav-label">Advanced Filter</span>
-                </button>
-                <button class="nav-item" data-panel="export" data-type="iframe" data-url="/admin/export_results_page">
-                    <i class="fas fa-file-export"></i>
-                    <span class="nav-label">Export Data</span>
-                </button>
-            </div>
-
-            <div class="nav-section">
-                <div class="section-label">Settings</div>
-                <button class="nav-item" data-panel="branding" data-type="iframe" data-url="/admin/settings">
-                    <i class="fas fa-paint-brush"></i>
-                    <span class="nav-label">Branding</span>
-                </button>
-            </div>
-        </nav>
-
-        <div class="sidebar-footer">
-            <a href="/admin/logout" class="logout-btn">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
+    <!-- LIVE STATS ROW -->
+    <div style="max-width:1400px;margin:15px auto 0;padding:0 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
+        <div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 3px 10px rgba(0,0,0,0.08);border-top:4px solid #2e7d32;display:flex;align-items:center;gap:15px;">
+            <i class="fas fa-user-graduate" style="font-size:2rem;color:#2e7d32;"></i>
+            <div><div style="font-size:2rem;font-weight:700;color:#2e7d32;">{{ active_students }}</div><div style="font-size:0.82rem;color:#666;">Students In Progress</div></div>
+        </div>
+        <div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 3px 10px rgba(0,0,0,0.08);border-top:4px solid #667eea;display:flex;align-items:center;gap:15px;">
+            <i class="fas fa-chalkboard-teacher" style="font-size:2rem;color:#667eea;"></i>
+            <div><div style="font-size:2rem;font-weight:700;color:#667eea;">{{ active_teachers }}</div><div style="font-size:0.82rem;color:#666;">Active Teachers</div></div>
+        </div>
+        <div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 3px 10px rgba(0,0,0,0.08);border-top:4px solid #ff9800;display:flex;align-items:center;gap:15px;">
+            <i class="fas fa-users" style="font-size:2rem;color:#ff9800;"></i>
+            <div><div style="font-size:2rem;font-weight:700;color:#ff9800;">{{ total_students }}</div><div style="font-size:0.82rem;color:#666;">Total Students</div></div>
+        </div>
+        <div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 3px 10px rgba(0,0,0,0.08);border-top:4px solid #dc3545;display:flex;align-items:center;gap:15px;">
+            <a href="/admin/reattempt_requests" style="display:flex;align-items:center;gap:15px;text-decoration:none;">
+                <i class="fas fa-redo-alt" style="font-size:2rem;color:#dc3545;"></i>
+                <div><div style="font-size:2rem;font-weight:700;color:#dc3545;">{{ pending_reattempts }}</div><div style="font-size:0.82rem;color:#666;">Pending Reattempts</div></div>
             </a>
-        </div>
-    </aside>
-
-    <!-- ─── MAIN CONTENT ──────────────────────────────────────────────── -->
-    <div class="main-content" id="mainContent">
-
-        <!-- TOP BAR -->
-        <header class="topbar">
-            <div class="topbar-left">
-                <button class="hamburger" onclick="toggleSidebar(true)">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <span class="page-title" id="pageTitle">Dashboard</span>
-            </div>
-            <div class="topbar-right">
-                <span class="clock"><i class="far fa-clock"></i> <span id="liveClock">--:--:--</span></span>
-                <div style="position:relative;">
-                    <button class="notif-btn" id="notifBell" onclick="toggleNotifPanel()">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge" id="notifBadge">0</span>
-                    </button>
-                    <div class="notif-dropdown" id="notifPanel">
-                        <div class="notif-header">
-                            <strong><i class="fas fa-bell" style="margin-right:6px;"></i>Live Notifications</strong>
-                            <span>Auto-refresh 3s</span>
-                        </div>
-                        <div class="notif-body" id="notifContent">
-                            <div style="text-align:center;padding:24px;color:#bbb;font-size:.85rem;">
-                                <i class="fas fa-spinner fa-spin"></i> Loading…
-                            </div>
-                        </div>
-                        <div class="notif-footer">
-                            <a href="/admin/reattempt_requests">View All Reattempts →</a>
-                        </div>
-                        <div class="notif-timestamp" id="notifTimestamp">Last updated: --</div>
-                    </div>
-                </div>
-                <div class="admin-info">
-                    <span class="name-text">Admin</span>
-                    <div class="avatar">A</div>
-                </div>
-            </div>
-        </header>
-
-        <!-- CONTENT PANEL -->
-        <div class="content-panel" id="contentPanel">
-
-            <!-- ═══ DASHBOARD (Static) ═══ -->
-            <div class="panel-section active" id="panel-dashboard">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon blue"><i class="fas fa-users"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-number">{{ total_students|default(0) }}</div>
-                            <div class="stat-label">Total Students</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon light-blue"><i class="fas fa-chalkboard"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-number">{{ (class_subject_map|default({})).keys()|length }}</div>
-                            <div class="stat-label">Total Classes</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon orange"><i class="fas fa-book"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-number">{{ total_subjects|default(0) }}</div>
-                            <div class="stat-label">Total Subjects</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon purple"><i class="fas fa-file-alt"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-number">{{ total_tests|default(0) }}</div>
-                            <div class="stat-label">Total Tests</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="breakdown-grid">
-                    <div class="breakdown-box">
-                        <h3><i class="fas fa-users"></i> Students per Class</h3>
-                        {% if class_student_counts %}
-                            {% for class_name, count in class_student_counts.items() %}
-                            <div class="break-item">
-                                <span class="label">Class {{ class_name }}</span>
-                                <span class="value">{{ count }}</span>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="break-item"><span class="label">No data available</span></div>
-                        {% endif %}
-                    </div>
-                    <div class="breakdown-box">
-                        <h3><i class="fas fa-file-alt"></i> Tests per Subject</h3>
-                        {% if subject_test_counts %}
-                            {% for subject, count in subject_test_counts.items() %}
-                            <div class="break-item">
-                                <span class="label">{{ subject }}</span>
-                                <span class="value">{{ count }}</span>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="break-item"><span class="label">No test data available</span></div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="summary-box" id="summaryBox">
-                    <h3>
-                        <i class="fas fa-table"></i> Test-wise Performance Summary
-                        <span class="total-badge" id="dashboardTotalRegistered">Total Registered: 0</span>
-                    </h3>
-                    <div class="summary-table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Class</th>
-                                    <th>Section</th>
-                                    <th>Subject</th>
-                                    <th>Test No</th>
-                                    <th>Students</th>
-                                    <th>Avg Score</th>
-                                    <th>Highest</th>
-                                    <th>Lowest</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dashboardSummaryBody">
-                                <tr><td colspan="8" class="summary-empty">Loading summary data...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ═══ EXAM CONTROL (Static) ═══ -->
-            <div class="panel-section" id="panel-exam-control">
-                <h2 style="font-size:1.3rem;font-weight:600;color:#1a1a2e;margin-bottom:20px;">
-                    <i class="fas fa-play-circle" style="color:var(--primary-light);"></i> Exam Control
-                </h2>
-                <div style="max-width:540px;">
-                    <div style="background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);">
-                        <form class="exam-form" action="/admin/start_exam" method="POST" id="startExamForm">
-                            <div style="margin-bottom:14px;">
-                                <label style="display:block;font-size:.82rem;font-weight:600;color:#333;margin-bottom:4px;">
-                                    <i class="far fa-clock"></i> Duration (minutes)
-                                </label>
-                                <input type="number" name="duration" value="30" min="1" required>
-                            </div>
-                            <div style="margin-bottom:14px;">
-                                <label style="display:block;font-size:.82rem;font-weight:600;color:#333;margin-bottom:4px;">
-                                    <i class="fas fa-minus-circle"></i> Negative Marking
-                                </label>
-                                <div style="background:#e8eaf6;border:1px solid #c5cae9;border-radius:8px;padding:12px 14px;">
-                                    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-                                        <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer;font-weight:500;">
-                                            <input type="radio" name="negative_marking" value="no" checked onchange="document.getElementById('negValRow').style.display='none'"> Disabled
-                                        </label>
-                                        <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer;font-weight:500;">
-                                            <input type="radio" name="negative_marking" value="yes" onchange="document.getElementById('negValRow').style.display='flex'"> Enabled
-                                        </label>
-                                    </div>
-                                    <div id="negValRow" style="display:none;align-items:center;gap:8px;margin-top:8px;">
-                                        <label style="font-size:.82rem;color:#555;white-space:nowrap;">Deduct per wrong:</label>
-                                        <input type="number" name="negative_value" value="0.33" min="0.01" max="1" step="0.01"
-                                               style="width:80px;padding:6px;border:2px solid #c5cae9;border-radius:6px;font-family:inherit;font-size:.85rem;">
-                                        <span style="font-size:.8rem;color:#888;">marks</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn-submit" id="startExamBtn">
-                                <i class="fas fa-play"></i> Start Exam
-                            </button>
-                        </form>
-                        <a href="/admin/stop_exam" class="btn-stop" id="stopExamBtn"
-                           onclick="return confirm('Stop exam for all students?')">
-                            <i class="fas fa-stop"></i> Stop Exam
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ═══ IFRAME PANEL ═══ -->
-            <iframe class="iframe-panel" id="iframePanel" src=""></iframe>
-
-        <footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
-</footer>
-
         </div>
     </div>
 
+    <div class="dashboard-container">
+        <!-- Exam Control Card -->
+        <div class="card">
+            <h3><i class="fas fa-play-circle"></i> Exam Control</h3>
+            <form action="/admin/start_exam" method="POST" id="startExamForm">
+                <div style="display:grid;gap:10px;">
+                    <div>
+                        <label style="display:block;font-size:.82rem;font-weight:600;color:#333;margin-bottom:4px;">
+                            <i class="far fa-clock"></i> Duration (minutes)
+                        </label>
+                        <input type="number" name="duration" value="30" min="1" required
+                               style="width:100%;padding:8px 10px;border:2px solid #e0e0e0;border-radius:8px;font-family:inherit;">
+                    </div>
+                    <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px;">
+                        <label style="display:block;font-size:.82rem;font-weight:600;color:#e65100;margin-bottom:8px;">
+                            <i class="fas fa-minus-circle"></i> Negative Marking
+                        </label>
+                        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer;">
+                                <input type="radio" name="negative_marking" value="no" checked
+                                       onchange="document.getElementById('negValRow').style.display='none'"> Disabled
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer;">
+                                <input type="radio" name="negative_marking" value="yes"
+                                       onchange="document.getElementById('negValRow').style.display='flex'"> Enabled
+                            </label>
+                        </div>
+                        <div id="negValRow" style="display:none;align-items:center;gap:8px;margin-top:8px;">
+                            <label style="font-size:.82rem;color:#555;white-space:nowrap;">Deduct per wrong answer:</label>
+                            <input type="number" name="negative_value" value="0.33" min="0.01" max="1" step="0.01"
+                                   style="width:80px;padding:6px;border:2px solid #ffe082;border-radius:6px;font-family:inherit;">
+                            <span style="font-size:.8rem;color:#888;">marks</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-green" style="width:100%;">
+                        <i class="fas fa-play"></i> Start Exam
+                    </button>
+                </div>
+            </form>
+            <a href="/admin/stop_exam" class="btn-red" id="stopExamBtn"
+               style="display:block;text-align:center;margin-top:10px;"
+               onclick="return confirm('Stop exam for all students?')">
+                <i class="fas fa-stop"></i> Stop Exam
+            </a>
+        </div>
+
+        <!-- Manage Questions Card -->
+        <div class="card">
+            <h3><i class="fas fa-database"></i> Questions</h3>
+            <a href="/admin/questions" class="btn"><i class="fas fa-upload"></i> Upload / View</a>
+            <a href="/admin/questions" class="btn"><i class="fas fa-edit"></i> Edit Bank</a>
+        </div>
+
+        <!-- Reattempt Requests Card -->
+        <div class="card">
+            <h3><i class="fas fa-redo-alt"></i> Reattempts</h3>
+            <a href="/admin/reattempt_requests" class="btn"><i class="fas fa-list"></i> View Requests</a>
+        </div>
+
+        <!-- Teacher Management Card -->
+        <div class="card">
+            <h3><i class="fas fa-chalkboard-teacher"></i> Teachers</h3>
+            <a href="/admin/teachers" class="btn"><i class="fas fa-user-plus"></i> Manage Teachers</a>
+            <a href="/teacher" class="btn" target="_blank"><i class="fas fa-sign-in-alt"></i> Teacher Portal</a>
+        </div>
+
+        <!-- Bulletin Board Card -->
+        <div class="card">
+            <h3><i class="fas fa-bullhorn"></i> Notice Board</h3>
+            <a href="/admin/bulletins" class="btn"><i class="fas fa-plus"></i> Post Announcement</a>
+            <a href="/admin/bulletins" class="btn"><i class="fas fa-list"></i> Manage Bulletins</a>
+        </div>
+
+        <!-- Test Papers Card -->
+        <div class="card">
+            <h3><i class="fas fa-file-alt"></i> Test Papers</h3>
+            <a href="/admin/test_papers" class="btn"><i class="fas fa-upload"></i> Upload & Manage</a>
+        </div>
+
+        <!-- Test Generator Card (Feature #8) -->
+        <div class="card">
+            <h3><i class="fas fa-magic"></i> Test Generator</h3>
+            <a href="/admin/create_test" class="btn"><i class="fas fa-robot"></i> AI Generate (CBT)</a>
+            <a href="/descriptive_paper" class="btn"><i class="fas fa-file-alt"></i> Descriptive Paper</a>
+            <a href="/admin/test_history" class="btn"><i class="fas fa-history"></i> History</a>
+        </div>
+
+        <!-- Class Report Card -->
+        <div class="card">
+            <h3><i class="fas fa-chart-bar"></i> Class Report</h3>
+            <a href="/admin/class_report" class="btn"><i class="fas fa-file-excel"></i> Generate Report</a>
+        </div>
+
+        <!-- Student Management Card -->
+        <div class="card">
+            <h3><i class="fas fa-user-graduate"></i> Students</h3>
+            <a href="/admin/students" class="btn"><i class="fas fa-users-cog"></i> Manage</a>
+        </div>
+
+        <!-- Live Monitoring Card -->
+        <div class="card">
+            <h3><i class="fas fa-desktop"></i> Monitoring</h3>
+            <a href="/admin/monitoring" class="btn"><i class="fas fa-eye"></i> Live View</a>
+        </div>
+
+        <!-- Evaluation Card -->
+        <div class="card">
+            <h3><i class="fas fa-check-double"></i> Evaluation</h3>
+            <a href="/admin/evaluate" class="btn"><i class="fas fa-calculator"></i> Evaluate</a>
+            <a href="/admin/results" class="btn"><i class="fas fa-poll"></i> Results</a>
+        </div>
+
+        <!-- Advanced Results Filtering Card -->
+        <div class="card">
+            <h3><i class="fas fa-filter"></i> Advanced Filter</h3>
+            <p style="font-size: 0.85em; color: #666; margin: 8px 0;">Filter by Class → Subject → Test → Date</p>
+            <a href="/admin/results_filter" class="btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-top: auto;"><i class="fas fa-sliders-h"></i> Hierarchical Filter</a>
+        </div>
+
+        <!-- Export Data Card -->
+        <div class="card">
+            <h3><i class="fas fa-file-export"></i> Export</h3>
+            <a href="/admin/export_results_page" class="btn">Export Results (Excel)</a>
+            <a href="/admin/export/answers" class="btn"><i class="fas fa-file-csv"></i> Answers (Excel)</a>
+        </div>
+
+        <!-- School Branding Card -->
+        <div class="card">
+            <h3><i class="fas fa-paint-brush"></i> Branding</h3>
+            <a href="/admin/settings" class="btn"><i class="fas fa-cog"></i> Logo & Name</a>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <i class="fas fa-calendar-alt"></i> <span id="currentDate"></span> 
+        <i class="fas fa-clock" style="margin-left: 20px;"></i> <span id="currentTime"></span>
+        <i class="fas fa-network-wired" style="margin-left: 20px;"></i> Server: Online
+        <i class="fas fa-user-shield" style="margin-left: 20px;"></i> Admin Session Active
+    </div>
+
     <script>
-        function updateClock() {
+        function updateDateTime() {
             const now = new Date();
-            document.getElementById('liveClock').textContent = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-IN', optionsDate);
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
-        updateClock();
-        setInterval(updateClock, 1000);
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
 
-        function toggleSidebar(open) {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            if (open === true) { sidebar.classList.add('open'); overlay.classList.add('open'); }
-            else if (open === false) { sidebar.classList.remove('open'); overlay.classList.remove('open'); }
-            else { sidebar.classList.toggle('open'); overlay.classList.toggle('open'); }
-        }
-
-        function toggleSidebarCollapse() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('collapsed');
-            const btn = sidebar.querySelector('.sidebar-toggle i');
-            btn.className = sidebar.classList.contains('collapsed') ? 'fas fa-chevron-right' : 'fas fa-chevron-left';
-        }
-
-        const panelMap = {
-            'dashboard': 'Dashboard',
-            'exam-control': 'Exam Control',
-            'questions': 'Questions',
-            'reattempts': 'Reattempts',
-            'teachers': 'Teachers',
-            'notice': 'Notice Board',
-            'test-papers': 'Test Papers',
-            'test-generator': 'Test Generator',
-            'class-report': 'Class Report',
-            'current-test-sessions': 'Current Test Sessions',
-            'students': 'Students',
-            'monitoring': 'Monitoring',
-            'evaluation': 'Evaluation',
-            'advanced-filter': 'Advanced Filter',
-            'export': 'Export Data',
-            'branding': 'Branding'
-        };
-
-        function switchPanel(panelId, type, url) {
-            document.querySelectorAll('.panel-section').forEach(el => el.classList.remove('active'));
-            const iframe = document.getElementById('iframePanel');
-            iframe.classList.remove('active');
-
-            if (type === 'static') {
-                const target = document.getElementById('panel-' + panelId);
-                if (target) target.classList.add('active');
-                iframe.src = '';
-            } else if (type === 'iframe') {
-                iframe.classList.add('active');
-                iframe.src = url;
+        async function updateExamControlButtons() {
+            try {
+                const response = await fetch('/admin/exam_status');
+                const data = await response.json();
+                const startBtn = document.querySelector('form[action="/admin/start_exam"] button[type="submit"]');
+                const stopBtn = document.querySelector('a.btn-red[href="/admin/stop_exam"]');
+                
+                if (data.is_active) {
+                    if (startBtn) startBtn.disabled = true;
+                    if (stopBtn) {
+                        stopBtn.style.pointerEvents = 'auto';
+                        stopBtn.style.opacity = '1';
+                    }
+                } else {
+                    if (startBtn) startBtn.disabled = false;
+                    if (stopBtn) {
+                        stopBtn.style.pointerEvents = 'none';
+                        stopBtn.style.opacity = '0.5';
+                        stopBtn.onclick = (e) => {
+                            e.preventDefault();
+                            alert('Exam is not active.');
+                            return false;
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching exam status:', error);
             }
-
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            const navBtn = document.querySelector(`.nav-item[data-panel="${panelId}"]`);
-            if (navBtn) navBtn.classList.add('active');
-            document.getElementById('pageTitle').textContent = panelMap[panelId] || panelId;
-            if (window.innerWidth <= 820) toggleSidebar(false);
         }
+        updateExamControlButtons();
+        setInterval(updateExamControlButtons, 10000);
 
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const panel = this.dataset.panel;
-                const type = this.dataset.type || 'static';
-                const url = this.dataset.url || '';
-                if (panel) switchPanel(panel, type, url);
-            });
-        });
-
-        let notifOpen = false;
-        let notifInterval = null;
+        // ── FEAT-003: Live Notification Panel ─────────────────────────────
+        let notifPanelOpen = false;
+        let notifInterval  = null;
 
         function toggleNotifPanel() {
-            notifOpen = !notifOpen;
-            const panel = document.getElementById('notifPanel');
-            panel.classList.toggle('open', notifOpen);
-            if (notifOpen) {
+            notifPanelOpen = !notifPanelOpen;
+            document.getElementById('notifPanel').style.display = notifPanelOpen ? 'block' : 'none';
+            if (notifPanelOpen) {
                 loadNotifications();
+                // Auto-refresh every 3 seconds while panel is open
                 notifInterval = setInterval(loadNotifications, 3000);
             } else {
                 clearInterval(notifInterval);
@@ -1297,135 +524,88 @@
                     fetch('/admin/monitoring/data'),
                     fetch('/admin/reattempt_requests/data')
                 ]);
-                const stats = await statsRes.json();
+                const stats     = await statsRes.json();
                 const reattempt = await reattemptRes.json();
-                const students = stats.students || [];
-                const inProgress = students.filter(s => s.status === 'In Progress').length;
-                const submitted = students.filter(s => s.status === 'Submitted').length;
-                const pending = (reattempt.requests || []).filter(r => r.status === 'pending').length;
 
+                const students    = stats.students || [];
+                const inProgress  = students.filter(s => s.status === 'In Progress').length;
+                const submitted   = students.filter(s => s.status === 'Submitted').length;
+                const pending     = (reattempt.requests || []).filter(r => r.status === 'pending').length;
+
+                // Update badge
                 const badge = document.getElementById('notifBadge');
-                const reattemptBadgeSide = document.getElementById('reattemptBadgeSide');
                 if (pending > 0) {
                     badge.textContent = pending;
-                    badge.classList.add('show');
-                    reattemptBadgeSide.textContent = pending;
-                    reattemptBadgeSide.style.display = 'inline';
+                    badge.style.display = 'flex';
                 } else {
-                    badge.classList.remove('show');
-                    reattemptBadgeSide.style.display = 'none';
+                    badge.style.display = 'none';
                 }
 
-                document.getElementById('notifContent').innerHTML = `
-                    <div class="notif-stats">
-                        <div><div class="num blue">${inProgress}</div><div class="lbl">In Progress</div></div>
-                        <div><div class="num light-blue">${submitted}</div><div class="lbl">Submitted</div></div>
-                        <div><div class="num orange">${students.length}</div><div class="lbl">Total Students</div></div>
-                        <div><div class="num red">${pending}</div><div class="lbl">Pending Reattempts</div></div>
+                // Build panel content
+                const content = document.getElementById('notifContent');
+                content.innerHTML = `
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#eee;">
+                        <div style="background:#fff;padding:14px 16px;text-align:center;">
+                            <div style="font-size:1.6rem;font-weight:700;color:#2e7d32;">${inProgress}</div>
+                            <div style="font-size:.74rem;color:#666;margin-top:2px;">In Progress</div>
+                        </div>
+                        <div style="background:#fff;padding:14px 16px;text-align:center;">
+                            <div style="font-size:1.6rem;font-weight:700;color:#1565c0;">${submitted}</div>
+                            <div style="font-size:.74rem;color:#666;margin-top:2px;">Submitted</div>
+                        </div>
+                        <div style="background:#fff;padding:14px 16px;text-align:center;">
+                            <div style="font-size:1.6rem;font-weight:700;color:#ff9800;">${students.length}</div>
+                            <div style="font-size:.74rem;color:#666;margin-top:2px;">Total Students</div>
+                        </div>
+                        <div style="background:#fff;padding:14px 16px;text-align:center;">
+                            <div style="font-size:1.6rem;font-weight:700;color:#dc3545;">${pending}</div>
+                            <div style="font-size:.74rem;color:#666;margin-top:2px;">Pending Reattempts</div>
+                        </div>
                     </div>
                     ${pending > 0 ? `
-                    <div class="pending-list">
-                        <div style="font-size:.78rem;font-weight:600;color:#dc3545;margin-bottom:6px;">
-                            <i class="fas fa-exclamation-circle"></i> Pending Requests
+                    <div style="padding:10px 14px;background:#fff8f8;border-top:1px solid #eee;">
+                        <div style="font-size:.8rem;font-weight:600;color:#dc3545;margin-bottom:8px;">
+                            <i class="fas fa-exclamation-circle"></i> Pending Reattempt Requests
                         </div>
                         ${(reattempt.requests || []).filter(r=>r.status==='pending').slice(0,5).map(r=>`
-                            <div class="pending-item">
-                                <span>${r.name} — ${r.subject}</span>
-                                <a href="/admin/reattempt_requests" class="review-link">Review</a>
-                            </div>
-                        `).join('')}
+                        <div style="display:flex;justify-content:space-between;align-items:center;
+                                    padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:.8rem;">
+                            <span>${r.name} — ${r.subject}</span>
+                            <a href="/admin/reattempt_requests" style="background:#dc3545;color:#fff;
+                               padding:2px 8px;border-radius:8px;text-decoration:none;font-size:.74rem;">Review</a>
+                        </div>`).join('')}
                     </div>` : ''}
-                `;
-                document.getElementById('notifTimestamp').textContent = 'Last updated: ' + new Date().toLocaleTimeString('en-IN');
-            } catch (e) {
-                document.getElementById('notifContent').innerHTML = '<div style="text-align:center;padding:20px;color:#999;font-size:.85rem;">Failed to load</div>';
+                    <div style="padding:8px 14px;text-align:center;font-size:.74rem;color:#aaa;">
+                        <i class="fas fa-sync-alt"></i> Last updated: ${new Date().toLocaleTimeString('en-IN')}
+                    </div>`;
+            } catch(e) {
+                document.getElementById('notifContent').innerHTML =
+                    '<div style="text-align:center;padding:20px;color:#999;font-size:.85rem;">Failed to load</div>';
             }
         }
 
-        document.addEventListener('click', function(e) {
+        // Close panel when clicking outside
+        document.addEventListener('click', e => {
             const panel = document.getElementById('notifPanel');
-            const bell = document.getElementById('notifBell');
-            if (notifOpen && !panel.contains(e.target) && !bell.contains(e.target)) {
-                notifOpen = false;
-                panel.classList.remove('open');
+            const bell  = document.getElementById('notifBell');
+            if (notifPanelOpen && !panel.contains(e.target) && !bell.contains(e.target)) {
+                notifPanelOpen = false;
+                panel.style.display = 'none';
                 clearInterval(notifInterval);
             }
         });
 
-        async function updateExamStatus() {
-            try {
-                const res = await fetch('/admin/exam_status');
-                const data = await res.json();
-                const startBtn = document.getElementById('startExamBtn');
-                const stopBtn = document.getElementById('stopExamBtn');
-                if (data.is_active) {
-                    if (startBtn) startBtn.disabled = true;
-                    if (stopBtn) { stopBtn.classList.remove('disabled'); stopBtn.style.pointerEvents = 'auto'; stopBtn.style.opacity = '1'; }
-                } else {
-                    if (startBtn) startBtn.disabled = false;
-                    if (stopBtn) { stopBtn.classList.add('disabled'); stopBtn.style.pointerEvents = 'none'; stopBtn.style.opacity = '0.5'; }
+        // Initial badge count
+        fetch('/admin/reattempt_requests/data')
+            .then(r => r.json())
+            .then(data => {
+                const pending = (data.requests || []).filter(r => r.status === 'pending').length;
+                if (pending > 0) {
+                    const b = document.getElementById('notifBadge');
+                    b.textContent = pending;
+                    b.style.display = 'flex';
                 }
-            } catch (e) {}
-        }
-        updateExamStatus();
-        setInterval(updateExamStatus, 10000);
-
-        fetch('/admin/reattempt_requests/data').then(r => r.json()).then(data => {
-            const pending = (data.requests || []).filter(r => r.status === 'pending').length;
-            if (pending > 0) {
-                document.getElementById('notifBadge').textContent = pending;
-                document.getElementById('notifBadge').classList.add('show');
-                document.getElementById('reattemptBadgeSide').textContent = pending;
-                document.getElementById('reattemptBadgeSide').style.display = 'inline';
-            }
-        }).catch(() => {});
-
-        window.addEventListener('resize', function() {
-            if (window.innerWidth > 820) {
-                document.getElementById('sidebar').classList.remove('open');
-                document.getElementById('sidebarOverlay').classList.remove('open');
-            }
-        });
-
-        document.querySelectorAll('input[name="negative_marking"]').forEach(el => {
-            el.addEventListener('change', function() {
-                document.getElementById('negValRow').style.display = this.value === 'yes' ? 'flex' : 'none';
-            });
-        });
-
-        async function loadDashboardSummary() {
-            const tbody = document.getElementById('dashboardSummaryBody');
-            const badge = document.getElementById('dashboardTotalRegistered');
-            try {
-                const res = await fetch('/api/results/summary');
-                const data = await res.json();
-                if (data.summary && data.summary.length) {
-                    tbody.innerHTML = '';
-                    data.summary.forEach(row => {
-                        tbody.innerHTML += `<tr>
-                            <td>${row.class}</td>
-                            <td>${row.section || '—'}</td>
-                            <td>${row.subject}</td>
-                            <td>${row.test_no || '—'}</td>
-                            <td>${row.student_count}</td>
-                            <td>${row.avg_score ? row.avg_score.toFixed(2) : 'N/A'}</td>
-                            <td>${row.max_score}</td>
-                            <td>${row.min_score}</td>
-                        </tr>`;
-                    });
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="8" class="summary-empty">No test results available</td></tr>';
-                }
-                badge.textContent = `Total Registered: ${data.total_students || 0}`;
-            } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="8" class="summary-empty">Failed to load summary</td></tr>';
-                badge.textContent = 'Total Registered: —';
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(loadDashboardSummary, 500);
-        });
+            }).catch(()=>{});
     </script>
 </body>
 </html>
