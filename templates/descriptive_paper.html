@@ -8,118 +8,294 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-:root{--g:#2e7d32;--gd:#1b5e20;--gl:#e8f5e9;--p:#667eea;--sh:0 4px 20px rgba(0,0,0,.10);--r:14px;}
-body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
+:root{
+  --primary:#4338ca;
+  --primary-dark:#312e81;
+  --primary-light:#eef2ff;
+  --accent:#10b981;
+  --accent-light:#ecfdf5;
+  --dark:#0f172a;
+  --slate:#475569;
+  --border:rgba(99, 102, 241, 0.15);
+  --shadow:0 10px 30px rgba(15, 23, 42, 0.06);
+  --radius:16px;
+}
+body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);min-height:100vh;color:#0f172a;}
 
-/* HEADER */
-.hdr{background:linear-gradient(90deg,var(--gd),var(--g));color:#fff;padding:14px 28px;
-     display:flex;justify-content:space-between;align-items:center;box-shadow:0 3px 12px rgba(0,0,0,.2);}
-.hdr h1{font-size:1.2rem;display:flex;align-items:center;gap:10px;}
-.hdr-links{display:flex;gap:10px;}
-.hdr-btn{background:rgba(255,255,255,.18);color:#fff;padding:7px 16px;border-radius:20px;
-          text-decoration:none;font-size:.84rem;border:1px solid rgba(255,255,255,.3);transition:background .2s;}
-.hdr-btn:hover{background:rgba(255,255,255,.32);}
+/* ── HEADER ────────────────────────────────────────────────────────── */
+.hdr{
+  background:linear-gradient(90deg, #0f172a, #1e1b4b);
+  color:#fff;
+  padding:14px 32px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 4px 20px rgba(15, 23, 42, 0.25);
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+.hdr h1{font-size:1.25rem;font-weight:700;display:flex;align-items:center;gap:12px;letter-spacing:-0.3px;}
+.hdr h1 i{color:#818cf8;}
+.hdr-badge{background:rgba(99, 102, 241, 0.25);color:#c7d2fe;padding:4px 12px;border-radius:20px;font-size:0.75rem;font-weight:600;border:1px solid rgba(199, 210, 254, 0.3);}
+.hdr-links{display:flex;gap:12px;}
+.hdr-btn{
+  background:rgba(255,255,255,0.12);
+  color:#fff;
+  padding:8px 18px;
+  border-radius:25px;
+  text-decoration:none;
+  font-size:0.84rem;
+  font-weight:600;
+  border:1px solid rgba(255,255,255,0.25);
+  transition:all 0.2s ease;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.hdr-btn:hover{background:rgba(255,255,255,0.25);transform:translateY(-1px);}
 
-/* LAYOUT */
-.wrap{display:grid;grid-template-columns:420px 1fr;gap:24px;max-width:1400px;margin:24px auto;padding:0 20px;}
+/* ── LAYOUT ────────────────────────────────────────────────────────── */
+.wrap{
+  display:grid;
+  grid-template-columns:460px 1fr;
+  gap:24px;
+  max-width:1500px;
+  margin:24px auto;
+  padding:0 24px;
+}
 
-/* FORM PANEL */
+/* ── FORM PANEL ────────────────────────────────────────────────────── */
 .form-panel{display:flex;flex-direction:column;gap:18px;}
-.card{background:#fff;border-radius:var(--r);padding:22px;box-shadow:var(--sh);}
-.card-title{font-size:.95rem;font-weight:700;color:var(--gd);margin-bottom:16px;
-             display:flex;align-items:center;gap:8px;border-bottom:2px solid var(--gl);padding-bottom:8px;}
+.card{
+  background:#ffffff;
+  border-radius:var(--radius);
+  padding:22px 24px;
+  box-shadow:var(--shadow);
+  border:1px solid var(--border);
+  transition:transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-title{
+  font-size:0.98rem;
+  font-weight:700;
+  color:var(--primary-dark);
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border-bottom:2px solid var(--primary-light);
+  padding-bottom:10px;
+}
+.card-title i{color:var(--primary);font-size:1.1rem;}
+
 .fg{margin-bottom:14px;}
 .fg:last-child{margin-bottom:0;}
-.fg label{display:block;font-size:.82rem;font-weight:600;color:#333;margin-bottom:5px;}
-.fg label i{color:var(--g);margin-right:4px;}
-.fg input,.fg select,.fg textarea{
-    width:100%;padding:9px 12px;border:2px solid #e0e0e0;border-radius:9px;
-    font-family:'Poppins',sans-serif;font-size:.88rem;transition:border-color .25s;background:#fff;}
-.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px rgba(46,125,50,.1);}
-.fg textarea{min-height:70px;resize:vertical;}
-.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fg label{display:block;font-size:0.82rem;font-weight:600;color:var(--slate);margin-bottom:6px;}
+.fg label i{color:var(--primary);margin-right:6px;}
+.fg input, .fg select, .fg textarea{
+  width:100%;
+  padding:10px 14px;
+  border:1.5px solid #cbd5e1;
+  border-radius:12px;
+  font-family:'Poppins',sans-serif;
+  font-size:0.88rem;
+  transition:all 0.2s ease;
+  background:#f8fafc;
+  color:#0f172a;
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus{
+  outline:none;
+  border-color:var(--primary);
+  box-shadow:0 0 0 4px rgba(99, 102, 241, 0.12);
+  background:#ffffff;
+}
+.fg textarea{min-height:75px;resize:vertical;}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .fg-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 
-/* Question type grid */
-.qtype-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.qt-card{border:2px solid #e0e0e0;border-radius:10px;padding:12px;transition:border-color .25s;background:#fff;}
-.qt-card:focus-within{border-color:var(--g);background:var(--gl);}
-.qt-label{font-size:.78rem;font-weight:700;color:#333;display:flex;align-items:center;gap:6px;margin-bottom:6px;}
-.qt-label i{color:var(--p);}
-.qt-card input[type=number]{
-    width:100%;padding:6px 10px;border:2px solid #e0e0e0;border-radius:7px;
-    font-family:'Poppins',sans-serif;font-size:.88rem;text-align:center;}
-.qt-card input[type=number]:focus{outline:none;border-color:var(--g);}
-.total-chip{background:linear-gradient(135deg,var(--gd),var(--g));color:#fff;
-             padding:5px 14px;border-radius:20px;font-size:.82rem;font-weight:700;display:inline-block;margin-top:4px;}
+/* ── QUESTION TYPE GRID (Testbook Style) ───────────────────────────── */
+.qtype-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.qt-card{
+  border:1.5px solid #e2e8f0;
+  border-radius:14px;
+  padding:12px 14px;
+  transition:all 0.25s ease;
+  background:#f8fafc;
+}
+.qt-card:focus-within, .qt-card:hover{
+  border-color:var(--primary);
+  background:var(--primary-light);
+  box-shadow:0 4px 12px rgba(99, 102, 241, 0.08);
+}
+.qt-label{
+  font-size:0.78rem;
+  font-weight:700;
+  color:#1e293b;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-bottom:8px;
+  line-height:1.3;
+}
+.qt-label i{color:var(--primary);font-size:0.85rem;}
+.qt-stepper{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.qt-stepper button{
+  width:28px;
+  height:28px;
+  border-radius:8px;
+  border:1px solid #cbd5e1;
+  background:#fff;
+  color:var(--primary-dark);
+  font-weight:bold;
+  font-size:1rem;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background 0.2s;
+}
+.qt-stepper button:hover{background:var(--primary-light);border-color:var(--primary);}
+.qt-stepper input[type=number]{
+  flex:1;
+  width:100%;
+  padding:5px 8px;
+  border:1.5px solid #cbd5e1;
+  border-radius:8px;
+  font-family:'Poppins',sans-serif;
+  font-size:0.9rem;
+  font-weight:700;
+  text-align:center;
+  background:#ffffff;
+}
+
+.total-summary{
+  background:linear-gradient(135deg, #1e1b4b, #312e81);
+  color:#ffffff;
+  border-radius:14px;
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:14px;
+  box-shadow:0 6px 16px rgba(49, 46, 129, 0.2);
+}
+.total-summary span{font-size:0.85rem;font-weight:600;}
+.total-chip{
+  background:#10b981;
+  color:#ffffff;
+  padding:4px 14px;
+  border-radius:20px;
+  font-size:0.9rem;
+  font-weight:700;
+}
 
 /* Full-syllabus toggle */
 .toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.toggle-row label{font-size:.82rem;font-weight:600;color:#333;cursor:pointer;}
-.toggle-switch{position:relative;display:inline-block;width:38px;height:22px;}
+.toggle-row label{font-size:0.82rem;font-weight:600;color:var(--slate);cursor:pointer;}
+.toggle-switch{position:relative;display:inline-block;width:40px;height:22px;}
 .toggle-switch input{opacity:0;width:0;height:0;}
-.slider-round{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;
-               background:#ccc;border-radius:22px;transition:.3s;}
-.slider-round::before{position:absolute;content:'';height:16px;width:16px;left:3px;bottom:3px;
-                       background:#fff;border-radius:50%;transition:.3s;}
-.toggle-switch input:checked + .slider-round{background:var(--g);}
-.toggle-switch input:checked + .slider-round::before{transform:translateX(16px);}
+.slider-round{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#cbd5e1;border-radius:22px;transition:.3s;}
+.slider-round::before{position:absolute;content:'';height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}
+.toggle-switch input:checked + .slider-round{background:var(--primary);}
+.toggle-switch input:checked + .slider-round::before{transform:translateX(18px);}
 
 /* Image upload */
-.img-drop{border:2px dashed var(--g);border-radius:10px;padding:20px;text-align:center;
-           background:var(--gl);cursor:pointer;transition:background .25s;}
-.img-drop:hover{background:#d0efda;}
-.img-drop i{font-size:1.8rem;color:var(--g);display:block;margin-bottom:6px;}
-.img-drop p{font-size:.82rem;color:#555;}
-.img-drop small{color:#888;}
+.img-drop{
+  border:2px dashed var(--primary);
+  border-radius:12px;
+  padding:16px;
+  text-align:center;
+  background:var(--primary-light);
+  cursor:pointer;
+  transition:all 0.2s ease;
+}
+.img-drop:hover{background:#e0e7ff;}
+.img-drop i{font-size:1.6rem;color:var(--primary);display:block;margin-bottom:4px;}
+.img-drop p{font-size:0.82rem;color:#334155;font-weight:600;}
+.img-drop small{color:#64748b;font-size:0.75rem;}
 .img-preview{max-width:100%;max-height:120px;border-radius:8px;margin-top:8px;}
 
 /* Generate button */
-.gen-btn{width:100%;background:linear-gradient(135deg,var(--gd),var(--g));color:#fff;
-          border:none;padding:14px;border-radius:10px;font-size:1rem;font-weight:700;
-          font-family:'Poppins',sans-serif;cursor:pointer;display:flex;align-items:center;
-          justify-content:center;gap:10px;transition:transform .2s,box-shadow .2s;}
-.gen-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(27,94,32,.35);}
+.gen-btn{
+  width:100%;
+  background:linear-gradient(90deg, #4338ca, #6366f1);
+  color:#fff;
+  border:none;
+  padding:14px;
+  border-radius:14px;
+  font-size:1rem;
+  font-weight:700;
+  font-family:'Poppins',sans-serif;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  transition:all 0.2s ease;
+  box-shadow:0 12px 24px rgba(67, 56, 202, 0.25);
+}
+.gen-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 16px 32px rgba(67, 56, 202, 0.35);}
 .gen-btn:disabled{opacity:.55;cursor:not-allowed;}
 
 /* Alert */
-.alert{padding:12px 16px;border-radius:9px;margin-bottom:14px;display:none;font-size:.88rem;}
-.alert-err{background:#fde8e8;border-left:4px solid #e53935;color:#b71c1c;}
-.alert-ok{background:#d4edda;border-left:4px solid #28a745;color:#155724;}
+.alert{padding:12px 16px;border-radius:12px;margin-bottom:14px;display:none;font-size:0.88rem;}
+.alert-err{background:#fef2f2;border-left:4px solid #ef4444;color:#991b1b;}
+.alert-ok{background:#ecfdf5;border-left:4px solid #10b981;color:#065f46;}
 
 /* PREVIEW PANEL */
-.preview-panel{position:sticky;top:24px;height:calc(100vh - 80px);display:flex;flex-direction:column;}
-.preview-toolbar{background:#fff;border-radius:var(--r) var(--r) 0 0;padding:14px 20px;
-                  display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--gl);flex-shrink:0;}
-.preview-toolbar h3{font-size:.95rem;color:#333;flex:1;}
-.tb-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border:none;
-         border-radius:20px;font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:600;
-         cursor:pointer;transition:all .2s;text-decoration:none;}
-.tb-print{background:var(--g);color:#fff;}
-.tb-print:hover{background:var(--gd);}
-.tb-doc{background:#1565c0;color:#fff;}
-.tb-doc:hover{background:#0d47a1;}
-.tb-disabled{background:#e0e0e0;color:#999;cursor:not-allowed;}
-.preview-frame{flex:1;border:none;background:#f9f9f9;border-radius:0 0 var(--r) var(--r);overflow:hidden;}
+.preview-panel{position:sticky;top:24px;height:calc(100vh - 90px);display:flex;flex-direction:column;}
+.preview-toolbar{
+  background:#ffffff;
+  border-radius:var(--radius) var(--radius) 0 0;
+  padding:14px 24px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  border-bottom:2px solid var(--primary-light);
+  box-shadow:var(--shadow);
+  flex-shrink:0;
+}
+.preview-toolbar h3{font-size:1rem;font-weight:700;color:var(--dark);flex:1;display:flex;align-items:center;gap:8px;}
+.tb-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:9px 20px;
+  border:none;
+  border-radius:25px;
+  font-family:'Poppins',sans-serif;
+  font-size:0.84rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.2s ease;
+  text-decoration:none;
+}
+.tb-print{background:#10b981;color:#fff;}
+.tb-print:hover:not(:disabled){background:#059669;transform:translateY(-1px);}
+.tb-doc{background:#2563eb;color:#fff;}
+.tb-doc:hover:not(:disabled){background:#1d4ed8;transform:translateY(-1px);}
+.tb-disabled{background:#e2e8f0;color:#94a3b8;cursor:not-allowed;}
+.preview-frame{flex:1;border:none;background:#ffffff;border-radius:0 0 var(--radius) var(--radius);overflow:hidden;box-shadow:var(--shadow);}
 
 /* LOADING OVERLAY */
-#loadingOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
-                  z-index:9999;align-items:center;justify-content:center;}
+#loadingOverlay{display:none;position:fixed;inset:0;background:rgba(15, 23, 42, 0.75);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;}
 #loadingOverlay.on{display:flex;}
-.loader-box{background:#fff;border-radius:18px;padding:40px 50px;text-align:center;
-             box-shadow:0 20px 60px rgba(0,0,0,.4);}
-.loader-box .spin{width:48px;height:48px;border:4px solid #e0e0e0;border-top-color:var(--g);
-                   border-radius:50%;animation:sp 1s linear infinite;margin:0 auto 16px;}
+.loader-box{background:#fff;border-radius:24px;padding:40px 50px;text-align:center;box-shadow:0 25px 70px rgba(0,0,0,0.4);}
+.loader-box .spin{width:52px;height:52px;border:4px solid #e2e8f0;border-top-color:var(--primary);border-radius:50%;animation:sp 0.9s linear infinite;margin:0 auto 18px;}
 @keyframes sp{100%{transform:rotate(360deg)}}
-.loader-box p{color:#333;font-weight:600;font-size:1rem;}
-.loader-box small{color:#888;font-size:.82rem;}
+.loader-box p{color:#0f172a;font-weight:700;font-size:1.1rem;}
+.loader-box small{color:#64748b;font-size:0.85rem;}
 
 /* RESPONSIVE */
-@media(max-width:1024px){
+@media(max-width:1100px){
   .wrap{grid-template-columns:1fr;}
-  .preview-panel{position:static;height:600px;}
+  .preview-panel{position:static;height:650px;}
 }
-@media(max-width:600px){.fg-row,.fg-row3,.qtype-grid{grid-template-columns:1fr;}}
+@media(max-width:640px){.fg-row,.fg-row3,.qtype-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -128,14 +304,17 @@ body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
 <div id="loadingOverlay">
   <div class="loader-box">
     <div class="spin"></div>
-    <p>Generating Question Paper…</p>
-    <small>Gemini AI is writing your paper. Please wait.</small>
+    <p>Generating Descriptive Question Paper…</p>
+    <small>AI is framing questions and solution layout. Please wait.</small>
   </div>
 </div>
 
 <!-- HEADER -->
 <div class="hdr">
-  <h1><i class="fas fa-file-alt"></i> Descriptive Question Paper Generator</h1>
+  <h1>
+    <i class="fas fa-pen-nib"></i> Descriptive Question Paper Generator
+    <span class="hdr-badge">Testbook AI Engine</span>
+  </h1>
   <div class="hdr-links">
     {% if is_admin %}
     <a href="/admin/dashboard" class="hdr-btn"><i class="fas fa-arrow-left"></i> Admin Dashboard</a>
@@ -154,12 +333,12 @@ body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
 
     <!-- Paper Identity -->
     <div class="card">
-      <div class="card-title"><i class="fas fa-school"></i> Paper Identity</div>
+      <div class="card-title"><i class="fas fa-file-signature"></i> Paper Identity & Subject Setup</div>
 
       {% if is_admin %}
       <div class="fg-row">
         <div class="fg">
-          <label><i class="fas fa-graduation-cap"></i>Class</label>
+          <label><i class="fas fa-layer-group"></i>Class</label>
           <input type="text" id="classInput" placeholder="e.g. 11, 12, X" list="classSuggestions">
           <datalist id="classSuggestions">
             {% for p in all_pairs if is_admin %}
@@ -168,8 +347,8 @@ body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
           </datalist>
         </div>
         <div class="fg">
-          <label><i class="fas fa-book"></i>Subject</label>
-          <input type="text" id="subjectInput" placeholder="e.g. Chemistry" list="subjectSuggestions">
+          <label><i class="fas fa-book-open"></i>Subject</label>
+          <input type="text" id="subjectInput" placeholder="e.g. Computer Science" list="subjectSuggestions">
           <datalist id="subjectSuggestions">
             {% for p in all_pairs if is_admin %}
             <option value="{{ p.subject }}">
@@ -180,7 +359,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
       {% else %}
       <div class="fg-row">
         <div class="fg">
-          <label><i class="fas fa-graduation-cap"></i>Class</label>
+          <label><i class="fas fa-layer-group"></i>Class</label>
           <select id="classInput" onchange="filterSubjects(this.value)">
             <option value="">Select Class</option>
             {% set seen_cls = [] %}
@@ -193,7 +372,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
           </select>
         </div>
         <div class="fg">
-          <label><i class="fas fa-book"></i>Subject</label>
+          <label><i class="fas fa-book-open"></i>Subject</label>
           <select id="subjectInput">
             <option value="">Select Subject</option>
           </select>
@@ -202,7 +381,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
       {% endif %}
 
       <div class="fg">
-        <label><i class="fas fa-list-ul"></i>Topics / Chapters</label>
+        <label><i class="fas fa-bookmark"></i>Topics / Chapters</label>
         <div class="toggle-row">
           <label class="toggle-switch">
             <input type="checkbox" id="fullSyllabusToggle" onchange="toggleTopics(this.checked)">
@@ -210,12 +389,12 @@ body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
           </label>
           <label for="fullSyllabusToggle">Full / Complete Syllabus</label>
         </div>
-        <textarea id="topicsInput" placeholder="e.g. Chapter 3: Electrochemistry, Chapter 4: Chemical Kinetics&#10;Separate topics with commas or new lines"></textarea>
+        <textarea id="topicsInput" placeholder="e.g. Chapter 1: Networking, Chapter 2: Python Fundamentals&#10;Separate topics with commas or new lines"></textarea>
       </div>
 
       <div class="fg-row3">
         <div class="fg">
-          <label><i class="fas fa-vial"></i>Exam Type</label>
+          <label><i class="fas fa-clipboard-list"></i>Exam Type</label>
           <select id="examType">
             <option>Unit Test</option>
             <option>Half Yearly</option>
@@ -231,21 +410,21 @@ body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
           <input type="text" id="durationInput" value="3 Hours" placeholder="e.g. 3 Hours">
         </div>
         <div class="fg">
-          <label><i class="fas fa-star"></i>Max Marks</label>
+          <label><i class="fas fa-award"></i>Max Marks</label>
           <input type="number" id="maxMarksInput" value="100" min="1">
         </div>
       </div>
     </div>
 
-    <!-- School Info (pre-filled from settings) -->
+    <!-- School Info -->
     <div class="card">
-      <div class="card-title"><i class="fas fa-building"></i> School Information</div>
+      <div class="card-title"><i class="fas fa-university"></i> School Header Information</div>
       <div class="fg">
         <label><i class="fas fa-school"></i>School Name</label>
         <input type="text" id="schoolName" value="{{ school_name }}">
       </div>
       <div class="fg">
-        <label><i class="fas fa-map-marker-alt"></i>School Address</label>
+        <label><i class="fas fa-map-marked-alt"></i>School Address</label>
         <input type="text" id="schoolAddress" value="{{ school_address }}" placeholder="Full address (optional)">
       </div>
       <div class="fg">
@@ -254,60 +433,110 @@ body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
       </div>
     </div>
 
-    <!-- Question Types -->
+    <!-- Question Types Grid (Expanded with Fill in Blanks & True/False) -->
     <div class="card">
-      <div class="card-title"><i class="fas fa-list-ol"></i> Questions Per Type</div>
+      <div class="card-title"><i class="fas fa-th-list"></i> Questions Per Type & Blueprint</div>
+      
       <div class="qtype-grid">
         <div class="qt-card">
-          <div class="qt-label"><i class="fas fa-check-square"></i>MCQ (1 mark)</div>
-          <input type="number" id="mcqCount" min="0" max="40" value="0" oninput="updateTotal()">
+          <div class="qt-label"><i class="fas fa-list-ul"></i>MCQ (1 mark)</div>
+          <div class="qt-stepper">
+            <button type="button" onclick="stepVal('mcqCount', -1)">-</button>
+            <input type="number" id="mcqCount" min="0" max="40" value="0" oninput="updateTotal()">
+            <button type="button" onclick="stepVal('mcqCount', 1)">+</button>
+          </div>
         </div>
+
         <div class="qt-card">
-          <div class="qt-label"><i class="fas fa-balance-scale"></i>Assertion-Reason (1 mark)</div>
-          <input type="number" id="arCount" min="0" max="20" value="0" oninput="updateTotal()">
+          <div class="qt-label"><i class="fas fa-pen-nib"></i>Fill in Blanks (1 mark)</div>
+          <div class="qt-stepper">
+            <button type="button" onclick="stepVal('fibCount', -1)">-</button>
+            <input type="number" id="fibCount" min="0" max="30" value="0" oninput="updateTotal()">
+            <button type="button" onclick="stepVal('fibCount', 1)">+</button>
+          </div>
         </div>
+
         <div class="qt-card">
-          <div class="qt-label"><i class="fas fa-minus"></i>Very Short (2 marks)</div>
-          <input type="number" id="vsCount" min="0" max="20" value="0" oninput="updateTotal()">
+          <div class="qt-label"><i class="fas fa-toggle-on"></i>True / False (1 mark)</div>
+          <div class="qt-stepper">
+            <button type="button" onclick="stepVal('tfCount', -1)">-</button>
+            <input type="number" id="tfCount" min="0" max="30" value="0" oninput="updateTotal()">
+            <button type="button" onclick="stepVal('tfCount', 1)">+</button>
+          </div>
         </div>
+
+        <div class="qt-card">
+          <div class="qt-label"><i class="fas fa-balance-scale-right"></i>Assertion-Reason (1 mark)</div>
+          <div class="qt-stepper">
+            <button type="button" onclick="stepVal('arCount', -1)">-</button>
+            <input type="number" id="arCount" min="0" max="20" value="0" oninput="updateTotal()">
+            <button type="button" onclick="stepVal('arCount', 1)">+</button>
+          </div>
+        </div>
+
+        <div class="qt-card">
+          <div class="qt-label"><i class="fas fa-comment-alt"></i>Very Short (2 marks)</div>
+          <div class="qt-stepper">
+            <button type="button" onclick="stepVal('vsCount', -1)">-</button>
+            <input type="number" id="vsCount" min="0" max="20" value="0" oninput="updateTotal()">
+            <button type="button" onclick="stepVal('vsCount', 1)">+</button>
+          </div>
+        </div>
+
         <div class="qt-card">
           <div class="qt-label"><i class="fas fa-align-left"></i>Short Answer (3 marks)</div>
-          <input type="number" id="shCount" min="0" max="15" value="0" oninput="updateTotal()">
+          <div class="qt-stepper">
+            <button type="button" onclick="stepVal('shCount', -1)">-</button>
+            <input type="number" id="shCount" min="0" max="15" value="0" oninput="updateTotal()">
+            <button type="button" onclick="stepVal('shCount', 1)">+</button>
+          </div>
         </div>
+
         <div class="qt-card">
           <div class="qt-label"><i class="fas fa-align-justify"></i>Long Answer (5 marks)</div>
-          <input type="number" id="lgCount" min="0" max="10" value="0" oninput="updateTotal()">
+          <div class="qt-stepper">
+            <button type="button" onclick="stepVal('lgCount', -1)">-</button>
+            <input type="number" id="lgCount" min="0" max="10" value="0" oninput="updateTotal()">
+            <button type="button" onclick="stepVal('lgCount', 1)">+</button>
+          </div>
         </div>
+
         <div class="qt-card">
-          <div class="qt-label"><i class="fas fa-file-alt"></i>Case Study (4 marks)</div>
-          <input type="number" id="csCount" min="0" max="5" value="0" oninput="updateTotal()">
+          <div class="qt-label"><i class="fas fa-microscope"></i>Case Study (4 marks)</div>
+          <div class="qt-stepper">
+            <button type="button" onclick="stepVal('csCount', -1)">-</button>
+            <input type="number" id="csCount" min="0" max="5" value="0" oninput="updateTotal()">
+            <button type="button" onclick="stepVal('csCount', 1)">+</button>
+          </div>
         </div>
       </div>
-      <div style="margin-top:10px;">
-        Total Questions: <span id="totalBadge" class="total-chip">0</span>
+
+      <div class="total-summary">
+        <span><i class="fas fa-calculator" style="margin-right:6px;"></i> Total Blueprint Questions</span>
+        <span id="totalBadge" class="total-chip">0 Questions</span>
       </div>
     </div>
 
-    <!-- Remarks + Image -->
+    <!-- AI Instructions & Image -->
     <div class="card">
-      <div class="card-title"><i class="fas fa-lightbulb"></i> AI Instructions & Image</div>
+      <div class="card-title"><i class="fas fa-robot"></i> AI Instructions & Reference Diagram</div>
       <div class="fg">
-        <label><i class="fas fa-pencil-alt"></i>Remarks / Extra Prompt</label>
-        <textarea id="remarksInput" placeholder="Guide the AI — e.g.:&#10;• Focus 40% on Electrochemistry&#10;• Include 2 PYQ-style questions&#10;• Marks distribution: Section A 10M, Section B 15M…&#10;• Include application-based questions"></textarea>
+        <label><i class="fas fa-magic"></i>Remarks / Custom AI Guidelines</label>
+        <textarea id="remarksInput" placeholder="Guide AI paper setter — e.g.:&#10;• Focus 40% on Electrochemistry&#10;• Include PYQ-style board questions&#10;• Include diagram-based questions"></textarea>
       </div>
       <div class="fg">
-        <label><i class="fas fa-image"></i>Image Upload <span style="color:#aaa;font-weight:400;">(optional — for image-based questions)</span></label>
+        <label><i class="fas fa-image"></i>Optional Reference Image</label>
         <div class="img-drop" onclick="document.getElementById('imgFileInput').click()" id="imgDrop">
           <i class="fas fa-cloud-upload-alt"></i>
-          <p id="imgDropLabel">Click to upload an image</p>
-          <small>Diagram, graph, or figure to base questions on</small>
+          <p id="imgDropLabel">Click to upload an image / diagram</p>
+          <small>Base paper questions on this visual graph or diagram</small>
         </div>
         <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="previewImage(this)">
         <img id="imgPreview" class="img-preview" style="display:none">
       </div>
     </div>
 
-    <!-- Generate -->
+    <!-- Generate Button -->
     <button class="gen-btn" id="genBtn" onclick="generatePaper()">
       <i class="fas fa-magic"></i> Generate Question Paper
     </button>
@@ -317,27 +546,25 @@ body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
   <!-- ── PREVIEW PANEL ───────────────────────────────────────────── -->
   <div class="preview-panel">
     <div class="preview-toolbar">
-      <h3><i class="fas fa-eye" style="color:var(--g);margin-right:6px;"></i> Live Preview</h3>
+      <h3><i class="fas fa-eye" style="color:var(--primary);margin-right:6px;"></i> Testbook Live Paper Preview</h3>
       <button class="tb-btn tb-print tb-disabled" id="btnPrint" onclick="doPrint()" disabled>
-        <i class="fas fa-print"></i> Print / PDF
+        <i class="fas fa-print"></i> Print / Save PDF
       </button>
       <button class="tb-btn tb-doc tb-disabled" id="btnDoc" onclick="doDoc()" disabled>
-        <i class="fas fa-file-word"></i> Download DOC
+        <i class="fas fa-file-word"></i> Download Word
       </button>
     </div>
     <iframe id="previewFrame" class="preview-frame" title="Paper Preview"
-            srcdoc="<html><body style='font-family:Arial;text-align:center;padding:60px;color:#bbb;'><p style='font-size:2rem;'>📄</p><p>Generate a paper to see the preview here.</p></body></html>">
+            srcdoc="<html><body style='font-family:Arial;text-align:center;padding:80px 20px;color:#94a3b8;background:#f8fafc;'><div style='font-size:3rem;margin-bottom:12px;'>📄</div><h3 style='color:#475569;margin-bottom:6px;'>No Paper Generated Yet</h3><p style='font-size:0.9rem;'>Fill in paper details and click 'Generate Question Paper' to view instant preview.</p></body></html>">
     </iframe>
   </div>
 
 </div><!-- end .wrap -->
 
 <script>
-// ── DATA ─────────────────────────────────────────────────────────────
 const assignments = {{ assignments | tojson | safe }};
 const IS_ADMIN    = {{ 'true' if is_admin else 'false' }};
 
-// ── TEACHER: filter subjects by class ────────────────────────────────
 function filterSubjects(cls) {
   const sel = document.getElementById('subjectInput');
   sel.innerHTML = '<option value="">Select Subject</option>';
@@ -348,7 +575,6 @@ function filterSubjects(cls) {
   });
 }
 
-// ── FULL SYLLABUS TOGGLE ─────────────────────────────────────────────
 function toggleTopics(checked) {
   const ta = document.getElementById('topicsInput');
   ta.disabled = checked;
@@ -356,27 +582,32 @@ function toggleTopics(checked) {
   if (checked) ta.value = '';
 }
 
-// ── QUESTION TOTAL ────────────────────────────────────────────────────
-function updateTotal() {
-  const ids  = ['mcqCount','arCount','vsCount','shCount','lgCount','csCount'];
-  const total = ids.reduce((s,id) => s + (parseInt(document.getElementById(id).value)||0), 0);
-  document.getElementById('totalBadge').textContent = total;
+function stepVal(id, delta) {
+  const el = document.getElementById(id);
+  let val = (parseInt(el.value) || 0) + delta;
+  if (val < 0) val = 0;
+  el.value = val;
+  updateTotal();
 }
 
-// ── IMAGE PREVIEW ─────────────────────────────────────────────────────
+function updateTotal() {
+  const ids = ['mcqCount','fibCount','tfCount','arCount','vsCount','shCount','lgCount','csCount'];
+  const total = ids.reduce((s,id) => s + (parseInt(document.getElementById(id).value)||0), 0);
+  document.getElementById('totalBadge').textContent = `${total} Question${total!==1?'s':''}`;
+}
+
 function previewImage(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    document.getElementById('imgPreview').src   = e.target.result;
+    document.getElementById('imgPreview').src = e.target.result;
     document.getElementById('imgPreview').style.display = 'block';
     document.getElementById('imgDropLabel').textContent = file.name;
   };
   reader.readAsDataURL(file);
 }
 
-// ── ALERT HELPER ──────────────────────────────────────────────────────
 function showAlert(msg, type='err') {
   const el = document.getElementById('alertBox');
   el.className = `alert alert-${type}`;
@@ -386,16 +617,16 @@ function showAlert(msg, type='err') {
   if (type === 'ok') setTimeout(() => el.style.display='none', 5000);
 }
 
-// ── GENERATE ──────────────────────────────────────────────────────────
 let _paperMeta     = null;
 let _paperSections = null;
 
 async function generatePaper() {
-  // Validate
-  const cls  = document.getElementById('classInput').value.trim();
+  const cls = document.getElementById('classInput').value.trim();
   const subj = document.getElementById('subjectInput').value.trim();
   if (!cls || !subj) { showAlert('Please select Class and Subject.'); return; }
-  const total = parseInt(document.getElementById('totalBadge').textContent);
+  
+  const ids = ['mcqCount','fibCount','tfCount','arCount','vsCount','shCount','lgCount','csCount'];
+  const total = ids.reduce((s,id) => s + (parseInt(document.getElementById(id).value)||0), 0);
   if (total === 0) { showAlert('Enter at least 1 question in any section.'); return; }
 
   document.getElementById('alertBox').style.display = 'none';
@@ -416,6 +647,8 @@ async function generatePaper() {
     fd.append('academic_session', document.getElementById('academicSession').value);
     fd.append('remarks',          document.getElementById('remarksInput').value);
     fd.append('mcq_count',        document.getElementById('mcqCount').value);
+    fd.append('fib_count',        document.getElementById('fibCount').value);
+    fd.append('tf_count',         document.getElementById('tfCount').value);
     fd.append('ar_count',         document.getElementById('arCount').value);
     fd.append('vs_count',         document.getElementById('vsCount').value);
     fd.append('sh_count',         document.getElementById('shCount').value);
@@ -435,7 +668,6 @@ async function generatePaper() {
 
     renderPreview(_paperMeta, _paperSections);
 
-    // Enable toolbar buttons
     ['btnPrint','btnDoc'].forEach(id => {
       const btn = document.getElementById(id);
       btn.disabled = false;
@@ -450,143 +682,101 @@ async function generatePaper() {
   }
 }
 
-// ── BUILD PREVIEW HTML ────────────────────────────────────────────────
-function buildPaperHTML(meta, sections, forPrint=false) {
-  const logoHtml = meta.logo_base64
-    ? `<img src="${meta.logo_base64}" style="height:70px;width:70px;border-radius:50%;object-fit:cover;border:2px solid #1b5e20;">`
-    : `<div style="width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,#1b5e20,#2e7d32);
-           display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.8rem;">🏫</div>`;
-
-  let sectionsHTML = '';
+function renderPreview(meta, sections) {
+  let secHtml = '';
   sections.forEach(sec => {
-    const qRows = (sec.questions || []).map((q, qi) => {
-      // Options
-      let optHTML = '';
+    let qHtml = '';
+    (sec.questions || []).forEach(q => {
+      let optsHtml = '';
       if (q.options && q.options.length) {
-        optHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 18px;margin:6px 0 0 28px;">
-          ${q.options.map(o=>`<span style="font-size:10.5pt;">${o}</span>`).join('')}
-        </div>`;
+        optsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;font-size:9.5pt;">` +
+          q.options.map(o => `<div>${o}</div>`).join('') + `</div>`;
       }
-      // Sub-questions (Case Study)
-      let subHTML = '';
+      let subHtml = '';
       if (q.sub_questions && q.sub_questions.length) {
-        subHTML = q.sub_questions.map(sq =>
-          `<div style="margin:5px 0 0 28px;font-size:10.5pt;">
-             <strong>(${sq.number || ''})</strong> ${sq.question || sq.text || sq}
-           </div>`
-        ).join('');
+        subHtml = `<ol type="i" style="margin-top:6px;padding-left:20px;font-size:9.5pt;">` +
+          q.sub_questions.map(sq => `<li style="margin-bottom:4px;">${sq.question || sq}</li>`).join('') + `</ol>`;
       }
-      return `<div style="margin-bottom:11px;page-break-inside:avoid;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div style="flex:1;">
-            <span style="font-weight:700;color:#1b5e20;">Q${q.number || qi+1}.</span>
-            <span style="font-size:10.5pt;margin-left:4px;">${q.question || ''}</span>
-          </div>
-          <span style="background:#e8f5e9;color:#1b5e20;padding:1px 7px;border-radius:8px;
-                       font-size:8pt;font-weight:700;white-space:nowrap;margin-left:10px;flex-shrink:0;">
-            ${sec.marks_per_question||1}M
-          </span>
-        </div>
-        ${optHTML}${subHTML}
-        ${(!q.options || !q.options.length) && (!q.sub_questions || !q.sub_questions.length)
-          ? `<div style="margin:5px 0 0 28px;">${Array(4).fill('<div style="border-bottom:1pt dotted #aaa;height:18px;margin:2px 0;"></div>').join('')}</div>`
-          : ''}
-      </div>`;
-    }).join('');
+      qHtml += `
+        <div style="margin-bottom:12px;page-break-inside:avoid;">
+          <table style="width:100%;border-collapse:collapse;">
+            <tr>
+              <td style="vertical-align:top;width:30px;font-weight:bold;">Q${q.number}.</td>
+              <td style="vertical-align:top;">${q.question} ${optsHtml} ${subHtml}</td>
+              <td style="vertical-align:top;width:45px;text-align:right;font-weight:bold;color:#475569;">[${sec.marks_per_question || 1}M]</td>
+            </tr>
+          </table>
+        </div>`;
+    });
 
-    sectionsHTML += `
-      <div style="margin-top:18px;">
-        <div style="background:#1b5e20;color:#fff;padding:5px 13px;font-weight:700;font-size:10.5pt;">
-          ${sec.section_label || ''} — ${sec.section_title || ''}
-          <span style="font-weight:400;font-size:9pt;margin-left:8px;">[${sec.marks_per_question||1} mark each]</span>
+    secHtml += `
+      <div style="margin-bottom:20px;">
+        <div style="background:#1e1b4b;color:#fff;padding:6px 12px;font-weight:bold;font-size:10pt;border-radius:4px;margin-bottom:10px;display:flex;justify-content:space-between;">
+          <span>${sec.section_label || ''}: ${sec.section_title || ''}</span>
+          <span>(${sec.instruction || ''})</span>
         </div>
-        ${sec.instruction ? `<p style="font-style:italic;font-size:9pt;color:#555;margin:5px 0 7px;">${sec.instruction}</p>` : ''}
-        ${qRows}
+        ${qHtml}
       </div>`;
   });
 
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <style>
-    *{box-sizing:border-box;}
-    body{font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;color:#000;margin:${forPrint?'12mm 14mm':'20px'};line-height:1.6;}
-    .no-print{display:${forPrint?'none':'block'};}
-    @media print{.no-print{display:none!important;} body{margin:12mm 14mm;}}
-    @page{margin:10mm 12mm;}
-  </style>
-  </head><body>
-  <!-- PRINT BUTTON (shown in preview, hidden when printing) -->
-  <div class="no-print" style="text-align:right;margin-bottom:12px;">
-    <button onclick="window.print()" style="background:#1b5e20;color:#fff;border:none;padding:8px 20px;
-            border-radius:8px;font-size:.88rem;cursor:pointer;margin-right:6px;">🖨 Print / Save PDF</button>
-    <button onclick="window.close()" style="background:#555;color:#fff;border:none;padding:8px 16px;
-            border-radius:8px;font-size:.88rem;cursor:pointer;">✕ Close</button>
+  const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+      displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
+    }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  body{font-family:Arial,sans-serif;font-size:10pt;line-height:1.45;color:#000;margin:20mm 15mm;}
+  .p-hdr{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px;}
+  .p-school{font-size:16pt;font-weight:bold;text-transform:uppercase;margin-bottom:2px;}
+  .p-sub{font-size:10pt;color:#333;margin-bottom:6px;}
+  .p-meta{display:flex;justify-content:space-between;border-top:1px solid #000;border-bottom:1px solid #000;padding:5px 0;font-weight:bold;font-size:9.5pt;margin-bottom:16px;}
+  @media print{body{margin:10mm;}}
+</style>
+</head>
+<body>
+  <div class="p-hdr">
+    <div class="p-school">${meta.school_name || ''}</div>
+    ${meta.school_address ? `<div style="font-size:9pt;color:#555;">${meta.school_address}</div>` : ''}
+    <div class="p-sub" style="font-weight:bold;margin-top:4px;">${meta.exam_type} (${meta.academic_session || ''})</div>
+    <div style="font-size:11pt;font-weight:bold;margin-top:2px;">CLASS: ${meta.class} — SUBJECT: ${meta.subject.toUpperCase()}</div>
   </div>
-
-  <!-- HEADER -->
-  <div style="text-align:center;border-bottom:2px solid #1b5e20;padding-bottom:10px;margin-bottom:14px;">
-    ${logoHtml}
-    <div style="font-size:16pt;font-weight:bold;color:#1b5e20;margin:6px 0 2px;">${meta.school_name||''}</div>
-    ${meta.school_address ? `<div style="font-size:9pt;color:#444;">${meta.school_address}</div>` : ''}
-    ${meta.academic_session ? `<div style="font-size:9pt;color:#666;">Academic Session: ${meta.academic_session}</div>` : ''}
+  <div class="p-meta">
+    <span>Time Allowed: ${meta.duration}</span>
+    <span>Maximum Marks: ${meta.max_marks}</span>
   </div>
-
-  <!-- META TABLE -->
-  <table style="width:100%;border-collapse:collapse;border:1pt solid #c8e6c9;background:#f9fbe7;margin-bottom:14px;">
-    <tr>
-      <td style="padding:5px 10px;"><strong style="color:#1b5e20;">Exam:</strong> ${meta.exam_type||''}</td>
-      <td style="padding:5px 10px;"><strong style="color:#1b5e20;">Class:</strong> ${meta.class||''}</td>
-      <td style="padding:5px 10px;"><strong style="color:#1b5e20;">Subject:</strong> ${meta.subject||''}</td>
-    </tr>
-    <tr>
-      <td style="padding:5px 10px;"><strong style="color:#1b5e20;">Duration:</strong> ${meta.duration||''}</td>
-      <td style="padding:5px 10px;"><strong style="color:#1b5e20;">Max Marks:</strong> ${meta.max_marks||''}</td>
-      <td style="padding:5px 10px;"><strong style="color:#1b5e20;">Date:</strong> ${meta.date||''}</td>
-    </tr>
-  </table>
-
-  <!-- GENERAL INSTRUCTIONS -->
-  <div style="background:#fff3e0;border:1pt solid #ffe082;border-radius:4px;padding:7px 12px;font-size:9pt;margin-bottom:14px;">
-    <strong>General Instructions:</strong> All questions are compulsory. Read each question carefully before answering.
-    Marks for each question are indicated at the right margin.
+  ${secHtml}
+  <div style="margin-top:30px;text-align:center;font-size:9pt;font-style:italic;border-top:1px solid #ccc;padding-top:8px;">
+    *** End of Question Paper ***
   </div>
+</body>
+</html>`;
 
-  <!-- SECTIONS -->
-  ${sectionsHTML}
-
-  </body></html>`;
-}
-
-function renderPreview(meta, sections) {
-  const html  = buildPaperHTML(meta, sections, false);
   const frame = document.getElementById('previewFrame');
-  frame.srcdoc = html;
+  frame.srcdoc = fullHtml;
 }
 
-// ── PRINT ─────────────────────────────────────────────────────────────
 function doPrint() {
-  if (!_paperMeta || !_paperSections) return;
-  const html = buildPaperHTML(_paperMeta, _paperSections, true);
-  const win  = window.open('', '_blank', 'width=900,height=700');
-  win.document.write(html);
-  win.document.close();
-  // Auto trigger print after content loads
-  win.onload = () => setTimeout(() => win.print(), 400);
+  const frame = document.getElementById('previewFrame');
+  if (frame.contentWindow) frame.contentWindow.print();
 }
 
-// ── DOC DOWNLOAD ──────────────────────────────────────────────────────
 function doDoc() {
-  if (!_paperMeta || !_paperSections) return;
-  // Build plain HTML for Word (Word can open HTML as .doc)
-  const html = buildPaperHTML(_paperMeta, _paperSections, true);
-  const blob  = new Blob(['\ufeff' + html], {type:'application/msword'});
-  const url   = URL.createObjectURL(blob);
-  const a     = document.createElement('a');
-  const fname = `${_paperMeta.school_name}_${_paperMeta.class}_${_paperMeta.subject}_${_paperMeta.exam_type}.doc`
-                .replace(/\s+/g,'_');
+  const frame = document.getElementById('previewFrame');
+  const content = frame.srcdoc;
+  const blob = new Blob(['\ufeff', content], {type:'application/msword'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
   a.href     = url;
-  a.download = fname;
+  a.download = `Descriptive_Paper_${_paperMeta ? _paperMeta.class + '_' + _paperMeta.subject : 'Export'}.doc`;
   a.click();
-  URL.revokeObjectURL(url);
 }
 </script>
 </body>
