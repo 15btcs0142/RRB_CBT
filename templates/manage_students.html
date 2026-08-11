@@ -3,313 +3,354 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Students - RRB CBT</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Dynamic enhancements */
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
-            animation: gradientShift 15s ease infinite;
-            background-size: 200% 200%;
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
+        
+        /* ─── TOP BAR ────────────────────────────────────────────────────── */
+        .topbar{
+            background:linear-gradient(90deg,#1a237e,#3949ab);
+            color:#fff;
+            padding:14px 28px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:10px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+            position:sticky;
+            top:0;
+            z-index:100;
         }
-
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
+        .topbar h1 i{color:#667eea;}
+        .topbar a{
+            color:#fff;
+            text-decoration:none;
+            background:rgba(255,255,255,0.15);
+            padding:8px 20px;
+            border-radius:25px;
+            font-size:0.85rem;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            border:1px solid rgba(255,255,255,0.1);
         }
-
-        .admin-nav {
-            background: linear-gradient(90deg, #1b5e20, #2e7d32, #1b5e20);
-            background-size: 200% auto;
-            animation: navGlow 5s linear infinite;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        .topbar a:hover{
+            background:rgba(255,255,255,0.25);
+            transform:translateY(-2px);
         }
-
-        @keyframes navGlow {
-            0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
+        
+        /* ─── MARQUEE ────────────────────────────────────────────────────── */
+        .marquee-container{
+            background:rgba(255,255,255,0.92);
+            backdrop-filter:blur(8px);
+            padding:10px 20px;
+            max-width:1400px;
+            margin:16px auto 10px;
+            border-radius:50px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.06);
+            border-left:4px solid #3949ab;
         }
-
-        .marquee-container {
-            background: rgba(255,255,255,0.9);
-            padding: 10px 20px;
-            margin: 20px auto 10px;
-            max-width: 1200px;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border-left: 5px solid #2e7d32;
-            backdrop-filter: blur(5px);
+        .marquee-container marquee{font-size:0.9rem;color:#1a237e;font-weight:500;}
+        .marquee-container marquee i{margin:0 12px;color:#667eea;}
+        
+        .container{max-width:1400px;margin:20px auto;padding:0 20px;}
+        
+        /* ─── FILTERS CARD ────────────────────────────────────────────────── */
+        .filters-card{
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            padding:20px 24px;
+            border-radius:16px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.06);
+            border:1px solid rgba(26,35,126,0.08);
+            margin-bottom:20px;
+            position:relative;
+            overflow:hidden;
+            transition:0.3s;
         }
-
-        .marquee-container marquee {
-            font-size: 1.1rem;
-            color: #1b5e20;
-            font-weight: 500;
+        .filters-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+        .filters-card::before{
+            content:'';
+            position:absolute;
+            top:0;left:0;
+            width:100%;
+            height:4px;
+            background:linear-gradient(90deg,#1a237e,#667eea,#1a237e);
+            background-size:200% auto;
+            animation:shimmer 2.5s linear infinite;
         }
-
-        .marquee-container i {
-            margin: 0 15px;
-            color: #ff9800;
+        @keyframes shimmer{
+            0%{background-position:0% center;}
+            100%{background-position:200% center;}
         }
-
-        .container {
-            max-width: 1400px;
-            margin: 30px auto;
-            padding: 0 20px;
+        
+        .filters{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            flex-wrap:wrap;
         }
-
-        .filters-card {
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border: 1px solid rgba(46,125,50,0.2);
-            margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
+        .filter-row{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            align-items:center;
+            flex:1;
         }
-
-        .filters-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, #2e7d32, #81c784, #2e7d32);
-            background-size: 200% auto;
-            animation: shimmer 2s linear infinite;
+        .fg{
+            display:flex;
+            align-items:center;
+            gap:6px;
+            flex-wrap:wrap;
         }
-
-        @keyframes shimmer {
-            0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
+        .fg label{
+            font-weight:600;
+            color:#1a237e;
+            font-size:0.8rem;
+            display:flex;
+            align-items:center;
+            gap:4px;
+            white-space:nowrap;
         }
-
-        .filters {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
+        .fg label i{color:#3949ab;font-size:0.85rem;}
+        .fg select,.fg input{
+            padding:8px 14px;
+            border:2px solid #e0e0e0;
+            border-radius:30px;
+            font-size:0.82rem;
+            font-family:'Poppins',sans-serif;
+            background:#fafafa;
+            cursor:pointer;
+            transition:all 0.3s;
+            min-width:120px;
         }
-
-        .filters label {
-            font-weight: 600;
-            color: #1b5e20;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .fg select:focus,.fg input:focus{
+            border-color:#3949ab;
+            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
+            outline:none;
+            background:#fff;
         }
-
-        .filters select {
-            padding: 12px 20px;
-            border: 2px solid #e0e0e0;
-            border-radius: 50px;
-            font-size: 1rem;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s;
-            min-width: 180px;
+        .fg input[type="date"]{min-width:150px;cursor:pointer;}
+        
+        .btn{
+            padding:8px 20px;
+            border:none;
+            border-radius:30px;
+            font-weight:600;
+            cursor:pointer;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            font-size:0.82rem;
+            font-family:'Poppins',sans-serif;
         }
-
-        .filters select:focus {
-            border-color: #2e7d32;
-            box-shadow: 0 0 0 3px rgba(46,125,50,0.2);
-            outline: none;
+        .btn-primary{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
         }
-
-        .filters button {
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #2e7d32, #43a047);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .btn-primary:hover{
+            transform:translateY(-2px);
+            box-shadow:0 6px 16px rgba(26,35,126,0.3);
         }
-
-        .filters button:hover {
-            background: linear-gradient(135deg, #1b5e20, #2e7d32);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 15px rgba(46,125,50,0.4);
+        .btn-secondary{
+            background:#e8eaf6;
+            color:#1a237e;
         }
-
-        .stats-badge {
-            margin-left: auto;
-            background: rgba(46,125,50,0.1);
-            padding: 8px 20px;
-            border-radius: 50px;
-            font-weight: 500;
-            color: #1b5e20;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .btn-secondary:hover{
+            background:#c5cae9;
+            transform:translateY(-2px);
         }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        
+        .stats-badge{
+            margin-left:auto;
+            background:#e8eaf6;
+            padding:8px 20px;
+            border-radius:30px;
+            font-weight:500;
+            font-size:0.85rem;
+            color:#1a237e;
+            display:flex;
+            align-items:center;
+            gap:8px;
+            border:1px solid #c5cae9;
+            white-space:nowrap;
         }
-
-        th {
-            background: linear-gradient(135deg, #2e7d32, #43a047);
-            color: white;
-            font-weight: 600;
-            padding: 18px 15px;
-            text-align: left;
-            font-size: 1rem;
+        .stats-badge i{color:#3949ab;}
+        .stats-badge span{font-weight:700;color:#1a237e;}
+        
+        /* ─── TABLE ────────────────────────────────────────────────────── */
+        .table-wrap{
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            border-radius:16px;
+            overflow:hidden;
+            border:1px solid rgba(26,35,126,0.08);
+            box-shadow:0 4px 16px rgba(0,0,0,0.06);
         }
-
-        th i {
-            margin-right: 8px;
+        table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+        th{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
+            font-weight:600;
+            padding:14px 12px;
+            text-align:left;
+            white-space:nowrap;
+            position:sticky;
+            top:0;
+            z-index:5;
         }
-
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #e0e0e0;
-            vertical-align: middle;
+        th i{margin-right:6px;opacity:0.7;}
+        td{padding:12px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+        tr:hover td{background:#e8eaf6;}
+        
+        .badge{
+            background:#e8eaf6;
+            color:#1a237e;
+            padding:2px 10px;
+            border-radius:14px;
+            font-size:0.72rem;
+            font-weight:500;
+            display:inline-block;
         }
-
-        tr {
-            transition: all 0.2s ease;
+        .status-badge{
+            padding:4px 14px;
+            border-radius:30px;
+            font-weight:500;
+            font-size:0.75rem;
+            display:inline-block;
         }
-
-        tr:hover {
-            background: #f1f8e9;
-            transform: scale(1.001);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        .status-Not-Started{background:#eceff1;color:#78909c;}
+        .status-In-Progress{background:#fff3e0;color:#e65100;}
+        .status-Submitted{background:#e8f5e9;color:#1b5e20;}
+        
+        .delete-btn{
+            background:linear-gradient(135deg,#c62828,#e53935);
+            color:#fff;
+            border:none;
+            padding:5px 14px;
+            border-radius:30px;
+            cursor:pointer;
+            font-weight:500;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:5px;
+            font-size:0.72rem;
+            font-family:'Poppins',sans-serif;
         }
-
-        .status-badge {
-            padding: 6px 14px;
-            border-radius: 50px;
-            font-weight: 500;
-            font-size: 0.85rem;
-            display: inline-block;
+        .delete-btn:hover{
+            transform:translateY(-2px);
+            box-shadow:0 4px 12px rgba(198,40,40,0.3);
         }
-
-        .status-Not.Started { background: #e0e0e0; color: #555; }
-        .status-In.Progress { background: #fff3e0; color: #f57c00; }
-        .status-Submitted { background: #c8e6c9; color: #2e7d32; }
-
-        .delete-btn {
-            background: linear-gradient(135deg, #d32f2f, #e53935);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+        
+        .empty-state{
+            text-align:center;
+            padding:50px 20px;
+            color:#999;
         }
-
-        .delete-btn:hover {
-            background: linear-gradient(135deg, #b71c1c, #c62828);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 12px rgba(211,47,47,0.3);
+        .empty-state i{font-size:3rem;color:#ddd;display:block;margin-bottom:12px;}
+        
+        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
+        @media(max-width:992px){
+            .filters{flex-direction:column;align-items:stretch;}
+            .filter-row{flex-direction:column;align-items:stretch;}
+            .fg select,.fg input{width:100%;}
+            .stats-badge{margin-left:0;justify-content:center;}
+            table{display:block;overflow-x:auto;white-space:nowrap;}
         }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            background: white;
-            border-radius: 20px;
-            color: #666;
+        @media(max-width:768px){
+            .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
+            .topbar a{font-size:0.75rem;padding:6px 14px;}
+            .container{padding:0 12px;}
+            .filters-card{padding:16px;}
+            .marquee-container{padding:8px 14px;margin:10px auto;}
+            .marquee-container marquee{font-size:0.75rem;}
+            table{font-size:0.75rem;}
+            th,td{padding:8px 10px;}
         }
-
-        .empty-state i {
-            font-size: 4rem;
-            color: #ccc;
-            margin-bottom: 20px;
-        }
-
-        /* Responsive */
-        @media (max-width: 992px) {
-            .filters {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .filters select {
-                width: 100%;
-            }
-            .stats-badge {
-                margin-left: 0;
-                justify-content: center;
-            }
-            table {
-                display: block;
-                overflow-x: auto;
-            }
+        @media(max-width:480px){
+            .fg label{font-size:0.72rem;}
+            .fg select,.fg input{font-size:0.72rem;padding:6px 10px;min-width:auto;}
+            .btn{font-size:0.72rem;padding:6px 14px;}
+            .stats-badge{font-size:0.75rem;padding:6px 14px;}
         }
     </style>
 </head>
 <body>
-    <div class="watermark">RRB Group of Schools</div>
-    
-    <nav class="admin-nav">
+
+    <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
+    <div class="topbar">
         <h1><i class="fas fa-user-graduate"></i> Student Management</h1>
         <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
-    </nav>
+    </div>
 
-    <!-- Dynamic Marquee -->
+    <!-- ─── MARQUEE ────────────────────────────────────────────────────── -->
     <div class="marquee-container">
-        <marquee behavior="scroll" direction="left" scrollamount="6" onmouseover="this.stop();" onmouseout="this.start();">
-            <i class="fas fa-circle"></i> Manage student registrations and exam participation
-            <i class="fas fa-filter"></i> Filter students by class or subject
-            <i class="fas fa-trash-alt"></i> Remove students if needed (this deletes their responses)
+        <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();">
+            <i class="fas fa-circle"></i> Manage student registrations · Filter by Class, Section, Subject, Test No, Date · See System Name
             <i class="fas fa-info-circle"></i> Status: Not Started / In Progress / Submitted
         </marquee>
     </div>
 
     <div class="container">
-        <!-- Filters Card -->
+
+        <!-- ─── FILTERS CARD ───────────────────────────────────────────── -->
         <div class="filters-card">
             <div class="filters">
-                <label><i class="fas fa-layer-group"></i> Filter Class:</label>
-                <select id="filterClass">
-                    <option value="">All Classes</option>
-                </select>
-                
-                <label><i class="fas fa-book"></i> Filter Subject:</label>
-                <select id="filterSubject">
-                    <option value="">All Subjects</option>
-                </select>
-                
-                <button id="applyFilter"><i class="fas fa-search"></i> Apply Filter</button>
-                
+                <div class="filter-row">
+                    <div class="fg">
+                        <label><i class="fas fa-layer-group"></i> Class</label>
+                        <select id="filterClass"><option value="">All</option></select>
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-columns"></i> Section</label>
+                        <select id="filterSection">
+                            <option value="">All</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-book"></i> Subject</label>
+                        <select id="filterSubject"><option value="">All</option></select>
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-hashtag"></i> Test No</label>
+                        <input type="text" id="filterTestNo" placeholder="e.g. Test01" style="min-width:120px;">
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-calendar-alt"></i> Date</label>
+                        <input type="date" id="filterDate">
+                    </div>
+                    <button class="btn btn-primary" id="applyFilter"><i class="fas fa-search"></i> Apply</button>
+                    <button class="btn btn-secondary" id="resetFilter"><i class="fas fa-undo-alt"></i> Reset</button>
+                </div>
                 <div class="stats-badge" id="studentCount">
                     <i class="fas fa-users"></i> <span>0</span> Students
                 </div>
             </div>
         </div>
 
-        <!-- Students Table -->
-        <div id="tableWrapper">
+        <!-- ─── TABLE ────────────────────────────────────────────────────── -->
+        <div class="table-wrap">
             <table id="studentTable">
                 <thead>
                     <tr>
                         <th><i class="fas fa-user"></i> Name</th>
-                        <th><i class="fas fa-graduation-cap"></i> Class</th>
-                        <th><i class="fas fa-book-open"></i> Subject</th>
-                        <th><i class="fas fa-id-card"></i> ID</th>
-                        <th><i class="fas fa-network-wired"></i> IP</th>
+                        <th><i class="fas fa-layer-group"></i> Class</th>
+                        <th><i class="fas fa-columns"></i> Section</th>
+                        <th><i class="fas fa-book"></i> Subject</th>
+                        <th><i class="fas fa-hashtag"></i> Test No</th>
+                        <th><i class="fas fa-calendar-day"></i> Exam Date</th>
+                        <th><i class="fas fa-desktop"></i> System</th>
                         <th><i class="fas fa-circle"></i> Status</th>
                         <th><i class="fas fa-cog"></i> Action</th>
                     </tr>
@@ -317,50 +358,71 @@
                 <tbody id="studentBody"></tbody>
             </table>
         </div>
-    </div>
+
+    
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
 
     <script>
+        // ─── LOAD STUDENTS WITH FILTERS ──────────────────────────────
         function loadStudents() {
             const classVal = document.getElementById('filterClass').value;
+            const sectionVal = document.getElementById('filterSection').value;
             const subjectVal = document.getElementById('filterSubject').value;
+            const testNoVal = document.getElementById('filterTestNo').value.trim();
+            const dateVal = document.getElementById('filterDate').value;
+
             let url = '/admin/students/data?';
-            if(classVal) url += `class=${classVal}&`;
-            if(subjectVal) url += `subject=${subjectVal}`;
-            
+            if(classVal) url += `class=${encodeURIComponent(classVal)}&`;
+            if(sectionVal) url += `section=${encodeURIComponent(sectionVal)}&`;
+            if(subjectVal) url += `subject=${encodeURIComponent(subjectVal)}&`;
+            if(testNoVal) url += `test_no=${encodeURIComponent(testNoVal)}&`;
+            if(dateVal) url += `date=${encodeURIComponent(dateVal)}&`;
+
             fetch(url)
                 .then(res => res.json())
                 .then(data => {
                     const tbody = document.getElementById('studentBody');
                     const countSpan = document.querySelector('#studentCount span');
-                    
-                    if (data.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="7" class="empty-state">
-                            <i class="fas fa-user-slash"></i><br>
-                            No students found. Students will appear here after they log in.
+
+                    if (!data || data.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="9" class="empty-state">
+                            <i class="fas fa-user-slash"></i>No students found matching filters.
                         </td></tr>`;
                         countSpan.textContent = '0';
                         return;
                     }
-                    
+
                     countSpan.textContent = data.length;
                     tbody.innerHTML = '';
-                    
+
+                    // Populate filter dropdowns (classes & subjects) from data
+                    populateFilterOptions(data);
+
                     data.forEach(s => {
                         const row = document.createElement('tr');
-                        
-                        // Determine status class for styling
                         let statusClass = '';
-                        if (s.status === 'Not Started') statusClass = 'status-Not-Started';
-                        else if (s.status === 'In Progress') statusClass = 'status-In-Progress';
-                        else if (s.status === 'Submitted') statusClass = 'status-Submitted';
-                        
+                        const status = s.status || 'Not Started';
+                        if (status === 'Not Started') statusClass = 'status-Not-Started';
+                        else if (status === 'In Progress') statusClass = 'status-In-Progress';
+                        else if (status === 'Submitted') statusClass = 'status-Submitted';
+
+                        const systemName = s.system_name || s.ip || '—';
+                        const examDate = s.exam_started_at ? new Date(s.exam_started_at).toLocaleDateString() : '—';
+                        const testNo = s.test_no || s.chapter || '—';
+                        const section = s.section || '—';
+
                         row.innerHTML = `
-                            <td><i class="fas fa-user-circle" style="margin-right: 8px; color: #2e7d32;"></i>${s.name}</td>
+                            <td><i class="fas fa-user-circle" style="margin-right:6px;color:#3949ab;"></i>${s.name}</td>
                             <td><span class="badge">${s.class}</span></td>
+                            <td>${section}</td>
                             <td><span class="badge">${s.subject}</span></td>
-                            <td><code>${s.student_id}</code></td>
-                            <td><i class="fas fa-ip"></i> ${s.ip}</td>
-                            <td><span class="status-badge ${statusClass}">${s.status}</span></td>
+                            <td>${testNo}</td>
+                            <td>${examDate}</td>
+                            <td><i class="fas fa-desktop" style="margin-right:4px;color:#78909c;"></i>${systemName}</td>
+                            <td><span class="status-badge ${statusClass}">${status}</span></td>
                             <td>
                                 <button class="delete-btn" onclick="deleteStudent('${s.student_id}')">
                                     <i class="fas fa-trash-alt"></i> Remove
@@ -369,53 +431,61 @@
                         `;
                         tbody.appendChild(row);
                     });
-                    
-                    // Populate filter dropdowns
-                    const classes = [...new Set(data.map(s => s.class))];
-                    const subjects = [...new Set(data.map(s => s.subject))];
-                    const classSelect = document.getElementById('filterClass');
-                    const subjectSelect = document.getElementById('filterSubject');
-                    
-                    // Preserve selected values
-                    const selectedClass = classSelect.value;
-                    const selectedSubject = subjectSelect.value;
-                    
-                    classSelect.innerHTML = '<option value="">All Classes</option>';
-                    subjectSelect.innerHTML = '<option value="">All Subjects</option>';
-                    
-                    classes.sort().forEach(c => { 
-                        classSelect.innerHTML += `<option value="${c}">${c}</option>`; 
-                    });
-                    subjects.sort().forEach(s => { 
-                        subjectSelect.innerHTML += `<option value="${s}">${s}</option>`; 
-                    });
-                    
-                    classSelect.value = selectedClass;
-                    subjectSelect.value = selectedSubject;
                 })
                 .catch(err => {
                     console.error('Error loading students:', err);
+                    document.getElementById('studentBody').innerHTML = `<tr><td colspan="9" class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>Failed to load data.
+                    </td></tr>`;
                 });
         }
-        
+
+        // ─── POPULATE FILTER DROPDOWNS ──────────────────────────────
+        function populateFilterOptions(data) {
+            const classSelect = document.getElementById('filterClass');
+            const subjectSelect = document.getElementById('filterSubject');
+
+            const selectedClass = classSelect.value;
+            const selectedSubject = subjectSelect.value;
+
+            const classes = [...new Set(data.map(s => s.class).filter(Boolean))].sort();
+            const subjects = [...new Set(data.map(s => s.subject).filter(Boolean))].sort();
+
+            classSelect.innerHTML = '<option value="">All Classes</option>';
+            classes.forEach(c => classSelect.innerHTML += `<option value="${c}">${c}</option>`);
+            subjectSelect.innerHTML = '<option value="">All Subjects</option>';
+            subjects.forEach(s => subjectSelect.innerHTML += `<option value="${s}">${s}</option>`);
+
+            classSelect.value = selectedClass;
+            subjectSelect.value = selectedSubject;
+        }
+
+        // ─── DELETE STUDENT ──────────────────────────────────────────
         function deleteStudent(id) {
             if(confirm('Remove this student? All their responses and results will be permanently deleted.')) {
                 fetch(`/admin/student/delete/${id}`, {method:'DELETE'})
                     .then(res => res.json())
                     .then(data => {
-                        if (data.status === 'deleted') {
-                            loadStudents();
-                        }
+                        if (data.status === 'deleted') loadStudents();
                     })
-                    .catch(err => {
-                        alert('Error deleting student. Please try again.');
-                        console.error(err);
-                    });
+                    .catch(err => alert('Error deleting student.'));
             }
         }
-        
+
+        // ─── EVENT LISTENERS ─────────────────────────────────────────
         document.getElementById('applyFilter').addEventListener('click', loadStudents);
-        
+        document.getElementById('resetFilter').addEventListener('click', function() {
+            document.getElementById('filterClass').value = '';
+            document.getElementById('filterSection').value = '';
+            document.getElementById('filterSubject').value = '';
+            document.getElementById('filterTestNo').value = '';
+            document.getElementById('filterDate').value = '';
+            loadStudents();
+        });
+
+        document.getElementById('filterTestNo').addEventListener('keydown', e => { if(e.key === 'Enter') loadStudents(); });
+        document.getElementById('filterDate').addEventListener('keydown', e => { if(e.key === 'Enter') loadStudents(); });
+
         // Initial load
         loadStudents();
     </script>
