@@ -435,3 +435,17 @@ tr:hover {
     color: #666;
     margin-top: 5px;
 }
+
+/* Global App Footer */
+.app-global-footer {
+    width: 100%;
+    text-align: center;
+    padding: 20px 10px;
+    font-size: 0.85rem;
+    color: #666;
+    opacity: 0.85;
+    margin-top: 30px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    box-sizing: border-box;
+    clear: both;
+}
