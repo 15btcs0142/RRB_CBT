@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
     * { box-sizing: border-box; }
     body { font-family: Arial, Helvetica, sans-serif; margin: 15mm; font-size: 10.5pt; color: #000; line-height: 1.5; }
@@ -23,10 +24,100 @@
     .option-item { margin: 2.5px 0; }
     .answer-lines { margin-left: 28px; }
     .ans-line { border-bottom: 0.75pt dotted #aaa; height: 18px; margin: 3px 0; }
-    @media print { body { margin: 10mm; } .section-title { -webkit-print-color-adjust: exact; } }
+
+    /* Top Floating Print Toolbar */
+    .print-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 9999;
+        background: #1b5e20;
+        color: #ffffff;
+        padding: 10px 20px;
+        margin: -15mm -15mm 20px -15mm;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+
+    .print-toolbar .title {
+        font-weight: 700;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .print-toolbar .actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .print-btn {
+        background: #ffffff;
+        color: #1b5e20;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .print-btn:hover {
+        background: #e8f5e9;
+        transform: translateY(-1px);
+    }
+
+    .download-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .download-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    @media print {
+        body { margin: 10mm; }
+        .section-title { -webkit-print-color-adjust: exact; }
+        .print-toolbar { display: none !important; }
+    }
 </style>
 </head>
 <body>
+
+<div class="print-toolbar">
+    <div class="title">
+        <i class="fas fa-file-alt"></i> Question Paper Preview
+    </div>
+    <div class="actions">
+        <button onclick="window.print()" class="print-btn">
+            <i class="fas fa-print"></i> Print / Save as PDF
+        </button>
+        <a href="?format=download_pdf" class="download-btn">
+            <i class="fas fa-download"></i> Direct Download PDF
+        </a>
+    </div>
+</div>
 
 <div class="header">
     {% if logo_base64 %}<img src="{{ logo_base64 }}" class="logo" alt="">{% endif %}
@@ -69,7 +160,7 @@
     <div class="q-text">{{ q.question }}</div>
     {% if q.get('image_path') %}
     <div style="margin-left:28px;margin-bottom:6px;">
-        <img src="{{ url_for('static', filename=q.image_path) }}" style="max-height:120px;border-radius:4px;">
+        <img src="{{ url_for('static', filename=q.image_path, _external=True) }}" style="max-height:120px;border-radius:4px;">
     </div>
     {% endif %}
     <div class="options-list">
@@ -177,5 +268,43 @@
 {% endfor %}
 {% endif %}
 
+{# ─── UNIVERSAL FALLBACK : ALL QUESTIONS ─────────────────── #}
+{% if not mcq_qs and not ar_qs and not vs_qs and not sh_qs and not lg_qs and not cs_qs and questions %}
+<div class="section-title">Questions</div>
+{% for q in questions %}
+<div class="question-block">
+    <div class="q-header">
+        <span class="q-num">Q{{ loop.index }}.</span>
+        <span class="q-marks">1 M</span>
+    </div>
+    <div class="q-text">{{ q.question }}</div>
+    <div class="options-list">
+        {% if q.option_a %}<div class="option-item">(a)&nbsp; {{ q.option_a }}</div>{% endif %}
+        {% if q.option_b %}<div class="option-item">(b)&nbsp; {{ q.option_b }}</div>{% endif %}
+        {% if q.option_c %}<div class="option-item">(c)&nbsp; {{ q.option_c }}</div>{% endif %}
+        {% if q.option_d %}<div class="option-item">(d)&nbsp; {{ q.option_d }}</div>{% endif %}
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if not questions %}
+<div style="padding: 30px 20px; text-align: center; color: #64748b; font-style: italic; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; margin: 20px 0;">
+    No questions are currently associated with this test paper.
+</div>
+{% endif %}
+
+<div class="footer" style="margin-top:30px; text-align:center; font-size:9pt; color:#666; border-top:1px solid #ccc; padding-top:10px; page-break-inside:avoid;">
+    Generated by RRB CBT | Developed by Gaurav Shukla & Team
+<script>
+    // Automatically open browser Print / Save as PDF dialog on load
+    window.addEventListener('load', function() {
+        if (!window.location.search.includes('noprint')) {
+            setTimeout(function() {
+                window.print();
+            }, 300);
+        }
+    });
+</script>
 </body>
 </html>
