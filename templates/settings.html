@@ -7,271 +7,327 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
-            animation: gradientShift 15s ease infinite;
-            background-size: 200% 200%;
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
+        
+        /* ─── TOP BAR ────────────────────────────────────────────────────── */
+        .topbar{
+            background:linear-gradient(90deg,#1a237e,#3949ab);
+            color:#fff;
+            padding:14px 28px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:10px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+            position:sticky;
+            top:0;
+            z-index:100;
         }
-
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
+        .topbar h1 i{color:#667eea;}
+        .topbar a{
+            color:#fff;
+            text-decoration:none;
+            background:rgba(255,255,255,0.15);
+            padding:8px 20px;
+            border-radius:25px;
+            font-size:0.85rem;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            border:1px solid rgba(255,255,255,0.1);
         }
-
-        .admin-nav {
-            background: linear-gradient(90deg, #1b5e20, #2e7d32, #1b5e20);
-            background-size: 200% auto;
-            animation: navGlow 5s linear infinite;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        .topbar a:hover{
+            background:rgba(255,255,255,0.25);
+            transform:translateY(-2px);
         }
-
-        @keyframes navGlow {
-            0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
+        
+        /* ─── MARQUEE ────────────────────────────────────────────────────── */
+        .marquee-container{
+            background:rgba(255,255,255,0.92);
+            backdrop-filter:blur(8px);
+            padding:10px 20px;
+            max-width:900px;
+            margin:16px auto 10px;
+            border-radius:50px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.06);
+            border-left:4px solid #3949ab;
         }
-
-        .marquee-container {
-            background: rgba(255,255,255,0.9);
-            padding: 10px 20px;
-            margin: 20px auto 10px;
-            max-width: 900px;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border-left: 5px solid #2e7d32;
-            backdrop-filter: blur(5px);
+        .marquee-container marquee{font-size:0.9rem;color:#1a237e;font-weight:500;}
+        .marquee-container marquee i{margin:0 12px;color:#667eea;}
+        
+        .container{max-width:900px;margin:20px auto;padding:0 20px;}
+        
+        /* ─── CARDS ────────────────────────────────────────────────────── */
+        .card{
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            padding:28px 30px;
+            border-radius:16px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.06);
+            border:1px solid rgba(26,35,126,0.08);
+            margin-bottom:24px;
+            transition:0.3s;
+            position:relative;
+            overflow:hidden;
         }
-
-        .marquee-container marquee {
-            font-size: 1.1rem;
-            color: #1b5e20;
-            font-weight: 500;
+        .card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+        .card::before{
+            content:'';
+            position:absolute;
+            top:0;left:0;
+            width:100%;
+            height:4px;
+            background:linear-gradient(90deg,#1a237e,#667eea,#1a237e);
+            background-size:200% auto;
+            animation:shimmer 2.5s linear infinite;
         }
-
-        .marquee-container i {
-            margin: 0 15px;
-            color: #ff9800;
+        @keyframes shimmer{
+            0%{background-position:0% center;}
+            100%{background-position:200% center;}
         }
-
-        .container {
-            max-width: 900px;
-            margin: 30px auto;
-            padding: 0 20px;
+        
+        .card-header{
+            color:#1a237e;
+            font-size:1.2rem;
+            font-weight:600;
+            display:flex;
+            align-items:center;
+            gap:12px;
+            border-bottom:2px dashed #e8eaf6;
+            padding-bottom:14px;
+            margin-bottom:22px;
         }
-
-        .card {
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border: 1px solid rgba(46,125,50,0.2);
-            transition: all 0.3s ease;
-            margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
+        .card-header i{color:#3949ab;font-size:1.4rem;}
+        
+        /* ─── FORM ────────────────────────────────────────────────────── */
+        .form-group{margin-bottom:22px;}
+        label{
+            font-weight:600;
+            color:#1a237e;
+            display:block;
+            margin-bottom:6px;
+            font-size:0.9rem;
         }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, #2e7d32, #81c784, #2e7d32);
-            background-size: 200% auto;
-            animation: shimmer 2s linear infinite;
+        label i{color:#3949ab;margin-right:8px;width:20px;}
+        input[type="text"], input[type="number"]{
+            width:100%;
+            padding:12px 18px;
+            border:2px solid #e0e0e0;
+            border-radius:10px;
+            font-size:0.95rem;
+            transition:all 0.3s;
+            font-family:'Poppins',sans-serif;
+            background:#fafafa;
         }
-
-        @keyframes shimmer {
-            0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
+        input[type="text"]:focus, input[type="number"]:focus{
+            border-color:#3949ab;
+            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
+            outline:none;
+            background:#fff;
         }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-            border-color: #2e7d32;
+        .form-row{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:16px;
         }
-
-        .card h3 {
-            color: #1b5e20;
-            margin-bottom: 25px;
-            font-size: 1.8rem;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-bottom: 2px dashed #c8e6c9;
-            padding-bottom: 15px;
+        
+        /* ─── FILE UPLOAD ────────────────────────────────────────────── */
+        .file-upload-area{
+            border:2px dashed #c5cae9;
+            border-radius:12px;
+            padding:24px;
+            text-align:center;
+            background:#f5f7fa;
+            transition:all 0.3s;
+            cursor:pointer;
         }
-
-        .card h3 i {
-            color: #2e7d32;
-            font-size: 2rem;
+        .file-upload-area:hover{
+            border-color:#3949ab;
+            background:#e8eaf6;
         }
-
-        .form-group {
-            margin-bottom: 25px;
+        .file-upload-area i{
+            font-size:2.8rem;
+            color:#3949ab;
+            margin-bottom:10px;
+            display:block;
         }
-
-        label {
-            font-weight: 600;
-            color: #1b5e20;
-            display: block;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
+        .file-upload-area p{color:#666;font-size:0.9rem;margin-bottom:8px;}
+        .file-upload-area input[type="file"]{
+            display:block;
+            margin:8px auto;
+            padding:8px;
+            font-family:'Poppins',sans-serif;
+            font-size:0.85rem;
         }
-
-        label i {
-            margin-right: 8px;
-            color: #2e7d32;
+        .file-upload-area small{
+            color:#999;
+            font-size:0.75rem;
+            display:block;
+            margin-top:6px;
         }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 14px 18px;
-            border: 2px solid #e0e0e0;
-            border-radius: 50px;
-            font-size: 1rem;
-            transition: all 0.3s;
-            font-family: 'Poppins', sans-serif;
+        
+        /* ─── PREVIEW ────────────────────────────────────────────────── */
+        .preview-section{
+            background:#e8eaf6;
+            padding:20px 24px;
+            border-radius:12px;
+            border:1px solid #c5cae9;
+            margin-top:20px;
         }
-
-        input[type="text"]:focus {
-            border-color: #2e7d32;
-            box-shadow: 0 0 0 3px rgba(46,125,50,0.2);
-            outline: none;
+        .preview-title{
+            font-size:0.85rem;
+            font-weight:600;
+            color:#1a237e;
+            margin-bottom:14px;
+            display:flex;
+            align-items:center;
+            gap:8px;
         }
-
-        .file-upload-area {
-            border: 2px dashed #ccc;
-            border-radius: 20px;
-            padding: 25px;
-            text-align: center;
-            background: #fafafa;
-            transition: all 0.3s;
+        .preview-title i{color:#3949ab;}
+        .preview-header{
+            display:flex;
+            align-items:center;
+            gap:24px;
+            justify-content:center;
+            flex-wrap:wrap;
         }
-
-        .file-upload-area:hover {
-            border-color: #2e7d32;
-            background: #f1f8e9;
+        .preview-logo{
+            max-width:120px;
+            max-height:80px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
         }
-
-        .file-upload-area i {
-            font-size: 3rem;
-            color: #2e7d32;
-            margin-bottom: 15px;
+        .preview-logo img{
+            max-width:100%;
+            max-height:80px;
+            object-fit:contain;
+            border-radius:8px;
         }
-
-        .file-upload-area p {
-            margin-bottom: 15px;
-            color: #666;
+        .preview-logo .placeholder{
+            font-size:3.5rem;
+            color:#3949ab;
         }
-
-        .file-upload-area input[type="file"] {
-            display: block;
-            margin: 0 auto;
-            padding: 10px;
+        .preview-name{
+            font-size:1.6rem;
+            font-weight:700;
+            color:#1a237e;
         }
-
-        .preview-section {
-            margin-top: 20px;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 15px;
-            border: 1px solid #e0e0e0;
+        .preview-address{
+            font-size:0.85rem;
+            color:#666;
+            text-align:center;
+            width:100%;
+            margin-top:4px;
         }
-
-        .preview-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            justify-content: center;
+        
+        /* ─── BUTTONS ────────────────────────────────────────────────── */
+        .btn-group{
+            display:flex;
+            gap:12px;
+            margin-top:24px;
+            flex-wrap:wrap;
         }
-
-        .preview-logo {
-            max-width: 120px;
-            max-height: 80px;
+        .btn{
+            padding:12px 28px;
+            border:none;
+            border-radius:30px;
+            font-weight:600;
+            font-size:0.9rem;
+            cursor:pointer;
+            transition:all 0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            font-family:'Poppins',sans-serif;
         }
-
-        .preview-logo img {
-            max-width: 100%;
-            max-height: 80px;
-            object-fit: contain;
+        .btn-primary{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
         }
-
-        .preview-name {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #1b5e20;
+        .btn-primary:hover{
+            transform:translateY(-2px);
+            box-shadow:0 6px 16px rgba(26,35,126,0.3);
         }
-
-        .btn {
-            padding: 14px 30px;
-            border: none;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            background: linear-gradient(135deg, #546e7a, #78909c);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-            margin-right: 15px;
+        .btn-secondary{
+            background:#e8eaf6;
+            color:#1a237e;
         }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #2e7d32, #43a047);
+        .btn-secondary:hover{
+            background:#c5cae9;
+            transform:translateY(-2px);
         }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #1b5e20, #2e7d32);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 15px rgba(46,125,50,0.4);
+        .btn-success{
+            background:linear-gradient(135deg,#1b5e20,#2e7d32);
+            color:#fff;
         }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #757575, #9e9e9e);
+        .btn-success:hover{
+            transform:translateY(-2px);
+            box-shadow:0 6px 16px rgba(27,94,32,0.3);
         }
-
-        .btn-secondary:hover {
-            background: linear-gradient(135deg, #616161, #757575);
+        
+        /* ─── INFO CARD ────────────────────────────────────────────────── */
+        .info-card{
+            background:#e8eaf6;
+            border:1px solid #c5cae9;
+            border-radius:12px;
+            padding:20px 24px;
         }
-
-        .alert {
-            padding: 15px 20px;
-            border-radius: 50px;
-            margin-bottom: 20px;
-            font-weight: 500;
+        .info-card h3{
+            color:#1a237e;
+            font-size:1rem;
+            margin-bottom:10px;
+            display:flex;
+            align-items:center;
+            gap:10px;
         }
-
-        .alert-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-left: 5px solid #2e7d32;
+        .info-card h3 i{color:#3949ab;}
+        .info-card p{
+            color:#555;
+            font-size:0.85rem;
+            margin-bottom:6px;
+            display:flex;
+            align-items:center;
+            gap:8px;
         }
-
-        @media (max-width: 768px) {
-            .preview-header {
-                flex-direction: column;
-                text-align: center;
-            }
+        .info-card p i{color:#3949ab;width:20px;}
+        
+        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
+        @media(max-width:768px){
+            .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
+            .topbar a{font-size:0.75rem;padding:6px 14px;}
+            .container{padding:0 12px;}
+            .card{padding:18px 16px;}
+            .form-row{grid-template-columns:1fr;}
+            .preview-header{flex-direction:column;text-align:center;}
+            .preview-name{font-size:1.2rem;}
+            .marquee-container{padding:8px 14px;margin:10px auto;}
+            .marquee-container marquee{font-size:0.75rem;}
+        }
+        @media(max-width:480px){
+            .btn-group{flex-direction:column;}
+            .btn{width:100%;justify-content:center;}
+            .card-header{font-size:1rem;}
+            .preview-logo{max-width:80px;max-height:60px;}
+            .preview-name{font-size:1rem;}
         }
     </style>
 </head>
 <body>
-    <div class="watermark">RRB Group of Schools</div>
-    
-    <nav class="admin-nav">
+
+    <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
+    <div class="topbar">
         <h1><i class="fas fa-paint-brush"></i> Branding Settings</h1>
         <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
-    </nav>
+    </div>
 
-    <!-- Dynamic Marquee -->
+    <!-- ─── MARQUEE ────────────────────────────────────────────────────── -->
     <div class="marquee-container">
-        <marquee behavior="scroll" direction="left" scrollamount="6" onmouseover="this.stop();" onmouseout="this.start();">
+        <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();">
             <i class="fas fa-circle"></i> Customize your school branding for question papers
             <i class="fas fa-image"></i> Upload a logo (PNG/JPG)
             <i class="fas fa-font"></i> Set your school name
@@ -280,76 +336,116 @@
     </div>
 
     <div class="container">
-        <!-- Flash messages can be added here if needed -->
 
+        <!-- ─── MAIN BRANDING CARD ──────────────────────────────────────── -->
         <div class="card">
-            <h3><i class="fas fa-school"></i> School Branding</h3>
+            <div class="card-header">
+                <i class="fas fa-school"></i> School Branding
+            </div>
             
             <form method="POST" enctype="multipart/form-data">
+                
                 <!-- School Name -->
                 <div class="form-group">
                     <label for="school_name"><i class="fas fa-heading"></i> School Name</label>
                     <input type="text" id="school_name" name="school_name" value="{{ school_name }}" placeholder="e.g., RRB Group of Schools" required>
+                </div>
 
-                    <label for="school_address" style="margin-top:14px;display:block;"><i class="fas fa-map-marker-alt"></i> School Address</label>
-                    <input type="text" id="school_address" name="school_address" value="{{ school_address }}" placeholder="Full address (shown on question papers)" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-family:inherit;margin-top:5px;">
+                <div class="form-row">
+                    <!-- School Address -->
+                    <div class="form-group">
+                        <label for="school_address"><i class="fas fa-map-marker-alt"></i> School Address</label>
+                        <input type="text" id="school_address" name="school_address" value="{{ school_address }}" placeholder="Full address">
+                    </div>
 
-                    <label for="academic_session" style="margin-top:14px;display:block;"><i class="fas fa-calendar-alt"></i> Academic Session</label>
-                    <input type="text" id="academic_session" name="academic_session" value="{{ academic_session }}" placeholder="e.g., 2024–25 (shown on question papers)" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-family:inherit;margin-top:5px;">
+                    <!-- Academic Session -->
+                    <div class="form-group">
+                        <label for="academic_session"><i class="fas fa-calendar-alt"></i> Academic Session</label>
+                        <input type="text" id="academic_session" name="academic_session" value="{{ academic_session }}" placeholder="e.g., 2024-25">
+                    </div>
                 </div>
 
                 <!-- Logo Upload -->
                 <div class="form-group">
                     <label><i class="fas fa-image"></i> School Logo</label>
-                    <div class="file-upload-area">
+                    <div class="file-upload-area" onclick="document.getElementById('logoInput').click()">
                         <i class="fas fa-cloud-upload-alt"></i>
-                        <p>Drag & drop or click to upload a logo (PNG, JPG, JPEG, GIF, WEBP)</p>
-                        <input type="file" name="logo" accept="image/*" id="logoInput">
-                        <small class="hint"><i class="fas fa-info-circle"></i> Recommended size: 200x80 pixels. Max 16MB.</small>
+                        <p>Drag &amp; drop or click to upload a logo</p>
+                        <input type="file" name="logo" accept="image/*" id="logoInput" style="display:inline-block;margin:8px auto;">
+                        <small><i class="fas fa-info-circle" style="color:#3949ab;"></i> Supported: PNG, JPG, JPEG, GIF, WEBP &bull; Max 16MB</small>
                     </div>
                 </div>
 
-                <!-- Preview -->
+                <!-- Live Preview -->
                 <div class="preview-section">
-                    <h4 style="margin-bottom: 15px; color: #1b5e20;"><i class="fas fa-eye"></i> Live Preview</h4>
+                    <div class="preview-title">
+                        <i class="fas fa-eye"></i> Live Preview
+                    </div>
                     <div class="preview-header">
                         <div class="preview-logo" id="previewLogo">
                             {% if logo_path %}
                                 <img src="{{ url_for('static', filename=logo_path) }}" alt="School Logo">
                             {% else %}
-                                <i class="fas fa-school" style="font-size: 4rem; color: #2e7d32;"></i>
+                                <span class="placeholder"><i class="fas fa-school"></i></span>
                             {% endif %}
                         </div>
-                        <div class="preview-name" id="previewName">{{ school_name }}</div>
+                        <div>
+                            <div class="preview-name" id="previewName">{{ school_name }}</div>
+                            <div class="preview-address" id="previewAddress">{{ school_address }}</div>
+                            <div class="preview-address" id="previewSession" style="font-size:0.75rem;color:#999;">{{ academic_session }}</div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Buttons -->
-                <div style="margin-top: 30px;">
+                <div class="btn-group">
                     <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Settings</button>
                     <a href="/admin/dashboard" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
                 </div>
+
             </form>
         </div>
 
-        <!-- Information Card -->
-        <div class="card" style="margin-top: 20px;">
-            <h3><i class="fas fa-info-circle"></i> How it works</h3>
-            <p style="margin-bottom: 15px;"><i class="fas fa-check-circle" style="color: #2e7d32;"></i> The school name and logo you set here will be automatically used when generating question papers (PDF).</p>
-            <p><i class="fas fa-print"></i> When you generate a question paper from the Questions page, the header will include your logo and school name.</p>
+        <!-- ─── INFO CARD ────────────────────────────────────────────────── -->
+        <div class="card" style="padding:20px 24px;">
+            <div class="info-card">
+                <h3><i class="fas fa-info-circle"></i> How it works</h3>
+                <p><i class="fas fa-check-circle"></i> The school name, address, and logo you set here will appear on generated question papers (PDF).</p>
+                <p><i class="fas fa-print"></i> When you generate a question paper from the Questions page, the header will include your branding.</p>
+                <p><i class="fas fa-magic"></i> Changes take effect immediately after saving.</p>
+            </div>
         </div>
-    </div>
+
+    
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
 
     <script>
-        // Live preview update
+        // ─── Live preview update ──────────────────────────────────────────
         const logoInput = document.getElementById('logoInput');
         const previewLogo = document.getElementById('previewLogo');
         const schoolNameInput = document.getElementById('school_name');
         const previewName = document.getElementById('previewName');
+        const addressInput = document.getElementById('school_address');
+        const previewAddress = document.getElementById('previewAddress');
+        const sessionInput = document.getElementById('academic_session');
+        const previewSession = document.getElementById('previewSession');
 
         // Update preview name as user types
         schoolNameInput.addEventListener('input', function() {
             previewName.textContent = this.value || 'School Name';
+        });
+
+        // Update preview address as user types
+        addressInput.addEventListener('input', function() {
+            previewAddress.textContent = this.value || '';
+        });
+
+        // Update preview session as user types
+        sessionInput.addEventListener('input', function() {
+            previewSession.textContent = this.value || '';
         });
 
         // Preview selected logo
@@ -358,18 +454,18 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    previewLogo.innerHTML = `<img src="${event.target.result}" alt="Preview" style="max-width: 120px; max-height: 80px; object-fit: contain;">`;
+                    previewLogo.innerHTML = `<img src="${event.target.result}" alt="Preview">`;
                 };
                 reader.readAsDataURL(file);
             } else {
-                // Reset to current logo or placeholder
                 {% if logo_path %}
                     previewLogo.innerHTML = `<img src="{{ url_for('static', filename=logo_path) }}" alt="School Logo">`;
                 {% else %}
-                    previewLogo.innerHTML = `<i class="fas fa-school" style="font-size: 4rem; color: #2e7d32;"></i>`;
+                    previewLogo.innerHTML = `<span class="placeholder"><i class="fas fa-school"></i></span>`;
                 {% endif %}
             }
         });
     </script>
+
 </body>
 </html>
