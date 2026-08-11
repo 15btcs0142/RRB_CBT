@@ -3,290 +3,364 @@
 <head>
     <title>Results - RRB CBT</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
-            animation: gradientShift 15s ease infinite;
-            background-size: 200% 200%;
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:#f0f4f8;font-family:'Poppins',sans-serif;min-height:100vh;}
+        
+        /* ─── TOP BAR ────────────────────────────────────────────────────── */
+        .topbar{
+            background:linear-gradient(90deg,#1a237e,#3949ab);
+            color:#fff;
+            padding:14px 28px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:10px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+            position:sticky;
+            top:0;
+            z-index:100;
         }
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
+        .topbar h1 i{color:#667eea;}
+        .topbar .nav-links{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
         }
-        .admin-nav {
-            background: linear-gradient(90deg, #1b5e20, #2e7d32, #1b5e20);
-            background-size: 200% auto;
-            animation: navGlow 5s linear infinite;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        .topbar a{
+            color:#fff;
+            text-decoration:none;
+            background:rgba(255,255,255,0.15);
+            padding:8px 20px;
+            border-radius:25px;
+            font-size:0.85rem;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            border:1px solid rgba(255,255,255,0.1);
         }
-        @keyframes navGlow {
-            0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
+        .topbar a:hover{
+            background:rgba(255,255,255,0.25);
+            transform:translateY(-2px);
         }
-        .marquee-container {
-            background: rgba(255,255,255,0.9);
-            padding: 10px 20px;
-            margin: 20px auto 10px;
-            max-width: 1200px;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border-left: 5px solid #2e7d32;
-            backdrop-filter: blur(5px);
+        
+        /* ─── MARQUEE ────────────────────────────────────────────────────── */
+        .marquee-container{
+            background:rgba(255,255,255,0.92);
+            backdrop-filter:blur(8px);
+            padding:10px 20px;
+            max-width:1400px;
+            margin:16px auto 10px;
+            border-radius:50px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.06);
+            border-left:4px solid #3949ab;
         }
-        .marquee-container marquee {
-            font-size: 1.1rem;
-            color: #1b5e20;
-            font-weight: 500;
+        .marquee-container marquee{font-size:0.9rem;color:#1a237e;font-weight:500;}
+        .marquee-container marquee i{margin:0 12px;color:#667eea;}
+        
+        .container{max-width:1400px;margin:20px auto;padding:0 20px;}
+        
+        /* ─── SUMMARY CARD ────────────────────────────────────────────────── */
+        .summary-card{
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            padding:20px 24px;
+            border-radius:16px;
+            box-shadow:0 4px 16px rgba(0,0,0,0.06);
+            border:1px solid rgba(26,35,126,0.08);
+            margin-bottom:20px;
+            display:flex;
+            flex-wrap:wrap;
+            gap:16px;
+            align-items:center;
+            position:relative;
+            overflow:hidden;
+            transition:0.3s;
         }
-        .marquee-container i {
-            margin: 0 15px;
-            color: #ff9800;
+        .summary-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+        .summary-card::before{
+            content:'';
+            position:absolute;
+            top:0;left:0;
+            width:100%;
+            height:4px;
+            background:linear-gradient(90deg,#1a237e,#667eea,#1a237e);
+            background-size:200% auto;
+            animation:shimmer 2.5s linear infinite;
         }
-        .container {
-            max-width: 1400px;
-            margin: 30px auto;
-            padding: 0 20px;
+        @keyframes shimmer{
+            0%{background-position:0% center;}
+            100%{background-position:200% center;}
         }
-        .summary-card {
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            padding: 20px 25px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border: 1px solid rgba(46,125,50,0.2);
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            position: relative;
-            overflow: hidden;
+        
+        .stat-box{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            background:#e8eaf6;
+            padding:8px 18px;
+            border-radius:30px;
+            flex:1;
+            min-width:130px;
+            border:1px solid #c5cae9;
         }
-        .summary-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, #2e7d32, #81c784, #2e7d32);
-            background-size: 200% auto;
-            animation: shimmer 2s linear infinite;
+        .stat-box i{font-size:1.6rem;color:#3949ab;}
+        .stat-info h4{font-size:0.75rem;color:#888;margin-bottom:2px;font-weight:500;text-transform:uppercase;letter-spacing:0.3px;}
+        .stat-info p{font-size:1.3rem;font-weight:700;color:#1a237e;}
+        
+        .filter-bar{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            flex-wrap:wrap;
+            margin-left:auto;
         }
-        @keyframes shimmer {
-            0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
+        .filter-group{
+            display:flex;
+            align-items:center;
+            gap:5px;
         }
-        .stat-box {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: rgba(46,125,50,0.05);
-            padding: 10px 20px;
-            border-radius: 50px;
-            flex: 1;
-            min-width: 140px;
+        .filter-group label{
+            font-weight:600;
+            color:#1a237e;
+            font-size:0.78rem;
+            display:flex;
+            align-items:center;
+            gap:3px;
+            white-space:nowrap;
         }
-        .stat-box i {
-            font-size: 2rem;
-            color: #2e7d32;
+        .filter-group label i{color:#3949ab;font-size:0.8rem;}
+        .filter-group select{
+            padding:6px 12px;
+            border:2px solid #e0e0e0;
+            border-radius:30px;
+            background:#fafafa;
+            font-size:0.8rem;
+            transition:.3s;
+            min-width:100px;
+            font-family:'Poppins',sans-serif;
         }
-        .stat-info h4 {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 4px;
+        .filter-group select:focus{
+            border-color:#3949ab;
+            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
+            outline:none;
         }
-        .stat-info p {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1b5e20;
+        
+        .btn{
+            padding:6px 16px;
+            border:none;
+            border-radius:30px;
+            font-weight:600;
+            cursor:pointer;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            font-size:0.78rem;
+            font-family:'Poppins',sans-serif;
         }
-        .filter-bar {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-left: auto;
+        .btn-primary{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
         }
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .btn-primary:hover{
+            transform:translateY(-2px);
+            box-shadow:0 6px 16px rgba(26,35,126,0.3);
         }
-        .filter-group label {
-            font-weight: 600;
-            color: #1b5e20;
+        .btn-secondary{
+            background:#e8eaf6;
+            color:#1a237e;
         }
-        .filter-group select {
-            padding: 10px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 50px;
-            background: white;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            min-width: 130px;
+        .btn-secondary:hover{
+            background:#c5cae9;
+            transform:translateY(-2px);
         }
-        .filter-group select:focus {
-            border-color: #2e7d32;
-            box-shadow: 0 0 0 3px rgba(46,125,50,0.2);
-            outline: none;
+        .btn-success{
+            background:linear-gradient(135deg,#1b5e20,#2e7d32);
+            color:#fff;
         }
-        .btn-icon {
-            background: linear-gradient(135deg, #2e7d32, #43a047);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        .btn-success:hover{
+            transform:translateY(-2px);
+            box-shadow:0 6px 16px rgba(27,94,32,0.3);
         }
-        .btn-icon:hover {
-            background: linear-gradient(135deg, #1b5e20, #2e7d32);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 15px rgba(46,125,50,0.4);
+        .btn:disabled{
+            opacity:0.5;
+            cursor:not-allowed;
+            transform:none;
         }
-        .btn-secondary {
-            background: linear-gradient(135deg, #757575, #9e9e9e);
+        
+        #currentTestBtnContainer{
+            display:none;
+            margin-left:auto;
         }
-        .btn-secondary:hover {
-            background: linear-gradient(135deg, #616161, #757575);
+        
+        /* ─── SUMMARY TABLE ─────────────────────────────────────────────── */
+        .summary-table-title{
+            font-size:1rem;
+            font-weight:600;
+            color:#1a237e;
+            margin:20px 0 12px;
+            display:flex;
+            align-items:center;
+            gap:8px;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        .summary-table-title i{color:#3949ab;}
+        .total-registered{
+            background:#e8eaf6;
+            color:#1a237e;
+            padding:4px 14px;
+            border-radius:20px;
+            font-size:0.75rem;
+            font-weight:600;
+            display:inline-block;
+            margin-left:10px;
         }
-        th {
-            background: linear-gradient(135deg, #2e7d32, #43a047);
-            color: white;
-            font-weight: 600;
-            padding: 18px 15px;
-            text-align: left;
-            font-size: 0.95rem;
-            white-space: nowrap;
+        
+        .table-wrap{
+            overflow-x:auto;
+            border-radius:12px;
+            box-shadow:0 4px 14px rgba(0,0,0,0.06);
+            background:#fff;
+            margin-bottom:16px;
+            border:1px solid rgba(26,35,126,0.08);
         }
-        th i {
-            margin-right: 8px;
+        .table-wrap.max-h{max-height:280px;overflow-y:auto;}
+        table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+        th{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
+            font-weight:600;
+            padding:10px 12px;
+            text-align:left;
+            white-space:nowrap;
+            position:sticky;
+            top:0;
+            z-index:2;
         }
-        td {
-            padding: 14px 15px;
-            border-bottom: 1px solid #e0e0e0;
-            vertical-align: middle;
+        th i{margin-right:6px;opacity:0.7;}
+        td{padding:8px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+        tr:hover td{background:#e8eaf6;}
+        
+        .badge{
+            background:#e8eaf6;
+            color:#1a237e;
+            padding:2px 10px;
+            border-radius:14px;
+            font-size:0.72rem;
+            font-weight:500;
+            display:inline-block;
         }
-        tr {
-            transition: all 0.2s ease;
+        .score-badge{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
+            padding:3px 12px;
+            border-radius:30px;
+            font-weight:600;
+            font-size:0.78rem;
+            display:inline-block;
         }
-        tr:hover {
-            background: #f1f8e9;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        .percentage-badge{
+            background:#e8eaf6;
+            color:#1a237e;
+            padding:3px 12px;
+            border-radius:30px;
+            font-weight:600;
+            font-size:0.78rem;
+            display:inline-block;
         }
-        .score-badge {
-            background: linear-gradient(135deg, #2e7d32, #43a047);
-            color: white;
-            padding: 5px 12px;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: inline-block;
+        .view-btn{
+            background:linear-gradient(135deg,#1a237e,#3949ab);
+            color:#fff;
+            border:none;
+            padding:4px 14px;
+            border-radius:30px;
+            font-weight:500;
+            font-size:0.72rem;
+            cursor:pointer;
+            transition:0.3s;
+            display:inline-flex;
+            align-items:center;
+            gap:4px;
+            text-decoration:none;
         }
-        .percentage-badge {
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 5px 12px;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-left: 8px;
+        .view-btn:hover{
+            transform:translateY(-2px);
+            box-shadow:0 4px 12px rgba(26,35,126,0.3);
         }
-        .view-responses-btn {
-            background: linear-gradient(135deg, #2196f3, #64b5f6);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 50px;
-            font-weight: 500;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            text-decoration: none;
+        
+        .empty-state{
+            text-align:center;
+            padding:30px 20px;
+            color:#999;
         }
-        .view-responses-btn:hover {
-            background: linear-gradient(135deg, #1976d2, #42a5f5);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(33,150,243,0.3);
+        .empty-state i{font-size:2.5rem;color:#ddd;display:block;margin-bottom:10px;}
+        
+        .section-title{
+            font-size:1.05rem;
+            font-weight:600;
+            color:#1a237e;
+            margin:20px 0 12px;
+            display:flex;
+            align-items:center;
+            gap:8px;
         }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #666;
+        .section-title i{color:#3949ab;}
+        
+        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
+        @media(max-width:992px){
+            .summary-card{flex-direction:column;align-items:stretch;}
+            .filter-bar{margin-left:0;}
+            .filter-group{flex-wrap:wrap;}
+            #currentTestBtnContainer{margin-left:0;}
         }
-        .empty-state i {
-            font-size: 4rem;
-            color: #ccc;
-            margin-bottom: 20px;
+        @media(max-width:768px){
+            .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
+            .topbar .nav-links{justify-content:center;width:100%;}
+            .container{padding:0 12px;}
+            .stat-box{min-width:auto;}
+            .filter-group select{min-width:80px;font-size:0.72rem;padding:4px 10px;}
+            .marquee-container{padding:8px 14px;margin:10px auto;}
+            .marquee-container marquee{font-size:0.75rem;}
+            table{font-size:0.75rem;}
+            th,td{padding:6px 8px;}
         }
-        .export-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        @media (max-width: 1200px) {
-            .summary-card {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .filter-bar {
-                margin-left: 0;
-                justify-content: flex-start;
-            }
-            table {
-                display: block;
-                overflow-x: auto;
-            }
+        @media(max-width:480px){
+            .stat-box{padding:6px 12px;}
+            .stat-box i{font-size:1.2rem;}
+            .stat-info p{font-size:1rem;}
+            .stat-info h4{font-size:0.65rem;}
+            .btn{font-size:0.7rem;padding:4px 12px;}
         }
     </style>
 </head>
 <body>
-    <div class="watermark">RRB Group of Schools</div>
-    
-    <nav class="admin-nav">
-        <h1><i class="fas fa-poll"></i> Exam Results</h1>
-        <div style="display: flex; gap: 15px;">
-            <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
-            <a href="/admin/export/results"><i class="fas fa-file-excel"></i> Export Excel</a>
-        </div>
-    </nav>
 
-    <!-- Dynamic Marquee -->
+    <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
+    <div class="topbar">
+        <h1><i class="fas fa-poll"></i> Exam Results</h1>
+        <div class="nav-links">
+            <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
+            <a href="/admin/export_results_page"><i class="fas fa-file-export"></i> Export Data</a>
+        </div>
+    </div>
+
+    <!-- ─── MARQUEE ────────────────────────────────────────────────────── -->
     <div class="marquee-container">
-        <marquee behavior="scroll" direction="left" scrollamount="6" onmouseover="this.stop();" onmouseout="this.start();">
-            <i class="fas fa-circle"></i> View and analyze student performance
-            <i class="fas fa-filter"></i> Filter results by class or subject
-            <i class="fas fa-chart-bar"></i> Summary statistics update dynamically
-            <i class="fas fa-download"></i> Export results to Excel for further analysis
-            <i class="fas fa-eye"></i> Click "View Responses" to see detailed answer sheet
+        <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();">
+            <i class="fas fa-circle"></i> View student performance · Filter by Class, Section, Subject, Test
+            <i class="fas fa-chart-bar"></i> Summary statistics per test · Total registered students
         </marquee>
     </div>
 
     <div class="container">
-        <!-- Summary Statistics Card -->
-        <div class="summary-card">
+
+        <!-- ─── SUMMARY STATS CARD ──────────────────────────────────────── -->
+        <div class="summary-card" id="statsCard">
             <div class="stat-box">
                 <i class="fas fa-users"></i>
                 <div class="stat-info">
@@ -315,51 +389,94 @@
                     <p id="passRate">0%</p>
                 </div>
             </div>
-            
+
+            <!-- Current Test Button -->
+            <div id="currentTestBtnContainer">
+                <button id="currentTestBtn" class="btn btn-success" disabled>
+                    <i class="fas fa-file-alt"></i> Generate Current Test Results
+                </button>
+            </div>
+
             <div class="filter-bar">
                 <div class="filter-group">
-                    <label><i class="fas fa-graduation-cap"></i> Class:</label>
-                    <select id="filterClass">
-                        <option value="">All Classes</option>
-                    </select>
+                    <label><i class="fas fa-graduation-cap"></i> Class</label>
+                    <select id="filterClass"><option value="">All</option></select>
                 </div>
                 <div class="filter-group">
-                    <label><i class="fas fa-book"></i> Subject:</label>
-                    <select id="filterSubject">
-                        <option value="">All Subjects</option>
-                    </select>
+                    <label><i class="fas fa-columns"></i> Section</label>
+                    <select id="filterSection"><option value="">All</option></select>
                 </div>
-                <button class="btn-icon" id="applyFilterBtn">
-                    <i class="fas fa-filter"></i> Apply
-                </button>
-                <button class="btn-icon btn-secondary" id="resetFilterBtn">
-                    <i class="fas fa-undo-alt"></i> Reset
-                </button>
+                <div class="filter-group">
+                    <label><i class="fas fa-book"></i> Subject</label>
+                    <select id="filterSubject"><option value="">All</option></select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-hashtag"></i> Test</label>
+                    <select id="filterTest"><option value="">All</option></select>
+                </div>
+                <button class="btn btn-primary" id="applyFilterBtn"><i class="fas fa-filter"></i> Apply</button>
+                <button class="btn btn-secondary" id="resetFilterBtn"><i class="fas fa-undo-alt"></i> Reset</button>
             </div>
         </div>
 
-        <!-- Results Table -->
-        <table id="resultsTable">
-            <thead>
-                <tr>
-                    <th><i class="fas fa-id-card"></i> Student ID</th>
-                    <th><i class="fas fa-user"></i> Name</th>
-                    <th><i class="fas fa-layer-group"></i> Class</th>
-                    <th><i class="fas fa-book-open"></i> Subject</th>
-                    <th><i class="fas fa-star"></i> Score</th>
-                    <th><i class="fas fa-percent"></i> Percentage</th>
-                    <th><i class="fas fa-eye"></i> Actions</th>
-                </tr>
-            </thead>
-            <tbody id="resultsBody"></tbody>
-        </table>
-    </div>
+        <!-- ─── SUMMARY TABLE ───────────────────────────────────────────── -->
+        <div class="summary-table-title">
+            <i class="fas fa-table"></i> Test-wise Summary
+            <span class="total-registered" id="totalRegisteredBadge">Total Registered: 0</span>
+        </div>
+        <div class="table-wrap max-h">
+            <table id="summaryTable">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-layer-group"></i> Class</th>
+                        <th><i class="fas fa-columns"></i> Section</th>
+                        <th><i class="fas fa-book"></i> Subject</th>
+                        <th><i class="fas fa-hashtag"></i> Test No</th>
+                        <th><i class="fas fa-users"></i> Students</th>
+                        <th><i class="fas fa-calculator"></i> Avg Score</th>
+                        <th><i class="fas fa-arrow-up"></i> Highest</th>
+                        <th><i class="fas fa-arrow-down"></i> Lowest</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryBody"></tbody>
+            </table>
+        </div>
+
+        <!-- ─── DETAILED RESULTS TABLE ──────────────────────────────────── -->
+        <div class="section-title">
+            <i class="fas fa-list"></i> Student-wise Results
+        </div>
+        <div class="table-wrap">
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-id-card"></i> Student ID</th>
+                        <th><i class="fas fa-user"></i> Name</th>
+                        <th><i class="fas fa-layer-group"></i> Class</th>
+                        <th><i class="fas fa-columns"></i> Section</th>
+                        <th><i class="fas fa-book"></i> Subject</th>
+                        <th><i class="fas fa-hashtag"></i> Test</th>
+                        <th><i class="fas fa-star"></i> Score</th>
+                        <th><i class="fas fa-percentage"></i> Percentage</th>
+                        <th><i class="fas fa-cog"></i> Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody"></tbody>
+            </table>
+        </div>
+
+    
+<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+    Developed by Gaurav Shukla &amp; Team
+</footer>
+</div>
 
     <script>
+        // ─── STATE ──────────────────────────────────────────────────────
         let allResults = [];
-        let totalQuestionsMap = {}; // Store max marks per class/subject
-        
-        // Fetch total questions for each class/subject (for percentage)
+        let totalQuestionsMap = {};
+
+        // ─── HELPERS ───────────────────────────────────────────────────
         async function fetchQuestionCounts() {
             const res = await fetch('/admin/questions/data');
             const questions = await res.json();
@@ -370,144 +487,177 @@
             });
             return counts;
         }
-        
-        // Fetch and display results
-        async function loadResults(classFilter = '', subjectFilter = '') {
-            const res = await fetch('/admin/results/data');
-            let results = await res.json();
-            
-            allResults = results;
-            totalQuestionsMap = await fetchQuestionCounts();
-            
-            // Populate filter dropdowns
-            populateFilterDropdowns(results);
-            
-            // Apply filters
-            let filtered = results;
-            if (classFilter) {
-                filtered = filtered.filter(r => r.class === classFilter);
-            }
-            if (subjectFilter) {
-                filtered = filtered.filter(r => r.subject === subjectFilter);
-            }
-            
-            renderTable(filtered);
-            updateSummary(filtered);
+
+        function populateSelect(selectId, values, allLabel = 'All') {
+            const sel = document.getElementById(selectId);
+            const current = sel.value;
+            sel.innerHTML = `<option value="">${allLabel}</option>`;
+            values.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
+            sel.value = current;
         }
-        
-        function populateFilterDropdowns(data) {
-            const classes = [...new Set(data.map(r => r.class))].filter(c => c).sort();
-            const subjects = [...new Set(data.map(r => r.subject))].filter(s => s).sort();
-            
-            const classSelect = document.getElementById('filterClass');
-            const subjectSelect = document.getElementById('filterSubject');
-            
-            const currentClass = classSelect.value;
-            const currentSubject = subjectSelect.value;
-            
-            classSelect.innerHTML = '<option value="">All Classes</option>';
-            classes.forEach(c => { classSelect.innerHTML += `<option value="${c}">${c}</option>`; });
-            classSelect.value = currentClass;
-            
-            subjectSelect.innerHTML = '<option value="">All Subjects</option>';
-            subjects.forEach(s => { subjectSelect.innerHTML += `<option value="${s}">${s}</option>`; });
-            subjectSelect.value = currentSubject;
+
+        // ─── LOAD FILTER OPTIONS ──────────────────────────────────────
+        async function loadFilterOptions() {
+            try {
+                const res = await fetch('/api/results/filters');
+                const data = await res.json();
+                populateSelect('filterClass', data.classes || []);
+                populateSelect('filterSection', data.sections || []);
+                populateSelect('filterSubject', data.subjects || []);
+                populateSelect('filterTest', data.test_numbers || []);
+            } catch(e) { console.error('Failed to load filters:', e); }
         }
-        
-        function renderTable(results) {
-            const tbody = document.getElementById('resultsBody');
-            
-            if (results.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="empty-state">
-                    <i class="fas fa-clipboard-list"></i><br>
-                    No results found. Please evaluate submissions first.
-                </td></tr>`;
+
+        // ─── LOAD SUMMARY ─────────────────────────────────────────────
+        async function loadSummary() {
+            try {
+                const res = await fetch('/api/results/summary');
+                const data = await res.json();
+                renderSummary(data.summary || []);
+                document.getElementById('totalRegisteredBadge').textContent = `Total Registered: ${data.total_students || 0}`;
+            } catch(e) { console.error('Failed to load summary:', e); }
+        }
+
+        function renderSummary(summary) {
+            const tbody = document.getElementById('summaryBody');
+            if (!summary.length) {
+                tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><i class="fas fa-chart-bar"></i>No data</td></tr>`;
                 return;
             }
-            
+            tbody.innerHTML = '';
+            summary.forEach(row => {
+                tbody.innerHTML += `<tr>
+                    <td>${row.class}</td>
+                    <td>${row.section || '—'}</td>
+                    <td>${row.subject}</td>
+                    <td>${row.test_no || '—'}</td>
+                    <td>${row.student_count}</td>
+                    <td>${row.avg_score ? row.avg_score.toFixed(2) : 'N/A'}</td>
+                    <td>${row.max_score}</td>
+                    <td>${row.min_score}</td>
+                </tr>`;
+            });
+        }
+
+        // ─── LOAD RESULTS ─────────────────────────────────────────────
+        async function loadResults() {
+            const classVal = document.getElementById('filterClass').value;
+            const sectionVal = document.getElementById('filterSection').value;
+            const subjectVal = document.getElementById('filterSubject').value;
+            const testVal = document.getElementById('filterTest').value;
+
+            let url = '/admin/results/data?';
+            if (classVal) url += `class=${encodeURIComponent(classVal)}&`;
+            if (sectionVal) url += `section=${encodeURIComponent(sectionVal)}&`;
+            if (subjectVal) url += `subject=${encodeURIComponent(subjectVal)}&`;
+            if (testVal) url += `test_no=${encodeURIComponent(testVal)}&`;
+
+            const res = await fetch(url);
+            allResults = await res.json();
+            totalQuestionsMap = await fetchQuestionCounts();
+
+            renderResults(allResults);
+            updateStats(allResults);
+        }
+
+        function renderResults(results) {
+            const tbody = document.getElementById('resultsBody');
+            if (!results.length) {
+                tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><i class="fas fa-clipboard-list"></i>No results found</td></tr>`;
+                return;
+            }
             tbody.innerHTML = '';
             results.forEach(r => {
                 const key = `${r.class}_${r.subject}`;
                 const maxMarks = totalQuestionsMap[key] || 0;
-                const percentage = maxMarks > 0 ? ((r.score / maxMarks) * 100).toFixed(2) : 'N/A';
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><code style="background: #f5f5f5; padding: 2px 8px; border-radius: 4px;">${r.student_id}</code></td>
-                    <td><i class="fas fa-user-circle" style="margin-right: 8px; color: #2e7d32;"></i>${r.name}</td>
+                const pct = maxMarks > 0 ? ((r.score / maxMarks) * 100).toFixed(1) : 'N/A';
+                tbody.innerHTML += `<tr>
+                    <td><code style="background:#f5f5f5;padding:2px 8px;border-radius:4px;font-size:0.78rem;">${r.student_id}</code></td>
+                    <td><i class="fas fa-user-circle" style="margin-right:6px;color:#3949ab;"></i>${r.name}</td>
                     <td><span class="badge">${r.class}</span></td>
+                    <td>${r.section || '—'}</td>
                     <td><span class="badge">${r.subject}</span></td>
-                    <td>
-                        <span class="score-badge">${r.score} / ${maxMarks}</span>
-                    </td>
-                    <td>
-                        <span class="percentage-badge">${percentage}%</span>
-                    </td>
-                    <td>
-                        <a href="/admin/student/responses/${r.student_id}" class="view-responses-btn" target="_blank">
-                            <i class="fas fa-external-link-alt"></i> View Responses
-                        </a>
-                    </td>
-                `;
-                tbody.appendChild(row);
+                    <td>${r.chapter || '—'}</td>
+                    <td><span class="score-badge">${r.score} / ${maxMarks}</span></td>
+                    <td><span class="percentage-badge">${pct}%</span></td>
+                    <td><a href="/admin/student/responses/${r.student_id}" class="view-btn" target="_blank"><i class="fas fa-external-link-alt"></i> View</a></td>
+                </tr>`;
             });
         }
-        
-        function updateSummary(results) {
+
+        function updateStats(results) {
             const total = results.length;
-            if (total === 0) {
-                document.getElementById('totalStudents').textContent = '0';
-                document.getElementById('avgScore').textContent = '0';
-                document.getElementById('maxScore').textContent = '0';
+            if (!total) {
+                ['totalStudents','avgScore','maxScore'].forEach(id => document.getElementById(id).textContent = '0');
                 document.getElementById('passRate').textContent = '0%';
                 return;
             }
-            
-            let sum = 0;
-            let max = 0;
-            let passCount = 0;
-            
+            let sum = 0, max = 0, passCount = 0;
             results.forEach(r => {
                 const key = `${r.class}_${r.subject}`;
                 const maxMarks = totalQuestionsMap[key] || 0;
-                const percentage = maxMarks > 0 ? (r.score / maxMarks) * 100 : 0;
-                
+                const pct = maxMarks > 0 ? (r.score / maxMarks) * 100 : 0;
                 sum += r.score;
                 if (r.score > max) max = r.score;
-                if (percentage >= 40) passCount++;
+                if (pct >= 40) passCount++;
             });
-            
-            const avg = (sum / total).toFixed(2);
-            const passRate = ((passCount / total) * 100).toFixed(1);
-            
             document.getElementById('totalStudents').textContent = total;
-            document.getElementById('avgScore').textContent = avg;
+            document.getElementById('avgScore').textContent = (sum / total).toFixed(2);
             document.getElementById('maxScore').textContent = max;
-            document.getElementById('passRate').textContent = passRate + '%';
+            document.getElementById('passRate').textContent = ((passCount / total) * 100).toFixed(1) + '%';
         }
-        
-        // Event listeners
-        document.getElementById('applyFilterBtn').addEventListener('click', () => {
-            const classVal = document.getElementById('filterClass').value;
-            const subjectVal = document.getElementById('filterSubject').value;
-            
-            let filtered = allResults;
-            if (classVal) filtered = filtered.filter(r => r.class === classVal);
-            if (subjectVal) filtered = filtered.filter(r => r.subject === subjectVal);
-            
-            renderTable(filtered);
-            updateSummary(filtered);
-        });
-        
+
+        // ─── CURRENT TEST BUTTON LOGIC ──────────────────────────────
+        async function updateCurrentTestButton() {
+            try {
+                const [statusRes, startedRes] = await Promise.all([
+                    fetch('/admin/exam_status'),
+                    fetch('/admin/exam_has_started')
+                ]);
+                const statusData = await statusRes.json();
+                const startedData = await startedRes.json();
+
+                const container = document.getElementById('currentTestBtnContainer');
+                const btn = document.getElementById('currentTestBtn');
+
+                if (startedData.has_started) {
+                    container.style.display = 'block';
+                    if (statusData.is_active) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exam in progress...';
+                    } else {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-file-alt"></i> Generate Current Test Results';
+                        btn.onclick = function() {
+                            window.location.href = '/admin/current_test_results';
+                        };
+                    }
+                } else {
+                    container.style.display = 'none';
+                }
+            } catch(e) {
+                console.error('Failed to update current test button:', e);
+            }
+        }
+
+        // ─── EVENT LISTENERS ──────────────────────────────────────────
+        document.getElementById('applyFilterBtn').addEventListener('click', loadResults);
         document.getElementById('resetFilterBtn').addEventListener('click', () => {
-            document.getElementById('filterClass').value = '';
-            document.getElementById('filterSubject').value = '';
-            renderTable(allResults);
-            updateSummary(allResults);
+            ['filterClass','filterSection','filterSubject','filterTest'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            loadResults();
         });
-        
-        // Initial load
-        loadResults();
+
+        // ─── INIT ──────────────────────────────────────────────────────
+        async function init() {
+            await loadFilterOptions();
+            await loadSummary();
+            await loadResults();
+            await updateCurrentTestButton();
+            setInterval(updateCurrentTestButton, 5000);
+        }
+        init();
     </script>
 </body>
 </html>
