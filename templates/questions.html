@@ -3,846 +3,592 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Questions - RRB CBT</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
         body {
-            font-family: 'Poppins', sans-serif;
-            background: #f0f4f8;
-            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+            animation: gradientShift 15s ease infinite;
+            background-size: 200% 200%;
         }
-        
-        /* ─── TOP BAR ────────────────────────────────────────────────────── */
-        .topbar {
-            background: linear-gradient(90deg, #1a237e, #3949ab);
-            padding: 14px 28px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            color: #fff;
-            flex-wrap: wrap;
-            gap: 10px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-        .topbar h1 {
-            font-size: 1.3rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .admin-nav {
+            background: linear-gradient(90deg, #1b5e20, #2e7d32, #1b5e20);
+            background-size: 200% auto;
+            animation: navGlow 5s linear infinite;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        .topbar h1 i {
-            color: #667eea;
+        @keyframes navGlow {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
         }
-        .topbar a {
-            color: #fff;
-            text-decoration: none;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 8px 20px;
-            border-radius: 25px;
-            font-size: 0.85rem;
-            transition: 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .marquee-container {
+            background: rgba(255,255,255,0.9);
+            padding: 10px 20px;
+            margin: 20px auto 10px;
+            max-width: 1400px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #2e7d32;
+            backdrop-filter: blur(5px);
         }
-        .topbar a:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-2px);
+        .marquee-container marquee {
+            font-size: 1.1rem;
+            color: #1b5e20;
+            font-weight: 500;
         }
-        
+        .marquee-container i {
+            margin: 0 15px;
+            color: #ff9800;
+        }
         .container {
             max-width: 1500px;
-            margin: 0 auto;
-            padding: 20px;
+            margin: 30px auto;
+            padding: 0 20px;
         }
-
-        /* ── CARDS ───────────────────────────────────────────────────────── */
         .card {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255,255,255,0.95);
             backdrop-filter: blur(10px);
-            padding: 18px 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-            border: 1px solid rgba(26, 35, 126, 0.08);
-            transition: 0.3s;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 1px solid rgba(46,125,50,0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
             height: fit-content;
         }
-        .card:hover {
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #2e7d32, #81c784, #2e7d32);
+            background-size: 200% auto;
+            animation: shimmer 2s linear infinite;
         }
-        .card-header {
-            color: #1a237e;
-            font-size: 0.95rem;
-            font-weight: 600;
+        @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        .card h3 {
+            color: #1b5e20;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
             display: flex;
             align-items: center;
             gap: 8px;
-            border-bottom: 2px dashed #e8eaf6;
+            border-bottom: 2px dashed #c8e6c9;
             padding-bottom: 8px;
-            margin-bottom: 12px;
         }
-        .card-header i {
-            color: #3949ab;
-            font-size: 1.1rem;
+        .card h3 i {
+            color: #2e7d32;
+            font-size: 1.5rem;
         }
-
-        /* ── FORM ELEMENTS ──────────────────────────────────────────────── */
-        input, select, textarea {
-            padding: 8px 12px;
+        input, textarea, select {
+            padding: 10px 12px;
             border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            transition: 0.3s;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
             font-family: 'Poppins', sans-serif;
             width: 100%;
-            background: #fafafa;
         }
-        input:focus, select:focus, textarea:focus {
-            border-color: #3949ab;
-            box-shadow: 0 0 0 3px rgba(57, 73, 171, 0.12);
+        input:focus, textarea:focus, select:focus {
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46,125,50,0.2);
             outline: none;
-            background: #fff;
         }
-        textarea {
-            resize: vertical;
-            min-height: 50px;
-        }
-        
         .btn {
-            padding: 8px 18px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 25px;
+            border-radius: 50px;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.3s;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            font-size: 0.82rem;
-            font-family: 'Poppins', sans-serif;
-            background: #78909c;
-            color: #fff;
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
-            white-space: nowrap;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #546e7a, #78909c);
+            color: white;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.3);
         }
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
         .btn-primary {
-            background: linear-gradient(135deg, #1a237e, #3949ab);
-        }
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #0d1457, #1a237e);
+            background: linear-gradient(135deg, #2e7d32, #43a047);
         }
         .btn-danger {
-            background: linear-gradient(135deg, #c62828, #e53935);
-        }
-        .btn-danger:hover {
-            background: linear-gradient(135deg, #b71c1c, #c62828);
+            background: linear-gradient(135deg, #d32f2f, #e53935);
         }
         .btn-warning {
-            background: linear-gradient(135deg, #e65100, #ff9800);
-            color: #fff;
+            background: linear-gradient(135deg, #ff9800, #ffb74d);
         }
         .btn-info {
             background: linear-gradient(135deg, #1565c0, #42a5f5);
         }
-        .btn-sm {
-            padding: 4px 12px;
-            font-size: 0.72rem;
-        }
-        .btn-outline {
-            background: transparent;
-            color: #555;
-            border: 2px solid #ddd;
-            box-shadow: none;
-        }
-        .btn-outline:hover {
-            background: #f5f5f5;
-            transform: none;
-        }
-
-        /* ── LAYOUT GRIDS ───────────────────────────────────────────────── */
         .top-row {
             display: grid;
             grid-template-columns: 0.9fr 2.1fr;
             gap: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+        }
+        .two-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+        .form-row {
+            margin-bottom: 12px;
+        }
+        .image-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .image-preview {
+            max-width: 120px;
+            max-height: 80px;
+        }
+        .image-preview img {
+            max-width: 100%;
+            max-height: 80px;
+            border-radius: 6px;
         }
         .action-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
-        .two-cols {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+        .filter-card {
+            margin-bottom: 25px;
         }
-        .three-cols {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-        }
-        .form-row {
-            margin-bottom: 8px;
-        }
-
-        /* ─── FILTER BAR ────────────────────────────────────────────────── */
         .filter-bar {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             flex-wrap: wrap;
         }
-        .filter-bar select, .filter-bar input {
+        .filter-bar select {
             width: auto;
-            min-width: 120px;
-            padding: 6px 10px;
-            font-size: 0.82rem;
-        }
-        .filter-bar .btn {
-            padding: 6px 14px;
-            font-size: 0.78rem;
-        }
-        .filter-bar .filter-count {
-            margin-left: auto;
-            color: #666;
-            font-size: 0.8rem;
-            font-weight: 500;
-            white-space: nowrap;
-            background: #e8eaf6;
-            padding: 4px 14px;
-            border-radius: 20px;
-        }
-
-        /* ─── TABLE ──────────────────────────────────────────────────────── */
-        .table-wrap {
-            overflow-x: auto;
-            border-radius: 14px;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-            background: #fff;
-            padding: 0 2px;
-            margin-top: 12px;
+            min-width: 150px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85rem;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
         }
         th {
-            background: linear-gradient(135deg, #1a237e, #3949ab);
-            color: #fff;
+            background: linear-gradient(135deg, #2e7d32, #43a047);
+            color: white;
             font-weight: 600;
-            padding: 10px 10px;
+            padding: 12px 10px;
             text-align: left;
-            position: sticky;
-            top: 0;
-            z-index: 2;
+            font-size: 0.9rem;
         }
-        th:first-child { width: 36px; text-align: center; }
-        th:nth-child(2) { width: 50px; }
-        th:nth-child(3) { width: 80px; }
-        th:nth-child(4) { width: 80px; }
         td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
             vertical-align: middle;
+            font-size: 0.9rem;
         }
-        tr:hover td {
-            background: #e8eaf6;
+        tr:hover {
+            background: #f1f8e9;
         }
         .badge {
-            background: #e8eaf6;
-            color: #1a237e;
-            padding: 2px 10px;
-            border-radius: 14px;
-            font-size: 0.72rem;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
             font-weight: 500;
-            display: inline-block;
         }
         .action-btns {
             display: flex;
-            gap: 4px;
+            gap: 5px;
             flex-wrap: wrap;
         }
-        .action-btns .btn {
-            padding: 3px 10px;
-            font-size: 0.7rem;
+        .btn-icon {
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+        .hint {
+            color: #666;
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+        .edit-mode {
+            border: 2px solid #ff9800 !important;
         }
         .empty-state {
             text-align: center;
-            padding: 30px;
-            color: #999;
+            padding: 40px;
+            color: #666;
         }
-        .empty-state i {
-            font-size: 2rem;
-            display: block;
-            margin-bottom: 8px;
-            opacity: 0.5;
-        }
-        .image-preview {
-            max-width: 50px;
-            max-height: 40px;
-            border-radius: 4px;
-            object-fit: cover;
-        }
-        .image-preview img {
-            max-width: 50px;
-            max-height: 40px;
-            border-radius: 4px;
-        }
-        .image-cell {
-            text-align: center;
-        }
-        .image-cell img {
-            max-width: 40px;
-            max-height: 35px;
-            border-radius: 4px;
-        }
-
-        /* ─── CHECKBOXES ────────────────────────────────────────────────── */
-        .select-all-wrap {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.8rem;
-            color: #555;
-        }
-        .select-all-wrap input[type="checkbox"],
-        td input[type="checkbox"],
-        th input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-            accent-color: #1a237e;
-        }
-
-        /* ─── BULK DELETE BAR ───────────────────────────────────────────── */
-        .bulk-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 0 4px;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .bulk-bar .left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .bulk-bar .left span {
-            font-size: 0.82rem;
-            color: #555;
-        }
-
-        /* ─── MISC ───────────────────────────────────────────────────────── */
-        .hint {
-            color: #888;
-            font-size: 0.72rem;
-            margin-top: 4px;
-        }
-        .hint i { margin-right: 4px; }
-        .mt-1 { margin-top: 6px; }
-        .edit-mode {
-            border-color: #667eea !important;
-            background: #e8eaf6 !important;
-        }
-        .remove-img-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.8rem;
-            color: #555;
-            margin-top: 4px;
-        }
-        .remove-img-row input[type="checkbox"] {
-            width: 14px;
-            height: 14px;
-            accent-color: #c62828;
-        }
-
-        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
-        @media (max-width: 1024px) {
-            .top-row { grid-template-columns: 1fr; }
-            .action-row { grid-template-columns: 1fr; }
-            .three-cols { grid-template-columns: 1fr 1fr; }
-        }
-        @media (max-width: 720px) {
-            .two-cols, .three-cols { grid-template-columns: 1fr; }
-            .filter-bar {
-                flex-direction: column;
-                align-items: stretch;
+        @media (max-width: 992px) {
+            .top-row {
+                grid-template-columns: 1fr;
             }
-            .filter-bar select, .filter-bar input { width: 100%; }
-            .filter-bar .filter-count { margin-left: 0; text-align: center; }
-            .topbar { flex-direction: column; text-align: center; }
-            .container { padding: 12px; }
-            .card { padding: 12px 14px; }
-            .bulk-bar { flex-direction: column; align-items: stretch; }
-        }
-        @media (max-width: 480px) {
-            .topbar h1 { font-size: 1rem; }
-            .topbar a { font-size: 0.75rem; padding: 6px 12px; }
-            table { font-size: 0.75rem; }
-            th, td { padding: 5px 6px; }
-            .action-btns .btn { padding: 2px 8px; font-size: 0.65rem; }
+            .action-row {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-
-    <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
-    <nav class="topbar">
+    <div class="watermark">RRB Group of Schools</div>
+    <nav class="admin-nav">
         <h1><i class="fas fa-database"></i> Question Bank</h1>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
-            <a href="/admin/create_test"><i class="fas fa-magic"></i> Test Generator</a>
-        </div>
+        <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
     </nav>
 
+    <div class="marquee-container">
+        <marquee behavior="scroll" direction="left" scrollamount="6" onmouseover="this.stop();" onmouseout="this.start();">
+            <i class="fas fa-circle"></i> Upload CSV (class_subject.csv) · Add single questions with images · Filter questions by class/subject · Generate PDF papers · Bulk delete
+        </marquee>
+    </div>
+
     <div class="container">
-
-        <!-- ═══ TOP ROW: CSV Upload + Add/Edit Question ═══ -->
+        <!-- TOP ROW: CSV Upload (Left) + Add/Edit Question (Right) -->
         <div class="top-row">
-
-            <!-- CSV Upload -->
+            <!-- CSV Upload Card -->
             <div class="card">
-                <div class="card-header"><i class="fas fa-cloud-upload-alt"></i> Upload CSV</div>
+                <h3><i class="fas fa-cloud-upload-alt"></i> Upload CSV</h3>
                 <form action="/admin/upload_csv" method="POST" enctype="multipart/form-data">
-                    <input type="file" name="csv_file" accept=".csv" required style="margin-bottom:6px;padding:6px 8px;">
-                    <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
-                        <i class="fas fa-upload"></i> Upload Questions
-                    </button>
+                    <input type="file" name="csv_file" accept=".csv" required style="margin-bottom: 10px;">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Upload</button>
                 </form>
-                <p class="hint"><i class="fas fa-info-circle"></i> Format: <strong>Class_Subject_TestNo.csv</strong></p>
+                <p class="hint"><i class="fas fa-info-circle"></i> Filename: class_subject.csv</p>
             </div>
 
-            <!-- Add / Edit Question -->
+            <!-- Add/Edit Question Card -->
             <div class="card">
-                <div class="card-header" id="formTitle"><i class="fas fa-plus-circle"></i> Add Question</div>
+                <h3 id="formTitle"><i class="fas fa-plus-circle"></i> Add Single Question</h3>
                 <form id="addQuestionForm" enctype="multipart/form-data">
                     <input type="hidden" id="editId" name="editId" value="">
-
+                    
+                    <!-- Row 1: Class + Subject -->
                     <div class="two-cols">
                         <input type="text" id="class" name="class" placeholder="Class" required>
                         <input type="text" id="subject" name="subject" placeholder="Subject" required>
                     </div>
+                    
+                    <!-- Row 2: Question -->
                     <div class="form-row">
-                        <textarea id="question" name="question" placeholder="Question text" required rows="2"></textarea>
+                        <textarea id="question" name="question" placeholder="Enter question text" required rows="2"></textarea>
                     </div>
+                    
+                    <!-- Row 3: Option A + Option B -->
                     <div class="two-cols">
                         <input type="text" id="opt_a" name="option_a" placeholder="Option A" required>
                         <input type="text" id="opt_b" name="option_b" placeholder="Option B" required>
                     </div>
+                    
+                    <!-- Row 4: Option C + Option D -->
                     <div class="two-cols">
                         <input type="text" id="opt_c" name="option_c" placeholder="Option C" required>
                         <input type="text" id="opt_d" name="option_d" placeholder="Option D" required>
                     </div>
+                    
+                    <!-- Row 5: Correct Answer + Image Upload -->
                     <div class="two-cols">
-                        <input type="text" id="correct" name="correct_answer" placeholder="Correct (A/B/C/D)" required maxlength="1" style="text-transform:uppercase;">
-                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                            <input type="file" id="imageUpload" name="image" accept="image/*" style="padding:4px;flex:1;">
+                        <input type="text" id="correct" name="correct_answer" placeholder="Correct Answer (A/B/C/D)" required maxlength="1" style="text-transform: uppercase;">
+                        <div class="image-row">
+                            <input type="file" id="imageUpload" name="image" accept="image/*" style="padding: 6px;">
                             <div id="imagePreview" class="image-preview"></div>
                         </div>
                     </div>
-                    <div class="remove-img-row">
+                    <div class="remove-image-checkbox" style="margin-bottom: 10px;">
                         <input type="checkbox" id="removeImage" name="remove_image" value="true">
                         <label for="removeImage">Remove existing image</label>
                     </div>
-
-                    <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
-                        <button type="submit" id="submitBtn" class="btn btn-primary"><i class="fas fa-save"></i> Add</button>
-                        <button type="button" id="cancelEditBtn" class="btn btn-outline" style="display:none;"><i class="fas fa-times"></i> Cancel</button>
+                    
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" id="submitBtn" class="btn btn-primary"><i class="fas fa-save"></i> Add Question</button>
+                        <button type="button" id="cancelEditBtn" class="btn" style="display: none;"><i class="fas fa-times"></i> Cancel</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- ═══ ACTION ROW: Generate Paper + Bulk Delete ═══ -->
+        <!-- ACTION ROW: Generate Paper + Bulk Delete -->
         <div class="action-row">
-
-            <!-- Generate Paper -->
+            <!-- Generate Paper Card -->
             <div class="card">
-                <div class="card-header"><i class="fas fa-print"></i> Generate Paper</div>
-                <div class="two-cols" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                    <select id="paperClass"><option value="">Class</option></select>
-                    <select id="paperSection"><option value="">Section (All)</option></select>
+                <h3><i class="fas fa-print"></i> Generate Paper</h3>
+                <div class="two-cols">
+                    <select id="paperClassSelect">
+                        <option value="">Select Class</option>
+                    </select>
+                    <select id="paperSubjectSelect">
+                        <option value="">Select Subject</option>
+                    </select>
                 </div>
-                <div class="two-cols" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
-                    <select id="paperSubject"><option value="">Subject</option></select>
-                    <select id="paperTestNo"><option value="">Test No (All)</option></select>
-                </div>
-                <div style="display:flex;gap:8px;margin-top:8px;">
-                    <button id="generatePaperBtn" class="btn btn-info" style="width:100%;justify-content:center;"><i class="fas fa-file-alt"></i> Generate Printable Paper</button>
-                </div>
-                <p class="hint"><i class="fas fa-info-circle"></i> Select options to generate HTML Print Preview &amp; PDF</p>
+                <button id="generatePaperBtn" class="btn btn-info" disabled>
+                    <i class="fas fa-file-pdf"></i> Generate PDF
+                </button>
             </div>
 
-            <!-- Bulk Delete by Filter -->
+            <!-- Bulk Delete Card -->
             <div class="card">
-                <div class="card-header"><i class="fas fa-trash-alt"></i> Bulk Delete by Filter</div>
-                <div class="three-cols">
-                    <select id="bulkClass"><option value="">Class</option></select>
-                    <select id="bulkSection"><option value="">Section</option></select>
-                    <select id="bulkSubject"><option value="">Subject</option></select>
+                <h3><i class="fas fa-trash-alt"></i> Bulk Delete</h3>
+                <div class="two-cols">
+                    <select id="bulkClassSelect">
+                        <option value="">Select Class</option>
+                    </select>
+                    <select id="bulkSubjectSelect">
+                        <option value="">Select Subject</option>
+                    </select>
                 </div>
-                <div style="display:flex;gap:8px;margin-top:6px;">
-                    <input type="text" id="bulkTestNo" placeholder="Test No (optional)" style="flex:1;padding:6px 10px;">
-                    <button id="bulkDeleteFilterBtn" class="btn btn-danger" style="flex-shrink:0;" disabled>
-                        <i class="fas fa-trash-alt"></i> Delete All
-                    </button>
-                </div>
-                <p class="hint"><i class="fas fa-exclamation-triangle"></i> Deletes all matching questions</p>
+                <button id="bulkDeleteBtn" class="btn btn-danger" disabled>
+                    <i class="fas fa-trash-alt"></i> Delete All
+                </button>
+                <p class="hint"><i class="fas fa-exclamation-triangle"></i> Irreversible!</p>
             </div>
         </div>
 
-        <!-- ═══ FILTER BAR + TABLE ═══ -->
-        <div class="card" style="padding-bottom:14px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <i class="fas fa-filter" style="color:#1a237e;font-size:1.1rem;"></i>
-                    <span style="font-weight:600;color:#1a237e;font-size:0.95rem;">Filter Questions</span>
-                </div>
-                <div class="filter-bar">
-                    <select id="filterClass"><option value="">All Classes</option></select>
-                    <select id="filterSection"><option value="">All Sections</option></select>
-                    <select id="filterSubject"><option value="">All Subjects</option></select>
-                    <input type="text" id="filterTestNo" placeholder="Test No" style="width:120px;padding:6px 10px;font-size:0.82rem;">
-                    <button id="applyFilterBtn" class="btn btn-primary btn-sm"><i class="fas fa-check"></i> Apply</button>
-                    <button id="resetFilterBtn" class="btn btn-outline btn-sm"><i class="fas fa-undo-alt"></i> Reset</button>
-                    <span class="filter-count" id="filterCount">0 questions</span>
-                </div>
-            </div>
-
-            <!-- Bulk Selection Bar -->
-            <div class="bulk-bar">
-                <div class="left">
-                    <div class="select-all-wrap">
-                        <input type="checkbox" id="selectAllCheckbox">
-                        <label for="selectAllCheckbox">Select All</label>
-                    </div>
-                    <span id="selectedCount">0 selected</span>
-                </div>
-                <div>
-                    <button id="bulkDeleteSelectedBtn" class="btn btn-danger btn-sm" disabled>
-                        <i class="fas fa-trash-alt"></i> Delete Selected
-                    </button>
-                </div>
-            </div>
-
-            <!-- Table -->
-            <div class="table-wrap">
-                <table id="questionsTable">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="selectAllHead" style="width:14px;height:14px;accent-color:#1a237e;cursor:pointer;"></th>
-                            <th>ID</th>
-                            <th>Class</th>
-                            <th>Subject</th>
-                            <th>Question</th>
-                            <th>Image</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+        <!-- FILTER CARD -->
+        <div class="card filter-card">
+            <h3><i class="fas fa-filter"></i> Filter Questions</h3>
+            <div class="filter-bar">
+                <select id="filterClassSelect">
+                    <option value="">All Classes</option>
+                </select>
+                <select id="filterSubjectSelect">
+                    <option value="">All Subjects</option>
+                </select>
+                <button class="btn btn-primary" id="applyFilterBtn"><i class="fas fa-check"></i> Apply</button>
+                <button class="btn" id="resetFilterBtn"><i class="fas fa-undo-alt"></i> Reset</button>
+                <span style="margin-left: auto; color: #666;" id="filterCount"></span>
             </div>
         </div>
 
-    
-<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
-</footer>
-</div>
+        <!-- QUESTIONS TABLE -->
+        <h3 style="display: flex; align-items: center; gap: 10px; color: #1b5e20; margin-bottom: 10px;">
+            <i class="fas fa-list-ul"></i> Question Bank
+        </h3>
+        <table id="questionsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Class</th>
+                    <th>Subject</th>
+                    <th>Question</th>
+                    <th>Image</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 
     <script>
-        // ─── STATE ─────────────────────────────────────────────────────────
-        let allQuestions = [];
-        let filteredQuestions = [];
         let currentEditId = null;
-        let selectedIds = new Set();
+        let allQuestionsData = [];
+        let filteredQuestions = [];
 
-        // ─── DOM REFS ──────────────────────────────────────────────────────
-        const $ = id => document.getElementById(id);
-        const filterClass = $('filterClass');
-        const filterSection = $('filterSection');
-        const filterSubject = $('filterSubject');
-        const filterTestNo = $('filterTestNo');
-        const applyFilterBtn = $('applyFilterBtn');
-        const resetFilterBtn = $('resetFilterBtn');
-        const filterCount = $('filterCount');
-        const tbody = document.querySelector('#questionsTable tbody');
-        const selectAllHead = $('selectAllHead');
-        const selectAllCheckbox = $('selectAllCheckbox');
-        const selectedCount = $('selectedCount');
-        const bulkDeleteSelectedBtn = $('bulkDeleteSelectedBtn');
+        // DOM Elements
+        const filterClassSelect = document.getElementById('filterClassSelect');
+        const filterSubjectSelect = document.getElementById('filterSubjectSelect');
+        const applyFilterBtn = document.getElementById('applyFilterBtn');
+        const resetFilterBtn = document.getElementById('resetFilterBtn');
+        const filterCount = document.getElementById('filterCount');
 
-        // ─── LOAD DATA ────────────────────────────────────────────────────
+        // Image preview
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
+            if (file) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                preview.appendChild(img);
+                document.getElementById('removeImage').checked = false;
+            }
+        });
+
         function loadQuestions() {
             fetch('/admin/questions/data')
                 .then(res => res.json())
                 .then(data => {
-                    allQuestions = data;
-                    allQuestions.forEach(q => q.section = q.section || '');
-                    populateDropdowns(data);
-                    applyFilters();
-                })
-                .catch(err => console.error(err));
+                    allQuestionsData = data;
+                    populateAllDropdowns(data);
+                    applyQuestionFilters();
+                });
         }
 
-        // ─── POPULATE DROPDOWNS ──────────────────────────────────────────
-        function populateDropdowns(data) {
-            const classes = [...new Set(data.map(q => q.class).filter(Boolean))].sort();
-            const subjects = [...new Set(data.map(q => q.subject).filter(Boolean))].sort();
-            const sections = [...new Set(data.map(q => q.section || '').filter(s => s !== ''))].sort();
-
-            const dropdowns = [
-                { el: filterClass, vals: classes, all: 'All Classes' },
-                { el: filterSubject, vals: subjects, all: 'All Subjects' },
-                { el: filterSection, vals: sections, all: 'All Sections' },
-                { el: $('paperClass'), vals: classes, all: 'Class' },
-                { el: $('paperSubject'), vals: subjects, all: 'Subject' },
-                { el: $('paperSection'), vals: sections, all: 'Section' },
-                { el: $('bulkClass'), vals: classes, all: 'Class' },
-                { el: $('bulkSubject'), vals: subjects, all: 'Subject' },
-                { el: $('bulkSection'), vals: sections, all: 'Section' },
-            ];
-            dropdowns.forEach(({ el, vals, all }) => {
-                const current = el.value;
-                el.innerHTML = `<option value="">${all}</option>`;
-                vals.forEach(v => el.innerHTML += `<option value="${v}">${v}</option>`);
-                if (current) el.value = current;
+        function populateAllDropdowns(data) {
+            const classSubjectMap = new Map();
+            const allClasses = new Set();
+            const allSubjects = new Set();
+            data.forEach(q => {
+                allClasses.add(q.class);
+                allSubjects.add(q.subject);
+                if (!classSubjectMap.has(q.class)) classSubjectMap.set(q.class, new Set());
+                classSubjectMap.get(q.class).add(q.subject);
             });
-            updatePaperFormDropdowns();
+            const classes = Array.from(allClasses).sort();
+            const subjects = Array.from(allSubjects).sort();
+
+            // Filter dropdowns
+            filterClassSelect.innerHTML = '<option value="">All Classes</option>';
+            classes.forEach(c => filterClassSelect.innerHTML += `<option value="${c}">${c}</option>`);
+            filterSubjectSelect.innerHTML = '<option value="">All Subjects</option>';
+            subjects.forEach(s => filterSubjectSelect.innerHTML += `<option value="${s}">${s}</option>`);
+
+            filterClassSelect.addEventListener('change', function() {
+                const selClass = this.value;
+                filterSubjectSelect.innerHTML = '<option value="">All Subjects</option>';
+                if (selClass && classSubjectMap.has(selClass)) {
+                    Array.from(classSubjectMap.get(selClass)).sort().forEach(s => {
+                        filterSubjectSelect.innerHTML += `<option value="${s}">${s}</option>`;
+                    });
+                } else {
+                    subjects.forEach(s => filterSubjectSelect.innerHTML += `<option value="${s}">${s}</option>`);
+                }
+            });
+
+            // Bulk Delete dropdowns
+            const bulkClass = document.getElementById('bulkClassSelect');
+            const bulkSubject = document.getElementById('bulkSubjectSelect');
+            const bulkBtn = document.getElementById('bulkDeleteBtn');
+            bulkClass.innerHTML = '<option value="">Select Class</option>';
+            classes.forEach(c => bulkClass.appendChild(new Option(c, c)));
+            bulkClass.addEventListener('change', function() {
+                const cls = this.value;
+                bulkSubject.innerHTML = '<option value="">Select Subject</option>';
+                bulkBtn.disabled = true;
+                if (cls && classSubjectMap.has(cls)) {
+                    Array.from(classSubjectMap.get(cls)).sort().forEach(s => bulkSubject.appendChild(new Option(s, s)));
+                }
+            });
+            bulkSubject.addEventListener('change', () => bulkBtn.disabled = !(bulkClass.value && bulkSubject.value));
+
+            // Generate Paper dropdowns
+            const paperClass = document.getElementById('paperClassSelect');
+            const paperSubject = document.getElementById('paperSubjectSelect');
+            const paperBtn = document.getElementById('generatePaperBtn');
+            paperClass.innerHTML = '<option value="">Select Class</option>';
+            classes.forEach(c => paperClass.appendChild(new Option(c, c)));
+            paperClass.addEventListener('change', function() {
+                const cls = this.value;
+                paperSubject.innerHTML = '<option value="">Select Subject</option>';
+                paperBtn.disabled = true;
+                if (cls && classSubjectMap.has(cls)) {
+                    Array.from(classSubjectMap.get(cls)).sort().forEach(s => paperSubject.appendChild(new Option(s, s)));
+                }
+            });
+            paperSubject.addEventListener('change', () => paperBtn.disabled = !(paperClass.value && paperSubject.value));
         }
 
-        // ─── FILTER LOGIC ──────────────────────────────────────────────────
-        function applyFilters() {
-            const cls = filterClass.value;
-            const sec = filterSection.value;
-            const sub = filterSubject.value;
-            const tno = filterTestNo.value.trim().toLowerCase();
-
-            filteredQuestions = allQuestions.filter(q => {
-                if (cls && q.class !== cls) return false;
-                if (sec && (q.section || '') !== sec) return false;
-                if (sub && q.subject !== sub) return false;
-                if (tno) {
-                    const qt = (q.test_no || q.chapter || '').toLowerCase();
-                    if (!qt.includes(tno)) return false;
-                }
+        function applyQuestionFilters() {
+            const classVal = filterClassSelect.value;
+            const subjectVal = filterSubjectSelect.value;
+            filteredQuestions = allQuestionsData.filter(q => {
+                if (classVal && q.class !== classVal) return false;
+                if (subjectVal && q.subject !== subjectVal) return false;
                 return true;
             });
-
             renderTable(filteredQuestions);
-            filterCount.textContent = `${filteredQuestions.length} of ${allQuestions.length} questions`;
-            selectedIds.clear();
-            updateSelectionUI();
-            selectAllHead.checked = false;
-            selectAllCheckbox.checked = false;
+            filterCount.textContent = `Showing ${filteredQuestions.length} of ${allQuestionsData.length} questions`;
         }
 
-        // ─── RENDER TABLE ──────────────────────────────────────────────────
         function renderTable(questions) {
-            if (!questions || questions.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><i class="fas fa-search"></i>No questions found</td></tr>`;
+            const tbody = document.querySelector('#questionsTable tbody');
+            if (questions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><i class="fas fa-search"></i><br>No questions found</td></tr>`;
                 return;
             }
-            let html = '';
+            tbody.innerHTML = '';
             questions.forEach(q => {
-                const img = q.image_path ? `<img src="/static/${q.image_path}" class="image-cell" style="max-width:40px;max-height:35px;border-radius:4px;">` : '—';
-                const checked = selectedIds.has(q.id) ? 'checked' : '';
-                html += `<tr>
-                    <td style="text-align:center;"><input type="checkbox" class="row-checkbox" data-id="${q.id}" ${checked}></td>
+                const row = document.createElement('tr');
+                const imageCell = q.image_path ? `<img src="/static/${q.image_path}" style="max-width:40px;max-height:40px;border-radius:4px;">` : '<span style="color:#999;">—</span>';
+                row.innerHTML = `
                     <td>${q.id}</td>
-                    <td><span class="badge">${q.class || ''}</span></td>
-                    <td><span class="badge">${q.subject || ''}</span></td>
-                    <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${q.question}">${q.question}</td>
-                    <td style="text-align:center;">${img}</td>
-                    <td>
-                        <div class="action-btns">
-                            <button class="btn btn-warning btn-sm" onclick="editQuestion(${q.id})"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteQuestion(${q.id})"><i class="fas fa-trash-alt"></i></button>
-                        </div>
+                    <td><span class="badge">${q.class}</span></td>
+                    <td><span class="badge">${q.subject}</span></td>
+                    <td>${q.question}</td>
+                    <td>${imageCell}</td>
+                    <td class="action-btns">
+                        <button class="btn btn-warning btn-icon" onclick="editQuestion(${q.id})"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn btn-danger btn-icon" onclick="deleteQuestion(${q.id})"><i class="fas fa-trash-alt"></i> Delete</button>
                     </td>
-                </tr>`;
+                `;
+                tbody.appendChild(row);
             });
-            tbody.innerHTML = html;
-
-            document.querySelectorAll('.row-checkbox').forEach(cb => {
-                cb.addEventListener('change', function() {
-                    const id = parseInt(this.dataset.id);
-                    if (this.checked) selectedIds.add(id);
-                    else selectedIds.delete(id);
-                    updateSelectionUI();
-                });
-            });
-            updateSelectionUI();
         }
 
-        // ─── SELECTION UI ──────────────────────────────────────────────────
-        function updateSelectionUI() {
-            const count = selectedIds.size;
-            selectedCount.textContent = `${count} selected`;
-            bulkDeleteSelectedBtn.disabled = count === 0;
-            const rows = document.querySelectorAll('.row-checkbox');
-            const checkedRows = document.querySelectorAll('.row-checkbox:checked');
-            const allChecked = rows.length > 0 && rows.length === checkedRows.length;
-            selectAllHead.checked = allChecked;
-            selectAllCheckbox.checked = allChecked;
-        }
-
-        // ─── SELECT ALL ────────────────────────────────────────────────────
-        function toggleSelectAll(checked) {
-            document.querySelectorAll('.row-checkbox').forEach(cb => {
-                cb.checked = checked;
-                const id = parseInt(cb.dataset.id);
-                if (checked) selectedIds.add(id);
-                else selectedIds.delete(id);
-            });
-            updateSelectionUI();
-        }
-
-        selectAllHead.addEventListener('change', function() { toggleSelectAll(this.checked); });
-        selectAllCheckbox.addEventListener('change', function() { toggleSelectAll(this.checked); });
-
-        // ─── BULK DELETE SELECTED ────────────────────────────────────────
-        bulkDeleteSelectedBtn.addEventListener('click', function() {
-            const ids = Array.from(selectedIds);
-            if (ids.length === 0) return;
-            if (!confirm(`Delete ${ids.length} selected question(s)?`)) return;
-            let deleted = 0;
-            const promises = ids.map(id =>
-                fetch(`/admin/question/delete/${id}`, { method: 'DELETE' })
-                .then(() => { deleted++; })
-                .catch(() => {})
-            );
-            Promise.all(promises).then(() => {
-                alert(`Deleted ${deleted} question(s).`);
-                selectedIds.clear();
-                loadQuestions();
-            });
-        });
-
-        // ─── BULK DELETE BY FILTER ───────────────────────────────────────
-        const bulkDeleteFilterBtn = $('bulkDeleteFilterBtn');
-
-        function checkBulkFilterReady() {
-            const cls = $('bulkClass').value;
-            const sub = $('bulkSubject').value;
-            bulkDeleteFilterBtn.disabled = !(cls && sub);
-        }
-        $('bulkClass').addEventListener('change', checkBulkFilterReady);
-        $('bulkSubject').addEventListener('change', checkBulkFilterReady);
-        $('bulkSection').addEventListener('change', checkBulkFilterReady);
-        $('bulkTestNo').addEventListener('input', checkBulkFilterReady);
-
-        bulkDeleteFilterBtn.addEventListener('click', function() {
-            const cls = $('bulkClass').value;
-            const sec = $('bulkSection').value;
-            const sub = $('bulkSubject').value;
-            const tno = $('bulkTestNo').value.trim();
-            if (!cls || !sub) return;
-
-            const matches = allQuestions.filter(q => {
-                if (q.class !== cls) return false;
-                if (sec && (q.section || '') !== sec) return false;
-                if (q.subject !== sub) return false;
-                if (tno) {
-                    const qt = (q.test_no || q.chapter || '').toLowerCase();
-                    if (!qt.includes(tno.toLowerCase())) return false;
-                }
-                return true;
-            });
-            if (matches.length === 0) {
-                alert('No questions match this filter.');
-                return;
-            }
-            if (!confirm(`Delete ALL ${matches.length} questions matching this filter?`)) return;
-
-            const ids = matches.map(q => q.id);
-            let deleted = 0;
-            const promises = ids.map(id =>
-                fetch(`/admin/question/delete/${id}`, { method: 'DELETE' })
-                .then(() => { deleted++; })
-                .catch(() => {})
-            );
-            Promise.all(promises).then(() => {
-                alert(`Deleted ${deleted} question(s).`);
-                loadQuestions();
-            });
-        });
-
-        // ─── DELETE SINGLE ─────────────────────────────────────────────────
         function deleteQuestion(id) {
-            if (!confirm('Delete this question?')) return;
-            fetch(`/admin/question/delete/${id}`, { method: 'DELETE' })
-                .then(() => {
-                    if (currentEditId === id) resetForm();
+            if(confirm('Delete this question?')) {
+                fetch(`/admin/question/delete/${id}`, {method:'DELETE'}).then(() => {
                     loadQuestions();
+                    if (currentEditId === id) resetForm();
                 });
+            }
         }
 
-        // ─── EDIT QUESTION ────────────────────────────────────────────────
         function editQuestion(id) {
-            const q = allQuestions.find(q => q.id === id);
+            const q = allQuestionsData.find(q => q.id === id);
             if (!q) return;
-            $('editId').value = q.id;
-            $('class').value = q.class || '';
-            $('subject').value = q.subject || '';
-            $('question').value = q.question || '';
-            $('opt_a').value = q.option_a || '';
-            $('opt_b').value = q.option_b || '';
-            $('opt_c').value = q.option_c || '';
-            $('opt_d').value = q.option_d || '';
-            $('correct').value = q.correct_answer || '';
-            const preview = $('imagePreview');
+            document.getElementById('editId').value = q.id;
+            document.getElementById('class').value = q.class;
+            document.getElementById('subject').value = q.subject;
+            document.getElementById('question').value = q.question;
+            document.getElementById('opt_a').value = q.option_a;
+            document.getElementById('opt_b').value = q.option_b;
+            document.getElementById('opt_c').value = q.option_c;
+            document.getElementById('opt_d').value = q.option_d;
+            document.getElementById('correct').value = q.correct_answer;
+            const preview = document.getElementById('imagePreview');
             preview.innerHTML = q.image_path ? `<img src="/static/${q.image_path}">` : '';
-            $('removeImage').checked = false;
-            $('imageUpload').value = '';
+            document.getElementById('removeImage').checked = false;
+            document.getElementById('imageUpload').value = '';
             currentEditId = id;
-            $('formTitle').innerHTML = '<i class="fas fa-pen"></i> Edit Question';
-            $('submitBtn').innerHTML = '<i class="fas fa-sync-alt"></i> Update';
-            $('cancelEditBtn').style.display = 'inline-block';
-            document.querySelectorAll('#addQuestionForm input:not([type=file]):not([type=checkbox]), #addQuestionForm textarea')
-                .forEach(el => el.classList.add('edit-mode'));
-            $('addQuestionForm').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('formTitle').innerHTML = '<i class="fas fa-pen"></i> Edit Question';
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-sync-alt"></i> Update Question';
+            document.getElementById('cancelEditBtn').style.display = 'inline-block';
+            document.querySelectorAll('#addQuestionForm input:not([type=file]):not([type=checkbox]), #addQuestionForm textarea').forEach(el => el.classList.add('edit-mode'));
+            document.getElementById('addQuestionForm').scrollIntoView({behavior: 'smooth'});
         }
 
-        // ─── RESET FORM ────────────────────────────────────────────────────
         function resetForm() {
-            $('editId').value = '';
-            $('addQuestionForm').reset();
-            $('imagePreview').innerHTML = '';
-            $('removeImage').checked = false;
+            document.getElementById('editId').value = '';
+            document.getElementById('addQuestionForm').reset();
+            document.getElementById('imagePreview').innerHTML = '';
+            document.getElementById('removeImage').checked = false;
             currentEditId = null;
-            $('formTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Add Question';
-            $('submitBtn').innerHTML = '<i class="fas fa-save"></i> Add';
-            $('cancelEditBtn').style.display = 'none';
-            document.querySelectorAll('#addQuestionForm input:not([type=file]):not([type=checkbox]), #addQuestionForm textarea')
-                .forEach(el => el.classList.remove('edit-mode'));
+            document.getElementById('formTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Add Single Question';
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Add Question';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+            document.querySelectorAll('#addQuestionForm input:not([type=file]):not([type=checkbox]), #addQuestionForm textarea').forEach(el => el.classList.remove('edit-mode'));
         }
-        $('cancelEditBtn').addEventListener('click', resetForm);
 
-        // ─── ADD / UPDATE FORM SUBMIT ────────────────────────────────────
-        $('addQuestionForm').addEventListener('submit', function(e) {
+        document.getElementById('addQuestionForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(this);
-            formData.set('correct_answer', $('correct').value.toUpperCase());
+            formData.set('correct_answer', document.getElementById('correct').value.toUpperCase());
             const url = currentEditId ? `/admin/question/update/${currentEditId}` : '/admin/question/add';
             fetch(url, { method: 'POST', body: formData })
                 .then(res => res.json())
@@ -851,175 +597,50 @@
                         resetForm();
                         loadQuestions();
                     } else alert('Error saving question');
-                })
-                .catch(() => alert('Error saving question'));
+                }).catch(err => alert('Error saving question'));
         });
 
-        // ─── IMAGE PREVIEW ─────────────────────────────────────────────────
-        $('imageUpload').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const preview = $('imagePreview');
-            preview.innerHTML = '';
-            if (file) {
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
-                preview.appendChild(img);
-                $('removeImage').checked = false;
-            }
+        document.getElementById('cancelEditBtn').addEventListener('click', resetForm);
+
+        document.getElementById('bulkDeleteBtn').addEventListener('click', function() {
+            const cls = document.getElementById('bulkClassSelect').value;
+            const sub = document.getElementById('bulkSubjectSelect').value;
+            if (!cls || !sub) return;
+            const count = allQuestionsData.filter(q => q.class === cls && q.subject === sub).length;
+            if (!confirm(`Delete ALL ${count} questions for ${cls} - ${sub}?`)) return;
+            fetch('/admin/questions/delete_by_class_subject', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({class: cls, subject: sub})
+            }).then(res => res.json()).then(data => {
+                if (data.status === 'success') {
+                    alert(`Deleted ${data.deleted} questions.`);
+                    loadQuestions();
+                    document.getElementById('bulkClassSelect').value = '';
+                    document.getElementById('bulkSubjectSelect').innerHTML = '<option value="">Select Subject</option>';
+                    document.getElementById('bulkDeleteBtn').disabled = true;
+                }
+            });
         });
 
-        // ─── GENERATE PAPER ──────────────────────────────────────────────
-        $('generatePaperBtn').addEventListener('click', function() {
-            const cls = $('paperClass').value;
-            const sec = $('paperSection').value;
-            const sub = $('paperSubject').value;
-            const tno = $('paperTestNo').value.trim();
-            if (!cls || !sub) {
-                alert('Please select Class and Subject.');
-                return;
-            }
-            let url = `/admin/generate_question_paper?class=${encodeURIComponent(cls)}&subject=${encodeURIComponent(sub)}`;
-            if (sec) url += `&section=${encodeURIComponent(sec)}`;
-            if (tno) url += `&test_no=${encodeURIComponent(tno)}`;
-            window.open(url, '_blank');
+        document.getElementById('generatePaperBtn').addEventListener('click', function() {
+            const cls = document.getElementById('paperClassSelect').value;
+            const sub = document.getElementById('paperSubjectSelect').value;
+            if (cls && sub) window.open(`/admin/print_question_paper?class=${cls}&subject=${sub}`, '_blank');
         });
 
-        // ─── FILTER BUTTONS ──────────────────────────────────────────────
-        applyFilterBtn.addEventListener('click', applyFilters);
+        applyFilterBtn.addEventListener('click', applyQuestionFilters);
         resetFilterBtn.addEventListener('click', function() {
-            filterClass.value = '';
-            filterSection.value = '';
-            filterSubject.value = '';
-            filterTestNo.value = '';
-            applyFilters();
+            filterClassSelect.value = '';
+            filterSubjectSelect.value = '';
+            // Reset subject dropdown
+            const allSubjects = [...new Set(allQuestionsData.map(q => q.subject))].sort();
+            filterSubjectSelect.innerHTML = '<option value="">All Subjects</option>';
+            allSubjects.forEach(s => filterSubjectSelect.innerHTML += `<option value="${s}">${s}</option>`);
+            applyQuestionFilters();
         });
 
-        // ─── KEYBOARD SHORTCUT ────────────────────────────────────────────
-        filterTestNo.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') applyFilters();
-        });
-
-        // ─── DYNAMIC DROPDOWNS FOR GENERATE PAPER ────────────────────────
-        function updatePaperFormDropdowns(changedField) {
-            const paperClsEl = $('paperClass');
-            const paperSecEl = $('paperSection');
-            const paperSubEl = $('paperSubject');
-            const paperTestEl = $('paperTestNo');
-
-            if (!paperClsEl || !paperSecEl || !paperSubEl || !paperTestEl) return;
-
-            const selectedCls = paperClsEl.value;
-            const selectedSec = paperSecEl.value;
-            const selectedSub = paperSubEl.value;
-            const selectedTest = paperTestEl.value;
-
-            const cleanCls = selectedCls ? selectedCls.replace(/\D/g, '') : '';
-
-            // 1. Filter by Class
-            let qsCls = allQuestions;
-            if (selectedCls) {
-                qsCls = allQuestions.filter(q => {
-                    if (q.class === selectedCls) return true;
-                    if (cleanCls && q.class && q.class.replace(/\D/g, '') === cleanCls) return true;
-                    return false;
-                });
-            }
-
-            // 2. Update Sections
-            if (changedField === 'class' || !changedField) {
-                const secs = [...new Set(qsCls.map(q => q.section || '').filter(Boolean))].sort();
-                paperSecEl.innerHTML = '<option value="">Section (All)</option>';
-                secs.forEach(s => paperSecEl.innerHTML += `<option value="${s}">${s}</option>`);
-                if (secs.includes(selectedSec)) paperSecEl.value = selectedSec;
-            }
-
-            // 3. Filter by Section
-            const currentSec = paperSecEl.value;
-            let qsSec = qsCls;
-            if (currentSec) {
-                qsSec = qsCls.filter(q => (q.section || '') === currentSec);
-            }
-
-            // 4. Update Subjects
-            if (changedField === 'class' || changedField === 'section' || !changedField) {
-                const subs = [...new Set(qsSec.map(q => q.subject).filter(Boolean))].sort();
-                paperSubEl.innerHTML = '<option value="">Subject</option>';
-                subs.forEach(s => paperSubEl.innerHTML += `<option value="${s}">${s}</option>`);
-                if (subs.includes(selectedSub)) paperSubEl.value = selectedSub;
-            }
-
-            // 5. Filter by Subject
-            const currentSub = paperSubEl.value;
-            let qsSub = qsSec;
-            if (currentSub) {
-                qsSub = qsSec.filter(q => q.subject === currentSub);
-            }
-
-            // 6. Update Test No Dropdown (ONLY shows tests created for selected Class, Section & Subject)
-            const tests = [...new Set(qsSub.map(q => q.test_no || q.chapter).filter(Boolean))].sort();
-            paperTestEl.innerHTML = '<option value="">Test No (All)</option>';
-            tests.forEach(t => paperTestEl.innerHTML += `<option value="${t}">${t}</option>`);
-            if (tests.includes(selectedTest)) paperTestEl.value = selectedTest;
-        }
-
-        $('paperClass')?.addEventListener('change', () => updatePaperFormDropdowns('class'));
-        $('paperSection')?.addEventListener('change', () => updatePaperFormDropdowns('section'));
-        $('paperSubject')?.addEventListener('change', () => updatePaperFormDropdowns('subject'));
-
-        $('bulkClass').addEventListener('change', function() {
-            const cls = this.value;
-            const sec = $('bulkSection').value;
-            const target = $('bulkSubject');
-            target.innerHTML = '<option value="">Subject</option>';
-            const subs = [...new Set(allQuestions
-                .filter(q => q.class === cls && (!sec || (q.section || '') === sec))
-                .map(q => q.subject)
-                .filter(Boolean)
-            )].sort();
-            subs.forEach(s => target.innerHTML += `<option value="${s}">${s}</option>`);
-            checkBulkFilterReady();
-        });
-        $('bulkSection').addEventListener('change', function() {
-            const cls = $('bulkClass').value;
-            if (cls) {
-                const target = $('bulkSubject');
-                target.innerHTML = '<option value="">Subject</option>';
-                const sec = this.value;
-                const subs = [...new Set(allQuestions
-                    .filter(q => q.class === cls && (!sec || (q.section || '') === sec))
-                    .map(q => q.subject)
-                    .filter(Boolean)
-                )].sort();
-                subs.forEach(s => target.innerHTML += `<option value="${s}">${s}</option>`);
-            }
-            checkBulkFilterReady();
-        });
-
-        // ─── FILTER SECTION DEPENDENCY ──────────────────────────────────
-        filterClass.addEventListener('change', function() {
-            const cls = this.value;
-            const target = filterSubject;
-            target.innerHTML = '<option value="">All Subjects</option>';
-            const subs = [...new Set(allQuestions
-                .filter(q => q.class === cls)
-                .map(q => q.subject)
-                .filter(Boolean)
-            )].sort();
-            subs.forEach(s => target.innerHTML += `<option value="${s}">${s}</option>`);
-            // Also update section dropdown
-            const secTarget = filterSection;
-            secTarget.innerHTML = '<option value="">All Sections</option>';
-            const secs = [...new Set(allQuestions
-                .filter(q => q.class === cls)
-                .map(q => q.section || '')
-                .filter(s => s !== '')
-            )].sort();
-            secs.forEach(s => secTarget.innerHTML += `<option value="${s}">${s}</option>`);
-        });
-
-        // ─── INIT ─────────────────────────────────────────────────────────
         loadQuestions();
     </script>
-
 </body>
 </html>
