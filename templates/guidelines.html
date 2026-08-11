@@ -7,544 +7,127 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #e8edf5 0%, #c5cae9 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 16px 12px 30px;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        /* ── Floating particles background ────────────────────────── */
-        .particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            overflow: hidden;
-        }
-
-        .particle {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: rgba(26, 35, 126, 0.06);
-            border-radius: 50%;
-            animation: floatUp linear infinite;
-        }
-
-        .particle:nth-child(1) { left: 10%; animation-duration: 12s; animation-delay: 0s; width: 12px; height: 12px; }
-        .particle:nth-child(2) { left: 20%; animation-duration: 15s; animation-delay: 2s; }
-        .particle:nth-child(3) { left: 30%; animation-duration: 10s; animation-delay: 1s; width: 6px; height: 6px; }
-        .particle:nth-child(4) { left: 40%; animation-duration: 18s; animation-delay: 3s; width: 14px; height: 14px; }
-        .particle:nth-child(5) { left: 50%; animation-duration: 13s; animation-delay: 0.5s; }
-        .particle:nth-child(6) { left: 60%; animation-duration: 16s; animation-delay: 2.5s; width: 10px; height: 10px; }
-        .particle:nth-child(7) { left: 70%; animation-duration: 11s; animation-delay: 1.5s; }
-        .particle:nth-child(8) { left: 80%; animation-duration: 14s; animation-delay: 3.5s; width: 8px; height: 8px; }
-
-        @keyframes floatUp {
-            0% { transform: translateY(100vh) scale(0); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
-        }
-
-        /* ── Watermark ─────────────────────────────────────────────── */
-        .watermark {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-25deg);
-            font-size: 7vw;
-            color: rgba(26, 35, 126, 0.04);
-            white-space: nowrap;
-            pointer-events: none;
-            z-index: 0;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 8px;
-            user-select: none;
-        }
-
-        /* ── Top Brand Bar ─────────────────────────────────────────── */
-        .brand-bar {
-            width: 100%;
-            max-width: 720px;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.94);
-            backdrop-filter: blur(8px);
-            border-radius: 50px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-            border: 1px solid rgba(26, 35, 126, 0.1);
-            z-index: 2;
-            margin-bottom: 16px;
-        }
-
-        .brand-bar .brand {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .brand-bar .brand .logo {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(26, 35, 126, 0.2);
-            flex-shrink: 0;
-        }
-
-        .brand-bar .brand .logo-placeholder {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #1a237e, #3949ab);
-            display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 0.95rem;
-            flex-shrink: 0;
-        }
-
-        .brand-bar .brand .name {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #1a237e;
-        }
-
-        .brand-bar .brand .tag {
-            font-size: 0.65rem;
-            color: #64748b;
-            font-weight: 400;
-        }
-
-        .brand-bar .status-pill {
-            background: #e8eaf6;
-            color: #1a237e;
-            padding: 5px 14px;
-            border-radius: 20px;
-            font-size: 0.72rem;
-            font-weight: 600;
-            border: 1px solid #c5cae9;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-        }
-
-        /* ── Guidelines Card ────────────────────────────────────────── */
-        .guidelines-card {
-            background: #ffffff;
-            border-radius: 24px;
-            padding: 30px 28px;
-            box-shadow: 0 12px 40px rgba(26, 35, 126, 0.08);
-            border: 1px solid rgba(26, 35, 126, 0.1);
-            max-width: 720px;
-            width: 100%;
-            z-index: 1;
-            position: relative;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-
-        .guidelines-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #1a237e, #667eea, #1a237e);
-        }
-
-        .guidelines-card h2 {
-            color: #1a237e;
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .guidelines-card .subtitle {
-            color: #64748b;
-            font-size: 0.85rem;
-            margin-bottom: 18px;
-        }
-
-        /* ── Student Info ──────────────────────────────────────────── */
-        .student-info {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-            gap: 8px 16px;
-            background: #f0f4ff;
-            padding: 10px 18px;
-            border-radius: 30px;
-            margin-bottom: 20px;
-            border: 1px solid #c5cae9;
-        }
-
-        .student-info span {
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: #1a237e;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-        }
-
-        .student-info span i {
-            color: #3949ab;
-        }
-
-        /* ── Rules List ────────────────────────────────────────────── */
-        .rules-list {
-            background: #f8fafc;
-            padding: 16px 20px;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .rules-list ul {
-            list-style: none;
-            padding: 0;
             margin: 0;
+            padding: 20px;
         }
-
-        .rules-list ul li {
+        .guidelines-card {
+            background: white;
+            max-width: 700px;
+            width: 100%;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 30px;
+            border-top: 8px solid #2e7d32;
+        }
+        h2 {
+            color: #1b5e20;
+            margin-bottom: 20px;
             display: flex;
-            flex-direction: row;
-            align-items: flex-start;
+            align-items: center;
             gap: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid #f1f5f9;
-            color: #334155;
-            font-size: 0.88rem;
-            line-height: 1.55;
         }
-
-        .rules-list ul li:last-child {
-            border-bottom: none;
+        .rules-list {
+            background: #f9f9f9;
+            padding: 20px 25px;
+            border-radius: 20px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
         }
-
-        .rules-list ul li .rule-icon {
-            flex-shrink: 0;
-            margin-top: 4px;
+        .rules-list li {
+            margin-bottom: 12px;
+            color: #333;
         }
-
-        .rules-list ul li .rule-icon i {
-            font-size: 0.55rem;
-            color: #1a237e;
-        }
-
-        .rules-list ul li .rule-text {
-            flex: 1;
-        }
-
-        .rules-list ul li .rule-text strong {
-            color: #1a237e;
-        }
-
-        /* ── Checkbox Area ─────────────────────────────────────────── */
         .checkbox-area {
             display: flex;
-            flex-direction: row;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            padding: 12px 18px;
-            background: #f0f4ff;
-            border-radius: 14px;
-            border: 1.5px solid #c5cae9;
-            transition: background 0.2s ease;
+            gap: 12px;
+            margin: 25px 0;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 50px;
         }
-
-        .checkbox-area:hover {
-            background: #e8eaf6;
+        .checkbox-area input {
+            width: 22px;
+            height: 22px;
+            accent-color: #2e7d32;
         }
-
-        .checkbox-area input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            accent-color: #1a237e;
-            flex-shrink: 0;
-            cursor: pointer;
-        }
-
-        .checkbox-area label {
-            font-weight: 500;
-            color: #1e293b;
-            font-size: 0.88rem;
-            cursor: pointer;
-            flex: 1;
-            line-height: 1.4;
-        }
-
-        .checkbox-area .check-icon {
-            color: #1a237e;
-            opacity: 0.3;
-            transition: opacity 0.2s ease;
-        }
-
-        .checkbox-area input:checked ~ .check-icon {
-            opacity: 1;
-        }
-
-        /* ── Start Button ──────────────────────────────────────────── */
         .btn-start {
-            background: linear-gradient(135deg, #1a237e, #3949ab);
+            background: linear-gradient(135deg, #2e7d32, #43a047);
             color: white;
             border: none;
-            padding: 14px 28px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-family: 'Poppins', sans-serif;
-            font-size: 1rem;
+            padding: 16px 30px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1.2rem;
             cursor: pointer;
             width: 100%;
-            transition: all 0.3s ease;
+            transition: 0.3s;
             opacity: 0.5;
             pointer-events: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 4px 15px rgba(26, 35, 126, 0.15);
         }
-
         .btn-start.enabled {
             opacity: 1;
             pointer-events: auto;
         }
-
         .btn-start.enabled:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(26, 35, 126, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(46,125,50,0.3);
         }
-
-        /* ── Footer Credit ─────────────────────────────────────────── */
-        .footer-note {
-            margin-top: 20px;
-            padding-top: 14px;
-            border-top: 1px dashed rgba(0, 0, 0, 0.1);
-            text-align: center;
-            font-size: 0.82rem;
-            color: #64748b;
-        }
-
-        /* ── Mobile Responsive Overrides ───────────────────────────── */
-        @media (max-width: 600px) {
-            body {
-                padding: 10px 8px 20px;
-            }
-
-            .brand-bar {
-                padding: 8px 14px;
-                border-radius: 30px;
-                margin-bottom: 12px;
-            }
-
-            .brand-bar .brand .name {
-                font-size: 0.85rem;
-            }
-
-            .brand-bar .status-pill {
-                font-size: 0.65rem;
-                padding: 4px 10px;
-            }
-
-            .guidelines-card {
-                padding: 20px 16px;
-                border-radius: 18px;
-            }
-
-            .guidelines-card h2 {
-                font-size: 1.15rem;
-            }
-
-            .student-info {
-                padding: 8px 12px;
-                gap: 6px 10px;
-                border-radius: 20px;
-            }
-
-            .student-info span {
-                font-size: 0.75rem;
-            }
-
-            .rules-list {
-                padding: 12px 14px;
-            }
-
-            .rules-list ul li {
-                font-size: 0.82rem;
-                padding: 6px 0;
-            }
-
-            .checkbox-area {
-                padding: 10px 12px;
-            }
-
-            .checkbox-area label {
-                font-size: 0.82rem;
-            }
-
-            .btn-start {
-                padding: 12px 20px;
-                font-size: 0.92rem;
-                border-radius: 10px;
-            }
-
-            .watermark {
-                font-size: 12vw;
-            }
+        .student-info {
+            display: flex;
+            justify-content: space-between;
+            background: #f5f5f5;
+            padding: 12px 20px;
+            border-radius: 50px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-
-    <!-- ── Floating Particles ────────────────────────────────────────── -->
-    <div class="particles">
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-    </div>
-
-    <!-- ── Watermark ──────────────────────────────────────────────────── -->
     <div class="watermark">RRB Group of Schools</div>
-
-    <!-- ── Brand Bar ──────────────────────────────────────────────────── -->
-    <div class="brand-bar">
-        <div class="brand">
-            {% if logo_path %}
-                <img src="{{ url_for('static', filename=logo_path) }}" class="logo" alt="Logo">
-            {% else %}
-                <div class="logo-placeholder"><i class="fas fa-graduation-cap"></i></div>
-            {% endif %}
-            <div>
-                <div class="name">{{ school_name|default('RRB Group of Schools') }}</div>
-                <div class="tag">Computer Based Test</div>
-            </div>
-        </div>
-        <div class="status-pill">
-            <i class="fas fa-file-alt"></i>
-            Guidelines
-        </div>
-    </div>
-
-    <!-- ── Guidelines Card ────────────────────────────────────────────── -->
     <div class="guidelines-card">
-        <h2><i class="fas fa-gavel" style="color:#1a237e;"></i> Exam Guidelines</h2>
-        <p class="subtitle">Please read all instructions carefully before starting the exam</p>
-
-        <!-- Student Info -->
+        <h2><i class="fas fa-gavel"></i> Exam Guidelines & Rules</h2>
+        
         <div class="student-info">
-            <span><i class="fas fa-user"></i> {{ session.get('student_name', 'Student') }}</span>
-            <span><i class="fas fa-id-card"></i> {{ session.get('student_id', '—') }}</span>
-            <span><i class="fas fa-graduation-cap"></i> {{ session.get('class', '—') }}</span>
-            <span><i class="fas fa-book"></i> {{ session.get('subject', '—') }}</span>
-            {% if session.get('test_no') %}
-                <span><i class="fas fa-file-alt"></i> {{ session.get('test_no') }}</span>
-            {% endif %}
+            <span><i class="fas fa-user"></i> {{ session.get('student_name') }}</span>
+            <span><i class="fas fa-id-card"></i> {{ session.get('student_id') }}</span>
+            <span><i class="fas fa-book"></i> {{ session.get('subject') }}</span>
         </div>
-
-        <!-- Rules List -->
+        
         <div class="rules-list">
-            <ul>
-                <li>
-                    <span class="rule-icon"><i class="fas fa-circle"></i></span>
-                    <span class="rule-text"><strong>Timed Exam:</strong> The timer will start as soon as you click "Start Exam".</span>
-                </li>
-                <li>
-                    <span class="rule-icon"><i class="fas fa-circle"></i></span>
-                    <span class="rule-text"><strong>No Refresh:</strong> Do not refresh or close the browser during the exam.</span>
-                </li>
-                <li>
-                    <span class="rule-icon"><i class="fas fa-circle"></i></span>
-                    <span class="rule-text"><strong>Fullscreen Mode:</strong> Fullscreen is mandatory. Exiting fullscreen will auto-submit your exam.</span>
-                </li>
-                <li>
-                    <span class="rule-icon"><i class="fas fa-circle"></i></span>
-                    <span class="rule-text"><strong>Navigation:</strong> Use the question palette to navigate. Mark questions for review if unsure.</span>
-                </li>
-                <li>
-                    <span class="rule-icon"><i class="fas fa-circle"></i></span>
-                    <span class="rule-text"><strong>Auto-Save:</strong> Answers are saved automatically when you select an option.</span>
-                </li>
-                <li>
-                    <span class="rule-icon"><i class="fas fa-circle"></i></span>
-                    <span class="rule-text"><strong>Final Submission:</strong> Once submitted, you cannot change your answers.</span>
-                </li>
-                <li>
-                    <span class="rule-icon"><i class="fas fa-circle"></i></span>
-                    <span class="rule-text"><strong>Fair Means:</strong> Any unfair means will lead to disqualification.</span>
-                </li>
-                <li>
-                    <span class="rule-icon"><i class="fas fa-circle"></i></span>
-                    <span class="rule-text"><strong>Technical Issues:</strong> If you face technical issues, inform the invigilator immediately.</span>
-                </li>
+            <ul style="padding-left:20px;">
+                <li><i class="fas fa-circle" style="font-size:8px; color:#2e7d32; margin-right:8px;"></i> This is a timed exam. The timer will start as soon as you click "Start Exam".</li>
+                <li><i class="fas fa-circle" style="font-size:8px; color:#2e7d32; margin-right:8px;"></i> Do not refresh or close the browser during the exam.</li>
+                <li><i class="fas fa-circle" style="font-size:8px; color:#2e7d32; margin-right:8px;"></i> Fullscreen mode is mandatory. Exiting fullscreen will auto‑submit your exam.</li>
+                <li><i class="fas fa-circle" style="font-size:8px; color:#2e7d32; margin-right:8px;"></i> You can navigate questions using the palette. Mark questions for review if unsure.</li>
+                <li><i class="fas fa-circle" style="font-size:8px; color:#2e7d32; margin-right:8px;"></i> Answers are saved automatically when you select an option.</li>
+                <li><i class="fas fa-circle" style="font-size:8px; color:#2e7d32; margin-right:8px;"></i> Once submitted, you cannot change your answers.</li>
+                <li><i class="fas fa-circle" style="font-size:8px; color:#2e7d32; margin-right:8px;"></i> Any unfair means will lead to disqualification.</li>
+                <li><i class="fas fa-circle" style="font-size:8px; color:#2e7d32; margin-right:8px;"></i> If you face technical issues, inform the invigilator immediately.</li>
             </ul>
         </div>
-
-        <!-- Agreement Checkbox -->
+        
         <div class="checkbox-area">
             <input type="checkbox" id="agreeCheck">
-            <label for="agreeCheck">
-                I have read and understood all the rules and agree to abide by them.
-            </label>
-            <span class="check-icon"><i class="fas fa-check-circle"></i></span>
+            <label for="agreeCheck" style="font-weight:500;">I have read and understood all the rules and agree to abide by them.</label>
         </div>
-
-        <!-- Start Button -->
+        
         <form action="/accept_guidelines" method="POST">
-            <button type="submit" id="startBtn" class="btn-start" disabled>
-                <i class="fas fa-play"></i> Start Exam
-            </button>
+            <button type="submit" id="startBtn" class="btn-start" disabled>Start Exam</button>
         </form>
-
-        <!-- Footer Credit -->
-        <div class="footer-note">
-            <i class="fas fa-shield-alt" style="color:#1a237e;"></i> RRB CBT &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
-        </div>
     </div>
-
-    <!-- JavaScript -->
+    
     <script>
         const checkbox = document.getElementById('agreeCheck');
         const startBtn = document.getElementById('startBtn');
-
+        
         checkbox.addEventListener('change', function() {
             if (this.checked) {
                 startBtn.disabled = false;
