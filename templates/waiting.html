@@ -7,25 +7,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #e8edf5 0%, #c5cae9 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
             animation: gradientShift 15s ease infinite;
             background-size: 200% 200%;
+            margin: 0;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
         }
 
         @keyframes gradientShift {
@@ -34,180 +23,58 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* ─── Floating particles background ──────────────────────────── */
-        .particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            overflow: hidden;
-        }
-
-        .particle {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: rgba(26, 35, 126, 0.06);
-            border-radius: 50%;
-            animation: floatUp linear infinite;
-        }
-
-        .particle:nth-child(1) { left: 10%; animation-duration: 12s; animation-delay: 0s; width: 12px; height: 12px; }
-        .particle:nth-child(2) { left: 20%; animation-duration: 15s; animation-delay: 2s; }
-        .particle:nth-child(3) { left: 30%; animation-duration: 10s; animation-delay: 1s; width: 6px; height: 6px; }
-        .particle:nth-child(4) { left: 40%; animation-duration: 18s; animation-delay: 3s; width: 14px; height: 14px; }
-        .particle:nth-child(5) { left: 50%; animation-duration: 13s; animation-delay: 0.5s; }
-        .particle:nth-child(6) { left: 60%; animation-duration: 16s; animation-delay: 2.5s; width: 10px; height: 10px; }
-        .particle:nth-child(7) { left: 70%; animation-duration: 11s; animation-delay: 1.5s; }
-        .particle:nth-child(8) { left: 80%; animation-duration: 14s; animation-delay: 3.5s; width: 8px; height: 8px; }
-        .particle:nth-child(9) { left: 90%; animation-duration: 17s; animation-delay: 0.8s; width: 16px; height: 16px; }
-        .particle:nth-child(10) { left: 95%; animation-duration: 12s; animation-delay: 2s; }
-
-        @keyframes floatUp {
-            0% { transform: translateY(100vh) scale(0); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
-        }
-
-        /* ─── Watermark ────────────────────────────────────────────────── */
         .watermark {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-25deg);
-            font-size: 7vw;
-            color: rgba(26, 35, 126, 0.04);
+            font-size: 8vw;
+            color: rgba(0, 128, 0, 0.03);
             white-space: nowrap;
             pointer-events: none;
             z-index: 0;
-            font-weight: 800;
+            font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 8px;
-            user-select: none;
         }
 
-        /* ─── Top Brand Bar ────────────────────────────────────────────── */
-        .brand-bar {
-            width: 100%;
-            max-width: 700px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 10px;
-            z-index: 1;
-        }
-
-        .brand-bar .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .brand-bar .brand .logo {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(26, 35, 126, 0.2);
-        }
-
-        .brand-bar .brand .logo-placeholder {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #1a237e, #3949ab);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2rem;
-        }
-
-        .brand-bar .brand .name {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #1a237e;
-        }
-
-        .brand-bar .brand .tag {
-            font-size: 0.65rem;
-            color: #888;
-            font-weight: 400;
-        }
-
-        .brand-bar .status-pill {
-            background: #e8eaf6;
-            color: #1a237e;
-            padding: 4px 16px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            border: 1px solid #c5cae9;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .brand-bar .status-pill i {
-            font-size: 0.5rem;
-            color: #3949ab;
-            animation: blink 1.2s ease-in-out infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.2; }
-        }
-
-        /* ─── Marquee ────────────────────────────────────────────────────── */
         .marquee-container {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(8px);
+            background: rgba(255,255,255,0.9);
             padding: 10px 20px;
+            margin: 20px auto 10px;
             max-width: 700px;
-            width: 100%;
+            width: 90%;
             border-radius: 50px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-            border-left: 4px solid #1a237e;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #2e7d32;
+            backdrop-filter: blur(5px);
             z-index: 1;
-            margin-bottom: 20px;
         }
 
         .marquee-container marquee {
-            font-size: 0.9rem;
-            color: #1a237e;
+            font-size: 1.1rem;
+            color: #1b5e20;
             font-weight: 500;
         }
 
-        .marquee-container marquee i {
-            margin: 0 12px;
-            color: #3949ab;
+        .marquee-container i {
+            margin: 0 15px;
+            color: #ff9800;
         }
 
-        /* ─── Main Waiting Card ────────────────────────────────────────── */
         .waiting-card {
-            background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(12px);
-            padding: 45px 35px 35px;
-            border-radius: 28px;
-            box-shadow: 0 25px 60px rgba(26, 35, 126, 0.1);
-            border: 1px solid rgba(26, 35, 126, 0.1);
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px 30px;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(46,125,50,0.2);
             text-align: center;
-            max-width: 520px;
-            width: 100%;
+            max-width: 550px;
+            width: 90%;
+            margin: auto;
             z-index: 1;
             position: relative;
             overflow: hidden;
-            transition: transform 0.3s ease;
-        }
-
-        .waiting-card:hover {
-            transform: translateY(-3px);
         }
 
         .waiting-card::before {
@@ -216,10 +83,10 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #1a237e, #667eea, #1a237e);
+            height: 5px;
+            background: linear-gradient(90deg, #2e7d32, #81c784, #2e7d32);
             background-size: 200% auto;
-            animation: shimmer 2.5s linear infinite;
+            animation: shimmer 2s linear infinite;
         }
 
         @keyframes shimmer {
@@ -227,305 +94,128 @@
             100% { background-position: 200% center; }
         }
 
-        /* ─── Icon Circle ──────────────────────────────────────────────── */
         .icon-circle {
-            width: 90px;
-            height: 90px;
-            background: linear-gradient(135deg, #1a237e, #3949ab);
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #2e7d32, #43a047);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 20px;
-            box-shadow: 0 12px 30px rgba(26, 35, 126, 0.25);
-            position: relative;
-        }
-
-        .icon-circle::after {
-            content: '';
-            position: absolute;
-            inset: -4px;
-            border-radius: 50%;
-            border: 2px solid rgba(26, 35, 126, 0.15);
-            animation: ringPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes ringPulse {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.2); opacity: 0; }
+            margin: 0 auto 25px;
+            box-shadow: 0 10px 20px rgba(46,125,50,0.3);
         }
 
         .icon-circle i {
-            font-size: 2.8rem;
+            font-size: 3.5rem;
             color: white;
         }
 
-        /* ─── Typography ────────────────────────────────────────────────── */
-        .waiting-card h2 {
-            color: #1a237e;
-            font-size: 1.6rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .waiting-card .subtitle {
-            color: #888;
-            font-size: 0.85rem;
-            margin-bottom: 16px;
+        h2 {
+            color: #1b5e20;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            font-weight: 600;
         }
 
         .student-badge {
-            background: #e8eaf6;
-            color: #1a237e;
-            padding: 6px 18px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 8px 20px;
             border-radius: 50px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 22px;
+            display: inline-block;
+            margin-bottom: 25px;
             font-weight: 500;
-            font-size: 0.85rem;
-            border: 1px solid #c5cae9;
         }
 
-        .student-badge i {
-            color: #3949ab;
-        }
-
-        /* ─── Loader ────────────────────────────────────────────────────── */
-        .loader-container {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin: 10px 0 15px;
-        }
-
-        .loader-dot {
-            width: 14px;
-            height: 14px;
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #e0e0e0;
+            border-top: 5px solid #2e7d32;
             border-radius: 50%;
-            background: #1a237e;
-            animation: bounceDot 1.4s ease-in-out infinite both;
-        }
-
-        .loader-dot:nth-child(1) { animation-delay: -0.32s; }
-        .loader-dot:nth-child(2) { animation-delay: -0.16s; }
-        .loader-dot:nth-child(3) { animation-delay: 0s; }
-
-        @keyframes bounceDot {
-            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-            40% { transform: scale(1); opacity: 1; }
-        }
-
-        /* ─── Status Message ───────────────────────────────────────────── */
-        .status-message {
-            color: #555;
-            font-size: 0.9rem;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .status-message i {
-            color: #1a237e;
-        }
-
-        .refresh-note {
-            margin-top: 18px;
-            font-size: 0.78rem;
-            color: #888;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            background: #f5f7fa;
-            padding: 6px 16px;
-            border-radius: 20px;
-            display: inline-flex;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .refresh-note i {
-            color: #1a237e;
-            animation: spin 2s linear infinite;
-            font-size: 0.7rem;
+            animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+            margin: 20px auto;
         }
 
         @keyframes spin {
+            0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        .status-message {
+            color: #666;
+            margin-top: 20px;
+            font-size: 1rem;
+        }
+
+        .refresh-note {
+            margin-top: 25px;
+            font-size: 0.85rem;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .refresh-note i {
+            color: #2e7d32;
+            animation: pulseIcon 2s infinite;
+        }
+
+        @keyframes pulseIcon {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         .footer-note {
             margin-top: 20px;
-            color: #ccc;
-            font-size: 0.7rem;
-            border-top: 1px solid #f0f0f0;
-            padding-top: 16px;
-            letter-spacing: 0.3px;
-        }
-
-        .footer-note i {
-            color: #1a237e;
-            margin-right: 4px;
-        }
-
-        /* ─── Responsive ────────────────────────────────────────────────── */
-        @media (max-width: 600px) {
-            .waiting-card {
-                padding: 30px 20px 25px;
-            }
-
-            .waiting-card h2 {
-                font-size: 1.3rem;
-            }
-
-            .icon-circle {
-                width: 70px;
-                height: 70px;
-            }
-
-            .icon-circle i {
-                font-size: 2.2rem;
-            }
-
-            .brand-bar .brand .name {
-                font-size: 0.9rem;
-            }
-
-            .brand-bar .status-pill {
-                font-size: 0.6rem;
-                padding: 3px 12px;
-            }
-
-            .marquee-container {
-                padding: 7px 14px;
-            }
-
-            .marquee-container marquee {
-                font-size: 0.75rem;
-            }
-
-            .watermark {
-                font-size: 12vw;
-            }
-        }
-
-        @media (max-width: 400px) {
-            .waiting-card {
-                padding: 22px 14px 18px;
-                border-radius: 20px;
-            }
-
-            .student-badge {
-                font-size: 0.7rem;
-                padding: 4px 12px;
-            }
+            color: #aaa;
+            font-size: 0.8rem;
         }
     </style>
+    <meta http-equiv="refresh" content="30">
 </head>
 <body>
-
-    <!-- ─── Floating Particles ────────────────────────────────────────── -->
-    <div class="particles">
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-    </div>
-
-    <!-- ─── Watermark ──────────────────────────────────────────────────── -->
     <div class="watermark">RRB Group of Schools</div>
 
-    <!-- ─── Brand Bar ──────────────────────────────────────────────────── -->
-    <div class="brand-bar">
-        <div class="brand">
-            {% if logo_path %}
-                <img src="{{ url_for('static', filename=logo_path) }}" class="logo" alt="Logo">
-            {% else %}
-                <div class="logo-placeholder"><i class="fas fa-graduation-cap"></i></div>
-            {% endif %}
-            <div>
-                <div class="name">{{ school_name|default('RRB Group of Schools') }}</div>
-                <div class="tag">Computer Based Test</div>
-            </div>
-        </div>
-        <div class="status-pill">
-            <i class="fas fa-circle"></i>
-            Waiting
-        </div>
-    </div>
-
-    <!-- ─── Motivational Marquee ──────────────────────────────────────── -->
+    <!-- Motivational Marquee -->
     <div class="marquee-container">
-        <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();">
+        <marquee behavior="scroll" direction="left" scrollamount="6" onmouseover="this.stop();" onmouseout="this.start();">
             <i class="fas fa-circle"></i> Welcome to RRB CBT
             <i class="fas fa-hourglass-half"></i> The exam will begin shortly
             <i class="fas fa-clock"></i> Please wait for the administrator to start the exam
-            <i class="fas fa-check-circle"></i> Stay prepared and focused
-            <i class="fas fa-star"></i> All the best!
+            <i class="fas fa-check-circle"></i> Do not refresh this page
         </marquee>
     </div>
 
-    <!-- ─── Main Waiting Card ──────────────────────────────────────────── -->
+    <!-- Main Waiting Card -->
     <div class="waiting-card">
         <div class="icon-circle">
             <i class="fas fa-user-graduate"></i>
         </div>
-
-        <h2>Hello, {{ session.get('student_name', 'Student') }}</h2>
-        <p class="subtitle">Your exam is being set up</p>
-
+        <h2>Welcome, {{ session.get('student_name') }}</h2>
         <div class="student-badge">
-            <i class="fas fa-id-card"></i>
-            {{ session.get('student_id', '—') }}
-            <span style="opacity:0.3;margin:0 4px;">|</span>
-            {{ session.get('class', '—') }}
-            <span style="opacity:0.3;margin:0 4px;">|</span>
-            {{ session.get('subject', '—') }}
-            {% if session.get('test_no') %}
-                <span style="opacity:0.3;margin:0 4px;">|</span>
-                {{ session.get('test_no') }}
-            {% endif %}
+            <i class="fas fa-id-card"></i> {{ session.get('student_id') }} | {{ session.get('class') }} | {{ session.get('subject') }}
         </div>
-
-        <p style="color: #555; font-size: 0.92rem; margin-bottom: 6px;">The exam has not started yet.</p>
-
-        <div class="loader-container">
-            <div class="loader-dot"></div>
-            <div class="loader-dot"></div>
-            <div class="loader-dot"></div>
-        </div>
-
+        <p style="color: #555; margin-bottom: 10px;">The exam has not started yet.</p>
+        <div class="loader"></div>
         <p class="status-message">
-            <i class="fas fa-sync-alt fa-spin"></i>
-            Waiting for the administrator to begin the exam
+            <i class="fas fa-sync-alt fa-spin" style="margin-right: 5px;"></i>
+            This page will automatically redirect when the exam begins.
         </p>
-
         <div class="refresh-note">
-            <i class="fas fa-sync-alt"></i>
-            Auto‑checking every 3 seconds
+            <i class="fas fa-info-circle"></i> Auto‑checking every 3 seconds
         </div>
+        <div class="footer-note">
+            <i class="fas fa-shield-alt"></i> RRB CBT | Developed by Gaurav Shukla
+        </div>
+    </div>
 
-        
-
-        <div class="footer-note" style="text-align:center; margin-top:20px; padding-top:15px; border-top:1px dashed rgba(0,0,0,0.1); font-size:0.85rem; color:#666;">
-    <i class="fas fa-shield-alt" style="color:#1a237e; margin-right:5px;"></i> RRB CBT &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
-</div>
-</div>
-
-    <!-- ─── JavaScript ──────────────────────────────────────────────────── -->
     <script>
         let pollInterval;
-
+        
         function checkStatus() {
             fetch('/check_exam_status')
                 .then(res => {
@@ -542,14 +232,11 @@
                     console.error('Status check failed:', err);
                 });
         }
-
-        // Start polling
+        
         pollInterval = setInterval(checkStatus, 3000);
         checkStatus();
-
-        // Cleanup on page unload
+        
         window.addEventListener('beforeunload', () => clearInterval(pollInterval));
     </script>
-
 </body>
 </html>
