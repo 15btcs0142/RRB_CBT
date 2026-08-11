@@ -8,134 +8,112 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         .exam-body {
             background: #e9eef4;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            font-family: 'Poppins', sans-serif;
         }
 
-        /* ── COMPACT HEADER SECTION ───────────────────────────────────────── */
         .exam-header {
             position: sticky;
             top: 0;
             z-index: 20;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            flex-wrap: nowrap;
-            gap: 12px;
-            padding: 8px 18px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 18px;
+            padding: 20px 24px;
             background: linear-gradient(135deg, #0d3b66 0%, #144b74 45%, #0b2545 100%);
             color: #ffffff;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-            min-height: 50px;
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.14);
         }
 
         .header-left {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 12px;
-            flex-wrap: wrap;
-            min-width: 0;
-            flex: 1;
+            min-width: 240px;
+            max-width: 100%;
         }
 
         .header-title {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 0.95rem;
+            gap: 12px;
+            font-size: 1rem;
             font-weight: 700;
-            white-space: nowrap;
+            letter-spacing: 0.02em;
         }
 
         .header-title span {
-            font-size: 0.82rem;
+            font-size: 0.92rem;
             opacity: 0.85;
             font-weight: 500;
         }
 
         .header-info {
             display: flex;
-            align-items: center;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: 10px;
         }
 
         .header-chip {
-            background: rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.16);
             border: 1px solid rgba(255, 255, 255, 0.18);
             color: #ffffff;
-            padding: 4px 10px;
+            padding: 10px 16px;
             border-radius: 999px;
-            font-size: 0.76rem;
+            font-size: 0.82rem;
             display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
-        }
-
-        .header-right {
-            display: flex;
             align-items: center;
             gap: 8px;
-            flex-shrink: 0;
         }
 
-        /* Compact Timer & Question Counter Pill Badges */
         .timer-box,
         .question-progress {
-            background: rgba(255, 255, 255, 0.18);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            border-radius: 20px;
-            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 18px;
+            padding: 16px 18px;
+            min-width: 160px;
             text-align: center;
             color: #ffffff;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            white-space: nowrap;
+            box-shadow: inset 0 0 0 rgba(255, 255, 255, 0.14);
         }
 
-        .timer-box .timer-time {
-            font-size: 1.05rem;
-            font-weight: 800;
-            color: #ffd54f;
-            font-variant-numeric: tabular-nums;
+        .timer-box .timer-label,
+        .question-progress .label {
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.78;
+            margin-bottom: 8px;
         }
 
+        .timer-box .timer-value,
         .question-progress .value {
-            font-size: 1.05rem;
+            font-size: 2rem;
             font-weight: 800;
-            color: #81d4fa;
+            letter-spacing: 0.01em;
         }
 
         .exam-marquee {
             background: #ffffff;
-            padding: 4px 18px;
-            color: #334155;
-            font-size: 0.82rem;
-            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-            white-space: nowrap;
+            padding: 10px 24px;
+            color: #1f2937;
+            font-size: 0.95rem;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.05);
         }
 
-        /* ── MAIN CONTENT AREA ────────────────────────────────────────────── */
         .exam-main {
             display: flex;
             flex: 1;
-            gap: 16px;
-            padding: 12px 18px 8px;
+            gap: 22px;
+            padding: 20px 24px 14px;
             min-height: 0;
             overflow: hidden;
         }
@@ -143,9 +121,9 @@
         .question-panel {
             flex: 3;
             background: #ffffff;
-            border-radius: 16px;
-            padding: 20px 24px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            border-radius: 24px;
+            padding: 28px 32px;
+            box-shadow: 0 24px 50px rgba(15, 23, 42, 0.08);
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -155,71 +133,71 @@
         .question-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 14px;
+            align-items: flex-start;
+            gap: 18px;
+            margin-bottom: 22px;
             flex-wrap: wrap;
-            border-bottom: 1px solid #f1f5f9;
-            padding-bottom: 10px;
         }
 
         .question-count {
-            font-size: 0.88rem;
-            color: #64748b;
-            font-weight: 500;
+            font-size: 0.95rem;
+            color: #475569;
+            line-height: 1.6;
         }
 
         .question-count strong {
-            font-size: 1.25rem;
-            color: #0f172a;
-            font-weight: 700;
-            margin-left: 4px;
+            display: block;
+            margin-top: 4px;
+            font-size: 1.75rem;
+            color: #111827;
+            letter-spacing: 0.01em;
         }
 
         .question-status {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         .status-pill {
             background: #eff6ff;
             color: #1d4ed8;
-            padding: 5px 12px;
+            padding: 9px 16px;
             border-radius: 999px;
-            font-size: 0.78rem;
+            font-size: 0.82rem;
             font-weight: 600;
-            border: 1px solid #bfdbfe;
+            letter-spacing: 0.01em;
         }
 
         .question-text {
-            font-size: 1.18rem;
-            line-height: 1.7;
-            margin-bottom: 18px;
-            color: #0f172a;
+            font-size: 1.35rem;
+            line-height: 1.85;
+            margin-bottom: 24px;
+            color: #111827;
             font-weight: 500;
         }
 
         .options {
             display: grid;
-            gap: 12px;
+            gap: 16px;
         }
 
         .option-item {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
-            padding: 12px 18px;
-            border-radius: 12px;
+            gap: 16px;
+            padding: 18px 22px;
+            border-radius: 18px;
             border: 2px solid #e2e8f0;
             background: #f8fafc;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
         }
 
         .option-item:hover {
             border-color: #93c5fd;
             background: #eff6ff;
+            transform: translateY(-1px);
         }
 
         .option-item.selected {
@@ -229,56 +207,50 @@
 
         .option-item input[type="radio"] {
             margin-top: 4px;
-            transform: scale(1.2);
+            transform: scale(1.22);
             accent-color: #2563eb;
-            cursor: pointer;
         }
 
-        /* ── QUESTION PALETTE (DESKTOP) ──────────────────────────────────── */
         .palette-panel {
             flex: 1;
-            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-            border-radius: 16px;
-            padding: 18px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            background: linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 24px 50px rgba(15, 23, 42, 0.08);
             overflow-y: auto;
             position: sticky;
-            top: 60px;
-            max-height: calc(100vh - 120px);
+            top: 120px;
+            max-height: calc(100vh - 170px);
             min-height: 0;
-            border: 1px solid #e2e8f0;
         }
 
         .palette-panel h4 {
-            margin-bottom: 12px;
-            font-size: 0.92rem;
+            margin-bottom: 16px;
+            font-size: 1rem;
             color: #0f172a;
+            letter-spacing: 0.01em;
             font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 6px;
         }
 
         .palette-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
-            gap: 8px;
-            margin: 12px 0;
+            grid-template-columns: repeat(auto-fit, minmax(48px, 1fr));
+            gap: 10px;
+            margin: 18px 0 14px;
         }
 
         .palette-btn {
             width: 100%;
-            height: 38px;
-            border-radius: 10px;
+            aspect-ratio: 1;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 0.85rem;
             color: #ffffff;
             cursor: pointer;
             border: 2px solid transparent;
-            transition: all 0.16s ease;
+            transition: transform 0.16s ease, border-color 0.2s ease;
         }
 
         .palette-btn:hover {
@@ -286,8 +258,8 @@
         }
 
         .palette-btn.not-visited {
-            background: #94a3b8;
-            border-color: #64748b;
+            background: #6b7280;
+            border-color: #52575f;
         }
 
         .palette-btn.not-answered {
@@ -308,127 +280,85 @@
         .legend {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 8px;
-            margin-top: 12px;
-            padding-top: 10px;
-            border-top: 1px dashed #e2e8f0;
+            gap: 10px;
+            margin-top: 14px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             color: #475569;
-            font-size: 0.78rem;
+            font-size: 0.86rem;
         }
 
         .legend-box {
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
             display: inline-block;
-            flex-shrink: 0;
         }
 
-        /* ── SINGLE ROW FOOTER SECTION ───────────────────────────────────── */
         .exam-footer {
             position: sticky;
             bottom: 0;
             z-index: 18;
-            background: #ffffff;
-            padding: 8px 16px;
-            box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
-            border-top: 1px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(10px);
+            padding: 18px 24px 24px;
+            box-shadow: 0 -18px 45px rgba(15, 23, 42, 0.08);
             display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
+            flex-direction: column;
+            gap: 14px;
         }
 
         .footer-row {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            max-width: 1400px;
-            flex-wrap: nowrap;
-        }
-
-        /* Compact Exam Action Buttons */
-        .btn-exam {
-            flex: 1 1 0px;
-            min-width: 0;
-            padding: 9px 14px;
-            font-weight: 600;
-            font-size: 0.86rem;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
             justify-content: center;
-            gap: 6px;
-            white-space: nowrap;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            font-family: inherit;
+            gap: 14px;
+            flex-wrap: wrap;
         }
 
-        .btn-exam i {
-            font-size: 0.88rem;
+        .btn-large {
+            min-width: 180px;
+            padding: 16px 24px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 999px;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
         }
 
-        .btn-exam:hover {
-            transform: translateY(-1.5px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        .btn-large i {
+            font-size: 1rem;
+            margin-right: 10px;
         }
 
-        .btn-green {
-            background: linear-gradient(135deg, #16a34a, #15803d);
-            color: #ffffff;
-        }
-
-        .btn-purple {
-            background: linear-gradient(135deg, #7c3aed, #6d28d9);
-            color: #ffffff;
-        }
-
-        .btn-orange {
-            background: linear-gradient(135deg, #f97316, #ea580c);
-            color: #ffffff;
-        }
-
-        .btn-red {
-            background: linear-gradient(135deg, #dc2626, #b91c1c);
-            color: #ffffff;
-        }
-
-        /* Mobile Palette Floating Button & Drawer */
         .palette-toggle-btn {
             display: none;
-            background: #0d3b66;
+            background: #0b2545;
             color: white;
             border: none;
             border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            font-size: 1.2rem;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+            width: 52px;
+            height: 52px;
+            font-size: 1.4rem;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
             cursor: pointer;
             position: fixed;
-            bottom: 60px;
-            right: 14px;
+            bottom: 92px;
+            right: 20px;
             z-index: 1000;
         }
 
         .palette-overlay {
             display: none;
             position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.5);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.48);
             z-index: 999;
-            backdrop-filter: blur(2px);
         }
 
         .palette-overlay.active {
@@ -439,15 +369,15 @@
             position: fixed;
             top: 0;
             right: -100%;
-            width: 84%;
-            max-width: 320px;
+            width: 86%;
+            max-width: 360px;
             height: 100%;
             background: #ffffff;
             z-index: 1001;
-            transition: right 0.25s ease;
+            transition: right 0.28s ease;
             box-shadow: -8px 0 24px rgba(15, 23, 42, 0.18);
             overflow-y: auto;
-            padding: 18px;
+            padding: 22px;
         }
 
         .mobile-palette.active {
@@ -455,22 +385,40 @@
         }
 
         .mobile-palette .close-btn {
-            background: #f1f5f9;
+            background: none;
             border: none;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            font-size: 1.1rem;
-            color: #334155;
+            font-size: 1.4rem;
+            color: #111827;
             cursor: pointer;
             float: right;
         }
 
-        /* ── RESPONSIVE MEDIA QUERIES (MOBILE OPTIMIZATION) ─────────────── */
         @media (max-width: 1024px) {
             .exam-main {
                 flex-direction: column;
-                padding: 10px 12px 6px;
+                padding: 16px 18px 12px;
+            }
+
+            .palette-panel {
+                position: relative;
+                top: auto;
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .exam-header {
+                padding: 18px 18px 16px;
+            }
+
+            .timer-box,
+            .question-progress {
+                min-width: 130px;
+                padding: 14px 16px;
+            }
+
+            .question-panel {
+                padding: 22px 20px;
             }
 
             .palette-panel {
@@ -482,81 +430,15 @@
                 align-items: center;
                 justify-content: center;
             }
-        }
-
-        @media (max-width: 768px) {
-            .exam-header {
-                padding: 6px 10px;
-                min-height: 44px;
-            }
-
-            .header-title {
-                font-size: 0.85rem;
-            }
-
-            .header-title img {
-                height: 28px !important;
-            }
-
-            .header-chip {
-                padding: 2px 7px;
-                font-size: 0.7rem;
-            }
-
-            /* Hide extra header details on small screen to save space */
-            .header-chip:nth-child(n+3) {
-                display: none;
-            }
-
-            .timer-box,
-            .question-progress {
-                padding: 3px 8px;
-                font-size: 0.78rem;
-            }
-
-            .timer-box .timer-time,
-            .question-progress .value {
-                font-size: 0.9rem;
-            }
-
-            .exam-marquee {
-                display: none; /* Hide marquee on mobile to save vertical space */
-            }
-
-            .question-panel {
-                padding: 14px 12px;
-                border-radius: 12px;
-            }
-
-            .question-text {
-                font-size: 1.05rem;
-                line-height: 1.6;
-                margin-bottom: 14px;
-            }
-
-            .option-item {
-                padding: 10px 12px;
-                font-size: 0.88rem;
-                border-radius: 10px;
-            }
-
-            .exam-footer {
-                padding: 6px 8px;
-            }
 
             .footer-row {
-                gap: 4px;
+                gap: 12px;
             }
 
-            .btn-exam {
-                padding: 8px 4px;
-                font-size: 0.75rem;
-                border-radius: 8px;
-                gap: 3px;
-            }
-
-            .btn-exam i {
-                font-size: 0.78rem;
+            .btn-large {
+                min-width: 140px;
+                padding: 14px 18px;
+                font-size: 0.95rem;
             }
         }
     </style>
@@ -564,66 +446,66 @@
 <body class="exam-body">
     <div class="watermark">RRB Group of Schools</div>
 
-    <!-- ── COMPACT HEADER SECTION ── -->
+    <!-- Top Bar - Full Info Header -->
     <div class="exam-header">
         <div class="header-left">
             <div class="header-title">
                 {% if logo_path %}
-                <img src="{{ url_for('static', filename=logo_path) }}" alt="Logo" style="height:32px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.4);">
+                <img src="{{ url_for('static', filename=logo_path) }}" alt="School Logo" style="height:38px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);">
                 {% endif %}
                 <div>
                     <div>{{ school_name }}</div>
-                    <span>CBT Exam</span>
+                    <span>Computer Based Test</span>
                 </div>
             </div>
             <div class="header-info">
-                <span class="header-chip"><i class="fas fa-user-circle"></i> {{ student_name }}</span>
+                <span class="header-chip"><i class="fas fa-user-circle"></i> {{ student_name }} ({{ student_id }})</span>
                 <span class="header-chip"><i class="fas fa-graduation-cap"></i> {{ student_class }}{% if student_section %}-{{ student_section }}{% endif %}</span>
                 <span class="header-chip"><i class="fas fa-book"></i> {{ student_subject }}</span>
+                {% if test_no %}<span class="header-chip"><i class="fas fa-file-alt"></i> {{ test_no }}</span>{% endif %}
+                <span class="header-chip"><i class="fas fa-calendar-day"></i> {{ exam_date }}</span>
             </div>
         </div>
-
-        <!-- Timer & Question Counter Badges -->
-        <div class="header-right">
-            <div class="timer-box" id="timer">
-                <i class="far fa-clock" style="color:#ffd54f;"></i>
-                <span class="timer-time">00:00</span>
-            </div>
-            <div class="question-progress">
-                <i class="fas fa-list-ol" style="color:#81d4fa;"></i>
-                <span class="value"><span id="questionNumberHeader">0</span>/<span id="questionTotalHeader">0</span></span>
-            </div>
+        <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:flex-end;">
+            <div class="timer-box" id="timer"><span class="timer-label">Time Remaining</span><span class="timer-value"><i class="far fa-clock"></i> <span class="timer-time">00:00</span></span></div>
+            <div class="question-progress"><span class="label">Question</span><span class="value"><span id="questionNumberHeader">0</span>/<span id="questionTotalHeader">0</span></span></div>
         </div>
     </div>
 
-    <!-- ── MAIN EXAM AREA ── -->
+    <!-- Motivational Marquee -->
+    <div class="exam-marquee" style="background:rgba(255,255,255,0.7); padding:5px 20px;">
+        <marquee behavior="scroll" direction="left" scrollamount="5">
+            <i class="fas fa-star"></i> Read carefully · Mark for review · Save before next · Good luck!
+        </marquee>
+    </div>
+
+    <!-- Main Area -->
     <div class="exam-main">
         <div class="question-panel">
             {% if is_combined and combined_subjects %}
             <!-- Subject Tab Bar for combined/multi-subject tests -->
-            <div id="subjectTabBar" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;
-                 padding:8px 12px;background:#f4f8ff;border-radius:12px;border:1px solid #dbeafe;">
-                <span style="font-size:.78rem;font-weight:700;color:#334155;align-self:center;margin-right:4px;">
+            <div id="subjectTabBar" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;
+                 padding:12px 16px;background:#f4f8ff;border-radius:18px;border:1px solid #dbeafe;">
+                <span style="font-size:.78rem;font-weight:700;color:#334155;align-self:center;margin-right:6px;">
                     <i class="fas fa-layer-group" style="color:#2563eb"></i> Subject:
                 </span>
                 {% for subj in combined_subjects %}
                 <button class="subj-tab {% if loop.first %}subj-tab-active{% endif %}"
                         data-subject="{{ subj }}"
                         onclick="jumpToSubject('{{ subj }}', this)"
-                        style="padding:5px 14px;border:1.5px solid #2563eb;border-radius:20px;
+                        style="padding:7px 18px;border:2px solid #2563eb;border-radius:24px;
                                background:{% if loop.first %}#2563eb{% else %}#fff{% endif %};
                                color:{% if loop.first %}#fff{% else %}#2563eb{% endif %};
-                               font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:600;
+                               font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:600;
                                cursor:pointer;transition:all .2s;">
                     {{ subj }}
                     <span id="subjCount-{{ loop.index0 }}"
-                          style="font-size:.7rem;opacity:.85;margin-left:4px;"></span>
+                          style="font-size:.72rem;opacity:.85;margin-left:6px;"></span>
                 </button>
                 {% endfor %}
-                <span id="subjectProgress" style="margin-left:auto;font-size:.76rem;color:#475569;align-self:center;"></span>
+                <span id="subjectProgress" style="margin-left:auto;font-size:.78rem;color:#475569;align-self:center;"></span>
             </div>
             {% endif %}
-            
             <div class="question-header">
                 <div class="question-count">Question Number <strong><span id="questionNumberPanel">1</span>/<span id="questionTotalPanel">0</span></strong></div>
                 <div class="question-status"><span class="status-pill" id="currentStatus">Not Answered</span></div>
@@ -631,13 +513,12 @@
             <div id="questionText" class="question-text"></div>
             <div id="optionsContainer" class="options"></div>
         </div>
-
-        <!-- Desktop Palette Panel -->
+        <!-- Desktop Palette -->
         <div class="palette-panel" id="desktopPalette">
             <h4><i class="fas fa-th-large"></i> Question Palette</h4>
             <div id="paletteGrid" class="palette-grid"></div>
             <div class="legend">
-                <div class="legend-item"><span class="legend-box" style="background:#94a3b8"></span> Not Visited</div>
+                <div class="legend-item"><span class="legend-box" style="background:#6b7280"></span> Not Visited</div>
                 <div class="legend-item"><span class="legend-box" style="background:#ef4444"></span> Not Answered</div>
                 <div class="legend-item"><span class="legend-box" style="background:#22c55e"></span> Answered</div>
                 <div class="legend-item"><span class="legend-box" style="background:#7c3aed"></span> Marked</div>
@@ -645,37 +526,37 @@
         </div>
     </div>
 
-    <!-- ── COMPACT SINGLE ROW FOOTER SECTION ── -->
-    <div class="exam-footer">
-        <div class="footer-row">
-            <button id="saveNextBtn" class="btn-green btn-exam">
-                <i class="fas fa-save"></i> Save &amp; Next
-            </button>
-            <button id="markReviewBtn" class="btn-purple btn-exam">
-                <i class="fas fa-bookmark"></i> Mark &amp; Next
-            </button>
-            <button id="clearBtn" class="btn-orange btn-exam">
-                <i class="fas fa-undo-alt"></i> Clear Response
-            </button>
-            <button id="submitBtn" class="btn-red btn-exam">
-                <i class="fas fa-check-circle"></i> Submit
-            </button>
-        </div>
+<!-- Bottom Bar -->
+<div class="exam-footer">
+    <div class="footer-row">
+        <button id="saveNextBtn" class="btn-green btn-large">
+            <i class="fas fa-save"></i> Save & Next
+        </button>
+        <button id="markReviewBtn" class="btn-purple btn-large">
+            <i class="fas fa-bookmark"></i> Mark & Next
+        </button>
     </div>
+    <div class="footer-row">
+        <button id="clearBtn" class="btn-orange btn-large">
+            <i class="fas fa-undo-alt"></i> Clear Response
+        </button>
+        <button id="submitBtn" class="btn-red btn-large">
+            <i class="fas fa-check-circle"></i> Submit
+        </button>
+    </div>
+</div>
 
-    <!-- Mobile Palette Floating Toggle Button -->
-    <button class="palette-toggle-btn" id="paletteToggleBtn" title="Question Palette">
-        <i class="fas fa-th-large"></i>
-    </button>
+    <!-- Mobile Palette Toggle Button -->
+    <button class="palette-toggle-btn" id="paletteToggleBtn"><i class="fas fa-th-large"></i></button>
 
-    <!-- Mobile Palette Drawer -->
+    <!-- Mobile Palette Overlay -->
     <div class="palette-overlay" id="paletteOverlay"></div>
     <div class="mobile-palette" id="mobilePalette">
-        <button class="close-btn" id="closePaletteBtn">&times;</button>
-        <h4 style="margin-top:10px; margin-bottom:12px;"><i class="fas fa-th-large"></i> Question Palette</h4>
+        <button class="close-btn" id="closePaletteBtn"><i class="fas fa-times"></i></button>
+        <h4 style="margin-top:20px;"><i class="fas fa-th-large"></i> Question Palette</h4>
         <div id="mobilePaletteGrid" class="palette-grid"></div>
         <div class="legend">
-            <div class="legend-item"><span class="legend-box" style="background:#94a3b8"></span> Not Visited</div>
+            <div class="legend-item"><span class="legend-box" style="background:#6b7280"></span> Not Visited</div>
             <div class="legend-item"><span class="legend-box" style="background:#ef4444"></span> Not Answered</div>
             <div class="legend-item"><span class="legend-box" style="background:#22c55e"></span> Answered</div>
             <div class="legend-item"><span class="legend-box" style="background:#7c3aed"></span> Marked</div>
@@ -685,14 +566,16 @@
     <script src="{{ url_for('static', filename='js/multimodal.js') }}"></script>
     <script src="{{ url_for('static', filename='js/exam.js') }}"></script>
     <script>
-    // ── COMBINED TEST LOGIC ──────────────────────────────────────────────────
+    // ── COMBINED TEST (FEAT-007) ─────────────────────────────────────────────
     const IS_COMBINED       = {{ 'true' if is_combined else 'false' }};
     const COMBINED_SUBJECTS = {{ combined_subjects | tojson | safe }};
 
+    // Called after questions load — build per-subject index map
     function initCombinedTabs() {
         if (!IS_COMBINED || !COMBINED_SUBJECTS.length) return;
         if (!window.questions || !window.questions.length) return;
 
+        // Build index: subject → [question indices]
         window._subjIndexMap = {};
         COMBINED_SUBJECTS.forEach(s => window._subjIndexMap[s] = []);
         window.questions.forEach((q, i) => {
@@ -700,6 +583,7 @@
             if (window._subjIndexMap[s]) window._subjIndexMap[s].push(i);
         });
 
+        // Update counts on tab buttons
         COMBINED_SUBJECTS.forEach((s, idx) => {
             const badge = document.getElementById('subjCount-' + idx);
             if (badge) badge.textContent = '(' + (window._subjIndexMap[s]||[]).length + 'Q)';
@@ -713,21 +597,24 @@
         const indices = window._subjIndexMap[subject] || [];
         if (!indices.length) return;
 
+        // Activate tab styling
         document.querySelectorAll('.subj-tab').forEach(b => {
             b.style.background = '#fff';
-            b.style.color      = '#2563eb';
+            b.style.color      = '#667eea';
             b.classList.remove('subj-tab-active');
         });
-        btn.style.background = '#2563eb';
+        btn.style.background = '#667eea';
         btn.style.color      = '#fff';
         btn.classList.add('subj-tab-active');
 
+        // Jump to first question of this subject
         loadQuestion(indices[0]);
         updateSubjectProgress();
     }
 
     function updateSubjectProgress() {
         if (!IS_COMBINED || !window._subjIndexMap || typeof currentIndex === 'undefined') return;
+        // Find which subject the current question belongs to
         const q = window.questions && window.questions[currentIndex];
         if (!q) return;
         const subj    = q.subject || '';
@@ -738,19 +625,22 @@
             prog.textContent = subj + ': Q' + posInSubj + '/' + indices.length;
         }
 
+        // Sync active tab to current subject
         document.querySelectorAll('.subj-tab').forEach(b => {
             const isActive = b.dataset.subject === subj;
-            b.style.background = isActive ? '#2563eb' : '#fff';
-            b.style.color      = isActive ? '#fff'    : '#2563eb';
+            b.style.background = isActive ? '#667eea' : '#fff';
+            b.style.color      = isActive ? '#fff'    : '#667eea';
         });
     }
 
+    // Hook into loadQuestion to update progress indicator
     const _origLoad = window.loadQuestion;
     window.loadQuestion = function(index) {
         _origLoad(index);
         if (IS_COMBINED) updateSubjectProgress();
     };
 
+    // Hook into questions loaded
     const _origInit = window.initExam || function(){};
     window.initExam = function() {
         _origInit();
