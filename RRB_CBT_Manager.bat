@@ -24,7 +24,7 @@ echo.
 echo   SETUP ^& TOOLS
 echo   ---------------
 echo   [6]  Install / Update Dependencies
-echo   [7]  Set Gemini API Key (for AI Test Generation)
+echo   [7]  Set AI API Keys (Gemini, DeepSeek, ChatGPT, Claude)
 echo   [8]  Show My IP Address
 echo   [9]  Backup Database
 echo  [10]  View Logs
@@ -178,15 +178,18 @@ goto MENU
 cls
 echo.
 echo  ============================================================
-echo       Set Gemini API Key (AI Test Generation)
+echo       Set AI API Keys (Gemini, DeepSeek, ChatGPT, Claude)
 echo  ============================================================
 echo.
 echo   This enables AI-powered test generation for teachers.
-echo   Get your key from: https://aistudio.google.com/
+echo   Gemini:   https://aistudio.google.com/
+echo   DeepSeek: https://platform.deepseek.com/
+echo   OpenAI:   https://platform.openai.com/
+echo   Claude:   https://console.anthropic.com/
 echo.
 if exist ".api_key" (
     set /p CURRENT_KEY=<.api_key
-    echo   Current key: !CURRENT_KEY:~0,20!...
+    echo   Current Gemini key: !CURRENT_KEY:~0,20!...
     echo.
 )
 set /p NEW_KEY="  Paste your Gemini API key (or press Enter to skip): "
@@ -195,8 +198,12 @@ if "!NEW_KEY!"=="" (
 ) else (
     echo !NEW_KEY!>.api_key
     set GEMINI_API_KEY=!NEW_KEY!
-    echo   [SUCCESS] Gemini API key saved! Loaded automatically on next server start.
+    echo GEMINI_API_KEY=!NEW_KEY!>apikey.env
+    echo   [SUCCESS] Gemini API key saved to .api_key and apikey.env!
 )
+echo.
+echo   NOTE: You can also edit apikey.env directly to add DEEPSEEK_API_KEY,
+echo   OPENAI_API_KEY, and CLAUDE_API_KEY for multi-provider fallback.
 echo.
 pause
 goto MENU
