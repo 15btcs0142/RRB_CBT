@@ -419,16 +419,9 @@ function updatePaletteButton(index) {
 }
 
 function refreshQuestionStatus(index) {
-    const hasAns = responses[index] !== undefined && responses[index] !== null && responses[index] !== '';
-    const isMarked = markedForReview.has(index);
-    let status = 'Not Answered';
-    if (isMarked && hasAns) {
-        status = 'Answered & Marked for Review';
-    } else if (isMarked) {
-        status = 'Marked for Review';
-    } else if (hasAns) {
-        status = 'Answered';
-    }
+    const status = markedForReview.has(index)
+        ? 'Marked for Review'
+        : (responses[index] ? 'Answered' : 'Not Answered');
     const statusEl = document.getElementById('currentStatus');
     if (statusEl) statusEl.textContent = status;
 }
@@ -537,11 +530,9 @@ function loadQuestion(index) {
     questions.forEach((_, i) => updatePaletteButton(i));
 }
 
-function selectOption(qIndex, option, keepMarked = false) {
+function selectOption(qIndex, option) {
     responses[qIndex] = option;
-    if (!keepMarked) {
-        markedForReview.delete(qIndex);
-    }
+    markedForReview.delete(qIndex);
     refreshQuestionStatus(qIndex);
     
     fetch('/save_answer', {
@@ -573,7 +564,9 @@ function saveCurrentAndNext() {
     const selectedRadio = document.querySelector('input[name="option"]:checked');
     if (selectedRadio) {
         const option = selectedRadio.value;
-        selectOption(currentIndex, option, false);
+        if (responses[currentIndex] !== option) {
+            selectOption(currentIndex, option);
+        }
     }
     
     if (currentIndex < questions.length - 1) {
@@ -585,20 +578,8 @@ function saveCurrentAndNext() {
 
 function markForReviewAndNext() {
     markedForReview.add(currentIndex);
-    const selectedRadio = document.querySelector('input[name="option"]:checked');
-    if (selectedRadio) {
-        const option = selectedRadio.value;
-        selectOption(currentIndex, option, true);
-    } else {
-        refreshQuestionStatus(currentIndex);
-        updatePaletteButton(currentIndex);
-    }
-    
-    if (currentIndex < questions.length - 1) {
-        loadQuestion(currentIndex + 1);
-    } else {
-        alert('This is the last question.');
-    }
+    updatePaletteButton(currentIndex);
+    saveCurrentAndNext();
 }
 
 function clearResponse() {
