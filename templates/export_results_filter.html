@@ -3,568 +3,216 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Export Results - RRB CBT</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;padding-bottom:40px;}
-        
-        /* ─── TOP BAR ────────────────────────────────────────────────────── */
-        .topbar{
-            background:linear-gradient(90deg,#1a237e,#3949ab);
-            color:#fff;
-            padding:14px 28px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            flex-wrap:wrap;
-            gap:10px;
-            box-shadow:0 4px 20px rgba(0,0,0,0.15);
-            position:sticky;
-            top:0;
-            z-index:100;
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+            animation: gradientShift 15s ease infinite;
+            background-size: 200% 200%;
         }
-        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
-        .topbar h1 i{color:#667eea;}
-        .topbar a{
-            color:#fff;
-            text-decoration:none;
-            background:rgba(255,255,255,0.15);
-            padding:8px 20px;
-            border-radius:25px;
-            font-size:0.85rem;
-            transition:0.3s;
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            border:1px solid rgba(255,255,255,0.1);
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-        .topbar a:hover{
-            background:rgba(255,255,255,0.25);
-            transform:translateY(-2px);
+        .admin-nav {
+            background: linear-gradient(90deg, #1b5e20, #2e7d32, #1b5e20);
+            background-size: 200% auto;
+            animation: navGlow 5s linear infinite;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        
-        .container{max-width:1200px;margin:24px auto;padding:0 20px;}
-        
-        /* ─── CARDS ────────────────────────────────────────────────────── */
-        .card{
-            background:rgba(255,255,255,0.95);
-            backdrop-filter:blur(10px);
-            border-radius:16px;
-            padding:24px 28px;
-            box-shadow:0 4px 16px rgba(0,0,0,0.06);
-            border:1px solid rgba(26,35,126,0.08);
-            margin-bottom:24px;
-            transition:0.3s;
+        @keyframes navGlow {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
         }
-        .card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
-        .card-title{
-            font-size:1.1rem;
-            font-weight:600;
-            color:#1a237e;
-            margin-bottom:18px;
-            display:flex;
-            align-items:center;
-            gap:10px;
-            border-bottom:2px dashed #e8eaf6;
-            padding-bottom:12px;
+        .marquee-container {
+            background: rgba(255,255,255,0.9);
+            padding: 10px 20px;
+            margin: 20px auto 10px;
+            max-width: 900px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #2e7d32;
+            backdrop-filter: blur(5px);
         }
-        .card-title i{color:#3949ab;font-size:1.2rem;}
-        
-        .badge-info{
-            background:#e8eaf6;
-            color:#1a237e;
-            padding:4px 14px;
-            border-radius:20px;
-            font-size:0.75rem;
-            font-weight:600;
-            display:inline-block;
-            margin-left:auto;
+        .marquee-container marquee {
+            font-size: 1.1rem;
+            color: #1b5e20;
+            font-weight: 500;
         }
-        
-        /* ─── FILTER GRID ────────────────────────────────────────────────── */
-        .filter-grid{
-            display:grid;
-            grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-            gap:16px;
-            margin-bottom:8px;
+        .marquee-container i {
+            margin: 0 15px;
+            color: #ff9800;
         }
-        .form-group label{
-            display:block;
-            font-weight:500;
-            color:#333;
-            margin-bottom:5px;
-            font-size:0.85rem;
+        .container {
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 0 20px;
         }
-        .form-group label i{
-            color:#3949ab;
-            margin-right:5px;
-            width:18px;
+        .card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 1px solid rgba(46,125,50,0.2);
+            position: relative;
+            overflow: hidden;
         }
-        .form-group select,.form-group input{
-            width:100%;
-            padding:10px 14px;
-            border:2px solid #e0e0e0;
-            border-radius:10px;
-            font-size:0.9rem;
-            transition:border-color .3s;
-            font-family:'Poppins',sans-serif;
-            background:#fafafa;
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #2e7d32, #81c784, #2e7d32);
+            background-size: 200% auto;
+            animation: shimmer 2s linear infinite;
         }
-        .form-group select:focus,.form-group input:focus{
-            border-color:#3949ab;
-            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
-            outline:none;
-            background:#fff;
+        @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
         }
-        .form-group select:disabled{
-            opacity:0.5;
-            cursor:not-allowed;
+        .card h3 {
+            color: #1b5e20;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 2px dashed #c8e6c9;
+            padding-bottom: 15px;
         }
-        
-        /* ─── BUTTONS ────────────────────────────────────────────────────── */
-        .btn-row{
-            display:flex;
-            gap:12px;
-            flex-wrap:wrap;
-            margin-top:20px;
+        .card h3 i {
+            color: #2e7d32;
+            font-size: 2rem;
         }
-        .btn{
-            display:inline-flex;
-            align-items:center;
-            gap:8px;
-            padding:10px 24px;
-            border:none;
-            border-radius:30px;
-            font-weight:600;
-            font-size:0.85rem;
-            cursor:pointer;
-            transition:all .25s;
-            box-shadow:0 4px 10px rgba(0,0,0,.06);
-            text-decoration:none;
-            font-family:'Poppins',sans-serif;
+        .form-group {
+            margin-bottom: 20px;
         }
-        .btn:hover:not(:disabled){
-            transform:translateY(-2px);
-            box-shadow:0 8px 20px rgba(0,0,0,.12);
+        label {
+            font-weight: 600;
+            color: #1b5e20;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
         }
-        .btn:disabled{
-            opacity:0.5;
-            cursor:not-allowed;
-            transform:none;
-            box-shadow:none;
+        label i {
+            margin-right: 8px;
+            color: #2e7d32;
         }
-        .btn-preview{
-            background:linear-gradient(135deg,#1a237e,#3949ab);
-            color:#fff;
+        select, input[type="date"] {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+            background: white;
         }
-        .btn-preview:hover:not(:disabled){
-            box-shadow:0 6px 16px rgba(26,35,126,0.3);
+        select:focus, input[type="date"]:focus {
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46,125,50,0.2);
+            outline: none;
         }
-        .btn-excel{
-            background:#217346;
-            color:#fff;
+        .btn-green {
+            background: linear-gradient(135deg, #2e7d32, #43a047);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            margin-top: 10px;
         }
-        .btn-excel:hover:not(:disabled){
-            background:#1a5c38;
+        .btn-green:hover {
+            background: linear-gradient(135deg, #1b5e20, #2e7d32);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(46,125,50,0.4);
         }
-        .btn-pdf{
-            background:linear-gradient(135deg,#c62828,#e53935);
-            color:#fff;
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #2e7d32;
+            text-decoration: none;
+            font-weight: 500;
         }
-        .btn-pdf:hover:not(:disabled){
-            box-shadow:0 6px 16px rgba(198,40,40,0.3);
+        .back-link i {
+            margin-right: 8px;
         }
-        .btn-secondary{
-            background:#e8eaf6;
-            color:#1a237e;
+        .hint {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            text-align: center;
         }
-        .btn-secondary:hover:not(:disabled){
-            background:#c5cae9;
-        }
-        
-        /* ─── HINT ────────────────────────────────────────────────────── */
-        .hint{
-            font-size:0.8rem;
-            color:#888;
-            margin-top:12px;
-            display:flex;
-            align-items:center;
-            gap:6px;
-        }
-        .hint i{color:#3949ab;}
-        
-        /* ─── PREVIEW ────────────────────────────────────────────────────── */
-        .preview-section{display:none;margin-top:20px;overflow-x:auto;}
-        .preview-section table{
-            width:100%;
-            border-collapse:collapse;
-            font-size:0.85rem;
-        }
-        .preview-section th{
-            background:linear-gradient(135deg,#1a237e,#3949ab);
-            color:#fff;
-            padding:10px 12px;
-            text-align:left;
-            white-space:nowrap;
-            position:sticky;
-            top:0;
-            z-index:2;
-        }
-        .preview-section td{
-            padding:8px 12px;
-            border-bottom:1px solid #f0f0f0;
-        }
-        .preview-section tr:hover td{background:#e8eaf6;}
-        
-        .loading{
-            text-align:center;
-            padding:30px;
-            color:#666;
-        }
-        .loading i{
-            font-size:2rem;
-            color:#3949ab;
-            animation:spin 1s linear infinite;
-            display:block;
-            margin-bottom:10px;
-        }
-        @keyframes spin{100%{transform:rotate(360deg);}}
-        
-        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
-        @media(max-width:768px){
-            .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
-            .topbar a{font-size:0.75rem;padding:6px 14px;}
-            .container{padding:0 12px;}
-            .card{padding:16px 18px;}
-            .filter-grid{grid-template-columns:1fr;}
-            .btn-row{flex-direction:column;}
-            .btn{width:100%;justify-content:center;}
-            .badge-info{margin-left:0;margin-top:4px;}
-        }
-        @media(max-width:480px){
-            .card-title{font-size:0.95rem;flex-wrap:wrap;}
-            .preview-section table{font-size:0.75rem;}
-            .preview-section th,.preview-section td{padding:6px 8px;}
+        .hint i {
+            color: #ff9800;
+            margin-right: 5px;
         }
     </style>
 </head>
 <body>
-
-    <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
-    <div class="topbar">
+    <div class="watermark">RRB Group of Schools</div>
+    
+    <nav class="admin-nav">
         <h1><i class="fas fa-file-export"></i> Export Results</h1>
         <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </nav>
+
+    <div class="marquee-container">
+        <marquee behavior="scroll" direction="left" scrollamount="6" onmouseover="this.stop();" onmouseout="this.start();">
+            <i class="fas fa-circle"></i> Filter results by class, subject, and date range
+            <i class="fas fa-calendar-alt"></i> Leave dates empty to include all records
+            <i class="fas fa-download"></i> Export customized Excel report
+        </marquee>
     </div>
 
     <div class="container">
-
-        <!-- ─── FILTERS CARD ───────────────────────────────────────────── -->
         <div class="card">
-            <div class="card-title">
-                <i class="fas fa-sliders-h"></i> Filter Options
-                <span class="badge-info" id="recordCount">Select filters</span>
-            </div>
-            <form id="exportForm">
-                <div class="filter-grid">
-                    <div class="form-group">
-                        <label for="filterClass"><i class="fas fa-graduation-cap"></i> Class</label>
-                        <select id="filterClass" name="class">
-                            <option value="All">All Classes</option>
-                            {% for c in classes %}
-                            <option value="{{ c }}">{{ c }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="filterSection"><i class="fas fa-columns"></i> Section</label>
-                        <select id="filterSection" name="section">
-                            <option value="All">All Sections</option>
-                            {% for sec in sections %}
-                            <option value="{{ sec }}">{{ sec }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="filterSubject"><i class="fas fa-book"></i> Subject</label>
-                        <select id="filterSubject" name="subject">
-                            <option value="All">All Subjects</option>
-                            {% for s in subjects %}
-                            <option value="{{ s }}">{{ s }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="filterTestNo"><i class="fas fa-hashtag"></i> Test No</label>
-                        <select id="filterTestNo" name="test_no">
-                            <option value="">Select Test</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="startDate"><i class="fas fa-calendar-alt"></i> From Date</label>
-                        <input type="date" id="startDate" name="start_date">
-                    </div>
-                    <div class="form-group">
-                        <label for="endDate"><i class="fas fa-calendar-check"></i> To Date</label>
-                        <input type="date" id="endDate" name="end_date">
-                    </div>
+            <h3><i class="fas fa-filter"></i> Filter Results</h3>
+            <form action="/admin/export/results" method="GET">
+                <div class="form-group">
+                    <label for="class"><i class="fas fa-graduation-cap"></i> Class</label>
+                    <select name="class" id="class">
+                        <option value="All">All Classes</option>
+                        {% for c in classes %}
+                        <option value="{{ c }}">{{ c }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-
-                <div class="btn-row">
-                    <button type="button" class="btn btn-preview" id="previewBtn">
-                        <i class="fas fa-eye"></i> Preview
-                    </button>
-                    <button type="button" class="btn btn-excel" id="exportExcelBtn" disabled>
-                        <i class="fas fa-file-excel"></i> Export Excel
-                    </button>
-                    <button type="button" class="btn btn-pdf" id="exportPdfBtn" disabled>
-                        <i class="fas fa-file-pdf"></i> Export PDF
-                    </button>
-                    <button type="reset" class="btn btn-secondary" id="clearBtn">
-                        <i class="fas fa-undo-alt"></i> Clear Filters
-                    </button>
+                <div class="form-group">
+                    <label for="subject"><i class="fas fa-book"></i> Subject</label>
+                    <select name="subject" id="subject">
+                        <option value="All">All Subjects</option>
+                        {% for s in subjects %}
+                        <option value="{{ s }}">{{ s }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <div class="hint">
-                    <i class="fas fa-info-circle"></i> Select Class, Subject, and Test No to enable exports. Use Preview to see data before exporting.
+                <div class="form-group">
+                    <label for="start_date"><i class="fas fa-calendar-alt"></i> Start Date (Optional)</label>
+                    <input type="date" name="start_date" id="start_date">
                 </div>
+                <div class="form-group">
+                    <label for="end_date"><i class="fas fa-calendar-check"></i> End Date (Optional)</label>
+                    <input type="date" name="end_date" id="end_date">
+                </div>
+                <button type="submit" class="btn-green"><i class="fas fa-file-excel"></i> Export Excel</button>
             </form>
-        </div>
-
-        <!-- ─── PREVIEW CARD ────────────────────────────────────────────── -->
-        <div class="card preview-section" id="previewCard">
-            <div class="card-title">
-                <i class="fas fa-table"></i> Preview Results
-                <span class="badge-info" id="previewCount">0 records</span>
-            </div>
-            <div id="previewContent">
-                <div class="loading"><i class="fas fa-spinner"></i> Loading...</div>
+            <div class="hint">
+                <i class="fas fa-info-circle"></i> Leave dates empty to include all records. Start and end dates are inclusive.
             </div>
         </div>
-
-    
-<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
-</footer>
-</div>
-
-    <script>
-        // ─── DOM refs ──────────────────────────────────────────────────────
-        const classSelect = document.getElementById('filterClass');
-        const sectionSelect = document.getElementById('filterSection');
-        const subjectSelect = document.getElementById('filterSubject');
-        const testNoSelect = document.getElementById('filterTestNo');
-        const startDate = document.getElementById('startDate');
-        const endDate = document.getElementById('endDate');
-        const previewBtn = document.getElementById('previewBtn');
-        const exportExcelBtn = document.getElementById('exportExcelBtn');
-        const exportPdfBtn = document.getElementById('exportPdfBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const recordCount = document.getElementById('recordCount');
-        const previewCard = document.getElementById('previewCard');
-        const previewContent = document.getElementById('previewContent');
-        const previewCount = document.getElementById('previewCount');
-        const exportForm = document.getElementById('exportForm');
-
-        // ─── Helper: get first real value from select ────────────────────
-        function getFirstValue(sel) {
-            for (let opt of sel.options) {
-                if (opt.value && opt.value !== 'All' && opt.value !== '') {
-                    return opt.value;
-                }
-            }
-            return null;
-        }
-
-        // ─── Load Test Numbers ────────────────────────────────────────────
-        async function loadTestNumbers(classVal, subjectVal) {
-            testNoSelect.innerHTML = '<option value="">Select Test</option>';
-            if (!classVal || !subjectVal || classVal === 'All' || subjectVal === 'All') {
-                testNoSelect.disabled = true;
-                updateButtons();
-                return;
-            }
-            testNoSelect.disabled = false;
-            try {
-                const res = await fetch(`/api/test_numbers?class=${encodeURIComponent(classVal)}&subject=${encodeURIComponent(subjectVal)}`);
-                const data = await res.json();
-                let testNos = data.test_numbers || [];
-                if (data.combined_tests) {
-                    data.combined_tests.forEach(ct => {
-                        if (ct.test_no) testNos.push(ct.test_no);
-                    });
-                }
-                const unique = [...new Set(testNos)].sort();
-                if (unique.length === 0) {
-                    testNoSelect.innerHTML = '<option value="">No tests available</option>';
-                } else {
-                    testNoSelect.innerHTML = '<option value="">Select Test</option>';
-                    unique.forEach(tn => {
-                        const opt = document.createElement('option');
-                        opt.value = tn;
-                        opt.textContent = tn;
-                        testNoSelect.appendChild(opt);
-                    });
-                }
-            } catch(e) {
-                console.error('Failed to load test numbers:', e);
-                testNoSelect.innerHTML = '<option value="">Error loading tests</option>';
-            }
-            updateButtons();
-            if (testNoSelect.options.length === 2) {
-                testNoSelect.value = testNoSelect.options[1].value;
-            }
-            updateButtons();
-        }
-
-        // ─── Update button states ─────────────────────────────────────────
-        function updateButtons() {
-            const testNo = testNoSelect.value;
-            const classVal = classSelect.value;
-            const subjectVal = subjectSelect.value;
-            const valid = classVal !== 'All' && subjectVal !== 'All' &&
-                          testNo !== '' && testNo !== 'Select Test' && testNo !== 'No tests available';
-            exportExcelBtn.disabled = !valid;
-            exportPdfBtn.disabled = !valid;
-            if (valid) {
-                recordCount.textContent = 'Ready to export ✅';
-                recordCount.style.background = '#e8f5e9';
-                recordCount.style.color = '#1b5e20';
-            } else {
-                recordCount.textContent = 'Select filters to enable';
-                recordCount.style.background = '#fff3e0';
-                recordCount.style.color = '#e65100';
-            }
-        }
-
-        // ─── Build URL for export/preview ────────────────────────────────
-        function buildParams() {
-            const formData = new FormData(exportForm);
-            const params = new URLSearchParams();
-            for (let [key, value] of formData.entries()) {
-                if (value && value !== 'All' && value !== 'Select Test' && value !== 'No tests available') {
-                    params.append(key, value);
-                }
-            }
-            if (params.get('test_no') === '') params.delete('test_no');
-            if (params.get('section') === 'All') params.delete('section');
-            return params;
-        }
-
-        // ─── Preview ──────────────────────────────────────────────────────
-        previewBtn.addEventListener('click', async () => {
-            const params = buildParams();
-            params.set('format', 'json');
-            previewCard.style.display = 'block';
-            previewContent.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Loading...</div>';
-            try {
-                const res = await fetch(`/admin/export/results?${params.toString()}`);
-                if (!res.ok) throw new Error('Failed to fetch');
-                const data = await res.json();
-                if (data.results && data.results.length) {
-                    const rows = data.results;
-                    previewCount.textContent = rows.length + ' records';
-                    let html = `<div style="overflow-x:auto;"><table>
-                        <thead><tr>
-                            <th>#</th><th>Student ID</th><th>Name</th><th>Class</th><th>Section</th><th>Subject</th><th>Score</th><th>Percentage</th>
-                        </tr></thead><tbody>`;
-                    rows.forEach((r, i) => {
-                        html += `<tr>
-                            <td>${i+1}</td>
-                            <td>${r.student_id}</td>
-                            <td>${r.name}</td>
-                            <td>${r.class}</td>
-                            <td>${r.section || '—'}</td>
-                            <td>${r.subject}</td>
-                            <td>${r.score}/${r.total_questions || 0}</td>
-                            <td>${r.percentage ? r.percentage.toFixed(1) : 'N/A'}%</td>
-                        </tr>`;
-                    });
-                    html += '</tbody></table></div>';
-                    previewContent.innerHTML = html;
-                } else {
-                    previewContent.innerHTML = '<p style="text-align:center;color:#999;padding:30px;">No records found for the selected filters.</p>';
-                    previewCount.textContent = '0 records';
-                }
-            } catch(e) {
-                previewContent.innerHTML = `<p style="text-align:center;color:#c62828;padding:30px;">Error loading preview: ${e.message}</p>`;
-                console.error(e);
-            }
-        });
-
-        // ─── Export actions ──────────────────────────────────────────────
-        function triggerExport(format) {
-            const params = buildParams();
-            params.set('format', format);
-            window.location.href = `/admin/export/results?${params.toString()}`;
-        }
-
-        exportExcelBtn.addEventListener('click', () => triggerExport('excel'));
-        exportPdfBtn.addEventListener('click', () => triggerExport('pdf'));
-
-        // ─── Clear filters ────────────────────────────────────────────────
-        clearBtn.addEventListener('click', () => {
-            classSelect.value = 'All';
-            sectionSelect.value = 'All';
-            subjectSelect.value = 'All';
-            testNoSelect.innerHTML = '<option value="">Select Test</option>';
-            testNoSelect.disabled = true;
-            startDate.value = '';
-            endDate.value = '';
-            previewCard.style.display = 'none';
-            updateButtons();
-        });
-
-        // ─── Event listeners ──────────────────────────────────────────────
-        classSelect.addEventListener('change', () => {
-            const cls = classSelect.value;
-            const sub = subjectSelect.value;
-            testNoSelect.innerHTML = '<option value="">Select Test</option>';
-            if (cls !== 'All' && sub !== 'All') {
-                loadTestNumbers(cls, sub);
-            } else {
-                testNoSelect.disabled = true;
-                updateButtons();
-            }
-        });
-
-        subjectSelect.addEventListener('change', () => {
-            const cls = classSelect.value;
-            const sub = subjectSelect.value;
-            testNoSelect.innerHTML = '<option value="">Select Test</option>';
-            if (cls !== 'All' && sub !== 'All') {
-                loadTestNumbers(cls, sub);
-            } else {
-                testNoSelect.disabled = true;
-                updateButtons();
-            }
-        });
-
-        testNoSelect.addEventListener('change', updateButtons);
-
-        // ─── Auto‑select on load ──────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', async () => {
-            const firstClass = getFirstValue(classSelect);
-            if (firstClass) classSelect.value = firstClass;
-            
-            const firstSection = getFirstValue(sectionSelect);
-            if (firstSection) sectionSelect.value = firstSection;
-            
-            const firstSubject = getFirstValue(subjectSelect);
-            if (firstSubject) subjectSelect.value = firstSubject;
-
-            const cls = classSelect.value;
-            const sub = subjectSelect.value;
-            if (cls !== 'All' && sub !== 'All') {
-                await loadTestNumbers(cls, sub);
-                if (testNoSelect.options.length === 2) {
-                    testNoSelect.value = testNoSelect.options[1].value;
-                }
-                updateButtons();
-            } else {
-                testNoSelect.disabled = true;
-                updateButtons();
-            }
-        });
-    </script>
+        <a href="/admin/dashboard" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
 </body>
 </html>
