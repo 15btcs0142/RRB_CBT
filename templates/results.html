@@ -344,7 +344,7 @@
     <div class="topbar">
         <h1><i class="fas fa-poll"></i> Exam Results</h1>
         <div class="nav-links">
-            <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
+            <a href="javascript:void(0)" onclick="handleDashboardClick(event)"><i class="fas fa-arrow-left"></i> Dashboard</a>
             <a href="/admin/export_results_page"><i class="fas fa-file-export"></i> Export Data</a>
         </div>
     </div>
@@ -569,8 +569,8 @@
             tbody.innerHTML = '';
             results.forEach(r => {
                 const key = `${r.class}_${r.subject}`;
-                const maxMarks = totalQuestionsMap[key] || 0;
-                const pct = maxMarks > 0 ? ((r.score / maxMarks) * 100).toFixed(1) : 'N/A';
+                const maxMarks = r.total_questions || totalQuestionsMap[key] || 0;
+                const pct = r.percentage !== undefined && r.percentage !== null ? Number(r.percentage).toFixed(1) : (maxMarks > 0 ? ((r.score / maxMarks) * 100).toFixed(1) : '0.0');
                 tbody.innerHTML += `<tr>
                     <td><code style="background:#f5f5f5;padding:2px 8px;border-radius:4px;font-size:0.78rem;">${r.student_id}</code></td>
                     <td><i class="fas fa-user-circle" style="margin-right:6px;color:#3949ab;"></i>${r.name}</td>
@@ -592,16 +592,17 @@
                 document.getElementById('passRate').textContent = '0%';
                 return;
             }
+            const uniqueStudentCount = new Set(results.map(r => r.student_id)).size;
             let sum = 0, max = 0, passCount = 0;
             results.forEach(r => {
                 const key = `${r.class}_${r.subject}`;
-                const maxMarks = totalQuestionsMap[key] || 0;
-                const pct = maxMarks > 0 ? (r.score / maxMarks) * 100 : 0;
+                const maxMarks = r.total_questions || totalQuestionsMap[key] || 0;
+                const pct = r.percentage !== undefined && r.percentage !== null ? Number(r.percentage) : (maxMarks > 0 ? (r.score / maxMarks) * 100 : 0);
                 sum += r.score;
                 if (r.score > max) max = r.score;
                 if (pct >= 40) passCount++;
             });
-            document.getElementById('totalStudents').textContent = total;
+            document.getElementById('totalStudents').textContent = uniqueStudentCount;
             document.getElementById('avgScore').textContent = (sum / total).toFixed(2);
             document.getElementById('maxScore').textContent = max;
             document.getElementById('passRate').textContent = ((passCount / total) * 100).toFixed(1) + '%';
@@ -658,6 +659,92 @@
             setInterval(updateCurrentTestButton, 5000);
         }
         init();
+
+        const IS_ADMIN = {{ 'true' if is_admin else 'false' }};
+        const IS_TEACHER = {{ 'true' if is_teacher else 'false' }};
+
+        function handleDashboardClick(e) {
+            if (e) e.preventDefault();
+            // 1. If loaded inside an iframe container (e.g. Teacher Panel), tell parent frame to load dashboard view
+            if (window.parent && window.parent !== window && typeof window.parent.loadTab === 'function') {
+                window.parent.loadTab('dashboard');
+                return;
+            }
+
+            // 2. If Teacher session, redirect to Teacher Dashboard
+            if (IS_TEACHER && !IS_ADMIN) {
+                window.location.href = '/teacher/dashboard';
+                return;
+            }
+
+            // 3. If Admin session, redirect to Admin Dashboard
+            if (IS_ADMIN) {
+                window.location.href = '/admin/dashboard';
+                return;
+            }
+
+            // 4. Default fallback
+            window.location.href = '/teacher/dashboard';
+        }
+
+        function openAdminAuthModal() {
+            document.getElementById('adminAuthModal').style.display = 'flex';
+            document.getElementById('adminPasswordInput').value = '';
+            document.getElementById('adminPasswordInput').focus();
+        }
+
+        function closeAdminAuthModal() {
+            document.getElementById('adminAuthModal').style.display = 'none';
+            document.getElementById('authAlert').style.display = 'none';
+        }
+
+        async function submitAdminAuth(e) {
+            e.preventDefault();
+            const pwd = document.getElementById('adminPasswordInput').value;
+            const alertBox = document.getElementById('authAlert');
+            try {
+                const res = await fetch('/api/verify_admin_password', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({password: pwd})
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    if (window.parent && window.parent !== window) {
+                        window.parent.location.href = data.redirect;
+                    } else {
+                        window.location.href = data.redirect;
+                    }
+                } else {
+                    alertBox.textContent = data.message || 'Incorrect admin password';
+                    alertBox.style.display = 'block';
+                }
+            } catch(err) {
+                alertBox.textContent = 'Authentication failed: ' + err.message;
+                alertBox.style.display = 'block';
+            }
+        }
     </script>
+
+    <!-- Admin Password Verification Modal -->
+    <div class="modal" id="adminAuthModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.65);backdrop-filter:blur(5px);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:18px;padding:30px 26px;max-width:420px;width:90%;box-shadow:0 12px 35px rgba(0,0,0,0.25);border:1px solid #e2e8f0;text-align:center;">
+            <div style="width:60px;height:60px;border-radius:50%;background:#e0e7ff;color:#3730a3;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.6rem;">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h3 style="color:#1e293b;font-size:1.2rem;font-weight:700;margin-bottom:6px;">Admin Authentication</h3>
+            <p style="color:#64748b;font-size:0.85rem;margin-bottom:20px;">Admin login is required to return to the Admin Dashboard.</p>
+
+            <div id="authAlert" style="display:none;padding:9px 14px;border-radius:10px;background:#fee2e2;color:#991b1b;font-size:0.84rem;margin-bottom:16px;font-weight:500;border:1px solid #fca5a5;"></div>
+
+            <form onsubmit="submitAdminAuth(event)">
+                <input type="password" id="adminPasswordInput" placeholder="Enter Admin Password" required style="width:100%;padding:12px 16px;border:2px solid #cbd5e1;border-radius:10px;font-family:'Poppins',sans-serif;font-size:0.92rem;margin-bottom:20px;outline:none;">
+                <div style="display:flex;gap:12px;">
+                    <button type="button" onclick="closeAdminAuthModal()" style="flex:1;padding:11px;background:#f1f5f9;color:#475569;border:none;border-radius:10px;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;font-size:0.9rem;">Cancel</button>
+                    <button type="submit" style="flex:1;padding:11px;background:linear-gradient(135deg,#1a237e,#3949ab);color:white;border:none;border-radius:10px;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;font-size:0.9rem;">Verify &amp; Enter</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
