@@ -316,11 +316,7 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg, #f8fafc
     <span class="hdr-badge">Testbook AI Engine</span>
   </h1>
   <div class="hdr-links">
-    {% if is_admin %}
-    <a href="/admin/dashboard" class="hdr-btn"><i class="fas fa-arrow-left"></i> Admin Dashboard</a>
-    {% else %}
-    <a href="/teacher/dashboard" class="hdr-btn"><i class="fas fa-arrow-left"></i> Teacher Dashboard</a>
-    {% endif %}
+    <a href="javascript:void(0)" onclick="handleDashboardClick(event)" class="hdr-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
   </div>
 </div>
 
@@ -687,22 +683,27 @@ function renderPreview(meta, sections) {
   sections.forEach(sec => {
     let qHtml = '';
     (sec.questions || []).forEach(q => {
+      let cleanQText = String(q.question || '').replace(/\{"?meta(data)?"?:?.*?\}/gi, '').trim();
       let optsHtml = '';
       if (q.options && q.options.length) {
         optsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;font-size:9.5pt;">` +
-          q.options.map(o => `<div>${o}</div>`).join('') + `</div>`;
+          q.options.map(o => `<div>${String(o).replace(/\{"?meta(data)?"?:?.*?\}/gi, '').trim()}</div>`).join('') + `</div>`;
       }
       let subHtml = '';
       if (q.sub_questions && q.sub_questions.length) {
         subHtml = `<ol type="i" style="margin-top:6px;padding-left:20px;font-size:9.5pt;">` +
-          q.sub_questions.map(sq => `<li style="margin-bottom:4px;">${sq.question || sq}</li>`).join('') + `</ol>`;
+          q.sub_questions.map(sq => {
+            let sqText = typeof sq === 'object' ? (sq.question || '') : String(sq);
+            sqText = sqText.replace(/\{"?meta(data)?"?:?.*?\}/gi, '').trim();
+            return `<li style="margin-bottom:4px;">${sqText}</li>`;
+          }).join('') + `</ol>`;
       }
       qHtml += `
         <div style="margin-bottom:12px;page-break-inside:avoid;">
           <table style="width:100%;border-collapse:collapse;">
             <tr>
               <td style="vertical-align:top;width:30px;font-weight:bold;">Q${q.number}.</td>
-              <td style="vertical-align:top;">${q.question} ${optsHtml} ${subHtml}</td>
+              <td style="vertical-align:top;">${cleanQText} ${optsHtml} ${subHtml}</td>
               <td style="vertical-align:top;width:45px;text-align:right;font-weight:bold;color:#475569;">[${sec.marks_per_question || 1}M]</td>
             </tr>
           </table>
@@ -730,8 +731,8 @@ function renderPreview(meta, sections) {
       displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
     }
   };
-</script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<\/script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"><\/script>
 <style>
   body{font-family:Arial,sans-serif;font-size:10pt;line-height:1.45;color:#000;margin:20mm 15mm;}
   .p-hdr{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px;}
@@ -777,6 +778,20 @@ function doDoc() {
   a.href     = url;
   a.download = `Descriptive_Paper_${_paperMeta ? _paperMeta.class + '_' + _paperMeta.subject : 'Export'}.doc`;
   a.click();
+}
+
+function handleDashboardClick(e) {
+  if (e) e.preventDefault();
+  if (window.parent && window.parent !== window && typeof window.parent.loadTab === 'function') {
+    window.parent.loadTab('dashboard');
+    return;
+  }
+  const IS_ADMIN = {{ 'true' if is_admin else 'false' }};
+  if (IS_ADMIN) {
+    window.location.href = '/admin/dashboard';
+  } else {
+    window.location.href = '/teacher/dashboard';
+  }
 }
 </script>
 </body>
