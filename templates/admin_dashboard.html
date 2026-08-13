@@ -334,7 +334,51 @@
         .topbar-right {
             display: flex;
             align-items: center;
-            gap: 18px;
+            gap: 14px;
+        }
+        .login-switch-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+            border: 1px solid transparent;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+        .login-switch-btn.teacher-btn {
+            background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+            color: #3730a3;
+            border-color: #c7d2fe;
+        }
+        .login-switch-btn.teacher-btn:hover {
+            background: linear-gradient(135deg, #4338ca, #3730a3);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(67, 56, 202, 0.3);
+            transform: translateY(-1px);
+        }
+        .login-switch-btn.student-btn {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+        .login-switch-btn.student-btn:hover {
+            background: linear-gradient(135deg, #15803d, #166534);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(21, 128, 61, 0.3);
+            transform: translateY(-1px);
+        }
+        @media (max-width: 992px) {
+            .login-switch-btn span {
+                display: none;
+            }
+            .login-switch-btn {
+                padding: 7px 10px;
+            }
         }
         .topbar-right .clock {
             font-size: .85rem;
@@ -405,6 +449,10 @@
             background: #f0f4f8;
             position: relative;
         }
+        .content-panel.has-iframe {
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
         .content-panel::-webkit-scrollbar {
             width: 6px;
         }
@@ -433,12 +481,10 @@
         .iframe-panel {
             display: none;
             width: 100%;
-            height: 100%;
-            min-height: 500px;
+            height: calc(100vh - var(--header-h));
             border: none;
-            border-radius: var(--radius);
+            border-radius: 0;
             background: #fff;
-            box-shadow: var(--shadow);
         }
         .iframe-panel.active {
             display: block;
@@ -1026,6 +1072,12 @@
                 <span class="page-title" id="pageTitle">Dashboard</span>
             </div>
             <div class="topbar-right">
+                <a href="{{ url_for('teacher_login') }}" class="login-switch-btn teacher-btn" target="_blank" title="Open Teachers Login">
+                    <i class="fas fa-chalkboard-teacher"></i> <span>Teachers Login</span>
+                </a>
+                <a href="{{ url_for('index') }}" class="login-switch-btn student-btn" target="_blank" title="Open Students Login">
+                    <i class="fas fa-user-graduate"></i> <span>Students Login</span>
+                </a>
                 <span class="clock"><i class="far fa-clock"></i> <span id="liveClock">--:--:--</span></span>
                 <div style="position:relative;">
                     <button class="notif-btn" id="notifBell" onclick="toggleNotifPanel()">
@@ -1249,13 +1301,16 @@
         function switchPanel(panelId, type, url) {
             document.querySelectorAll('.panel-section').forEach(el => el.classList.remove('active'));
             const iframe = document.getElementById('iframePanel');
+            const contentPanel = document.querySelector('.content-panel');
             iframe.classList.remove('active');
 
             if (type === 'static') {
+                if (contentPanel) contentPanel.classList.remove('has-iframe');
                 const target = document.getElementById('panel-' + panelId);
                 if (target) target.classList.add('active');
                 iframe.src = '';
             } else if (type === 'iframe') {
+                if (contentPanel) contentPanel.classList.add('has-iframe');
                 iframe.classList.add('active');
                 iframe.src = url;
             }
