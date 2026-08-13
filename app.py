@@ -21,6 +21,7 @@ import weasyprint.pdf.stream
 import re
 import json
 import ast
+from validators import validate_schema, STUDENT_LOGIN_SCHEMA, ADMIN_LOGIN_SCHEMA, SAVE_ANSWER_SCHEMA, REATTEMPT_REQUEST_SCHEMA
 
 def safe_json_loads(text):
     """
@@ -165,6 +166,66 @@ def parse_question_csv_row(row):
         'marks': marks,
         'negative_mark': neg_mark
     }
+
+def _normalize_correct_answer(correct_raw, opt_a='', opt_b='', opt_c='', opt_d=''):
+    """
+    Normalize any correct_answer representation ('A', 'a', 'option_a', 'Option A', '1', or actual option text)
+    to a standard uppercase letter ('A', 'B', 'C', 'D').
+    """
+    if not correct_raw:
+        return ''
+    c_str = str(correct_raw).strip()
+    c_upper = c_str.upper()
+
+    # 1. Single letter 'A', 'B', 'C', 'D'
+    if c_upper in ('A', 'B', 'C', 'D'):
+        return c_upper
+
+    # 2. Number string '1', '2', '3', '4'
+    if c_str in ('1', '2', '3', '4'):
+        return chr(ord('A') + int(c_str) - 1)
+
+    # 3. 'OPTION_A', 'OPTION A', 'OPT_A', 'OPTION_B', etc.
+    c_clean = c_upper.replace(' ', '_')
+    if c_clean in ('OPTION_A', 'OPT_A'):
+        return 'A'
+    if c_clean in ('OPTION_B', 'OPT_B'):
+        return 'B'
+    if c_clean in ('OPTION_C', 'OPT_C'):
+        return 'C'
+    if c_clean in ('OPTION_D', 'OPT_D'):
+        return 'D'
+
+    # 4. Text match against option_a, option_b, option_c, option_d
+    c_lower = c_str.lower()
+    if opt_a and str(opt_a).strip().lower() == c_lower:
+        return 'A'
+    if opt_b and str(opt_b).strip().lower() == c_lower:
+        return 'B'
+    if opt_c and str(opt_c).strip().lower() == c_lower:
+        return 'C'
+    if opt_d and str(opt_d).strip().lower() == c_lower:
+        return 'D'
+
+    return ''
+
+def _save_or_update_result(c, student_id, name, class_, section, subject, score, total_questions, percentage, chapter):
+    """Save new result or update existing result row for (student_id, subject, chapter)."""
+    c.execute("""SELECT id FROM results 
+                 WHERE student_id=? AND LOWER(subject)=LOWER(?) AND (chapter=? OR (chapter IS NULL AND ?=''))""",
+              (student_id, subject, chapter or '', chapter or ''))
+    existing = c.fetchone()
+    if existing:
+        c.execute("""UPDATE results 
+                     SET name=?, class=?, section=?, score=?, total_questions=?, percentage=?, test_date=CURRENT_TIMESTAMP
+                     WHERE id=?""",
+                  (name, class_, section or '', round(score, 2), total_questions, percentage, existing['id']))
+    else:
+        c.execute("""INSERT INTO results 
+                     (student_id, name, class, section, subject, score, total_questions, percentage, chapter, test_date)
+                     VALUES (?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)""",
+                  (student_id, name, class_, section or '', subject, round(score, 2), total_questions, percentage, chapter or ''))
+
 def get_working_model(api_key):
     """
     Try to find a working Gemini model by listing available models.
@@ -265,7 +326,9 @@ def _get_ai_keys():
         'gemini': os.environ.get('GEMINI_API_KEY', '').strip().strip('"\''),
         'deepseek': os.environ.get('DEEPSEEK_API_KEY', '').strip().strip('"\''),
         'openai': os.environ.get('OPENAI_API_KEY', '').strip().strip('"\''),
-        'claude': os.environ.get('CLAUDE_API_KEY', '') or os.environ.get('ANTHROPIC_API_KEY', '')
+        'claude': os.environ.get('CLAUDE_API_KEY', '') or os.environ.get('ANTHROPIC_API_KEY', ''),
+        'huggingface': os.environ.get('HUGGINGFACE_API_KEY', '') or os.environ.get('HF_TOKEN', '') or os.environ.get('HF_API_KEY', ''),
+        'hf_model': os.environ.get('HF_MODEL', '') or os.environ.get('HUGGINGFACE_MODEL', '')
     }
     for k in keys:
         keys[k] = keys[k].strip().strip('"\'')
@@ -295,6 +358,10 @@ def _get_ai_keys():
                         keys['openai'] = val
                     elif ('CLAUDE' in k_name or 'ANTHROPIC' in k_name) and val:
                         keys['claude'] = val
+                    elif ('HUGGINGFACE_MODEL' in k_name or 'HF_MODEL' in k_name) and val:
+                        keys['hf_model'] = val
+                    elif ('HUGGINGFACE' in k_name or 'HF_' in k_name) and val:
+                        keys['huggingface'] = val
 
             if is_single and lines:
                 raw_val = ''.join(lines).strip().strip('"\'')
@@ -435,9 +502,70 @@ def _call_claude_api(prompt, api_key, timeout=90):
             break
     return None, last_err
 
+def _call_huggingface_api(prompt, api_key, timeout=90):
+    """Call Hugging Face Inference API (Serverless Open-Source models)"""
+    import urllib.request, urllib.error, json
+    keys = _get_ai_keys()
+    custom_model = keys.get('hf_model')
+    models = [
+        "Qwen/Qwen2.5-7B-Instruct",
+        "meta-llama/Llama-3.1-8B-Instruct",
+        "mistralai/Mistral-7B-Instruct-v0.3",
+        "Qwen/Qwen2.5-Coder-32B-Instruct"
+    ]
+    if custom_model and custom_model not in models:
+        models.insert(0, custom_model)
+    elif custom_model and custom_model in models:
+        models.remove(custom_model)
+        models.insert(0, custom_model)
+    last_err = ""
+    for model_name in models:
+        url = "https://router.huggingface.co/v1/chat/completions"
+        payload = json.dumps({
+            "model": model_name,
+            "messages": [
+                {"role": "system", "content": "You are a professional educational question paper generator. Always return clean JSON array output."},
+                {"role": "user", "content": prompt}
+            ],
+            "max_tokens": 4096,
+            "temperature": 0.7
+        }).encode('utf-8')
+        req = urllib.request.Request(
+            url, data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) RRB-CBT-Engine"
+            },
+            method='POST'
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                res = json.loads(resp.read().decode('utf-8'))
+                text = res['choices'][0]['message']['content'].strip()
+                return text, None
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode('utf-8')
+            try:
+                err_json = json.loads(err_body)
+                msg = err_json.get('error', {}).get('message', err_body)
+                if isinstance(err_json.get('error'), str):
+                    msg = err_json.get('error')
+            except Exception:
+                msg = err_body
+            last_err = f"Hugging Face HTTP {e.code}: {msg[:300]}"
+            if e.code in (404, 400, 503):
+                continue
+            else:
+                break
+        except Exception as e:
+            last_err = f"Hugging Face Error: {str(e)}"
+            break
+    return None, last_err
+
 def generate_ai_content(prompt, timeout=90):
     """
-    Multi-provider AI generator with automatic failover across Gemini, DeepSeek, OpenAI, and Claude.
+    Multi-provider AI generator with automatic failover across Gemini, DeepSeek, OpenAI, Claude, and Hugging Face.
     Returns (result_dict, provider_name, error_message).
     """
     keys = _get_ai_keys()
@@ -477,6 +605,15 @@ def generate_ai_content(prompt, timeout=90):
             return res_dict, 'Claude AI', None
         app.logger.warning(f"Claude AI failed: {err}")
         errors.append(f"Claude: {err}")
+
+    # Priority 5: Hugging Face AI
+    if keys.get('huggingface'):
+        text, err = _call_huggingface_api(prompt, keys['huggingface'], timeout=timeout)
+        if text:
+            res_dict = {'candidates': [{'content': {'parts': [{'text': text}]}}]}
+            return res_dict, 'Hugging Face AI', None
+        app.logger.warning(f"Hugging Face AI failed: {err}")
+        errors.append(f"Hugging Face: {err}")
 
     if not any(keys.values()):
         return None, None, "No AI API key found. Please set GEMINI_API_KEY, DEEPSEEK_API_KEY, OPENAI_API_KEY, or CLAUDE_API_KEY in apikey.env or .api_key."
@@ -652,10 +789,10 @@ def init_db():
     """
     Initialize the SQLite database with all required tables and schema. Handles migrations from old schemas.
     """
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('database.db', timeout=30.0)
     c = conn.cursor()
-    c.execute("PRAGMA journal_mode=WAL")
-    c.execute("PRAGMA busy_timeout = 10000")
+    c.execute("PRAGMA busy_timeout = 30000")
+    c.execute("PRAGMA journal_mode=DELETE")
 
     c.execute('''CREATE TABLE IF NOT EXISTS students
                  (student_id TEXT PRIMARY KEY, name TEXT, class TEXT, subject TEXT, ip TEXT,
@@ -729,12 +866,14 @@ def init_db():
         c.execute("ALTER TABLE results RENAME TO results_old")
         c.execute('''CREATE TABLE results
                      (id INTEGER PRIMARY KEY AUTOINCREMENT, student_id TEXT, name TEXT,
-                      class TEXT, subject TEXT, score INTEGER, total_questions INTEGER,
+                      class TEXT, section TEXT, subject TEXT, score INTEGER, total_questions INTEGER,
                       percentage REAL, test_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                       chapter TEXT)''')
         c.execute("""INSERT INTO results (student_id, name, class, subject, score, total_questions, percentage)
                      SELECT student_id, name, class, subject, score, score, 0 FROM results_old""")
         c.execute("DROP TABLE results_old")
+    elif 'section' not in res_columns:
+        c.execute("ALTER TABLE results ADD COLUMN section TEXT")
     c.execute('''CREATE TABLE IF NOT EXISTS exam_control
                  (id INTEGER PRIMARY KEY CHECK (id=1), is_active INTEGER DEFAULT 0,
                   start_time TIMESTAMP, duration INTEGER DEFAULT 60,
@@ -852,6 +991,8 @@ def init_db():
         c.execute("ALTER TABLE questions ADD COLUMN question_type TEXT DEFAULT 'MCQ'")
     if 'test_no' not in q_cols:
         c.execute("ALTER TABLE questions ADD COLUMN test_no TEXT DEFAULT ''")
+    if 'section' not in q_cols:
+        c.execute("ALTER TABLE questions ADD COLUMN section TEXT DEFAULT ''")
 
     # Student class lock: once registered, class/section is locked
     c.execute('''CREATE TABLE IF NOT EXISTS student_class_lock
@@ -882,11 +1023,21 @@ def init_db():
     conn.commit()
     conn.close()
 
+def get_db():
+    """
+    Get a database connection with Row factory enabled for dict-like access.
+    Configured with timeout and busy_timeout to prevent lock conflicts.
+    """
+    conn = sqlite3.connect('database.db', timeout=30.0)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout = 30000")
+    return conn
+
 def reset_exam_on_startup():
     """
     Reset the exam status on application startup to ensure clean state.
     """
-    conn = sqlite3.connect('database.db')
+    conn = get_db()
     c = conn.cursor()
     c.execute("UPDATE exam_control SET is_active=0, start_time=NULL WHERE id=1")
     conn.commit()
@@ -894,14 +1045,6 @@ def reset_exam_on_startup():
 
 init_db()
 reset_exam_on_startup()
-
-def get_db():
-    """
-    Get a database connection with Row factory enabled for dict-like access.
-    """
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    return conn
 
 def get_setting(key, default=''):
     """
@@ -961,6 +1104,7 @@ def teacher_required(f):
 # Student Routes
 # -------------------------------
 @app.route('/')
+@app.route('/login')
 def index():
     """
     Render the student login page with available classes, subjects, bulletins, and class teachers.
@@ -1008,6 +1152,7 @@ def index():
                            logo_path=logo_path)
 
 @app.route('/student_login', methods=['POST'])
+@validate_schema(STUDENT_LOGIN_SCHEMA)
 def student_login():
     """
     Handle student login and exam registration. Validates class lock, manages reattempt requests.
@@ -1432,8 +1577,13 @@ def exam():
         c.execute("SELECT COUNT(*) FROM shuffled_questions WHERE student_id=?", (student_id,))
         count = c.fetchone()[0]
         if count == 0:
-            c.execute("SELECT id FROM questions WHERE class=? AND subject=? ORDER BY id",
-                      (student['class'], student['subject']))
+            test_no = (student['test_no'] if ('test_no' in student.keys() and student['test_no']) else session.get('test_no', '') or '').strip()
+            if test_no:
+                c.execute("SELECT id FROM questions WHERE class=? AND subject=? AND (test_no=? OR chapter=?) ORDER BY id",
+                          (student['class'], student['subject'], test_no, test_no))
+            else:
+                c.execute("SELECT id FROM questions WHERE class=? AND subject=? ORDER BY id",
+                          (student['class'], student['subject']))
             qids = [row['id'] for row in c.fetchall()]
             random.shuffle(qids)
             option_letters = ['A', 'B', 'C', 'D']
@@ -1595,6 +1745,7 @@ def get_questions():
 
 @app.route('/save_answer', methods=['POST'])
 @student_required
+@validate_schema(SAVE_ANSWER_SCHEMA, is_json=True)
 def save_answer():
     """
     API endpoint to save a student's answer to a question.
@@ -1647,7 +1798,7 @@ def submit_exam():
     neg_value   = float(ec['negative_value'])  if ec else 0.33
 
     def _score_subject(subj):
-        c.execute("""SELECT q.correct_answer, r.selected_option, q.subject
+        c.execute("""SELECT q.correct_answer, q.option_a, q.option_b, q.option_c, q.option_d, r.selected_option, q.subject
                      FROM shuffled_questions sq
                      JOIN questions q   ON q.id = sq.question_id
                      LEFT JOIN responses r ON q.id = r.question_id AND r.student_id = ?
@@ -1657,9 +1808,15 @@ def submit_exam():
         total = len(rows)
         raw   = 0.0
         for r in rows:
-            sel = r['selected_option']
-            cor = r['correct_answer']
-            if sel == cor:
+            sel = (r['selected_option'] or '').strip().upper()
+            cor_letter = _normalize_correct_answer(
+                r['correct_answer'],
+                r['option_a'],
+                r['option_b'],
+                r['option_c'],
+                r['option_d']
+            )
+            if sel and cor_letter and sel == cor_letter:
                 raw += 1.0
             elif sel and neg_enabled:
                 raw -= neg_value
@@ -1667,21 +1824,20 @@ def submit_exam():
         pct   = round((score / total * 100), 2) if total > 0 else 0.0
         return score, total, pct
 
+    c.execute("SELECT section, test_no FROM students WHERE student_id=?", (student_id,))
+    st_row = c.fetchone()
+    section_val = (st_row['section'] if st_row and st_row['section'] else session.get('section', ''))
+    test_no_val = (st_row['test_no'] if st_row and st_row['test_no'] else session.get('test_no', ''))
+
     if combined_subjects:
         # Save one result row per subject
         for subj in combined_subjects:
             score, total, pct = _score_subject(subj)
-            c.execute("""INSERT INTO results
-                         (student_id, name, class, subject, score, total_questions, percentage, test_date)
-                         VALUES (?,?,?,?,?,?,?,CURRENT_TIMESTAMP)""",
-                     (student_id, name, class_, subj, round(score,2), total, pct))
+            _save_or_update_result(c, student_id, name, class_, section_val, subj, score, total, pct, test_no_val)
     else:
         # Single-subject test
         score, total, pct = _score_subject(subject)
-        c.execute("""INSERT INTO results
-                     (student_id, name, class, subject, score, total_questions, percentage, test_date)
-                     VALUES (?,?,?,?,?,?,?,CURRENT_TIMESTAMP)""",
-                 (student_id, name, class_, subject, round(score,2), total, pct))
+        _save_or_update_result(c, student_id, name, class_, section_val, subject, score, total, pct, test_no_val)
 
     c.execute("UPDATE students SET status='Submitted' WHERE student_id=?", (student_id,))
     conn.commit()
@@ -1707,6 +1863,7 @@ def submitted():
 
 @app.route('/request_reattempt', methods=['POST'])
 @student_required
+@validate_schema(REATTEMPT_REQUEST_SCHEMA, is_json=True)
 def request_reattempt():
     """
     API endpoint for students to request reattempt of an exam.
@@ -1950,6 +2107,40 @@ def start_exam():
     conn.close()
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/teacher/start_exam', methods=['POST'])
+@teacher_required
+def teacher_start_exam():
+    """
+    API endpoint for teacher to start the exam with negative marking options.
+    """
+    duration         = request.form.get('duration', 60, type=int)
+    negative_marking = 1 if request.form.get('negative_marking') == 'yes' else 0
+    negative_value   = request.form.get('negative_value', 0.33, type=float)
+    conn = get_db()
+    c = conn.cursor()
+    start_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    c.execute("""UPDATE exam_control
+                 SET is_active=1, start_time=?, duration=?,
+                     negative_marking=?, negative_value=?
+                 WHERE id=1""",
+              (start_time, duration, negative_marking, negative_value))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('teacher_dashboard'))
+
+@app.route('/teacher/stop_exam')
+@teacher_required
+def teacher_stop_exam():
+    """
+    API endpoint for teacher to stop the exam.
+    """
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE exam_control SET is_active=0 WHERE id=1")
+    conn.commit()
+    conn.close()
+    return redirect(url_for('teacher_dashboard'))
+
 @app.route('/admin/exam_settings')
 @admin_required
 def admin_exam_settings():
@@ -1965,6 +2156,22 @@ def admin_exam_settings():
                         'negative_value': row['negative_value']})
     return jsonify({'duration': 60, 'negative_marking': False, 'negative_value': 0.33})
 
+@app.route('/teacher/exam_settings')
+@teacher_required
+def teacher_exam_settings():
+    """Return current exam control settings as JSON — used by teacher dashboard."""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT is_active, duration, negative_marking, negative_value FROM exam_control WHERE id=1")
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return jsonify({'is_active': bool(row['is_active']),
+                        'duration': row['duration'],
+                        'negative_marking': bool(row['negative_marking']),
+                        'negative_value': row['negative_value']})
+    return jsonify({'is_active': False, 'duration': 60, 'negative_marking': False, 'negative_value': 0.33})
+
 @app.route('/admin/student/force_submit/<student_id>', methods=['POST'])
 @admin_required
 def admin_force_submit_student(student_id):
@@ -1973,7 +2180,7 @@ def admin_force_submit_student(student_id):
     c = conn.cursor()
 
     # Only act if student is In Progress
-    c.execute("SELECT name, class, subject, status FROM students WHERE student_id=?", (student_id,))
+    c.execute("SELECT name, class, section, subject, status, test_no FROM students WHERE student_id=?", (student_id,))
     student = c.fetchone()
     if not student:
         conn.close()
@@ -1985,6 +2192,7 @@ def admin_force_submit_student(student_id):
     name    = student['name']
     class_  = student['class']
     subject = student['subject']
+    test_no = (student['test_no'] if ('test_no' in student.keys() and student['test_no']) else '').strip()
 
     # Calculate score with negative marking
     c.execute("SELECT negative_marking, negative_value FROM exam_control WHERE id=1")
@@ -1992,25 +2200,39 @@ def admin_force_submit_student(student_id):
     neg_enabled = bool(ec['negative_marking']) if ec else False
     neg_value   = float(ec['negative_value'])  if ec else 0.33
 
-    c.execute("""SELECT q.correct_answer, r.selected_option
-                 FROM questions q
-                 LEFT JOIN responses r ON q.id = r.question_id AND r.student_id = ?
-                 WHERE q.class = ? AND q.subject = ?""",
-             (student_id, class_, subject))
+    if test_no:
+        c.execute("""SELECT q.correct_answer, q.option_a, q.option_b, q.option_c, q.option_d, r.selected_option
+                     FROM questions q
+                     LEFT JOIN responses r ON q.id = r.question_id AND r.student_id = ?
+                     WHERE q.class = ? AND q.subject = ? AND (q.test_no = ? OR q.chapter = ?)""",
+                  (student_id, class_, subject, test_no, test_no))
+    else:
+        c.execute("""SELECT q.correct_answer, q.option_a, q.option_b, q.option_c, q.option_d, r.selected_option
+                     FROM questions q
+                     LEFT JOIN responses r ON q.id = r.question_id AND r.student_id = ?
+                     WHERE q.class = ? AND q.subject = ?""",
+                  (student_id, class_, subject))
     rows  = c.fetchall()
     total = len(rows)
-    raw   = sum(
-        1.0 if r['selected_option'] == r['correct_answer'] else
-        (-neg_value if r['selected_option'] and neg_enabled else 0.0)
-        for r in rows
-    )
+    raw = 0.0
+    for r in rows:
+        sel = (r['selected_option'] or '').strip().upper()
+        cor_letter = _normalize_correct_answer(
+            r['correct_answer'],
+            r['option_a'],
+            r['option_b'],
+            r['option_c'],
+            r['option_d']
+        )
+        if sel and cor_letter and sel == cor_letter:
+            raw += 1.0
+        elif sel and neg_enabled:
+            raw -= neg_value
     score      = max(0.0, raw)
     percentage = round((score / total * 100), 2) if total > 0 else 0.0
 
     # Save result
-    c.execute("""INSERT INTO results (student_id, name, class, subject, score, total_questions, percentage, test_date)
-                 VALUES (?,?,?,?,?,?,?,CURRENT_TIMESTAMP)""",
-             (student_id, name, class_, subject, round(score, 2), total, percentage))
+    _save_or_update_result(c, student_id, name, class_, student['section'] if 'section' in student.keys() else '', subject, score, total, percentage, test_no)
     c.execute("UPDATE students SET status='Submitted' WHERE student_id=?", (student_id,))
     conn.commit()
     conn.close()
@@ -2089,10 +2311,12 @@ def generate_question_paper():
                         CASE WHEN question_type IS NULL OR trim(question_type) = '' THEN 'MCQ' ELSE question_type END as question_type
                  FROM questions
                  WHERE (class=? OR class=? OR class LIKE ?)
+                   AND (? = '' OR section=? OR section LIKE ?)
                    AND (LOWER(subject)=LOWER(?) OR subject LIKE ?)
                    AND (? = '' OR test_no=? OR chapter=? OR test_no LIKE ? OR chapter LIKE ?)
                  ORDER BY id""",
              (class_, clean_cls, f"%{clean_cls}%",
+              section, section, f"%{section}%",
               subject, f"%{subject}%",
               test_no, test_no, test_no, f"%{test_no}%", f"%{test_no}%"))
     questions = [dict(row) for row in c.fetchall()]
@@ -2166,7 +2390,7 @@ def questions_data():
     """
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT id, class, subject, question, option_a, option_b, option_c, option_d, correct_answer, image_path FROM questions ORDER BY class, subject, id")
+    c.execute("SELECT id, class, section, subject, question, option_a, option_b, option_c, option_d, correct_answer, image_path, test_no, chapter FROM questions ORDER BY class, subject, id")
     questions = [dict(row) for row in c.fetchall()]
     conn.close()
     return jsonify(questions)
@@ -2497,7 +2721,21 @@ def api_class_report_subjects():
     conn = get_db()
     c = conn.cursor()
 
-    # Query distinct subjects across test_papers, questions, and results
+    teacher_id = session.get('teacher_id')
+    is_admin = session.get('admin_logged_in')
+
+    if teacher_id and not is_admin:
+        c.execute("SELECT subject, is_class_teacher FROM teacher_assignments WHERE teacher_id=? AND (class=? OR class LIKE ?)",
+                  (teacher_id, class_, f"%{clean_cls}%"))
+        t_rows = [dict(r) for r in c.fetchall()]
+        is_ct = any(r.get('is_class_teacher') for r in t_rows)
+        t_subjs = sorted(list(set([r['subject'] for r in t_rows if r.get('subject')])))
+
+        if not is_ct and t_subjs:
+            conn.close()
+            return jsonify({'subjects': t_subjs})
+
+    # Admin or Class Teacher: Query distinct subjects across test_papers, questions, and results
     c.execute("""SELECT DISTINCT subject FROM test_papers WHERE (class=? OR class LIKE ?)
                  UNION
                  SELECT DISTINCT subject FROM questions WHERE (class=? OR class LIKE ?)
@@ -2594,33 +2832,31 @@ def evaluate():
     neg_enabled = bool(ec['negative_marking']) if ec else False
     neg_value   = float(ec['negative_value'])  if ec else 0.33
 
-    c.execute("DELETE FROM results")
-    c.execute("SELECT student_id, name, class, subject FROM students WHERE status='Submitted'")
+    c.execute("SELECT student_id, name, class, section, subject, test_no FROM students WHERE status='Submitted'")
     students = c.fetchall()
     for student in students:
         student_id = student['student_id']
         name  = student['name']
         class_  = student['class']
+        section_ = student['section'] or ''
         subject = student['subject']
-        c.execute("SELECT id, option_a, option_b, option_c, option_d, correct_answer FROM questions WHERE class=? AND subject=?", (class_, subject))
+        test_no = (student['test_no'] or '').strip() if ('test_no' in student.keys() and student['test_no']) else ''
+        if test_no:
+            c.execute("SELECT id, option_a, option_b, option_c, option_d, correct_answer FROM questions WHERE class=? AND subject=? AND (test_no=? OR chapter=?)", (class_, subject, test_no, test_no))
+        else:
+            c.execute("SELECT id, option_a, option_b, option_c, option_d, correct_answer FROM questions WHERE class=? AND subject=?", (class_, subject))
         q_rows = c.fetchall()
         correct_map = {}
         for q in q_rows:
-            correct = q['correct_answer']
-            if correct is None:
-                continue
-            correct = correct.strip()
-            if len(correct) == 1 and correct.upper() in ('A','B','C','D'):
-                correct_map[q['id']] = correct.upper()
-            else:
-                if correct == q['option_a'] or correct.lower() == 'option_a':
-                    correct_map[q['id']] = 'A'
-                elif correct == q['option_b'] or correct.lower() == 'option_b':
-                    correct_map[q['id']] = 'B'
-                elif correct == q['option_c'] or correct.lower() == 'option_c':
-                    correct_map[q['id']] = 'C'
-                elif correct == q['option_d'] or correct.lower() == 'option_d':
-                    correct_map[q['id']] = 'D'
+            cor_letter = _normalize_correct_answer(
+                q['correct_answer'],
+                q['option_a'],
+                q['option_b'],
+                q['option_c'],
+                q['option_d']
+            )
+            if cor_letter:
+                correct_map[q['id']] = cor_letter
         c.execute("SELECT question_id, selected_option FROM responses WHERE student_id=?", (student_id,))
         responses = c.fetchall()
 
@@ -2639,9 +2875,7 @@ def evaluate():
 
         score      = max(0.0, raw_score)
         percentage = round((score / total * 100), 2) if total > 0 else 0.0
-        c.execute("""INSERT OR REPLACE INTO results (student_id, name, class, subject, score, total_questions, percentage)
-                     VALUES (?,?,?,?,?,?,?)""",
-                  (student_id, name, class_, subject, round(score, 2), total, percentage))
+        _save_or_update_result(c, student_id, name, class_, section_, subject, score, total, percentage, test_no)
     conn.commit()
     conn.close()
     return redirect(url_for('results_page'))
@@ -2687,44 +2921,65 @@ def api_results_summary():
     query = """
         SELECT
             r.class,
-            s.section,
+            COALESCE(r.section, s.section, '') as section,
             r.subject,
             r.chapter as test_no,
-            COUNT(r.student_id) as student_count,
+            COUNT(DISTINCT r.student_id) as student_count,
             AVG(r.score) as avg_score,
             MAX(r.score) as max_score,
             MIN(r.score) as min_score
         FROM results r
-        JOIN students s ON r.student_id = s.student_id
+        LEFT JOIN students s ON r.student_id = s.student_id
         WHERE r.class IS NOT NULL AND r.class != ''
           AND r.subject IS NOT NULL AND r.subject != ''
-        GROUP BY r.class, s.section, r.subject, r.chapter
-        ORDER BY r.class, s.section, r.subject, r.chapter
+        GROUP BY r.class, COALESCE(r.section, s.section, ''), r.subject, r.chapter
+        ORDER BY r.class, COALESCE(r.section, s.section, ''), r.subject, r.chapter
     """
     c.execute(query)
     rows = c.fetchall()
     summary = [dict(row) for row in rows]
 
-    # Total registered students (distinct student_id in results)
-    c.execute("SELECT COUNT(DISTINCT student_id) as total FROM results")
-    total_students = c.fetchone()['total'] or 0
+    # Total registered students from students table
+    c.execute("SELECT COUNT(*) as total FROM students")
+    total_st_row = c.fetchone()
+    c.execute("SELECT COUNT(DISTINCT student_id) as total_res FROM results")
+    total_res_row = c.fetchone()
+    total_students = max(total_st_row['total'] if total_st_row else 0, total_res_row['total_res'] if total_res_row else 0)
     conn.close()
 
     return jsonify({
         'summary': summary,
         'total_students': total_students
     })
+
+@app.route('/api/verify_admin_password', methods=['POST'])
+def verify_admin_password():
+    """Verify admin password for elevation from results page to admin dashboard."""
+    data = request.get_json(silent=True) or request.form or {}
+    password = data.get('password', '').strip()
+    if password == 'admin123':
+        session['admin_logged_in'] = True
+        return jsonify({'status': 'success', 'redirect': url_for('admin_dashboard')})
+    return jsonify({'status': 'error', 'message': 'Incorrect admin password.'}), 401
+
 @app.route('/admin/results')
-@admin_required
 def results_page():
     """
-    Render the results page showing all test results.
+    Render the results page showing all test results. Accessible to both Admin and Teacher roles.
     """
-    return render_template('results.html')
+    if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
+        return redirect(url_for('teacher_login'))
+    return render_template('results.html',
+                           is_admin=bool(session.get('admin_logged_in')),
+                           is_teacher=bool(session.get('teacher_logged_in')))
 
 @app.route('/admin/results/data')
-@admin_required
 def results_data():
+    """
+    API endpoint to fetch results data with filtering. Accessible to both Admin and Teacher roles.
+    """
+    if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
     """
     API endpoint to fetch results data with filtering:
     class, section (via join), subject, test_no (chapter).
@@ -2742,11 +2997,13 @@ def results_data():
             r.id, r.student_id, r.name, r.class, r.subject,
             r.score, r.total_questions, r.percentage, r.test_date,
             r.chapter,
-            s.section,
+            COALESCE(r.section, s.section, '') as section,
             s.exam_started_at
         FROM results r
         LEFT JOIN students s ON r.student_id = s.student_id
-        WHERE 1=1
+        WHERE r.id IN (
+            SELECT MAX(id) FROM results GROUP BY student_id, LOWER(subject), COALESCE(chapter, '')
+        )
     """
     params = []
 
@@ -2754,7 +3011,7 @@ def results_data():
         query += " AND r.class = ?"
         params.append(class_filter)
     if section_filter:
-        query += " AND s.section = ?"
+        query += " AND COALESCE(r.section, s.section, '') = ?"
         params.append(section_filter)
     if subject_filter:
         query += " AND r.subject = ?"
@@ -2767,6 +3024,7 @@ def results_data():
     c.execute(query, params)
     results = [dict(row) for row in c.fetchall()]
     conn.close()
+    return jsonify(results)
 @app.route('/admin/results_filter')
 @admin_required
 def results_filter():
@@ -2837,7 +3095,13 @@ def export_results():
             COALESCE(r.test_date, s.exam_started_at) as test_date,
             s.exam_started_at
         FROM students s
-        LEFT JOIN results r ON r.student_id = s.student_id
+        LEFT JOIN results r ON r.id = (
+            SELECT id FROM results 
+            WHERE student_id = s.student_id 
+              AND (LOWER(subject) = LOWER(s.subject) OR subject IS NULL OR subject = '')
+              AND (chapter = s.test_no OR chapter IS NULL OR chapter = '' OR s.test_no IS NULL OR s.test_no = '')
+            ORDER BY id DESC LIMIT 1
+        )
         WHERE 1=1
     '''
     params = []
@@ -2856,7 +3120,7 @@ def export_results():
         params.append(subject_filter.strip())
 
     if test_filter and test_filter != '' and test_filter != 'All':
-        query += " AND (r.chapter = ? OR s.test_no = ? OR r.chapter IS NULL OR r.chapter = '' OR s.test_no IS NULL OR s.test_no = '')"
+        query += " AND (r.chapter = ? OR s.test_no = ?)"
         params.extend([test_filter, test_filter])
 
     if single_date:
@@ -2874,7 +3138,17 @@ def export_results():
 
     c.execute(query, params)
     rows = c.fetchall()
-    results = [dict(row) for row in rows]
+    
+    seen = set()
+    deduped_results = []
+    for row in rows:
+        r_dict = dict(row)
+        key = (r_dict['student_id'], r_dict['subject'], r_dict['test_no'])
+        if key not in seen:
+            seen.add(key)
+            deduped_results.append(r_dict)
+            
+    results = deduped_results
     total_students = len(results)
     conn.close()
 
@@ -3019,9 +3293,14 @@ def view_student_responses(student_id):
     if not student:
         return "Student not found", 404
 
-    # Fetch questions with all option texts
-    c.execute("SELECT id, question, option_a, option_b, option_c, option_d, correct_answer FROM questions WHERE class=? AND subject=? ORDER BY id",
-              (student['class'], student['subject']))
+    # Fetch questions with all option texts, filtering by test_no if set
+    test_no = (student['test_no'] if ('test_no' in student.keys() and student['test_no']) else '').strip()
+    if test_no:
+        c.execute("SELECT id, question, option_a, option_b, option_c, option_d, correct_answer FROM questions WHERE class=? AND subject=? AND (test_no=? OR chapter=?) ORDER BY id",
+                  (student['class'], student['subject'], test_no, test_no))
+    else:
+        c.execute("SELECT id, question, option_a, option_b, option_c, option_d, correct_answer FROM questions WHERE class=? AND subject=? ORDER BY id",
+                  (student['class'], student['subject']))
     questions = c.fetchall()
 
     c.execute("SELECT question_id, selected_option FROM responses WHERE student_id=?", (student_id,))
@@ -3032,27 +3311,14 @@ def view_student_responses(student_id):
     question_data = []
     for q in questions:
         selected = responses.get(q['id'], '')
-        # Map the stored correct_answer to a letter (A/B/C/D)
-        correct_raw = q['correct_answer']
-        correct_letter = None
-        if correct_raw:
-            correct_raw = correct_raw.strip()
-            if len(correct_raw) == 1 and correct_raw.upper() in ('A','B','C','D'):
-                correct_letter = correct_raw.upper()
-            else:
-                # Try to match against option texts or "option_x"
-                if correct_raw == q['option_a'] or correct_raw.lower() == 'option_a':
-                    correct_letter = 'A'
-                elif correct_raw == q['option_b'] or correct_raw.lower() == 'option_b':
-                    correct_letter = 'B'
-                elif correct_raw == q['option_c'] or correct_raw.lower() == 'option_c':
-                    correct_letter = 'C'
-                elif correct_raw == q['option_d'] or correct_raw.lower() == 'option_d':
-                    correct_letter = 'D'
-        # Determine if correct
-        is_correct = False
-        if selected and correct_letter:
-            is_correct = (selected.strip().upper() == correct_letter)
+        correct_letter = _normalize_correct_answer(
+            q['correct_answer'],
+            q['option_a'],
+            q['option_b'],
+            q['option_c'],
+            q['option_d']
+        )
+        is_correct = bool(selected and correct_letter and selected.strip().upper() == correct_letter)
 
         question_data.append({
             'id': q['id'],
@@ -3216,34 +3482,26 @@ def admin_current_test_sessions():
 @app.route('/api/admin/recent_test_sessions')
 @admin_required
 def api_recent_test_sessions():
-    """Return list of distinct test sessions (class, section, subject, test_no, date) from today or most recent date."""
+    """Return list of distinct test sessions across all dates, grouped by class, section, subject, test_no, date."""
     conn = get_db()
     c = conn.cursor()
     
-    # Get the most recent date (or today's date) from results
-    c.execute("SELECT DATE(MAX(test_date)) as max_date FROM results")
-    row = c.fetchone()
-    if not row or not row['max_date']:
-        conn.close()
-        return jsonify({'sessions': []})
-    target_date = row['max_date']
-    
-    # Query distinct test sessions for that date
-    # Since section is not in results, we'll get it from students join
     c.execute("""
         SELECT 
             r.class,
-            s.section,
+            COALESCE(NULLIF(r.section, ''), NULLIF(s.section, ''), '') as section,
             r.subject,
-            r.chapter as test_no,
-            r.test_date,
-            COUNT(r.student_id) as student_count
+            COALESCE(NULLIF(r.chapter, ''), 'Test') as test_no,
+            DATE(r.test_date) as session_date,
+            MAX(r.test_date) as test_date,
+            COUNT(DISTINCT r.student_id) as student_count
         FROM results r
-        JOIN students s ON r.student_id = s.student_id
-        WHERE DATE(r.test_date) = ?
-        GROUP BY r.class, s.section, r.subject, r.chapter, r.test_date
-        ORDER BY r.test_date DESC
-    """, (target_date,))
+        LEFT JOIN students s ON r.student_id = s.student_id
+        WHERE r.class IS NOT NULL AND r.class != ''
+        GROUP BY r.class, COALESCE(NULLIF(r.section, ''), NULLIF(s.section, ''), ''), r.subject, r.chapter, DATE(r.test_date)
+        ORDER BY MAX(r.test_date) DESC
+        LIMIT 50
+    """)
     sessions = [dict(row) for row in c.fetchall()]
     conn.close()
     return jsonify({'sessions': sessions})
@@ -3251,7 +3509,7 @@ def api_recent_test_sessions():
 @app.route('/admin/current_test_results')
 @admin_required
 def current_test_results():
-    """Show results of the most recent exam session, optionally filtered by class, section, subject, test_no, date."""
+    """Show results of the test session, filtered by class, section, subject, test_no, date."""
     format_type = request.args.get('format', 'html')
     class_filter = request.args.get('class', '').strip()
     section_filter = request.args.get('section', '').strip()
@@ -3262,60 +3520,33 @@ def current_test_results():
     conn = get_db()
     c = conn.cursor()
 
+    clean_cls = class_filter.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+
     # Build base query with joins
     query = """
-        SELECT r.*, s.admission_no, s.section as student_section
+        SELECT r.*, COALESCE(NULLIF(s.admission_no, ''), s.student_id) as admission_no,
+               COALESCE(NULLIF(r.section, ''), s.section, '') as student_section
         FROM results r
-        JOIN students s ON r.student_id = s.student_id
+        LEFT JOIN students s ON r.student_id = s.student_id
         WHERE 1=1
     """
     params = []
 
     if class_filter:
-        query += " AND r.class = ?"
-        params.append(class_filter)
+        query += " AND (r.class = ? OR r.class = ? OR r.class LIKE ?)"
+        params.extend([class_filter, clean_cls, f"%{clean_cls}%"])
     if section_filter:
-        query += " AND s.section = ?"
-        params.append(section_filter)
+        query += " AND (r.section = ? OR s.section = ?)"
+        params.extend([section_filter, section_filter])
     if subject_filter:
-        query += " AND r.subject = ?"
-        params.append(subject_filter)
+        query += " AND (LOWER(r.subject) = LOWER(?) OR r.subject LIKE ?)"
+        params.extend([subject_filter, f"%{subject_filter}%"])
     if test_no_filter:
-        query += " AND r.chapter = ?"
-        params.append(test_no_filter)
+        query += " AND (r.chapter = ? OR r.chapter LIKE ?)"
+        params.extend([test_no_filter, f"%{test_no_filter}%"])
     if date_filter:
-        # date_filter may be full timestamp or just date; we'll match date part
         query += " AND DATE(r.test_date) = DATE(?)"
         params.append(date_filter)
-
-    # If no filters provided, fallback to most recent test (previous logic)
-    if not any([class_filter, subject_filter, test_no_filter, date_filter]):
-        # Get the latest test date and class from that date
-        c.execute("SELECT MAX(test_date) as latest_date FROM results")
-        row = c.fetchone()
-        if not row or not row['latest_date']:
-            conn.close()
-            return "No results found.", 404
-        latest_date = row['latest_date']
-        # Get the class from that latest date
-        c.execute("""
-            SELECT DISTINCT class FROM results WHERE test_date = ?
-        """, (latest_date,))
-        classes = [r['class'] for r in c.fetchall()]
-        if not classes:
-            conn.close()
-            return "No results found for the latest date.", 404
-        class_filter = classes[0]
-        # Now add class and date filters
-        query += " AND r.class = ? AND r.test_date = ?"
-        params = [class_filter, latest_date]
-        # Also get subject and test_no for info
-        c.execute("""
-            SELECT DISTINCT subject, chapter FROM results WHERE class = ? AND test_date = ?
-        """, (class_filter, latest_date))
-        info = c.fetchone()
-        subject_filter = info['subject'] if info else ''
-        test_no_filter = info['chapter'] if info else ''
 
     query += " ORDER BY r.score DESC"
     c.execute(query, params)
@@ -3515,6 +3746,7 @@ def handle_reattempt_request(req_id, action):
 # ========================
 
 @app.route('/teacher', methods=['GET', 'POST'])
+@app.route('/teacher/login', methods=['GET', 'POST'])
 def teacher_login():
     """
     Handle teacher login.
@@ -3702,7 +3934,8 @@ Output the JSON array now:"""
 @teacher_required
 def teacher_dashboard():
     """
-    Render the teacher dashboard.
+    Render the teacher dashboard with allotted class stats, all-classes list,
+    and same-subject teacher test counts.
     """
     teacher_id = session.get('teacher_id')
     conn = get_db()
@@ -3716,65 +3949,282 @@ def teacher_dashboard():
     
     # Get teacher info
     c.execute("SELECT * FROM teachers WHERE id=?", (teacher_id,))
-    teacher = dict(c.fetchone())
+    t_row = c.fetchone()
+    teacher = dict(t_row) if t_row else {}
     
+    # Compile Detailed Allotted Classes Data
+    allotted_details = []
+    total_assigned_students = 0
+    total_my_tests_all = 0
+
+    for a in assignments:
+        cls = str(a['class'])
+        subj = str(a['subject'])
+        
+        # Enrolled students count for class
+        c.execute('SELECT COUNT(*) FROM students WHERE class=?', (cls,))
+        st_count = c.fetchone()[0]
+        total_assigned_students += st_count
+        
+        # Total tests conducted for class & subject
+        c.execute('SELECT COUNT(DISTINCT test_no) FROM questions WHERE class=? AND subject=?', (cls, subj))
+        q_tests = c.fetchone()[0]
+        c.execute('SELECT COUNT(*) FROM test_papers WHERE class=? AND subject=?', (cls, subj))
+        tp_tests = c.fetchone()[0]
+        tot_tests = max(q_tests, tp_tests)
+        
+        # My tests created for class & subject
+        c.execute('SELECT COUNT(*) FROM test_generation_history WHERE teacher_id=? AND class=? AND subject=?', (teacher_id, cls, subj))
+        my_ai = c.fetchone()[0]
+        c.execute('SELECT COUNT(*) FROM test_papers WHERE uploaded_by=? AND class=? AND subject=?', (str(teacher_id), cls, subj))
+        my_up = c.fetchone()[0]
+        my_tests_count = my_ai + my_up
+        total_my_tests_all += my_tests_count
+        
+        # Same subject teachers breakdown (all teachers teaching this subject across school)
+        c.execute('''SELECT DISTINCT t.id, t.name, t.mobile, t.picture 
+                     FROM teacher_assignments ta 
+                     JOIN teachers t ON ta.teacher_id = t.id 
+                     WHERE ta.subject=?''', (subj,))
+        s_teachers = [dict(r) for r in c.fetchall()]
+        
+        teachers_breakdown = []
+        for st in s_teachers:
+            tid = st['id']
+            c.execute('SELECT COUNT(*) FROM test_generation_history WHERE teacher_id=? AND subject=?', (tid, subj))
+            tai = c.fetchone()[0]
+            c.execute('SELECT COUNT(*) FROM test_papers WHERE uploaded_by=? AND subject=?', (str(tid), subj))
+            tup = c.fetchone()[0]
+            st['tests_count'] = tai + tup
+            st['is_me'] = (tid == teacher_id)
+            teachers_breakdown.append(st)
+            
+        allotted_details.append({
+            'class': cls,
+            'subject': subj,
+            'is_class_teacher': a['is_class_teacher'],
+            'student_count': st_count,
+            'total_tests': tot_tests,
+            'my_tests': my_tests_count,
+            'teachers_breakdown': teachers_breakdown
+        })
+
+    # Compile All Classes List across System
+    c.execute('''
+        SELECT class FROM students WHERE class IS NOT NULL AND class != ''
+        UNION
+        SELECT class FROM questions WHERE class IS NOT NULL AND class != ''
+        UNION
+        SELECT class FROM teacher_assignments WHERE class IS NOT NULL AND class != ''
+    ''')
+    class_names = sorted([r[0] for r in c.fetchall()], key=lambda x: int(x) if str(x).isdigit() else str(x))
+
+    all_classes_data = []
+    for cls in class_names:
+        c.execute('SELECT COUNT(*) FROM students WHERE class=?', (str(cls),))
+        st_cnt = c.fetchone()[0]
+        
+        c.execute('SELECT DISTINCT subject FROM questions WHERE class=? AND subject IS NOT NULL', (str(cls),))
+        q_subjs = [r[0] for r in c.fetchall()]
+        c.execute('SELECT DISTINCT subject FROM teacher_assignments WHERE class=? AND subject IS NOT NULL', (str(cls),))
+        ta_subjs = [r[0] for r in c.fetchall()]
+        all_subjs = sorted(list(set(q_subjs + ta_subjs)))
+        
+        c.execute('SELECT COUNT(DISTINCT test_no) FROM questions WHERE class=?', (str(cls),))
+        q_tests = c.fetchone()[0]
+        c.execute('SELECT COUNT(*) FROM test_papers WHERE class=?', (str(cls),))
+        tp_tests = c.fetchone()[0]
+        tot_tests = max(q_tests, tp_tests)
+        
+        all_classes_data.append({
+            'class': str(cls),
+            'student_count': st_cnt,
+            'subjects': all_subjs,
+            'total_tests': tot_tests
+        })
+
     conn.close()
     return render_template('teacher_dashboard.html', 
                          assignments=assignments,
-                         teacher=teacher)
+                         teacher=teacher,
+                         allotted_details=allotted_details,
+                         all_classes_data=all_classes_data,
+                         total_assigned_students=total_assigned_students,
+                         total_my_tests_all=total_my_tests_all)
+
 
 
 @app.route('/teacher/students')
 @teacher_required
 def teacher_students():
     """
-    Render the page showing teacher's assigned students.
+    Render the page showing teacher's assigned students with step-by-step Class -> Section -> Student navigation.
     """
     teacher_id = session.get('teacher_id')
-    class_filter = request.args.get('class', '')
-    subject_filter = request.args.get('subject', '')
+    class_filter = request.args.get('class', '').strip()
+    section_filter = request.args.get('section', '').strip()
     
     conn = get_db()
     c = conn.cursor()
     
-    # Get teacher assignments to verify access
-    c.execute("""SELECT class, subject, is_class_teacher 
+    # 1. Get teacher assignments
+    c.execute("""SELECT class, section, subject, is_class_teacher 
                  FROM teacher_assignments 
                  WHERE teacher_id=?""", (teacher_id,))
     assignments = [dict(row) for row in c.fetchall()]
     
-    # Build student query based on assignments
+    # Build assigned classes map
+    assigned_classes_map = {}
+    for a in assignments:
+        cls = str(a['class'])
+        if not cls: continue
+        if cls not in assigned_classes_map:
+            assigned_classes_map[cls] = {
+                'class_name': cls,
+                'sections': set(),
+                'subjects': [],
+                'is_class_teacher': False,
+                'total_students': 0
+            }
+        if a.get('section'):
+            assigned_classes_map[cls]['sections'].add(str(a['section']))
+        if a.get('subject') and a['subject'] not in assigned_classes_map[cls]['subjects']:
+            assigned_classes_map[cls]['subjects'].append(a['subject'])
+        if a.get('is_class_teacher'):
+            assigned_classes_map[cls]['is_class_teacher'] = True
+            
+    for cls, cdata in assigned_classes_map.items():
+        c.execute("SELECT DISTINCT section FROM students WHERE class=? AND section IS NOT NULL AND section!=''", (cls,))
+        for r in c.fetchall():
+            cdata['sections'].add(r[0])
+        cdata['sections'] = sorted(list(cdata['sections']))
+        
+        c.execute("SELECT COUNT(*) FROM students WHERE class=?", (cls,))
+        cdata['total_students'] = c.fetchone()[0]
+        
+    assigned_classes_list = sorted(list(assigned_classes_map.values()), key=lambda x: int(x['class_name']) if x['class_name'].isdigit() else x['class_name'])
+    
+    # 2. Build Student Query
     query = """SELECT DISTINCT s.student_id, s.name, s.admission_no, s.class, s.section, 
                       s.dob, s.house, s.parents_name, s.picture
                FROM students s
                WHERE 1=1"""
     params = []
     
-    # If teacher has any class teacher assignment, they can see all students in those classes
-    class_teacher_classes = [a['class'] for a in assignments if a['is_class_teacher']]
-    
-    if class_teacher_classes and class_filter:
-        if class_filter in class_teacher_classes:
-            query += " AND s.class = ?"
-            params.append(class_filter)
-    elif not class_teacher_classes:
-        # Subject teacher - can only see students in their subject classes
-        assigned_classes = list(set([(a['class'], a['subject']) for a in assignments]))
-        if assigned_classes:
-            class_conditions = " OR ".join(["(s.class=? AND s.subject=?)"] * len(assigned_classes))
-            query += f" AND ({class_conditions})"
-            for cls, subj in assigned_classes:
-                params.extend([cls, subj])
-    
+    if class_filter:
+        query += " AND s.class = ?"
+        params.append(class_filter)
+        if section_filter:
+            query += " AND s.section = ?"
+            params.append(section_filter)
+    else:
+        all_t_classes = list(set([str(a['class']) for a in assignments if a.get('class')]))
+        if all_t_classes:
+            placeholders = ','.join(['?'] * len(all_t_classes))
+            query += f" AND s.class IN ({placeholders})"
+            params.extend(all_t_classes)
+            
+    query += " ORDER BY s.class, s.section, s.name"
     c.execute(query, params)
-    students = [dict(row) for row in c.fetchall()]
+    raw_students = [dict(row) for row in c.fetchall()]
+    
+    # 3. Compute student test metrics
+    students = []
+    for st in raw_students:
+        sid = st['student_id']
+        c.execute("SELECT COUNT(*) FROM results WHERE student_id=?", (sid,))
+        t_count = c.fetchone()[0]
+        
+        c.execute("SELECT AVG(percentage) FROM results WHERE student_id=? AND percentage IS NOT NULL", (sid,))
+        avg_perc = c.fetchone()[0]
+        avg_perc = round(avg_perc, 1) if avg_perc is not None else 0.0
+        
+        st['tests_appeared'] = t_count
+        st['avg_percentage'] = avg_perc
+        students.append(st)
+        
     conn.close()
     
     return render_template('teacher_students.html', 
+                         assigned_classes=assigned_classes_list,
                          students=students,
                          assignments=assignments,
                          class_filter=class_filter,
-                         subject_filter=subject_filter)
+                         section_filter=section_filter)
+
+@app.route('/api/student_performance/<student_id>')
+@teacher_required
+def api_student_performance(student_id):
+    """API endpoint to get detailed student performance analysis and graph data."""
+    conn = get_db()
+    c = conn.cursor()
+    
+    c.execute("SELECT * FROM students WHERE student_id=?", (student_id,))
+    student = c.fetchone()
+    if not student:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Student not found'}), 404
+    student = dict(student)
+    
+    teacher_id = session.get('teacher_id')
+    c.execute("SELECT class, subject, is_class_teacher FROM teacher_assignments WHERE teacher_id=?", (teacher_id,))
+    assignments = [dict(r) for r in c.fetchall()]
+    is_class_teacher = any(a['class'] == student['class'] and a['is_class_teacher'] for a in assignments)
+    
+    if is_class_teacher:
+        c.execute("""
+            SELECT id, subject, chapter, score, total_questions, percentage, test_date
+            FROM results
+            WHERE student_id=?
+            ORDER BY test_date ASC
+        """, (student_id,))
+    else:
+        teacher_subjects = [a['subject'] for a in assignments if a['class'] == student['class']]
+        if teacher_subjects:
+            placeholders = ','.join(['?'] * len(teacher_subjects))
+            c.execute(f"""
+                SELECT id, subject, chapter, score, total_questions, percentage, test_date
+                FROM results
+                WHERE student_id=? AND subject IN ({placeholders})
+                ORDER BY test_date ASC
+            """, [student_id] + teacher_subjects)
+        else:
+            c.execute("SELECT id, subject, chapter, score, total_questions, percentage, test_date FROM results WHERE 1=0")
+            
+    results_list = [dict(r) for r in c.fetchall()]
+    
+    total_tests = len(results_list)
+    avg_score = round(sum(r['percentage'] or 0 for r in results_list) / total_tests, 1) if total_tests > 0 else 0.0
+    max_score = round(max((r['percentage'] or 0 for r in results_list), default=0.0), 1)
+    passed_tests = sum(1 for r in results_list if (r['percentage'] or 0) >= 40.0)
+    pass_rate = round((passed_tests / total_tests) * 100, 1) if total_tests > 0 else 0.0
+    
+    subject_graphs = {}
+    for r in results_list:
+        subj = r['subject'] or 'General'
+        if subj not in subject_graphs:
+            subject_graphs[subj] = {'labels': [], 'scores': [], 'max_marks': []}
+        t_label = r['chapter'] if r.get('chapter') else f"Test #{r['id']}"
+        label = f"{t_label} ({r['test_date'][:10] if r.get('test_date') else ''})"
+        subject_graphs[subj]['labels'].append(label)
+        subject_graphs[subj]['scores'].append(round(r['percentage'] or 0.0, 1))
+        subject_graphs[subj]['max_marks'].append(f"{r['score']}/{r['total_questions']}")
+        
+    conn.close()
+    
+    return jsonify({
+        'status': 'success',
+        'student': student,
+        'stats': {
+            'total_tests': total_tests,
+            'avg_score': avg_score,
+            'max_score': max_score,
+            'passed_tests': passed_tests,
+            'pass_rate': pass_rate
+        },
+        'results': results_list,
+        'subject_graphs': subject_graphs
+    })
 
 @app.route('/teacher/student/<student_id>')
 @teacher_required
@@ -3807,12 +4257,12 @@ def teacher_student_profile(student_id):
         c.execute("""
             SELECT 
                 r.id, r.subject, r.chapter, r.score, r.test_date,
-                COALESCE(r.total_questions, 
-                    (SELECT COUNT(*) FROM questions WHERE class = r.class AND subject = r.subject)) AS total_questions,
+                COALESCE(NULLIF(r.total_questions, 0), 
+                    (SELECT COUNT(*) FROM questions WHERE class = r.class AND subject = r.subject AND (r.chapter IS NULL OR r.chapter = '' OR test_no = r.chapter OR chapter = r.chapter))) AS total_questions,
                 COALESCE(r.percentage,
                     CASE 
-                        WHEN (SELECT COUNT(*) FROM questions WHERE class = r.class AND subject = r.subject) > 0 
-                        THEN ROUND((r.score * 100.0 / (SELECT COUNT(*) FROM questions WHERE class = r.class AND subject = r.subject)), 2)
+                        WHEN (SELECT COUNT(*) FROM questions WHERE class = r.class AND subject = r.subject AND (r.chapter IS NULL OR r.chapter = '' OR test_no = r.chapter OR chapter = r.chapter)) > 0 
+                        THEN ROUND((r.score * 100.0 / (SELECT COUNT(*) FROM questions WHERE class = r.class AND subject = r.subject AND (r.chapter IS NULL OR r.chapter = '' OR test_no = r.chapter OR chapter = r.chapter))), 2)
                         ELSE 0.0 
                     END) AS percentage
             FROM results r
@@ -3827,12 +4277,12 @@ def teacher_student_profile(student_id):
             c.execute(f"""
                 SELECT 
                     r.id, r.subject, r.chapter, r.score, r.test_date,
-                    COALESCE(r.total_questions, 
-                        (SELECT COUNT(*) FROM questions WHERE class = r.class AND subject = r.subject)) AS total_questions,
+                    COALESCE(NULLIF(r.total_questions, 0), 
+                        (SELECT COUNT(*) FROM questions WHERE class = r.class AND subject = r.subject AND (r.chapter IS NULL OR r.chapter = '' OR test_no = r.chapter OR chapter = r.chapter))) AS total_questions,
                     COALESCE(r.percentage,
                         CASE 
-                            WHEN (SELECT COUNT(*) FROM questions WHERE class = r.class AND subject = r.subject) > 0 
-                            THEN ROUND((r.score * 100.0 / (SELECT COUNT(*) FROM questions WHERE class = r.class AND subject = r.subject)), 2)
+                            WHEN (SELECT COUNT(*) FROM questions WHERE class = r.class AND subject = r.subject AND (r.chapter IS NULL OR r.chapter = '' OR test_no = r.chapter OR chapter = r.chapter)) > 0 
+                            THEN ROUND((r.score * 100.0 / (SELECT COUNT(*) FROM questions WHERE class = r.class AND subject = r.subject AND (r.chapter IS NULL OR r.chapter = '' OR test_no = r.chapter OR chapter = r.chapter))), 2)
                             ELSE 0.0 
                         END) AS percentage
                 FROM results r
@@ -4649,7 +5099,18 @@ def teacher_monitoring_data():
 @app.route('/admin/class_report')
 @admin_required
 def admin_class_report():
-    return render_template('class_report.html', role='admin')
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""SELECT DISTINCT class FROM students WHERE class IS NOT NULL AND class != ''
+                 UNION
+                 SELECT DISTINCT class FROM results WHERE class IS NOT NULL AND class != ''
+                 UNION
+                 SELECT DISTINCT class FROM questions WHERE class IS NOT NULL AND class != ''
+                 UNION
+                 SELECT DISTINCT class FROM test_papers WHERE class IS NOT NULL AND class != ''""")
+    classes = sorted(list(set(r['class'].strip() for r in c.fetchall() if r['class'] and r['class'].strip())))
+    conn.close()
+    return render_template('class_report.html', role='admin', classes=classes)
 
 @app.route('/teacher/class_report')
 @teacher_required
@@ -4676,23 +5137,59 @@ def generate_class_report():
     export_format = data.get('format', 'excel')
     sort_by      = data.get('sort_by', 'name')
 
-    # Bug #5 Fix: require class
     if not class_:
         return jsonify({'status': 'error', 'message': 'Please enter a class to generate the report.'}), 400
+
+    clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
 
     conn = get_db()
     c = conn.cursor()
 
-    query  = """SELECT DISTINCT s.student_id, s.name, s.admission_no, s.class, s.section,
-                       s.house, s.parents_name, s.picture
-                FROM students s WHERE s.class=?"""
-    params = [class_]
+    # 1. Fetch students from students table
+    stu_query = """SELECT student_id, name, admission_no, class, section, house, parents_name, picture
+                   FROM students WHERE (class=? OR class=? OR class LIKE ?)"""
+    stu_params = [class_, clean_cls, f"%{clean_cls}%"]
     if section:
-        query += " AND (s.section=? OR s.section IS NULL OR s.section='')"
-        params.append(section)
+        stu_query += " AND (section=? OR section IS NULL OR section='')"
+        stu_params.append(section)
 
-    c.execute(query, params)
-    students = [dict(r) for r in c.fetchall()]
+    c.execute(stu_query, stu_params)
+    db_students = [dict(r) for r in c.fetchall()]
+
+    # 2. Fetch distinct student_ids from results table for this class
+    res_query = """SELECT DISTINCT student_id, name, class, section FROM results
+                   WHERE (class=? OR class=? OR class LIKE ?)"""
+    res_params = [class_, clean_cls, f"%{clean_cls}%"]
+    if section:
+        res_query += " AND (section=? OR section IS NULL OR section='')"
+        res_params.append(section)
+
+    c.execute(res_query, res_params)
+    res_students = [dict(r) for r in c.fetchall()]
+
+    # Combine and deduplicate strictly by student_id (or name if student_id blank)
+    student_map = {}
+    for st in db_students:
+        key = (st.get('student_id') or st.get('name') or '').strip().lower()
+        if key and key not in student_map:
+            st['admission_no'] = st.get('admission_no') or st.get('student_id') or ''
+            student_map[key] = st
+
+    for r in res_students:
+        key = (r.get('student_id') or r.get('name') or '').strip().lower()
+        if key and key not in student_map:
+            student_map[key] = {
+                'student_id': r.get('student_id'),
+                'name': r.get('name') or key,
+                'admission_no': r.get('student_id') or '',
+                'class': r.get('class') or class_,
+                'section': r.get('section') or section,
+                'house': '',
+                'parents_name': '',
+                'picture': ''
+            }
+
+    students = list(student_map.values())
 
     report_data = []
     for st in students:
@@ -4700,13 +5197,12 @@ def generate_class_report():
                            FROM results WHERE student_id=?"""
         result_params = [st['student_id']]
         if subject:
-            result_query += " AND subject=?"
-            result_params.append(subject)
-        # Inside the loop for each student:
+            result_query += " AND (LOWER(subject)=LOWER(?) OR subject LIKE ?)"
+            result_params.extend([subject, f"%{subject}%"])
         test_no = data.get('test_no', '').strip()
         if test_no:
-            result_query += " AND chapter=?"
-            result_params.append(test_no)
+            result_query += " AND (chapter=? OR chapter LIKE ?)"
+            result_params.extend([test_no, f"%{test_no}%"])
         if date_from:
             result_query += " AND DATE(test_date)>=?"
             result_params.append(date_from)
@@ -4759,7 +5255,7 @@ def generate_class_report():
         ws['A2'].alignment = openpyxl.styles.Alignment(horizontal='center')
         ws.append([])
 
-        headers = ['#', 'Admission No', 'Name', 'Class', 'Section', 'House', 'Total Tests', 'Score']
+        headers = ['#', 'Admission No / ID', 'Name', 'Class', 'Section', 'House', 'Total Tests', 'Score']
         ws.append(headers)
         for col_idx, h in enumerate(headers, 1):
             cell = ws.cell(row=4, column=col_idx)
@@ -4768,7 +5264,7 @@ def generate_class_report():
             cell.alignment = openpyxl.styles.Alignment(horizontal='center')
 
         for i, st in enumerate(report_data, 1):
-            ws.append([i, st.get('admission_no') or '', st['name'], st['class'],
+            ws.append([i, st.get('admission_no') or st.get('student_id') or '', st['name'], st['class'],
                        st.get('section') or '', st.get('house') or '',
                        st['total_tests'], st.get('score_ratio', '0/0')])
 
@@ -4784,7 +5280,7 @@ def generate_class_report():
         for i, st in enumerate(report_data, 1):
             rows_html += f"""<tr>
                 <td>{i}</td>
-                <td>{st.get('admission_no') or '—'}</td>
+                <td>{st.get('admission_no') or st.get('student_id') or '—'}</td>
                 <td><strong>{st['name']}</strong></td>
                 <td>{st['class']}{st.get('section') or ''}</td>
                 <td>{st.get('house') or '—'}</td>
@@ -5207,12 +5703,16 @@ def teacher_test_history():
     return render_template('teacher_test_history.html', history=history)
 
 @app.route('/api/test_generation_history/<int:hid>/pdf')
-@teacher_required
 def test_gen_history_pdf(hid):
-    teacher_id = session.get('teacher_id')
+    if not session.get('teacher_logged_in') and not session.get('admin_logged_in'):
+        return redirect(url_for('teacher_login'))
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT * FROM test_generation_history WHERE id=? AND teacher_id=?", (hid, str(teacher_id)))
+    if session.get('teacher_logged_in'):
+        c.execute("SELECT * FROM test_generation_history WHERE id=? AND teacher_id=?",
+                  (hid, str(session.get('teacher_id'))))
+    else:
+        c.execute("SELECT * FROM test_generation_history WHERE id=?", (hid,))
     hist = c.fetchone()
     if not hist:
         conn.close()
@@ -5455,8 +5955,12 @@ def teacher_create_test_v2():
         output_mode = request.form.get('output_mode','cbt')
         method   = request.form.get('method','ai')
 
-        mcq_count       = int(request.form.get('mcq_count', 0) or 0)
-        assertion_count = int(request.form.get('assertion_count', 0) or 0)
+        mcq_count        = int(request.form.get('mcq_count', 0) or 0)
+        assertion_count  = int(request.form.get('assertion_count', 0) or 0)
+        very_short_count = int(request.form.get('very_short_count', 0) or 0)
+        short_count      = int(request.form.get('short_count', 0) or 0)
+        long_count       = int(request.form.get('long_count', 0) or 0)
+        case_study_count = int(request.form.get('case_study_count', 0) or 0)
 
         if method == 'upload':
             file = request.files.get('csv_file')
@@ -5498,29 +6002,18 @@ def teacher_create_test_v2():
         app.logger.info(f"Using Gemini model: {model_name}")
 
         type_instructions = []
-        if mcq_count:       type_instructions.append(f"{mcq_count} MCQ (4 options)")
-        if assertion_count: type_instructions.append(f"{assertion_count} Assertion-Reason")
+        if mcq_count:        type_instructions.append(f"{mcq_count} MCQ (4 options)")
+        if assertion_count:  type_instructions.append(f"{assertion_count} Assertion-Reason")
+        if very_short_count: type_instructions.append(f"{very_short_count} Very Short Answer (1 Mark)")
+        if short_count:      type_instructions.append(f"{short_count} Short Answer (3 Marks)")
+        if long_count:       type_instructions.append(f"{long_count} Long Answer (5 Marks)")
+        if case_study_count: type_instructions.append(f"{case_study_count} Case Study (4 Marks)")
 
         if not type_instructions:
             conn.close()
             return jsonify({'status':'error','message':'Enter at least 1 question quantity'}), 400
 
-        ai_prompt = f"""You are an expert CBSE/ICSE academic question paper generator.
-Output ONLY a valid JSON array — no markdown fences, no text outside the JSON array.
-
-PAPER DETAILS:
-Class: {class_}{section} | Subject: {subject} | Chapter: {chapter} | Test No: {test_no}
-Teacher instructions: {remark if remark else 'Standard difficulty'}
-
-QUESTION TYPES REQUIRED:
-{chr(10).join(type_instructions)}
-
-Return ONLY the JSON array starting with [ and ending with ].
-Ensure all strings are properly escaped (\\" for double quotes inside strings).
-Do NOT include line breaks inside strings – use \\n if needed.
-
-Follow the same math and chemistry formatting rules as in the system prompt.
-"""
+        ai_prompt = _build_ai_prompt(class_, section, subject, chapter, test_no, remark, type_instructions)
 
         try:
             result, provider, err_msg = generate_ai_content(ai_prompt, timeout=60)
@@ -5539,14 +6032,12 @@ Follow the same math and chemistry formatting rules as in the system prompt.
             questions = safe_json_loads(raw_text)
             if questions is None:
                 app.logger.error(f"AI response invalid. Full response (first 2000 chars): {raw_text[:2000]}")
-                # Also store the response in session for debugging (optional)
                 return jsonify({
                     'status': 'error',
-                    'message': 'AI returned invalid JSON. Please try again with a simpler prompt. '
-                            'Check the server logs for the full AI response.'
+                    'message': 'AI returned invalid JSON. Please try again with a simpler prompt.'
                 }), 500
 
-            if output_mode == 'cbt':
+            if output_mode in ('cbt', 'both'):
                 c.execute("""SELECT COUNT(*) as cnt FROM questions
                              WHERE class=? AND subject=? AND test_no=?""",
                          (class_, subject, test_no))
@@ -5586,10 +6077,12 @@ Follow the same math and chemistry formatting rules as in the system prompt.
                           short_count,long_count,case_study_count,remark)
                          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                      (str(teacher_id),class_,section,subject,chapter,test_no,output_mode,
-                      len(questions),mcq_count,assertion_count,0,0,0,0,remark))
+                      len(questions),mcq_count,assertion_count,very_short_count,
+                      short_count,long_count,case_study_count,remark))
             conn.commit()
             history_id = c.lastrowid
             conn.close()
+
 
             if output_mode == 'print':
                 return jsonify({'status':'success','mode':'print',
@@ -5609,17 +6102,38 @@ Follow the same math and chemistry formatting rules as in the system prompt.
             return jsonify({'status':'error','message':str(e)}), 500
 
     conn.close()
-    # Build class→subjects map
+    # Build class -> section -> subjects map
+    class_section_subject_map = {}
     class_subject_map = {}
     for a in assignments:
-        cls = a['class']
+        cls  = str(a['class']).strip() if a['class'] is not None else ''
+        sec  = str(a.get('section') or '').strip().upper()
+        subj = str(a['subject']).strip() if a['subject'] is not None else ''
+
+        if not cls or not subj:
+            continue
+
         if cls not in class_subject_map:
             class_subject_map[cls] = []
-        if a['subject'] not in class_subject_map[cls]:
-            class_subject_map[cls].append(a['subject'])
+        if subj not in class_subject_map[cls]:
+            class_subject_map[cls].append(subj)
+
+        if cls not in class_section_subject_map:
+            class_section_subject_map[cls] = {'all_subjects': [], 'sections': {}}
+
+        if subj not in class_section_subject_map[cls]['all_subjects']:
+            class_section_subject_map[cls]['all_subjects'].append(subj)
+
+        if sec:
+            if sec not in class_section_subject_map[cls]['sections']:
+                class_section_subject_map[cls]['sections'][sec] = []
+            if subj not in class_section_subject_map[cls]['sections'][sec]:
+                class_section_subject_map[cls]['sections'][sec].append(subj)
+
     return render_template('teacher_create_test_v2.html',
                            assignments=assignments,
-                           class_subject_map=class_subject_map)
+                           class_subject_map=class_subject_map,
+                           class_section_subject_map=class_section_subject_map)
 @app.route('/admin/test_history')
 @admin_required
 def admin_test_history():
@@ -5807,7 +6321,7 @@ OUTPUT FORMAT — return ONLY a valid JSON object like this (no markdown, no cod
 RULES:
 - For Mathematical and Chemical formulas:
   * Use proper HTML tags <sub> and <sup> for chemical formulas and powers (e.g. H<sub>2</sub>O, H<sub>2</sub>SO<sub>4</sub>, x<sup>2</sup>, CO<sub>2</sub>, Ca(OH)<sub>2</sub>).
-  * Use standard mathematical symbols or MathJax LaTeX delimiters \\( ... \\) for square roots, equations, fractions, and symbols (e.g. \\(\\sqrt{x}\\), \\(\\neq\\), \\(\\pm\\), \\(\\frac{a}{b}\\), \\(\\pi\\), \\(\\Delta\\), \\(\\theta\\), \\(\\rightarrow\\)).
+  * Use standard mathematical symbols or MathJax LaTeX delimiters \\( ... \\) for square roots, equations, fractions, and symbols (e.g. \\(\\sqrt{{x}}\\), \\(\\neq\\), \\(\\pm\\), \\(\\frac{{a}}{{b}}\\), \\(\\pi\\), \\(\\Delta\\), \\(\\theta\\), \\(\\rightarrow\\)).
 - For MCQ/AR: include "options" array with 4 choices formatted as (a), (b), (c), (d).
 - For Fill in the Blanks: include "options": [] and place a clear blank line "_______" inside the question text.
 - For True/False: include "options": ["True", "False"] or "options": [].
@@ -5815,6 +6329,7 @@ RULES:
 - For Case Study: write a reading passage first in "question", then list sub-questions in "sub_questions" array (each with number and question text).
 - Assertion-Reason: write Assertion and Reason clearly in the question text. Options must be the standard 4 AR options.
 - Keep language age-appropriate for Class {class_}.
+- Do NOT output any raw metadata, answer keys, or debug JSON objects inside or after the question paper.
 - Return ONLY the JSON object. Nothing else."""
 
     gemini_key = _get_gemini_key()
@@ -5836,6 +6351,24 @@ RULES:
                 if part.startswith('{'): raw = part; break
 
         paper_data = json_lib.loads(raw)
+
+        # Clean any raw metadata fields or trailing JSON strings from question content
+        if isinstance(paper_data, dict) and 'sections' in paper_data:
+            for sec in paper_data.get('sections', []):
+                for q in sec.get('questions', []):
+                    if isinstance(q.get('question'), str):
+                        q['question'] = re.sub(r'\{"?meta(data)?"?:?.*\}', '', q['question'], flags=re.IGNORECASE).strip()
+                    if isinstance(q.get('sub_questions'), list):
+                        cleaned_sq = []
+                        for sq in q['sub_questions']:
+                            if isinstance(sq, str):
+                                cleaned_sq.append(re.sub(r'\{"?meta(data)?"?:?.*\}', '', sq, flags=re.IGNORECASE).strip())
+                            elif isinstance(sq, dict) and 'question' in sq and isinstance(sq['question'], str):
+                                sq['question'] = re.sub(r'\{"?meta(data)?"?:?.*\}', '', sq['question'], flags=re.IGNORECASE).strip()
+                                cleaned_sq.append(sq)
+                            else:
+                                cleaned_sq.append(sq)
+                        q['sub_questions'] = cleaned_sq
 
         # Build logo base64 for the preview
         logo_path   = get_setting('logo_path', '')
