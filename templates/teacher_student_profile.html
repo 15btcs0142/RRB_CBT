@@ -236,9 +236,9 @@
         <div class="header">
             <h1><i class="fas fa-user-graduate"></i> Student Profile</h1>
             <div>
-                <a href="/teacher/generate_student_report/{{ student.student_id }}" class="generate-pdf-btn">
-                    <i class="fas fa-file-pdf"></i> Generate PDF Report
-                </a>
+                <button onclick="window.print()" class="generate-pdf-btn">
+                    <i class="fas fa-print"></i> Print / Save PDF
+                </button>
                 <a href="/teacher/students" class="back-btn">
                     <i class="fas fa-arrow-left"></i> Back
                 </a>
