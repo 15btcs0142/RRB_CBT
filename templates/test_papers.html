@@ -285,11 +285,7 @@
 <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
 <div class="topbar">
     <h1><i class="fas fa-file-alt"></i> Test Papers</h1>
-    {% if role == 'admin' %}
-    <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
-    {% else %}
-    <a href="/teacher/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
-    {% endif %}
+    <a href="javascript:void(0)" onclick="handleDashboardClick(event)"><i class="fas fa-arrow-left"></i> Dashboard</a>
 </div>
 
 <div class="container">
@@ -452,6 +448,19 @@ async function togglePaper(id) {
         }
     } catch(err) { 
         showAlert('Failed to toggle status', 'error'); 
+    }
+}
+
+function handleDashboardClick(e) {
+    if (e) e.preventDefault();
+    if (window.parent && window.parent !== window && typeof window.parent.loadTab === 'function') {
+        window.parent.loadTab('dashboard');
+        return;
+    }
+    if (ROLE === 'admin') {
+        window.location.href = '/admin/dashboard';
+    } else {
+        window.location.href = '/teacher/dashboard';
     }
 }
 
