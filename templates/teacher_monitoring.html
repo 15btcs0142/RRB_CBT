@@ -1,174 +1,695 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Live Monitoring - Teacher</title>
+    <meta charset="UTF-8">
+    <title>Live Exam Monitoring — Teacher Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#f5f7fa,#c3cfe2);min-height:100vh;}
-        .header{background:linear-gradient(90deg,#667eea,#764ba2);color:white;padding:18px 30px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 15px rgba(0,0,0,0.2);}
-        .header h1{font-size:1.5rem;}
-        .back-btn{background:rgba(255,255,255,0.2);color:white;padding:8px 20px;border-radius:20px;text-decoration:none;transition:background 0.3s;}
-        .back-btn:hover{background:rgba(255,255,255,0.35);}
-        .container{max-width:1400px;margin:25px auto;padding:0 20px;}
-        .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin-bottom:25px;}
-        .stat-card{background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.08);text-align:center;border-top:4px solid;}
-        .stat-card.total{border-color:#667eea;} .stat-card.inprogress{border-color:#ff9800;} .stat-card.submitted{border-color:#28a745;} .stat-card.waiting{border-color:#6c757d;}
-        .stat-value{font-size:2.2rem;font-weight:700;}
-        .stat-card.total .stat-value{color:#667eea;} .stat-card.inprogress .stat-value{color:#ff9800;} .stat-card.submitted .stat-value{color:#28a745;} .stat-card.waiting .stat-value{color:#6c757d;}
-        .stat-label{color:#666;font-size:0.85rem;margin-top:4px;}
-        .table-card{background:white;border-radius:15px;box-shadow:0 5px 20px rgba(0,0,0,0.08);overflow:hidden;}
-        .table-header{padding:18px 25px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;flex-wrap:wrap;gap:10px;}
-        .table-header h3{color:#333;}
-        .live-badge{background:#d4edda;color:#155724;padding:5px 15px;border-radius:20px;font-size:0.85rem;font-weight:600;}
-        .live-badge.inactive{background:#f8d7da;color:#721c24;}
-        .search-box{padding:8px 15px;border:2px solid #eee;border-radius:20px;font-family:'Poppins',sans-serif;outline:none;transition:border-color 0.3s;}
-        .search-box:focus{border-color:#667eea;}
-        table{width:100%;border-collapse:collapse;}
-        th{background:#667eea;color:white;padding:12px 15px;text-align:left;font-size:0.88rem;}
-        td{padding:11px 15px;border-bottom:1px solid #f0f0f0;font-size:0.88rem;vertical-align:middle;}
-        tr:hover td{background:#fafafa;}
-        .student-cell{display:flex;align-items:center;gap:10px;}
-        .avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:white;font-size:0.9rem;flex-shrink:0;}
-        .avatar img{width:36px;height:36px;border-radius:50%;object-fit:cover;}
-        .status-badge{padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:600;display:inline-block;}
-        .status-In.Progress,.status-In\.Progress{background:#fff3cd;color:#856404;}
-        .status-Submitted{background:#d4edda;color:#155724;}
-        .status-Not.Started,.status-Not\.Started{background:#e9ecef;color:#6c757d;}
-        .progress-bar{background:#e9ecef;border-radius:10px;height:8px;min-width:80px;}
-        .progress-fill{background:linear-gradient(90deg,#667eea,#764ba2);height:8px;border-radius:10px;transition:width 0.5s;}
-        .refresh-info{color:#999;font-size:0.8rem;}
-        .no-data{text-align:center;padding:50px;color:#999;}
-        .no-data i{font-size:3rem;margin-bottom:15px;display:block;}
+        :root {
+            --tb-navy: #0f172a;
+            --tb-navy-light: #1e293b;
+            --tb-blue: #0ea5e9;
+            --tb-blue-dark: #0284c7;
+            --tb-teal: #10b981;
+            --tb-amber: #f59e0b;
+            --tb-red: #ef4444;
+            --tb-slate: #64748b;
+            --tb-bg: #f8fafc;
+            --tb-card-bg: #ffffff;
+            --tb-border: #e2e8f0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--tb-bg);
+            color: #334155;
+            min-height: 100vh;
+        }
+
+        /* ─── TOPBAR ────────────────────────────────────────────────────────── */
+        .topbar {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #fff;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .topbar-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .topbar-title .icon-box {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: rgba(14, 165, 233, 0.15);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--tb-blue);
+            font-size: 1.2rem;
+        }
+        .topbar-title h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+        }
+        .topbar-title p {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .refresh-pill {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #cbd5e1;
+            padding: 7px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(8px);
+        }
+        .refresh-pill i {
+            color: var(--tb-blue);
+        }
+        .back-btn {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: all 0.25s;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+            color: #fff;
+        }
+
+        /* ─── CONTAINER ────────────────────────────────────────────────────── */
+        .container {
+            max-width: 1400px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
+
+        /* ─── STAT CARDS GRID ──────────────────────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--tb-card-bg);
+            border-radius: 16px;
+            padding: 20px 22px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--tb-border);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            border-color: #cbd5e1;
+        }
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            flex-shrink: 0;
+        }
+        .stat-card.total .stat-icon { background: #e0f2fe; color: #0284c7; }
+        .stat-card.progress .stat-icon { background: #fef3c7; color: #d97706; }
+        .stat-card.submitted .stat-icon { background: #d1fae5; color: #059669; }
+        .stat-card.waiting .stat-icon { background: #f1f5f9; color: #64748b; }
+
+        .stat-content h4 {
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--tb-slate);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .stat-content p {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--tb-navy);
+            line-height: 1.1;
+        }
+
+        /* ─── MAIN CONTENT TABLE CARD ──────────────────────────────────────── */
+        .table-card {
+            background: var(--tb-card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--tb-border);
+            overflow: hidden;
+        }
+        .table-toolbar {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--tb-border);
+            flex-wrap: wrap;
+            gap: 16px;
+            background: #fafbfc;
+        }
+        .toolbar-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .toolbar-title h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--tb-navy);
+        }
+        .exam-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+        .exam-badge.active {
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+        .exam-badge.inactive {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .exam-badge.active .pulse-dot {
+            background: #16a34a;
+            box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+        .exam-badge.inactive .pulse-dot {
+            background: #94a3b8;
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+        }
+
+        .filter-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .filter-btn-group {
+            display: flex;
+            background: #f1f5f9;
+            padding: 3px;
+            border-radius: 10px;
+            gap: 2px;
+        }
+        .filter-chip {
+            padding: 6px 14px;
+            border: none;
+            background: transparent;
+            color: var(--tb-slate);
+            font-size: 0.78rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .filter-chip.active {
+            background: #ffffff;
+            color: var(--tb-navy);
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        .search-box-wrap {
+            position: relative;
+        }
+        .search-box-wrap i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--tb-slate);
+            font-size: 0.85rem;
+        }
+        .search-box {
+            padding: 8px 16px 8px 36px;
+            border: 1px solid var(--tb-border);
+            border-radius: 10px;
+            font-size: 0.84rem;
+            outline: none;
+            transition: all 0.2s;
+            font-family: inherit;
+            background: #ffffff;
+            width: 220px;
+        }
+        .search-box:focus {
+            border-color: var(--tb-blue);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+            width: 260px;
+        }
+
+        /* ─── TABLE STYLE ──────────────────────────────────────────────────── */
+        .table-responsive {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.86rem;
+            text-align: left;
+        }
+        thead th {
+            background: #f8fafc;
+            color: var(--tb-navy);
+            font-weight: 600;
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--tb-border);
+            white-space: nowrap;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        tbody td {
+            padding: 14px 18px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+            color: #334155;
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        tbody tr {
+            transition: background 0.15s;
+        }
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .student-flex {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .avatar-box {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(14, 165, 233, 0.2);
+            overflow: hidden;
+        }
+        .avatar-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .student-name {
+            font-weight: 600;
+            color: var(--tb-navy);
+            display: block;
+        }
+        .student-id-text {
+            font-size: 0.75rem;
+            color: var(--tb-slate);
+            font-family: monospace;
+        }
+
+        /* ─── STATUS PILLS ─────────────────────────────────────────────────── */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .status-pill.in-progress {
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fde68a;
+        }
+        .status-pill.submitted {
+            background: #d1fae5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+        .status-pill.not-started {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* ─── PROGRESS BAR ─────────────────────────────────────────────────── */
+        .progress-track {
+            background: #e2e8f0;
+            height: 7px;
+            border-radius: 10px;
+            width: 100px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #0ea5e9, #10b981);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.4s ease;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--tb-slate);
+        }
+        .no-data i {
+            font-size: 2.8rem;
+            color: #cbd5e1;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .topbar { padding: 14px 16px; flex-direction: column; gap: 12px; align-items: flex-start; }
+            .topbar-actions { width: 100%; justify-content: space-between; }
+            .container { padding: 0 12px; margin: 16px auto; }
+            .table-toolbar { flex-direction: column; align-items: stretch; }
+            .search-box { width: 100%; }
+            .search-box:focus { width: 100%; }
+        }
     </style>
 </head>
 <body>
-<div class="header">
-    <h1><i class="fas fa-desktop"></i> Live Exam Monitoring</h1>
-    <div style="display:flex;align-items:center;gap:15px;">
-        <span class="refresh-info"><i class="fas fa-sync-alt"></i> Auto refresh: <span id="countdown">10</span>s</span>
-        <a href="/teacher/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
-    </div>
-</div>
 
-<div class="container">
-    <div class="stats-row">
-        <div class="stat-card total"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total Students</div></div>
-        <div class="stat-card inprogress"><div class="stat-value" id="statProgress">0</div><div class="stat-label">In Progress</div></div>
-        <div class="stat-card submitted"><div class="stat-value" id="statSubmitted">0</div><div class="stat-label">Submitted</div></div>
-        <div class="stat-card waiting"><div class="stat-value" id="statWaiting">0</div><div class="stat-label">Not Started</div></div>
-    </div>
-
-    <div class="table-card">
-        <div class="table-header">
-            <h3><i class="fas fa-users"></i> My Class Students</h3>
-            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-                <span id="examBadge" class="live-badge inactive"><i class="fas fa-circle"></i> Exam Inactive</span>
-                <input type="text" class="search-box" id="searchBox" placeholder="Search student..." oninput="filterTable()">
+    <!-- ─── TOPBAR ───────────────────────────────────────────────────────── -->
+    <div class="topbar">
+        <div class="topbar-title">
+            <div class="icon-box"><i class="fas fa-desktop"></i></div>
+            <div>
+                <h1>Live Exam Monitoring</h1>
+                <p>Testbook Real-Time Student Session Tracking</p>
             </div>
         </div>
-        <div style="overflow-x:auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Student</th>
-                        <th>Class</th>
-                        <th>Subject</th>
-                        <th>Status</th>
-                        <th>Answered</th>
-                        <th>Started At</th>
-                    </tr>
-                </thead>
-                <tbody id="studentTable">
-                    <tr><td colspan="7" class="no-data"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>
-                </tbody>
-            </table>
+        <div class="topbar-actions">
+            <div class="refresh-pill">
+                <i class="fas fa-sync-alt fa-spin" id="syncIcon"></i>
+                <span>Auto Refresh: <strong id="countdown" style="color:#38bdf8;">10</strong>s</span>
+            </div>
+            <a href="javascript:void(0)" onclick="handleDashboardClick(event)" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Dashboard
+            </a>
         </div>
     </div>
 
-<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
-</footer>
-</div>
+    <!-- ─── MAIN CONTAINER ───────────────────────────────────────────────── -->
+    <div class="container">
 
-<script>
-let allStudents = [];
-let totalQCount = 0;
-
-async function loadData() {
-    try {
-        const res = await fetch('/teacher/monitoring/data');
-        const data = await res.json();
-        allStudents = data.students || [];
-        renderTable(allStudents);
-        updateStats(allStudents);
-        const badge = document.getElementById('examBadge');
-        if (data.exam_is_active) {
-            badge.className = 'live-badge';
-            badge.innerHTML = '<i class="fas fa-circle" style="color:#28a745"></i> Exam Active';
-        } else {
-            badge.className = 'live-badge inactive';
-            badge.innerHTML = '<i class="fas fa-circle"></i> Exam Inactive';
-        }
-    } catch(e) { console.error(e); }
-}
-
-function updateStats(students) {
-    document.getElementById('statTotal').textContent = students.length;
-    document.getElementById('statProgress').textContent = students.filter(s=>s.status==='In Progress').length;
-    document.getElementById('statSubmitted').textContent = students.filter(s=>s.status==='Submitted').length;
-    document.getElementById('statWaiting').textContent = students.filter(s=>s.status==='Not Started').length;
-}
-
-function renderTable(students) {
-    const tbody = document.getElementById('studentTable');
-    if (!students.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="no-data"><i class="fas fa-user-slash"></i><br>No students found in your classes</td></tr>';
-        return;
-    }
-    tbody.innerHTML = students.map((s, i) => {
-        const answered = s.answered || 0;
-        const statusClass = 'status-' + (s.status || '').replace(' ', '.');
-        const picHtml = s.picture
-            ? `<div class="avatar"><img src="/static/${s.picture}" alt="${s.name}"></div>`
-            : `<div class="avatar"><i class="fas fa-user"></i></div>`;
-        const startTime = s.exam_started_at ? s.exam_started_at.slice(11,16) : '—';
-        return `<tr>
-            <td>${i+1}</td>
-            <td><div class="student-cell">${picHtml}<span>${s.name}</span></div></td>
-            <td>${s.class}${s.section||''}</td>
-            <td>${s.subject||'—'}</td>
-            <td><span class="status-badge ${statusClass}">${s.status||'—'}</span></td>
-            <td>
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(answered*5,100)}%"></div></div>
-                    <span style="font-size:0.8rem;color:#666;">${answered}</span>
+        <!-- STAT CARDS GRID -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-content">
+                    <h4>Total Assigned</h4>
+                    <p id="statTotal">0</p>
                 </div>
-            </td>
-            <td>${startTime}</td>
-        </tr>`;
-    }).join('');
-}
+            </div>
+            <div class="stat-card progress">
+                <div class="stat-icon"><i class="fas fa-spinner"></i></div>
+                <div class="stat-content">
+                    <h4>In Progress</h4>
+                    <p id="statProgress">0</p>
+                </div>
+            </div>
+            <div class="stat-card submitted">
+                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-content">
+                    <h4>Submitted</h4>
+                    <p id="statSubmitted">0</p>
+                </div>
+            </div>
+            <div class="stat-card waiting">
+                <div class="stat-icon"><i class="fas fa-hourglass-start"></i></div>
+                <div class="stat-content">
+                    <h4>Not Started</h4>
+                    <p id="statWaiting">0</p>
+                </div>
+            </div>
+        </div>
 
-function filterTable() {
-    const q = document.getElementById('searchBox').value.toLowerCase();
-    renderTable(allStudents.filter(s =>
-        s.name.toLowerCase().includes(q) || (s.class||'').toLowerCase().includes(q) || (s.subject||'').toLowerCase().includes(q)
-    ));
-}
+        <!-- TABLE CARD -->
+        <div class="table-card">
+            <div class="table-toolbar">
+                <div class="toolbar-title">
+                    <h3><i class="fas fa-user-graduate" style="color:var(--tb-blue);margin-right:6px;"></i> Students Live Monitor</h3>
+                    <span id="examBadge" class="exam-badge inactive">
+                        <span class="pulse-dot"></span>
+                        <span id="examBadgeText">Exam Inactive</span>
+                    </span>
+                </div>
+                <div class="filter-controls">
+                    <div class="filter-btn-group">
+                        <button class="filter-chip active" onclick="setFilterStatus('')">All</button>
+                        <button class="filter-chip" onclick="setFilterStatus('In Progress')">In Progress</button>
+                        <button class="filter-chip" onclick="setFilterStatus('Submitted')">Submitted</button>
+                        <button class="filter-chip" onclick="setFilterStatus('Not Started')">Not Started</button>
+                    </div>
+                    <div class="search-box-wrap">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="search-box" id="searchBox" placeholder="Search student or class..." oninput="filterTable()">
+                    </div>
+                </div>
+            </div>
 
-// Countdown + auto refresh
-let countdown = 10;
-setInterval(() => {
-    countdown--;
-    document.getElementById('countdown').textContent = countdown;
-    if (countdown <= 0) { countdown = 10; loadData(); }
-}, 1000);
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Student Name</th>
+                            <th>Class & Sec</th>
+                            <th>Subject</th>
+                            <th>Status</th>
+                            <th>Questions Answered</th>
+                            <th>Started Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTable">
+                        <tr>
+                            <td colspan="7" class="no-data">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p style="font-weight:500;">Loading live session data...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-loadData();
-</script>
+        <footer class="app-global-footer" style="width:100%; text-align:center; padding:24px 10px; font-size:0.82rem; color:#94a3b8; opacity:0.85; margin-top:28px; border-top:1px solid #e2e8f0; clear:both;">
+            Developed by Gaurav Shukla &amp; Team
+        </footer>
+    </div>
+
+    <script>
+        let allStudents = [];
+        let currentStatusFilter = '';
+
+        async function loadData() {
+            try {
+                const res = await fetch('/teacher/monitoring/data');
+                const data = await res.json();
+                allStudents = data.students || [];
+                renderFilteredData();
+                updateStats(allStudents);
+
+                const badge = document.getElementById('examBadge');
+                const badgeText = document.getElementById('examBadgeText');
+                if (data.exam_is_active) {
+                    badge.className = 'exam-badge active';
+                    badgeText.textContent = 'Exam Active';
+                } else {
+                    badge.className = 'exam-badge inactive';
+                    badgeText.textContent = 'Exam Inactive';
+                }
+            } catch(e) {
+                console.error('Error fetching live monitoring data:', e);
+            }
+        }
+
+        function updateStats(students) {
+            document.getElementById('statTotal').textContent = students.length;
+            document.getElementById('statProgress').textContent = students.filter(s => s.status === 'In Progress').length;
+            document.getElementById('statSubmitted').textContent = students.filter(s => s.status === 'Submitted').length;
+            document.getElementById('statWaiting').textContent = students.filter(s => s.status === 'Not Started').length;
+        }
+
+        function setFilterStatus(status) {
+            currentStatusFilter = status;
+            document.querySelectorAll('.filter-chip').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.trim() === (status || 'All'));
+            });
+            renderFilteredData();
+        }
+
+        function renderFilteredData() {
+            const query = (document.getElementById('searchBox').value || '').toLowerCase().trim();
+            const filtered = allStudents.filter(s => {
+                const matchStatus = !currentStatusFilter || s.status === currentStatusFilter;
+                const matchQuery = !query ||
+                    (s.name || '').toLowerCase().includes(query) ||
+                    (s.student_id || '').toLowerCase().includes(query) ||
+                    (s.class || '').toLowerCase().includes(query) ||
+                    (s.subject || '').toLowerCase().includes(query);
+                return matchStatus && matchQuery;
+            });
+            renderTable(filtered);
+        }
+
+        function renderTable(students) {
+            const tbody = document.getElementById('studentTable');
+            if (!students.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="no-data">
+                            <i class="fas fa-user-slash"></i>
+                            <p style="font-weight:600;color:#64748b;margin-bottom:4px;">No student records found</p>
+                            <span style="font-size:0.8rem;color:#94a3b8;">Try clearing search or status filters.</span>
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = students.map((s, i) => {
+                const answered = s.answered || 0;
+                const totalQ = s.total_questions || 20;
+                const pct = Math.min(Math.round((answered / totalQ) * 100), 100);
+
+                let statusBadgeHtml = '';
+                if (s.status === 'In Progress') {
+                    statusBadgeHtml = `<span class="status-pill in-progress"><i class="fas fa-spinner fa-spin" style="font-size:0.7rem;"></i> In Progress</span>`;
+                } else if (s.status === 'Submitted') {
+                    statusBadgeHtml = `<span class="status-pill submitted"><i class="fas fa-check-circle"></i> Submitted</span>`;
+                } else {
+                    statusBadgeHtml = `<span class="status-pill not-started"><i class="fas fa-circle" style="font-size:0.5rem;opacity:0.6;"></i> Not Started</span>`;
+                }
+
+                const picHtml = s.picture
+                    ? `<div class="avatar-box"><img src="/static/${s.picture}" alt="${s.name}"></div>`
+                    : `<div class="avatar-box">${(s.name || 'S').charAt(0).toUpperCase()}</div>`;
+
+                const startTime = s.exam_started_at ? s.exam_started_at.slice(11, 16) : '—';
+                const clsDisplay = `${s.class || ''} ${s.section ? '(' + s.section + ')' : ''}`.trim() || '—';
+
+                return `<tr>
+                    <td style="font-weight:600;color:#94a3b8;">${i + 1}</td>
+                    <td>
+                        <div class="student-flex">
+                            ${picHtml}
+                            <div>
+                                <span class="student-name">${s.name || 'Student'}</span>
+                                <span class="student-id-text">ID: ${s.student_id || '—'}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span style="font-weight:500;">${clsDisplay}</span></td>
+                    <td><span style="background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:12px;font-weight:500;font-size:0.78rem;">${s.subject || '—'}</span></td>
+                    <td>${statusBadgeHtml}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+                            <span style="font-size:0.8rem;font-weight:600;color:#475569;">${answered}</span>
+                        </div>
+                    </td>
+                    <td><code style="background:#f1f5f9;padding:3px 8px;border-radius:6px;font-size:0.78rem;color:#475569;">${startTime}</code></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function filterTable() {
+            renderFilteredData();
+        }
+
+        // Countdown + Auto refresh
+        let countdown = 10;
+        setInterval(() => {
+            countdown--;
+            document.getElementById('countdown').textContent = countdown;
+            if (countdown <= 0) {
+                countdown = 10;
+                loadData();
+            }
+        }, 1000);
+
+        function handleDashboardClick(e) {
+            if (e) e.preventDefault();
+            if (window.parent && window.parent !== window && typeof window.parent.loadTab === 'function') {
+                window.parent.loadTab('dashboard');
+                return;
+            }
+            window.location.href = '/teacher/dashboard';
+        }
+
+        loadData();
+    </script>
 </body>
 </html>
