@@ -269,28 +269,36 @@
                 }
                 let html = '';
                 data.sessions.forEach((s, index) => {
-                    const dateObj = new Date(s.test_date);
-                    const formattedDate = dateObj.toLocaleDateString('en-IN', {
-                        day:'2-digit',
-                        month:'short',
-                        year:'numeric'
-                    });
-                    const formattedTime = dateObj.toLocaleTimeString('en-IN', {
-                        hour:'2-digit',
-                        minute:'2-digit'
-                    });
+                    let dateStr = s.test_date || s.session_date;
+                    let formattedDateTime = dateStr;
+                    if (dateStr) {
+                        const d = new Date(dateStr.replace(' ', 'T'));
+                        if (!isNaN(d.getTime())) {
+                            const formattedDate = d.toLocaleDateString('en-IN', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric'
+                            });
+                            const formattedTime = d.toLocaleTimeString('en-IN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true
+                            });
+                            formattedDateTime = `${formattedDate} ${formattedTime}`;
+                        }
+                    }
                     const section = s.section || '—';
                     const rowClass = index % 2 === 0 ? '' : 'style="background:#fafafa;"';
                     html += `
                         <tr ${rowClass}>
-                            <td><i class="far fa-clock" style="color:#3949ab;margin-right:6px;"></i>${formattedDate} ${formattedTime}</td>
+                            <td><i class="far fa-clock" style="color:#3949ab;margin-right:6px;"></i>${formattedDateTime}</td>
                             <td><span class="badge">${s.class}</span></td>
                             <td>${section}</td>
                             <td>${s.subject}</td>
                             <td>${s.test_no || '—'}</td>
                             <td><strong>${s.student_count}</strong></td>
                             <td>
-                                <a href="{{ url_for('current_test_results') }}?class=${encodeURIComponent(s.class)}&section=${encodeURIComponent(s.section || '')}&subject=${encodeURIComponent(s.subject)}&test_no=${encodeURIComponent(s.test_no || '')}&date=${s.test_date}" 
+                                <a href="{{ url_for('current_test_results') }}?class=${encodeURIComponent(s.class)}&section=${encodeURIComponent(s.section || '')}&subject=${encodeURIComponent(s.subject)}&test_no=${encodeURIComponent(s.test_no || '')}&date=${encodeURIComponent(s.session_date || s.test_date)}" 
                                    target="_blank" 
                                    class="btn btn-primary btn-sm">
                                     <i class="fas fa-file-alt"></i> Generate
