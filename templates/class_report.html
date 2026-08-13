@@ -377,11 +377,7 @@
 <body>
 <div class="topbar">
     <h1><i class="fas fa-chart-bar"></i> Class Report Generator</h1>
-    {% if role == 'admin' %}
-    <a href="/admin/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
-    {% else %}
-    <a href="/teacher/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
-    {% endif %}
+    <a href="javascript:void(0)" onclick="handleDashboardClick(event)" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
 </div>
 
 <div class="loading-overlay" id="loadingOverlay">
@@ -404,14 +400,28 @@
 
         <form id="reportForm">
             <div class="form-grid">
-                <!-- Class dropdown 1–12 -->
+                <!-- Class dropdown -->
                 <div class="form-group">
                     <label><i class="fas fa-graduation-cap"></i> Class *</label>
                     <select name="class" id="classSelect" required>
-                        <option value="">Select Class</option>
-                        {% for i in range(1,13) %}
-                        <option value="{{ i }}" {% if role == 'teacher' and assignments and assignments[0].class == i|string %}selected{% endif %}>{{ i }}</option>
-                        {% endfor %}
+                        <option value="">Select Assigned Class</option>
+                        {% if role == 'teacher' and assignments %}
+                            {% set seen_classes = [] %}
+                            {% for a in assignments %}
+                                {% if a.class not in seen_classes %}
+                                <option value="{{ a.class }}">Class {{ a.class }}</option>
+                                {% set _ = seen_classes.append(a.class) %}
+                                {% endif %}
+                            {% endfor %}
+                        {% elif classes %}
+                            {% for c in classes %}
+                            <option value="{{ c }}">{{ c }}</option>
+                            {% endfor %}
+                        {% else %}
+                            {% for i in range(1,13) %}
+                            <option value="{{ i }}">{{ i }}</option>
+                            {% endfor %}
+                        {% endif %}
                     </select>
                 </div>
 
@@ -688,7 +698,7 @@ function renderPreview(students) {
         return `<tr>
             <td>${i+1}</td>
             <td><div class="student-cell">${picHtml}<span>${s.name}</span></div></td>
-            <td>${s.admission_no||'—'}</td>
+            <td>${s.admission_no || s.student_id || '—'}</td>
             <td>${s.class}${s.section||''}</td>
             <td>${s.house||'—'}</td>
             <td>${s.total_tests}</td>
@@ -756,6 +766,20 @@ async function generateReport(format) {
         }
     } catch(e) { showAlert('Error: '+e.message, 'error'); }
     document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+function handleDashboardClick(e) {
+    if (e) e.preventDefault();
+    if (window.parent && window.parent !== window && typeof window.parent.loadTab === 'function') {
+        window.parent.loadTab('dashboard');
+        return;
+    }
+    const ROLE = '{{ role }}';
+    if (ROLE === 'admin') {
+        window.location.href = '/admin/dashboard';
+    } else {
+        window.location.href = '/teacher/dashboard';
+    }
 }
 </script>
 <div class="footer">
