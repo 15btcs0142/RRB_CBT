@@ -1,158 +1,539 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Test Generation History</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Generation History — Testbook AI Engine</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#f5f7fa,#c3cfe2);min-height:100vh;padding:20px;}
-        .header{background:linear-gradient(90deg,#667eea,#764ba2);color:white;padding:15px 26px;border-radius:14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
-        .header h1{font-size:1.3rem;}
-        .hbtns{display:flex;gap:8px;}
-        .hbtn{background:rgba(255,255,255,.2);color:white;padding:7px 16px;border-radius:20px;text-decoration:none;font-size:.85rem;transition:background .2s;}
-        .hbtn:hover{background:rgba(255,255,255,.35);}
-        .card{background:white;border-radius:14px;padding:22px;box-shadow:0 4px 18px rgba(0,0,0,.08);}
-        .alert{padding:12px 16px;border-radius:8px;margin-bottom:14px;display:none;}
-        .alert-success{background:#d4edda;border-left:4px solid #28a745;color:#155724;}
-        .alert-error  {background:#f8d7da;border-left:4px solid #dc3545;color:#721c24;}
-        table{width:100%;border-collapse:collapse;}
-        thead tr{background:linear-gradient(90deg,#667eea,#764ba2);color:white;}
-        th,td{padding:10px 13px;text-align:left;font-size:.84rem;border-bottom:1px solid #eee;}
-        tr:hover td{background:#fafafa;}
-        .badge{display:inline-block;padding:3px 10px;border-radius:18px;font-size:.77rem;font-weight:600;}
-        .badge-cbt  {background:#d4edda;color:#155724;}
-        .badge-print{background:#cce5ff;color:#004085;}
-        .q-counts span{background:#f0f0ff;color:#667eea;padding:2px 7px;border-radius:9px;margin-right:3px;font-size:.76rem;font-weight:600;}
-        .btn-sm{border:none;padding:5px 12px;border-radius:7px;cursor:pointer;font-size:.8rem;font-family:'Poppins',sans-serif;transition:all .2s;display:inline-flex;align-items:center;gap:5px;}
-        .btn-print{background:#e8f5e9;color:#1b5e20;}  .btn-print:hover{background:#1b5e20;color:white;}
-        .btn-del  {background:#fde8e8;color:#c62828;}  .btn-del:hover  {background:#c62828;color:white;}
-        .btn-wrap{display:flex;gap:5px;flex-wrap:wrap;}
-        .remark-cell{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#666;font-size:.8rem;}
-        .empty{text-align:center;padding:50px;color:#aaa;}
-        .empty i{font-size:2.8rem;display:block;margin-bottom:12px;}
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #4338ca;
+            --primary-dark: #312e81;
+            --primary-light: #eef2ff;
+            --accent: #10b981;
+            --dark: #0f172a;
+            --slate: #475569;
+            --border: rgba(99, 102, 241, 0.15);
+            --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+            --radius: 16px;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+            min-height: 100vh;
+            color: #0f172a;
+            padding-bottom: 30px;
+        }
+
+        /* ── HEADER ────────────────────────────────────────────────────────── */
+        .hdr {
+            background: linear-gradient(90deg, #0f172a, #1e1b4b);
+            color: #fff;
+            padding: 14px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.25);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .hdr h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.3px;
+        }
+        .hdr h1 i { color: #818cf8; }
+        .hdr-badge {
+            background: rgba(99, 102, 241, 0.25);
+            color: #c7d2fe;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid rgba(199, 210, 254, 0.3);
+        }
+        .hdr-links { display: flex; gap: 10px; }
+        .hdr-btn {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-size: 0.84rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .hdr-btn:hover { background: rgba(255, 255, 255, 0.25); transform: translateY(-1px); }
+
+        /* ── CONTAINER ──────────────────────────────────────────────────────── */
+        .container { max-width: 1280px; margin: 24px auto; padding: 0 20px; }
+
+        /* ── STATS ROW ──────────────────────────────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 18px 22px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.2s ease;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+        .stat-val { font-size: 1.5rem; font-weight: 700; color: #0f172a; line-height: 1; }
+        .stat-lbl { font-size: 0.8rem; color: #64748b; font-weight: 500; margin-top: 4px; }
+
+        /* ── MAIN CARD ──────────────────────────────────────────────────────── */
+        .card {
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .card-hdr {
+            padding: 20px 24px;
+            background: #fff;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-title i { color: var(--primary); }
+
+        /* Search & Filter Bar */
+        .filter-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            position: relative;
+            min-width: 260px;
+        }
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 9px 14px 9px 38px;
+            border-radius: 20px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.84rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
+
+        /* Mode Filter Pills */
+        .filter-pills { display: flex; gap: 6px; }
+        .pill {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #64748b;
+            transition: all 0.2s ease;
+        }
+        .pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        /* ── TABLE ────────────────────────────────────────────────────────── */
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        thead th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 14px 18px;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        tbody td {
+            padding: 16px 18px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+        tbody tr:hover { background: #f8fafc; }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 11px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-cbt { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .badge-print { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+
+        /* Question Chips */
+        .q-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+        .q-chip {
+            background: #eef2ff;
+            color: #3730a3;
+            padding: 2px 7px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            border: 1px solid #c7d2fe;
+        }
+
+        /* Action Buttons */
+        .btn-group { display: flex; gap: 8px; align-items: center; }
+        .btn-action {
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .btn-print-action {
+            background: #10b981;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+        .btn-print-action:hover { background: #059669; transform: translateY(-1px); }
+        .btn-delete-action {
+            background: #fef2f2;
+            color: #ef4444;
+            border: 1px solid #fecaca;
+            padding: 7px 10px;
+        }
+        .btn-delete-action:hover { background: #ef4444; color: #fff; }
+
+        /* Alert */
+        .alert { padding: 12px 18px; border-radius: 12px; margin-bottom: 16px; display: none; font-size: 0.86rem; }
+        .alert-success { background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; }
+        .alert-error { background: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b; }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+        .empty-state i { font-size: 3rem; color: #cbd5e1; margin-bottom: 14px; display: block; }
+        .empty-state h3 { font-size: 1.1rem; font-weight: 700; color: #334155; margin-bottom: 6px; }
+        .empty-state p { font-size: 0.85rem; margin-bottom: 18px; }
     </style>
 </head>
 <body>
-<div class="header">
-    <h1><i class="fas fa-history"></i> Test Generation History</h1>
-    <div class="hbtns">
+
+<!-- HEADER -->
+<div class="hdr">
+    <h1>
+        <i class="fas fa-history"></i> Test Generation History
+        <span class="hdr-badge"><i class="fas fa-magic"></i> Testbook AI Engine</span>
+    </h1>
+    <div class="hdr-links">
         {% if is_admin %}
-        <a href="/admin/create_test" class="hbtn"><i class="fas fa-plus"></i> New Test</a>
-        <a href="/admin/dashboard"   class="hbtn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+        <a href="/admin/create_test" class="hdr-btn"><i class="fas fa-plus"></i> New AI Test</a>
+        <a href="javascript:void(0)" onclick="handleDashboardClick(event)" class="hdr-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
         {% else %}
-        <a href="/teacher/create_test_v2" class="hbtn"><i class="fas fa-plus"></i> New Test</a>
-        <a href="/teacher/dashboard"      class="hbtn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+        <a href="/teacher/create_test_v2" class="hdr-btn"><i class="fas fa-plus"></i> New AI Test</a>
+        <a href="javascript:void(0)" onclick="handleDashboardClick(event)" class="hdr-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
         {% endif %}
     </div>
 </div>
 
-<div class="card">
+<div class="container">
+
     <div id="alertBox" class="alert"></div>
 
-    {% if history %}
-    <div style="overflow-x:auto;">
-    <table>
-        <thead>
-            <tr>
-                <th>#</th><th>Date &amp; Time</th><th>Class</th><th>Subject</th>
-                <th>Chapter</th><th>Test No</th><th>Mode</th><th>Questions</th>
-                <th>Remark</th><th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="histBody">
-        {% for h in history %}
-        <tr id="row-{{ h.id }}">
-            <td>{{ loop.index }}</td>
-            <td style="font-size:.8rem;white-space:nowrap;">{{ h.created_at[:16] if h.created_at else '—' }}</td>
-            <td><strong>{{ h.class }}{% if h.section %}-{{ h.section }}{% endif %}</strong></td>
-            <td>{{ h.subject }}</td>
-            <td>{{ h.chapter }}</td>
-            <td><strong>{{ h.test_no }}</strong></td>
-            <td>
-                <span class="badge badge-{{ h.output_mode or 'cbt' }}">
-                    {{ (h.output_mode or 'cbt') | upper }}
-                </span>
-            </td>
-            <td>
-                <div class="q-counts">
-                    {% if h.mcq_count        %}<span>MCQ:{{ h.mcq_count }}</span>{% endif %}
-                    {% if h.assertion_count  %}<span>A-R:{{ h.assertion_count }}</span>{% endif %}
-                    {% if h.very_short_count %}<span>VS:{{ h.very_short_count }}</span>{% endif %}
-                    {% if h.short_count      %}<span>Sh:{{ h.short_count }}</span>{% endif %}
-                    {% if h.long_count       %}<span>Lg:{{ h.long_count }}</span>{% endif %}
-                    {% if h.case_study_count %}<span>CS:{{ h.case_study_count }}</span>{% endif %}
-                    <br><strong style="color:#333;">Total: {{ h.total_questions }}</strong>
+    <!-- STATS OVERVIEW CARDS -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #eef2ff; color: #4f46e5;">
+                <i class="fas fa-file-invoice"></i>
+            </div>
+            <div>
+                <div class="stat-val">{{ history|length }}</div>
+                <div class="stat-lbl">Total Generated Tests</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #ecfdf5; color: #10b981;">
+                <i class="fas fa-desktop"></i>
+            </div>
+            <div>
+                <div class="stat-val">
+                    {% set cbt_count = history | selectattr('output_mode', 'equalto', 'cbt') | list | length %}
+                    {{ cbt_count if cbt_count is defined else history|length }}
                 </div>
-            </td>
-            <td class="remark-cell" title="{{ h.remark or '' }}">{{ h.remark or '—' }}</td>
-            <td>
-                <div class="btn-wrap">
-                    <!-- Feature #6: print opens browser print dialog -->
-                    <a href="{{ url_for('test_gen_print_preview', hid=h.id) }}" class="btn-sm btn-print" target="_blank" rel="noopener" title="Print / Save PDF">
-                        <i class="fas fa-print"></i> Print
-                    </a>
-                    <!-- Feature #1: individual delete -->
-                    <button class="btn-sm btn-del"
-                            onclick="deleteHistory({{ h.id }}, this)"
-                            title="Delete this entry">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                <div class="stat-lbl">CBT Online Exams</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #eff6ff; color: #2563eb;">
+                <i class="fas fa-print"></i>
+            </div>
+            <div>
+                <div class="stat-val">
+                    {% set print_count = history | selectattr('output_mode', 'equalto', 'print') | list | length %}
+                    {{ print_count if print_count is defined else 0 }}
                 </div>
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+                <div class="stat-lbl">Print / PDF Downloads</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #fff7ed; color: #ea580c;">
+                <i class="fas fa-question-circle"></i>
+            </div>
+            <div>
+                <div class="stat-val">
+                    {% set ns = namespace(total=0) %}
+                    {% for h in history %}
+                        {% set ns.total = ns.total + (h.total_questions or 0) %}
+                    {% endfor %}
+                    {{ ns.total }}
+                </div>
+                <div class="stat-lbl">Total Questions Framed</div>
+            </div>
+        </div>
     </div>
-    {% else %}
-    <div class="empty">
-        <i class="fas fa-history"></i>
-        No tests generated yet.<br>
-        <a href="/teacher/create_test_v2" style="color:#667eea;text-decoration:none;">Create your first test →</a>
-    </div>
-    {% endif %}
 
-<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
-</footer>
+    <!-- MAIN HISTORY TABLE CARD -->
+    <div class="card">
+        <div class="card-hdr">
+            <div class="card-title">
+                <i class="fas fa-list-alt"></i> Generated Question Papers Log
+            </div>
+            <div class="filter-wrap">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search class, subject, test..." oninput="filterHistory()">
+                </div>
+                <div class="filter-pills">
+                    <span class="pill active" onclick="setModeFilter('all', this)">All</span>
+                    <span class="pill" onclick="setModeFilter('cbt', this)">CBT</span>
+                    <span class="pill" onclick="setModeFilter('print', this)">PDF</span>
+                </div>
+            </div>
+        </div>
+
+        {% if history %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date &amp; Time</th>
+                        <th>Class</th>
+                        <th>Subject</th>
+                        <th>Chapter / Topic</th>
+                        <th>Test No</th>
+                        <th>Mode</th>
+                        <th>Questions Breakdown</th>
+                        <th>Remark</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="histBody">
+                {% for h in history %}
+                <tr id="row-{{ h.id }}" data-mode="{{ h.output_mode or 'cbt' }}" data-search="{{ h.class }} {{ h.subject }} {{ h.chapter }} {{ h.test_no }} {{ h.remark or '' }}">
+                    <td><strong style="color: #64748b;">{{ loop.index }}</strong></td>
+                    <td style="font-size: 0.8rem; white-space: nowrap; color: #475569;">
+                        <i class="far fa-calendar-alt" style="margin-right: 4px; color: #818cf8;"></i>
+                        {{ h.created_at[:16] if h.created_at else '—' }}
+                    </td>
+                    <td>
+                        <span style="font-weight: 700; color: #3730a3; background: #e0e7ff; padding: 4px 10px; border-radius: 12px;">
+                            Class {{ h.class }}{% if h.section %}-{{ h.section }}{% endif %}
+                        </span>
+                    </td>
+                    <td><strong style="color: #0f172a;">{{ h.subject }}</strong></td>
+                    <td style="max-width: 180px; font-weight: 500; color: #334155;">{{ h.chapter }}</td>
+                    <td>
+                        <span style="background: #f1f5f9; padding: 3px 9px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; color: #334155;">
+                            {{ h.test_no }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if (h.output_mode or 'cbt') == 'print' %}
+                            <span class="badge badge-print"><i class="fas fa-file-pdf"></i> PRINT PDF</span>
+                        {% else %}
+                            <span class="badge badge-cbt"><i class="fas fa-desktop"></i> CBT ONLINE</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="q-chips">
+                            {% if h.mcq_count %}<span class="q-chip">MCQ: {{ h.mcq_count }}</span>{% endif %}
+                            {% if h.assertion_count %}<span class="q-chip">A-R: {{ h.assertion_count }}</span>{% endif %}
+                            {% if h.very_short_count %}<span class="q-chip">VS: {{ h.very_short_count }}</span>{% endif %}
+                            {% if h.short_count %}<span class="q-chip">Sh: {{ h.short_count }}</span>{% endif %}
+                            {% if h.long_count %}<span class="q-chip">Lg: {{ h.long_count }}</span>{% endif %}
+                            {% if h.case_study_count %}<span class="q-chip">CS: {{ h.case_study_count }}</span>{% endif %}
+                        </div>
+                        <div style="font-size: 0.78rem; font-weight: 700; color: #1e293b;">
+                            Total: {{ h.total_questions }} Questions
+                        </div>
+                    </td>
+                    <td style="max-width: 160px; font-size: 0.78rem; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ h.remark or '' }}">
+                        {{ h.remark or '—' }}
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ url_for('test_gen_print_preview', hid=h.id) }}" class="btn-action btn-print-action" target="_blank" rel="noopener" title="Print or Save PDF">
+                                <i class="fas fa-print"></i> Print PDF
+                            </a>
+                            <button class="btn-action btn-delete-action" onclick="deleteHistory({{ h.id }}, this)" title="Delete Entry">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-history"></i>
+            <h3>No AI Tests Generated Yet</h3>
+            <p>Generate instant CBT tests or print-ready PDF question papers using Gemini AI.</p>
+            {% if is_admin %}
+            <a href="/admin/create_test" class="hdr-btn" style="background: var(--primary); display: inline-flex;"><i class="fas fa-plus"></i> Generate First Test</a>
+            {% else %}
+            <a href="/teacher/create_test_v2" class="hdr-btn" style="background: var(--primary); display: inline-flex;"><i class="fas fa-plus"></i> Generate First Test</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <footer class="app-global-footer" style="width:100%; text-align:center; padding:24px 10px; font-size:0.85rem; color:#64748b; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.06); box-sizing:border-box; clear:both;">
+        Developed by Gaurav Shukla &amp; Team
+    </footer>
+
 </div>
 
 <script>
+let currentMode = 'all';
+
+function setModeFilter(mode, pillEl) {
+    currentMode = mode;
+    document.querySelectorAll('.filter-pills .pill').forEach(p => p.classList.remove('active'));
+    if (pillEl) pillEl.classList.add('active');
+    filterHistory();
+}
+
+function filterHistory() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#histBody tr');
+
+    rows.forEach(row => {
+        const rowMode = row.getAttribute('data-mode') || 'cbt';
+        const searchData = (row.getAttribute('data-search') || '').toLowerCase();
+
+        const matchesMode = (currentMode === 'all') || (rowMode === currentMode);
+        const matchesSearch = !q || searchData.includes(q);
+
+        if (matchesMode && matchesSearch) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
 function showAlert(msg, type) {
     const box = document.getElementById('alertBox');
-    box.className = 'alert alert-'+type;
+    box.className = 'alert alert-' + type;
     box.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}"></i> ${msg}`;
     box.style.display = 'block';
-    setTimeout(() => box.style.display='none', 5000);
+    setTimeout(() => box.style.display = 'none', 5000);
 }
 
-// Feature #6: open print preview in new tab
-function openPrint(id) {
-    window.open('/api/test_generation_history/'+id+'/print_preview', '_blank');
-}
-
-// Feature #1: delete individual history entry
 async function deleteHistory(id, btn) {
-    if (!confirm('Delete this test history entry? This does NOT delete the questions from the question bank.')) return;
+    if (!confirm('Delete this test history entry? (Question bank questions will remain preserved)')) return;
     btn.disabled = true;
     try {
-        const res  = await fetch('/api/test_generation_history/'+id+'/delete', {method:'DELETE'});
+        const res = await fetch('/api/test_generation_history/' + id + '/delete', { method: 'DELETE' });
         const data = await res.json();
         if (data.status === 'success') {
-            const row = document.getElementById('row-'+id);
-            row.style.opacity = '0';
-            row.style.transition = 'opacity .3s';
-            setTimeout(() => row.remove(), 300);
-            showAlert('Entry deleted', 'success');
+            const row = document.getElementById('row-' + id);
+            if (row) {
+                row.style.opacity = '0';
+                row.style.transition = 'opacity .3s';
+                setTimeout(() => row.remove(), 300);
+            }
+            showAlert('Test history entry deleted successfully.', 'success');
         } else {
             showAlert(data.message || 'Delete failed', 'error');
             btn.disabled = false;
         }
     } catch(err) {
-        showAlert('Error: '+err.message, 'error');
+        showAlert('Error: ' + err.message, 'error');
         btn.disabled = false;
+    }
+}
+
+function handleDashboardClick(e) {
+    if (e) e.preventDefault();
+    if (window.parent && window.parent !== window && typeof window.parent.loadTab === 'function') {
+        window.parent.loadTab('dashboard');
+        return;
+    }
+    const IS_ADMIN = {{ 'true' if is_admin else 'false' }};
+    if (IS_ADMIN) {
+        window.location.href = '/admin/dashboard';
+    } else {
+        window.location.href = '/teacher/dashboard';
     }
 }
 </script>
