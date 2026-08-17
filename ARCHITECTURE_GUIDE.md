@@ -606,8 +606,146 @@ auto_submit_expired_exams()
 
 ---
 
+---
+
+## 🤖 High-Concurrency AI Paper Generation & Queueing Architecture
+
+### High-Concurrency Handling for Parallel Teachers (22+ Parallel Users)
+1. **Concurrency Challenge**:
+   - Hugging Face Serverless Inference API has a concurrency limit of ~2–5 parallel calls per API key.
+   - Standard free API keys (Gemini / Hugging Face) return HTTP 429 / 503 if 22+ requests hit the server at the exact same second.
+
+2. **Asynchronous Background Task Queue Pattern**:
+   - **Instant Web Response (<0.1s)**: Server accepts paper request, assigns a `job_id`, and returns HTTP 202 (`Paper request queued at position #X`).
+   - **Sequential Background Processing**: Worker thread executes requests strictly one-by-one from the queue.
+   - **Zero Rate Limit / 429 Errors**: Hugging Face / Gemini API only receives 1 request at a time.
+   - **Teacher Notification**: Once completed, a notification is inserted into `teacher_notifications` and alerts the teacher via the dashboard notification bell.
+
+3. **Multi-Provider Failover**:
+   - Primary: Gemini / Hugging Face / DeepSeek / OpenAI
+   - Automated fallback across providers if one returns HTTP 429 or 503 errors.
+
+---
+
+## 📁 Shared Paper Repository & Classwise Folder Structure Architecture
+
+### Folder Hierarchy (`paper/`)
+Generated question papers (.doc / .docx files) are automatically saved into a structured classwise & sectionwise directory tree:
+```
+paper/
+├── Class_1/
+│   ├── Section_A/
+│   ├── Section_B/
+│   ├── Section_C/
+│   └── Section_D/
+├── Class_2/
+│   └── ...
+├── Class_3/
+│   ├── Section_A/
+│   │   ├── 3_A_Mathematics_UnitTest_Gaurav_Shukla.doc
+│   │   └── 3_A_Science_HalfYearly_Ramesh_Kumar.doc
+│   └── Section_B/
+└── Class_12/
+```
+
+### Standard File Naming Convention
+$$\text{Class}\_\text{Section}\_\text{Subject}\_\text{ExamType}\_\text{TeacherName.doc}$$
+- Example: `10_A_Mathematics_UnitTest_Gaurav_Shukla.doc`
+- Example: `8_B_Science_HalfYearly_Anjali_Sharma.doc`
+
+### Shared Teacher Repository Access
+- All teachers can browse the directory tree in the Teacher & Admin Dashboards.
+- Cross-Teacher Reuse: Any teacher can navigate to `Class_N` ➔ `Section_X` and download editable `.doc` papers created by other teachers.
+
+---
+
+## 🌀 Circular Progress Ring & RRB Logo Processing Modal Architecture
+
+### Processing & Progress Overlay Design
+Used for long-running operations such as AI paper generation, dataset uploads, and PDF export:
+1. **Central Pulsing RRB Logo**: Central logo emblem with glowing scale pulse animation (`rrbPulse`).
+2. **SVG Circular Progress Ring**: Animated SVG circle filling smoothly from `0%` to `100%` (`stroke-dashoffset` transition).
+3. **Live Percentage & Stage Labels**: Real-time counter (`10%`, `20%`, ... `100%`) accompanied by step-by-step progress status messages (*"Initializing AI..."* ➔ *"Generating MCQs..."* ➔ *"Saving Paper.doc..."*).
+
+---
+
+## 📝 MCQ Test History Architecture (All Teachers)
+
+### Database Table (`mcq_test_history`)
+Stores logs of all generated MCQ test papers across teachers:
+- `id`, `teacher_id`, `teacher_name`, `class`, `section`, `subject`, `test_no`, `question_count`, `created_at`
+
+### Features & Controls
+1. **Automatic Logging**: Every generated MCQ test automatically creates a history entry.
+2. **Teacher Dashboard Table**: Interactive data table filterable by Class, Section, Subject, and Test No.
+3. **Actions**: Preview test online, Download PDF paper, Export CSV dataset, and Delete history entry.
+
+---
+
+## 👩‍🏫 Teacher Assignment & Class Teacher Privileges Architecture
+
+### Admin Assign Form & Controls
+- **Class Dropdown**: `1st` to `12th` (and `1` to `12`).
+- **Section Dropdown**: `A`, `B`, `C`, `D`.
+- **Subject Input**: Subject text input.
+- **Dynamic 1:1 Class Teacher Guard**:
+  - If a Class + Section (e.g. Class 10 Section A) already has an assigned Class Teacher, the "Assign as Class Teacher" option is **disabled** with an alert badge naming the current Class Teacher.
+  - Enforced on backend: Backend rejects requests with HTTP 400 if a second Class Teacher assignment is attempted.
+
+### Privileges & Access Scope
+- **Subject Teacher**: View test results and question progress for assigned subject only.
+- **Class Teacher**: **Full Class Access** across ALL subjects for assigned Class + Section (all subject test progress, student rank lists, and report cards).
+
+---
+
+---
+
+## 🔑 Optional JWT Token Authentication Layer Architecture
+
+### Overview
+Optional JWT token-based authentication (`PyJWT`) is integrated as an additional API auth layer for future mobile app and external system integrations while keeping all existing Flask session-based web logins (`admin_logged_in`, `teacher_logged_in`, student exam sessions) 100% unchanged.
+
+### Key Components
+- **Secret & Expiry Management**: Loaded from `.env` (`JWT_SECRET_KEY`, `JWT_EXPIRATION_HOURS=24`).
+- **Endpoint `POST /api/token`**: Issues signed HS256 JWT tokens for Admin, Teacher, or Student roles upon credential verification.
+- **Decorator `@jwt_required(allowed_roles=None)`**: Protects REST API endpoints by parsing `Authorization: Bearer <token>` headers and attaching user context to `g.jwt_user`.
+
+---
+
+## ⚡ Redis + RQ Background Job Processing & Fallback Architecture
+
+### Overview
+Upgraded background AI paper processing to use **Redis + RQ (Redis Queue)** with automatic Thread Queue fallback.
+
+### Features & Fallback Workflow
+1. **Instant Response (HTTP 202)**: Returns `job_id` and `queue_position` immediately.
+2. **Redis Connection Auto-Detection**:
+   - If Redis is running (`localhost:6379`), jobs are queued in Redis RQ (`'paper_generation'`).
+   - If Redis is offline/unavailable, jobs automatically route to the built-in Thread Queue worker (`queue.Queue()`).
+3. **Worker Script**: Executed via `python rq_worker.py` or batch menu option `[11]`.
+4. **Paper Save & Notification**: Paper `.doc` files are saved into `paper/Class_<N>/Section_<X>/` and completion alerts log to `teacher_notifications`.
+
+---
+
+## 🛡️ System Audit Logs & Security Monitoring Architecture
+
+### Overview
+Persistent security audit logging system tracking critical administrative and user operations.
+
+### Schema & Monitored Events
+- **Table `audit_logs`**: `id`, `user_type`, `user_id`, `action`, `target_table`, `target_id`, `timestamp`, `ip_address`.
+- **5 Monitored Security Actions**:
+  1. `STUDENT_RESULT_VIEW`: Student result inspection by Admin / Teacher.
+  2. `PAPER_DELETE`: Test paper deletion.
+  3. `REATTEMPT_APPROVE` / `REATTEMPT_REJECT`: Admin approval or rejection of student reattempts.
+  4. `EXAM_START` / `EXAM_STOP`: Exam control activation or deactivation.
+  5. `STUDENT_UNLOCK`: Unlocking student class locks.
+- **Admin Dashboard UI (`/admin/audit_logs`)**: Filterable by User Role, Action Type, Start Date, and End Date.
+
+---
+
 ## 📝 Version Info
-- **App Version**: v1.10
+- **App Version**: v1.13
 - **Framework**: Flask
 - **Database**: SQLite
 - **Python**: 3.x
