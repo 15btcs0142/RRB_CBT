@@ -1,6 +1,14 @@
-# Ignore API key files
+# Ignore API key files and secrets
+.api_key
 apikey.env
 .env
+*.env
+*.key
+*api_key*
+
+# Local deployment & version scripts containing tokens
+push_to_github.py
+Push_Version_To_GitHub.bat
 
 # Python cache
 __pycache__/
@@ -8,7 +16,12 @@ __pycache__/
 
 # Virtual environments
 venv/
+.venv/
 env/
 
-# SQLite DB (if present locally)
+# SQLite DB & journals
 database.db
+database.db-shm
+database.db-wal
+database.db*
+backups/
