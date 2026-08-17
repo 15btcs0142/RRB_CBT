@@ -1,3 +1,51 @@
+// ================================================================
+// IN-SCREEN TOAST NOTIFICATIONS (No Fullscreen Exit / No Window Blur)
+// ================================================================
+function showToastNotification(message, type = 'info') {
+    let container = document.getElementById('examToastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'examToastContainer';
+        container.style.cssText = `
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+        `;
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        background: ${type === 'warning' ? '#be123c' : 'linear-gradient(135deg, #0f172a, #1e293b)'};
+        color: #ffffff;
+        padding: 10px 22px;
+        border-radius: 30px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(255,255,255,0.2);
+        pointer-events: auto;
+    `;
+    toast.innerHTML = message;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.4s ease';
+        setTimeout(() => toast.remove(), 400);
+    }, 3500);
+}
+
 // ========================================
 // COMPREHENSIVE COPY/PASTE PREVENTION
 // ========================================
@@ -81,29 +129,41 @@ document.head.appendChild(style);
 // ========================================
 
 
-// Detect mobile device
+// Detect mobile device (strictly mobile UAs, excluding touchscreen Windows PCs/laptops)
 function isMobileDevice() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-           || ('ontouchstart' in window) 
-           || (navigator.maxTouchPoints > 0);
+    const ua = navigator.userAgent || '';
+    return /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
 }
 
 const isMobile = isMobileDevice();
 let fullscreenEnabled = false;
 
-// ── FULLSCREEN MANAGER ─────────────────────────────────────────────────────
-// Bug #1 Fix: accidental focus loss (OS notifications, alt-tab, etc.) must NOT
-// immediately submit. Instead: show a warning overlay and allow the student to
-// re-enter fullscreen within a grace period. Only submit after 3 confirmed exits
-// with no recovery, protecting students from spurious notification clicks.
+// ── GLOBAL TAB SWITCH & FULLSCREEN SECURITY MONITOR ──────────────────────────
+let _submittingTriggered = false;
 
+function triggerAutoSubmit(reason) {
+    if (_submittingTriggered) return;
+    if (sessionStorage.getItem('examSubmitted')) return;
+    if (window._isSubmittingModalOpen) return;
+
+    _submittingTriggered = true;
+    console.warn('Security violation auto-submit:', reason);
+    silentSubmit(reason, true);
+}
+
+// Global Tab Switch & Blur listeners (enforced on all desktop browsers)
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden || document.visibilityState === 'hidden') {
+        triggerAutoSubmit('tab_switch');
+    }
+});
+
+window.addEventListener('blur', () => {
+    triggerAutoSubmit('tab_switch');
+});
+
+// Fullscreen exit monitor for desktop devices
 if (!isMobile) {
-    let _fsExitCount    = 0;          // consecutive exits without recovery
-    let _fsGraceTimer   = null;       // timeout for grace period
-    let _fsWarningShown = false;
-    const FS_GRACE_MS   = 8000;       // 8-second grace window per exit
-    const FS_MAX_EXITS  = 3;          // submit only after this many unrecovered exits
-
     function requestFullscreen() {
         const elem = document.documentElement;
         if      (elem.requestFullscreen)       elem.requestFullscreen();
@@ -122,7 +182,7 @@ if (!isMobile) {
         requestFullscreen();
         setTimeout(() => {
             if (!isInFullscreen()) {
-                showFullscreenPrompt(true);  // initial prompt — not an exit warning
+                showFullscreenPrompt(true);
             } else {
                 fullscreenEnabled = true;
             }
@@ -141,18 +201,14 @@ if (!isMobile) {
             <div style="background:white;padding:36px 40px;border-radius:18px;
                         box-shadow:0 20px 60px rgba(0,0,0,0.5);text-align:center;max-width:420px;">
                 <div style="font-size:2.5rem;margin-bottom:12px;">⚠️</div>
-                <h3 style="color:#b71c1c;margin-bottom:10px;">
-                    ${isInitial ? 'Fullscreen Required' : 'Fullscreen Exited'}
-                </h3>
+                <h3 style="color:#b71c1c;margin-bottom:10px;">Fullscreen Required</h3>
                 <p style="color:#555;margin-bottom:20px;line-height:1.6;">
-                    ${isInitial
-                        ? 'This exam must be taken in fullscreen mode to continue.'
-                        : 'You exited fullscreen. Please return to fullscreen immediately.<br><small style="color:#e53935;">Repeated exits will automatically submit your exam.</small>'}
+                    This exam must be taken in fullscreen mode to continue.
                 </p>
                 <button id="fsBtnRe" style="background:#1b5e20;color:white;border:none;
                         padding:12px 28px;border-radius:30px;font-size:1rem;cursor:pointer;
                         display:inline-flex;align-items:center;gap:8px;">
-                    ⛶ Return to Fullscreen
+                    ⛶ Enter Fullscreen
                 </button>
             </div>`;
         document.body.appendChild(div);
@@ -161,9 +217,6 @@ if (!isMobile) {
             setTimeout(() => {
                 if (isInFullscreen()) {
                     fullscreenEnabled = true;
-                    _fsExitCount = 0;
-                    clearTimeout(_fsGraceTimer);
-                    _fsWarningShown = false;
                     const p = document.getElementById('fullscreenPrompt');
                     if (p) p.remove();
                 }
@@ -173,39 +226,14 @@ if (!isMobile) {
 
     function exitHandler() {
         if (isInFullscreen()) {
-            // Entering fullscreen — clear any pending grace timer
-            clearTimeout(_fsGraceTimer);
-            _fsExitCount = 0;
-            _fsWarningShown = false;
             const p = document.getElementById('fullscreenPrompt');
             if (p) p.remove();
             return;
         }
 
-        // Student exited fullscreen
-        if (sessionStorage.getItem('examSubmitted')) return;
-
-        _fsExitCount++;
-
-        if (_fsExitCount >= FS_MAX_EXITS) {
-            // Too many exits — submit now
-            const p = document.getElementById('fullscreenPrompt');
-            if (p) p.remove();
-            alert('You exited fullscreen too many times. The exam has been submitted.');
-            silentSubmit();
-            return;
+        if (!isInFullscreen() && !sessionStorage.getItem('examSubmitted') && !window._isSubmittingModalOpen) {
+            triggerAutoSubmit('fullscreen_exit');
         }
-
-        // Show warning overlay and start grace timer
-        showFullscreenPrompt(false);
-
-        clearTimeout(_fsGraceTimer);
-        _fsGraceTimer = setTimeout(() => {
-            // Grace period expired without recovery — still in exit
-            if (!isInFullscreen() && !sessionStorage.getItem('examSubmitted')) {
-                // Give one more chance silently; increment on next exitHandler call
-            }
-        }, FS_GRACE_MS);
     }
 
     enterFullscreen();
@@ -214,16 +242,6 @@ if (!isMobile) {
     document.addEventListener('webkitfullscreenchange', exitHandler);
     document.addEventListener('mozfullscreenchange',    exitHandler);
     document.addEventListener('MSFullscreenChange',     exitHandler);
-
-    // visibilitychange: page hidden (e.g. notification click) — do NOT submit
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            // page lost focus — only increment exit count if already out of FS
-            if (!isInFullscreen() && !sessionStorage.getItem('examSubmitted')) {
-                // handled by exitHandler when FS state actually changes
-            }
-        }
-    });
 } else {
     console.log('Mobile device detected – fullscreen not enforced.');
 }
@@ -448,6 +466,14 @@ function loadQuestion(index) {
     refreshQuestionCounters(index);
     refreshQuestionStatus(index);
 
+    // In-screen notification on reaching the last question
+    if (questions.length > 0 && index === questions.length - 1 && !window._lastQNotified) {
+        window._lastQNotified = true;
+        showToastNotification('📌 Note: You are on the last question of the exam.', 'info');
+    } else if (index < questions.length - 1) {
+        window._lastQNotified = false;
+    }
+
     // ── Question text ─────────────────────────────────────────────────────────
     const qText = document.getElementById('questionText');
     if (qText) {
@@ -593,7 +619,7 @@ function saveCurrentAndNext() {
     if (currentIndex < questions.length - 1) {
         loadQuestion(currentIndex + 1);
     } else {
-        alert('This is the last question.');
+        showToastNotification('📌 Note: You are on the last question of the exam.', 'info');
     }
 }
 
@@ -611,7 +637,7 @@ function markForReviewAndNext() {
     if (currentIndex < questions.length - 1) {
         loadQuestion(currentIndex + 1);
     } else {
-        alert('This is the last question.');
+        showToastNotification('📌 Note: You are on the last question of the exam.', 'info');
     }
 }
 
@@ -641,20 +667,153 @@ function clearResponse() {
     updatePaletteButton(currentIndex);
 }
 
-function silentSubmit() {
+function silentSubmit(reason, force = false) {
+    if (sessionStorage.getItem('examSubmitted') && !force) return;
     sessionStorage.setItem('examSubmitted', 'true');
-    fetch('/submit_exam', {method: 'POST'})
-        .then(() => {
-            if (document.exitFullscreen){
-                window.location.href = '/submitted';
-            }
-        });
+
+    let subOverlay = document.getElementById('submittingOverlay');
+    if (!subOverlay) {
+        subOverlay = document.createElement('div');
+        subOverlay.id = 'submittingOverlay';
+        subOverlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.92); z-index: 9999999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #ffffff; font-family: 'Poppins', sans-serif;
+        `;
+        subOverlay.innerHTML = `
+            <div style="font-size: 2.5rem; margin-bottom: 12px;">⏳</div>
+            <h3 style="margin-bottom: 8px;">Submitting Exam...</h3>
+            <p style="font-size: 0.85rem; opacity: 0.8;">Please wait while your answers are recorded.</p>
+        `;
+        document.body.appendChild(subOverlay);
+    }
+
+    fetch('/submit_exam', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason || 'manual' })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Submission response error');
+        return res.json();
+    })
+    .then(data => {
+        window.location.href = data.redirect || '/submitted';
+    })
+    .catch(err => {
+        console.warn('Submit error fallback:', err);
+        window.location.href = '/submitted';
+    });
+}
+
+function showSubmitConfirmationModal() {
+    if (document.getElementById('submitConfirmModal')) return;
+    
+    window._isSubmittingModalOpen = true;
+
+    // Count statistics
+    let answered = 0;
+    let marked = markedForReview.size;
+    let notVisited = 0;
+    let notAnswered = 0;
+
+    questions.forEach((q, idx) => {
+        if (responses[idx]) {
+            answered++;
+        } else if (visited.has(idx)) {
+            notAnswered++;
+        } else {
+            notVisited++;
+        }
+    });
+
+    const total = questions.length;
+
+    const modal = document.createElement('div');
+    modal.id = 'submitConfirmModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(15, 23, 42, 0.82);
+        backdrop-filter: blur(8px);
+        z-index: 999999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    `;
+
+    modal.innerHTML = `
+        <div style="background: #ffffff; width: 100%; max-width: 440px; border-radius: 20px;
+                    padding: 28px 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+                    text-align: center; font-family: 'Poppins', sans-serif;">
+            <div style="width: 60px; height: 60px; background: #e0e7ff; color: #3730a3;
+                        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                        margin: 0 auto 16px; font-size: 1.8rem;">
+                📝
+            </div>
+            <h3 style="color: #1e1b4b; font-size: 1.3rem; font-weight: 700; margin-bottom: 8px;">
+                Are you sure you want to submit your exam?
+            </h3>
+            <p style="color: #64748b; font-size: 0.88rem; margin-bottom: 20px;">
+                Please review your exam summary before final submission.
+            </p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; text-align: left;">
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">ANSWERED</div>
+                    <div style="font-size: 1.1rem; color: #16a34a; font-weight: 700;">${answered} / ${total}</div>
+                </div>
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">MARKED FOR REVIEW</div>
+                    <div style="font-size: 1.1rem; color: #7c3aed; font-weight: 700;">${marked}</div>
+                </div>
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">NOT ANSWERED</div>
+                    <div style="font-size: 1.1rem; color: #dc2626; font-weight: 700;">${notAnswered}</div>
+                </div>
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">UNVISITED</div>
+                    <div style="font-size: 1.1rem; color: #64748b; font-weight: 700;">${notVisited}</div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button id="cancelSubmitBtn" style="flex: 1; padding: 12px; border: 1.5px solid #cbd5e1;
+                        background: #ffffff; color: #475569; border-radius: 12px; font-weight: 600;
+                        font-size: 0.92rem; cursor: pointer; transition: all 0.2s;">
+                    Cancel
+                </button>
+                <button id="confirmSubmitBtn" style="flex: 1; padding: 12px; border: none;
+                        background: linear-gradient(135deg, #16a34a, #15803d); color: #ffffff;
+                        border-radius: 12px; font-weight: 600; font-size: 0.92rem; cursor: pointer;
+                        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); transition: all 0.2s;">
+                    Yes, Submit
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById('cancelSubmitBtn').addEventListener('click', () => {
+        modal.remove();
+        window._isSubmittingModalOpen = false;
+    });
+
+    document.getElementById('confirmSubmitBtn').addEventListener('click', () => {
+        modal.remove();
+        window._isSubmittingModalOpen = false;
+        silentSubmit('manual', true);
+    });
 }
 
 function submitExam() {
-    if (confirm('Are you sure you want to submit?')) {
-        silentSubmit();
-    }
+    showSubmitConfirmationModal();
 }
 
 // Event listeners for buttons
