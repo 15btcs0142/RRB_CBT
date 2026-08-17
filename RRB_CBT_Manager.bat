@@ -1,5 +1,5 @@
 @echo off
-title RRB CBT v1.03 - Exam Manager
+title RRB CBT v1.13 - Exam Manager
 color 0A
 setlocal enabledelayedexpansion
 
@@ -7,7 +7,7 @@ setlocal enabledelayedexpansion
 cls
 echo.
 echo  ============================================================
-echo         RRB CBT v1.03 - School Exam System
+echo         RRB CBT v1.13 - School Exam System
 echo  ============================================================
 echo.
 echo   SERVER CONTROLS
@@ -28,6 +28,7 @@ echo   [7]  Set AI API Keys (Gemini, DeepSeek, ChatGPT, Claude)
 echo   [8]  Show My IP Address
 echo   [9]  Backup Database
 echo  [10]  View Logs
+echo  [11]  Start RQ Redis Worker
 echo.
 echo   [0]  Exit
 echo  ============================================================
@@ -44,6 +45,7 @@ if "%choice%"=="7"  goto SET_API_KEY
 if "%choice%"=="8"  goto SHOW_IP
 if "%choice%"=="9"  goto BACKUP_DB
 if "%choice%"=="10" goto VIEW_LOGS
+if "%choice%"=="11" goto START_RQ_WORKER
 if "%choice%"=="0"  goto EXIT
 
 echo   [!] Invalid choice. Please try again.
@@ -68,7 +70,7 @@ if errorlevel 1 (
 )
 for /f "tokens=*" %%v in ('python --version 2^>^&1') do echo   Found: %%v
 echo   Checking packages...
-pip show flask >nul 2>&1
+pip show PyJWT >nul 2>&1
 if errorlevel 1 (
     echo   Installing packages...
     pip install -r requirements.txt
@@ -109,16 +111,41 @@ echo  ============================================================
 echo       Starting RRB CBT Server (Localhost Mode)
 echo  ============================================================
 echo.
-echo   Only this computer can access the exam.
-echo   URL: http://127.0.0.1:5000
+echo   Checking Python...
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo   [ERROR] Python is not installed or not in PATH!
+    echo   Please install Python 3.9+ from https://python.org
+    echo   Make sure to check "Add Python to PATH" during install.
+    pause
+    goto MENU
+)
+for /f "tokens=*" %%v in ('python --version 2^>^&1') do echo   Found: %%v
+echo   Checking packages...
+pip show PyJWT >nul 2>&1
+if errorlevel 1 (
+    echo   Installing packages...
+    pip install -r requirements.txt
+) else (
+    echo   Packages OK.
+)
+echo.
+echo  ============================================================
+echo   Local URL    ^: http://127.0.0.1:5000
+echo   Admin        ^: http://127.0.0.1:5000/admin
+echo   Teacher      ^: http://127.0.0.1:5000/teacher
+echo   Student      ^: http://127.0.0.1:5000/
+echo  ============================================================
+echo   Developed by Gaurav Shukla
 echo.
 echo   Press Ctrl+C to stop the server.
 echo.
 if exist ".api_key" (
     set /p SAVED_KEY=<.api_key
     set GEMINI_API_KEY=!SAVED_KEY!
+    echo   Gemini API Key loaded.
+    echo.
 )
-set FLASK_RUN_HOST=127.0.0.1
 python app.py
 goto MENU
 
@@ -166,7 +193,7 @@ pip install -r requirements.txt
 echo.
 if errorlevel 1 (
     echo   [WARNING] Some packages failed.
-    echo   Try manually: pip install Flask openpyxl weasyprint google-genai python-dotenv
+    echo   Try manually: pip install Flask openpyxl weasyprint PyJWT python-dotenv
 ) else (
     echo   [SUCCESS] All packages installed successfully!
 )
@@ -280,10 +307,21 @@ echo.
 pause
 goto MENU
 
+:START_RQ_WORKER
+cls
+echo.
+echo  ============================================================
+echo       Starting RRB CBT RQ Redis Worker
+echo  ============================================================
+echo.
+python rq_worker.py
+pause
+goto MENU
+
 :EXIT
 cls
 echo.
-echo   Thank you for using RRB CBT v1.03. Goodbye!
+echo   Thank you for using RRB CBT v1.13. Goodbye!
 echo.
 timeout /t 2 >nul
 exit
