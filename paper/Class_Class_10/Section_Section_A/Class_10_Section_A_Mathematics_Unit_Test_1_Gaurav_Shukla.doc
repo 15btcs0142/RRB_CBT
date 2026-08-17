@@ -1,0 +1,26 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>Mathematics Unit Test 1</title>
+<style>
+body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.4; margin: 20px; }
+.header { text-align: center; font-weight: bold; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class='header'>
+    <h2>RRB Group of Schools</h2>
+    <h3>Unit Test 1 — Mathematics (Class Class 10 Section A)</h3>
+</div>
+<table width='100%' style='margin-bottom:15px;font-weight:bold;'>
+    <tr>
+        <td>Time Allowed: 3 Hours</td>
+        <td align='right'>Maximum Marks: 100</td>
+    </tr>
+    <tr>
+        <td>Teacher: Gaurav Shukla</td>
+        <td align='right'>Date: 13/08/2026</td>
+    </tr>
+</table>
+<hr>
+<h3 style='margin-top:16px;color:#1e1b4b;border-bottom:1px solid #ddd;'>Section A: Multiple Choice Questions</h3><p style='font-style:italic;color:#555;'>Note: Answer all questions</p><div style='margin-bottom:10px;'><strong>Q1.</strong> What is 2+2?</div><ul style='list-style-type:none;padding-left:15px;margin-top:4px;'><li style='margin-bottom:2px;'>(a) 3</li><li style='margin-bottom:2px;'>(b) 4</li><li style='margin-bottom:2px;'>(c) 5</li><li style='margin-bottom:2px;'>(d) 6</li></ul>
+</body>
+</html>
