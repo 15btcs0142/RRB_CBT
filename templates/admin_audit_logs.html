@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Logs - System Security & Event Monitoring</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; padding: 24px; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .header h1 { font-size: 1.5rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 10px; }
+        .header h1 i { color: #2563eb; }
+        
+        /* Stats row */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: white; border-radius: 12px; padding: 18px 20px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .stat-card .val { font-size: 1.6rem; font-weight: 700; color: #0f172a; }
+        .stat-card .lbl { font-size: 0.85rem; font-weight: 500; color: #64748b; margin-top: 2px; }
+
+        /* Filter Card */
+        .filter-card { background: white; border-radius: 14px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: end; }
+        .fg { display: flex; flex-direction: column; gap: 6px; }
+        .fg label { font-size: 0.82rem; font-weight: 600; color: #475569; }
+        .fg select, .fg input { padding: 9px 13px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; outline: none; transition: all 0.2s; }
+        .fg select:focus, .fg input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        
+        .btn-group { display: flex; gap: 10px; }
+        .btn { padding: 9px 18px; border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer; border: none; transition: all 0.2s; display: flex; align-items: center; gap: 7px; text-decoration: none; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .btn-secondary:hover { background: #e2e8f0; }
+
+        /* Table Card */
+        .table-card { background: white; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: #f8fafc; padding: 14px 18px; font-size: 0.8rem; font-weight: 600; color: #475569; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+        td { padding: 14px 18px; font-size: 0.88rem; color: #334155; border-bottom: 1px solid #f1f5f9; }
+        tr:hover { background: #f8fafc; }
+        
+        /* Badges */
+        .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+        .badge-admin { background: #fee2e2; color: #991b1b; }
+        .badge-teacher { background: #e0e7ff; color: #3730a3; }
+        .badge-student { background: #dcfce7; color: #166534; }
+        .badge-system { background: #f1f5f9; color: #475569; }
+
+        .badge-action { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+        .action-view { background: #e0f2fe; color: #075985; }
+        .action-delete { background: #fef2f2; color: #991b1b; }
+        .action-approve { background: #dcfce7; color: #166534; }
+        .action-reject { background: #fff7ed; color: #9a3412; }
+        .action-toggle { background: #f3e8ff; color: #6b21a8; }
+
+        .ip-code { font-family: monospace; font-size: 0.82rem; background: #f1f5f9; padding: 2px 7px; border-radius: 4px; color: #475569; }
+        .empty-state { padding: 48px; text-align: center; color: #64748b; }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 12px; color: #cbd5e1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> System Audit Logs</h1>
+            <a href="/admin/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="val">{{ total_count }}</div>
+                <div class="lbl">Total Logged Events</div>
+            </div>
+            <div class="stat-card">
+                <div class="val" style="color: #991b1b;">{{ admin_count }}</div>
+                <div class="lbl">Admin Security Actions</div>
+            </div>
+            <div class="stat-card">
+                <div class="val" style="color: #3730a3;">{{ teacher_count }}</div>
+                <div class="lbl">Teacher Actions</div>
+            </div>
+            <div class="stat-card">
+                <div class="val" style="color: #166534;">{{ student_count }}</div>
+                <div class="lbl">Student Activity Logs</div>
+            </div>
+        </div>
+
+        <!-- Filter Form -->
+        <div class="filter-card">
+            <form method="GET" action="/admin/audit_logs">
+                <div class="filter-grid">
+                    <div class="fg">
+                        <label><i class="fas fa-user-tag"></i> User Role</label>
+                        <select name="user_type">
+                            <option value="">All Roles</option>
+                            <option value="admin" {% if selected_user_type == 'admin' %}selected{% endif %}>Admin</option>
+                            <option value="teacher" {% if selected_user_type == 'teacher' %}selected{% endif %}>Teacher</option>
+                            <option value="student" {% if selected_user_type == 'student' %}selected{% endif %}>Student</option>
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-tasks"></i> Action Type</label>
+                        <select name="action">
+                            <option value="">All Actions</option>
+                            <option value="STUDENT_RESULT_VIEW" {% if selected_action == 'STUDENT_RESULT_VIEW' %}selected{% endif %}>Student Result View</option>
+                            <option value="PAPER_DELETE" {% if selected_action == 'PAPER_DELETE' %}selected{% endif %}>Paper Delete</option>
+                            <option value="REATTEMPT_APPROVE" {% if selected_action == 'REATTEMPT_APPROVE' %}selected{% endif %}>Reattempt Approve</option>
+                            <option value="REATTEMPT_REJECT" {% if selected_action == 'REATTEMPT_REJECT' %}selected{% endif %}>Reattempt Reject</option>
+                            <option value="EXAM_START" {% if selected_action == 'EXAM_START' %}selected{% endif %}>Exam Start</option>
+                            <option value="EXAM_STOP" {% if selected_action == 'EXAM_STOP' %}selected{% endif %}>Exam Stop</option>
+                            <option value="STUDENT_UNLOCK" {% if selected_action == 'STUDENT_UNLOCK' %}selected{% endif %}>Student Unlock</option>
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-calendar-alt"></i> Start Date</label>
+                        <input type="date" name="start_date" value="{{ start_date }}">
+                    </div>
+                    <div class="fg">
+                        <label><i class="fas fa-calendar-alt"></i> End Date</label>
+                        <input type="date" name="end_date" value="{{ end_date }}">
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Apply Filters</button>
+                        <a href="/admin/audit_logs" class="btn btn-secondary"><i class="fas fa-undo"></i> Reset</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Table -->
+        <div class="table-card">
+            {% if logs %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User Role</th>
+                        <th>User ID</th>
+                        <th>Action</th>
+                        <th>Target Object</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td style="font-weight: 500;">{{ log.timestamp }}</td>
+                        <td>
+                            {% if log.user_type == 'admin' %}
+                                <span class="badge badge-admin"><i class="fas fa-user-shield"></i> Admin</span>
+                            {% elif log.user_type == 'teacher' %}
+                                <span class="badge badge-teacher"><i class="fas fa-chalkboard-teacher"></i> Teacher</span>
+                            {% elif log.user_type == 'student' %}
+                                <span class="badge badge-student"><i class="fas fa-user-graduate"></i> Student</span>
+                            {% else %}
+                                <span class="badge badge-system">{{ log.user_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-weight: 600;">{{ log.user_id }}</td>
+                        <td>
+                            {% if 'VIEW' in log.action %}
+                                <span class="badge badge-action action-view"><i class="fas fa-eye"></i> {{ log.action }}</span>
+                            {% elif 'DELETE' in log.action %}
+                                <span class="badge badge-action action-delete"><i class="fas fa-trash"></i> {{ log.action }}</span>
+                            {% elif 'APPROVE' in log.action %}
+                                <span class="badge badge-action action-approve"><i class="fas fa-check-circle"></i> {{ log.action }}</span>
+                            {% elif 'REJECT' in log.action %}
+                                <span class="badge badge-action action-reject"><i class="fas fa-times-circle"></i> {{ log.action }}</span>
+                            {% elif 'EXAM' in log.action %}
+                                <span class="badge badge-action action-toggle"><i class="fas fa-power-off"></i> {{ log.action }}</span>
+                            {% else %}
+                                <span class="badge badge-action"><i class="fas fa-info-circle"></i> {{ log.action }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.target_table %}
+                                <span style="font-family: monospace; font-size: 0.84rem;">{{ log.target_table }}:{{ log.target_id }}</span>
+                            {% else %}
+                                <span style="color: #94a3b8;">—</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="ip-code">{{ log.ip_address or '127.0.0.1' }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <p>No audit log entries match your filter criteria.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
