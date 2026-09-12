@@ -114,11 +114,11 @@ def validate_schema(schema, is_json=False):
 
 # Common Schema Definitions
 STUDENT_LOGIN_SCHEMA = {
-    'name': {'type': str, 'required': True, 'min_length': 1, 'max_length': 100, 'regex': r'^[a-zA-Z0-9\s\.\-_]+$'},
+    'name': {'type': str, 'required': True, 'min_length': 1, 'max_length': 100, 'regex': r"^[a-zA-Z0-9\s\.\-_'’\u0900-\u097F]+$"},
     'student_id': {'type': str, 'required': True, 'min_length': 1, 'max_length': 50, 'regex': r'^[a-zA-Z0-9_\-]+$'},
     'class': {'type': str, 'required': True, 'min_length': 1, 'max_length': 20, 'regex': r'^[a-zA-Z0-9\s\-_]+$'},
     'section': {'type': str, 'required': False, 'max_length': 10, 'regex': r'^[a-zA-Z0-9\s\-_]*$'},
-    'subject': {'type': str, 'required': True, 'min_length': 1, 'max_length': 100, 'regex': r'^[a-zA-Z0-9\s\.\-_]+$'},
+    'subject': {'type': str, 'required': True, 'min_length': 1, 'max_length': 100, 'regex': r"^[a-zA-Z0-9\s\.\-_'’\u0900-\u097F]+$"},
     'test_no': {'type': str, 'required': False, 'max_length': 50, 'regex': r'^[a-zA-Z0-9\s\-_]*$'}
 }
 
