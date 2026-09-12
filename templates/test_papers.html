@@ -1,282 +1,607 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Test Papers - RRB CBT</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Test Papers & Generator Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --primary-light: #e0e7ff;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --dark-surface: #1e293b;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 14px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
         
         /* ─── TOP BAR ────────────────────────────────────────────────────── */
-        .topbar{
-            background:linear-gradient(90deg,#1a237e,#3949ab);
-            color:#fff;
-            padding:14px 28px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            flex-wrap:wrap;
-            gap:10px;
-            box-shadow:0 4px 20px rgba(0,0,0,0.15);
-            position:sticky;
-            top:0;
-            z-index:100;
+        .topbar {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.25);
+            color: #fff;
+            flex-wrap: wrap;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
-        .topbar h1 i{color:#667eea;}
-        .topbar a{
-            color:#fff;
-            text-decoration:none;
-            background:rgba(255,255,255,0.15);
-            padding:8px 20px;
-            border-radius:25px;
-            font-size:0.85rem;
-            transition:0.3s;
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            border:1px solid rgba(255,255,255,0.1);
+
+        .topbar .title-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
         }
-        .topbar a:hover{
-            background:rgba(255,255,255,0.25);
-            transform:translateY(-2px);
+
+        .topbar .icon-pill {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: #818cf8;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+        }
+
+        .topbar h1 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+        }
+
+        .topbar h1 span {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #a5b4fc;
+            display: block;
+            margin-top: -2px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .topbar a {
+            color: #f8fafc;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 9px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .topbar a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            color: #ffffff;
         }
         
-        .container{max-width:1200px;margin:24px auto;padding:0 20px;}
+        .container {
+            max-width: 1300px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
         
         /* ─── CARDS ────────────────────────────────────────────────────── */
-        .card{
-            background:rgba(255,255,255,0.95);
-            backdrop-filter:blur(10px);
-            border-radius:16px;
-            padding:22px 24px;
-            box-shadow:0 4px 16px rgba(0,0,0,0.06);
-            border:1px solid rgba(26,35,126,0.08);
-            margin-bottom:24px;
-            transition:0.3s;
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 24px 28px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+            transition: all 0.25s ease;
         }
-        .card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
-        .card-header{
-            color:#1a237e;
-            font-size:1.1rem;
-            font-weight:600;
-            display:flex;
-            align-items:center;
-            gap:10px;
-            border-bottom:2px dashed #e8eaf6;
-            padding-bottom:10px;
-            margin-bottom:16px;
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
         }
-        .card-header i{color:#3949ab;}
+
+        .card-header {
+            color: var(--dark);
+            font-size: 1.08rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+        }
+
+        .card-header i {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
         
         /* ─── CONVENTION BOX ──────────────────────────────────────────── */
-        .convention-box{
-            background:#e8eaf6;
-            border-left:4px solid #3949ab;
-            padding:14px 18px;
-            border-radius:10px;
-            margin:14px 0 18px;
+        .convention-box {
+            background: #eef2ff;
+            border-left: 4px solid var(--primary);
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            margin: 14px 0 18px;
+            border: 1px solid #c7d2fe;
         }
-        .convention-box strong{color:#1a237e;}
-        .convention-box code{
-            background:#fff;
-            padding:2px 10px;
-            border-radius:4px;
-            font-size:0.85rem;
-            color:#1a237e;
-            font-weight:600;
+
+        .convention-box strong {
+            color: var(--primary-dark);
+            font-size: 0.92rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
-        .convention-box small{color:#666;margin-top:4px;display:block;}
+
+        .convention-box code {
+            background: #ffffff;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.84rem;
+            color: var(--primary-dark);
+            font-weight: 700;
+            border: 1px solid #cbd5e1;
+            font-family: monospace;
+        }
+
+        .convention-box small {
+            color: var(--text-muted);
+            margin-top: 6px;
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 500;
+        }
         
         /* ─── TEMPLATE DOWNLOAD BANNER ────────────────────────────────── */
-        .template-banner{
-            background:#e8eaf6;
-            border-radius:10px;
-            padding:12px 18px;
-            margin-bottom:16px;
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            flex-wrap:wrap;
-            gap:10px;
-            border:1px solid #c5cae9;
+        .template-banner {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: var(--radius-md);
+            padding: 14px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            border: 1.5px solid #e2e8f0;
         }
-        .template-banner strong{color:#1a237e;font-size:.88rem;}
-        .template-banner .sub{font-size:.78rem;color:#555;margin-top:2px;}
-        .template-banner a{
-            background:linear-gradient(135deg,#1a237e,#3949ab);
-            color:#fff;
-            padding:8px 20px;
-            border-radius:25px;
-            text-decoration:none;
-            font-size:.82rem;
-            font-weight:600;
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            white-space:nowrap;
-            transition:0.3s;
+
+        .template-banner strong {
+            color: var(--dark);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .template-banner a:hover{
-            transform:translateY(-2px);
-            box-shadow:0 6px 16px rgba(26,35,126,0.3);
+
+        .template-banner .sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+            font-weight: 500;
+        }
+
+        .template-banner a {
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            color: #ffffff;
+            padding: 9px 22px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            transition: all 0.25s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .template-banner a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.25);
+            color: #ffffff;
         }
         
         /* ─── UPLOAD ZONE ──────────────────────────────────────────────── */
-        .upload-zone{
-            border:2px dashed #3949ab;
-            border-radius:12px;
-            padding:32px 20px;
-            text-align:center;
-            background:#f5f7fa;
-            cursor:pointer;
-            transition:all 0.3s;
+        .upload-zone {
+            border: 2px dashed #818cf8;
+            border-radius: var(--radius-lg);
+            padding: 36px 20px;
+            text-align: center;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.25s ease;
         }
-        .upload-zone:hover{
-            background:#e8eaf6;
-            border-color:#1a237e;
+
+        .upload-zone:hover {
+            background: #eef2ff;
+            border-color: var(--primary);
+            transform: scale(1.005);
         }
-        .upload-zone i{
-            font-size:2.8rem;
-            color:#3949ab;
-            margin-bottom:10px;
-            display:block;
+
+        .upload-zone i {
+            font-size: 2.8rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: block;
         }
-        .upload-zone h4{color:#333;margin-bottom:4px;font-weight:600;}
-        .upload-zone p{color:#666;font-size:0.85rem;}
-        
-        /* ─── FORM ──────────────────────────────────────────────────────── */
-        .form-group{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:14px;}
-        .form-group label{display:block;font-weight:500;margin-bottom:4px;color:#333;font-size:0.85rem;}
-        .form-group input,.form-group select{
-            width:100%;
-            padding:9px 12px;
-            border:2px solid #e0e0e0;
-            border-radius:8px;
-            font-family:'Poppins',sans-serif;
-            font-size:0.85rem;
-            transition:0.3s;
-            background:#fafafa;
+
+        .upload-zone h4 {
+            color: var(--dark);
+            margin-bottom: 4px;
+            font-weight: 700;
+            font-size: 1.05rem;
         }
-        .form-group input:focus,.form-group select:focus{
-            outline:none;
-            border-color:#3949ab;
-            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
+
+        .upload-zone p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
         }
         
-        .btn{
-            padding:10px 22px;
-            border:none;
-            border-radius:25px;
-            font-weight:600;
-            cursor:pointer;
-            transition:0.3s;
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            font-size:0.85rem;
-            font-family:'Poppins',sans-serif;
+        /* ─── BUTTONS ──────────────────────────────────────────────────── */
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-family: inherit;
         }
-        .btn-primary{
-            background:linear-gradient(135deg,#1a237e,#3949ab);
-            color:#fff;
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            color: #ffffff;
+            box-shadow: var(--shadow-sm);
         }
-        .btn-primary:hover{
-            transform:translateY(-2px);
-            box-shadow:0 6px 16px rgba(26,35,126,0.3);
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.25);
         }
-        .btn-success{
-            background:linear-gradient(135deg,#1b5e20,#2e7d32);
-            color:#fff;
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #ffffff;
+            box-shadow: var(--shadow-sm);
         }
-        .btn-success:hover{
-            transform:translateY(-2px);
-            box-shadow:0 6px 16px rgba(27,94,32,0.3);
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.25);
         }
-        .btn-sm{padding:6px 14px;font-size:0.78rem;}
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #ffffff;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-outline {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-outline:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .btn-sm {
+            padding: 6px 16px;
+            font-size: 0.78rem;
+        }
         
         /* ─── ALERTS ────────────────────────────────────────────────────── */
-        .alert{
-            padding:12px 18px;
-            border-radius:10px;
-            margin-bottom:18px;
-            display:none;
-            align-items:center;
-            gap:10px;
+        .alert {
+            padding: 14px 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 0.88rem;
         }
-        .alert-success{
-            background:#e8f5e9;
-            border-left:4px solid #2e7d32;
-            color:#1b5e20;
+
+        .alert-success {
+            background: #d1fae5;
+            border-left: 4px solid #059669;
+            color: #065f46;
         }
-        .alert-error{
-            background:#fce4ec;
-            border-left:4px solid #c62828;
-            color:#c62828;
-        }
-        
-        /* ─── TABLE ──────────────────────────────────────────────────────── */
-        .table-wrap{overflow-x:auto;}
-        table{width:100%;border-collapse:collapse;font-size:0.85rem;}
-        thead tr{background:linear-gradient(135deg,#1a237e,#3949ab);color:#fff;}
-        th{padding:12px 14px;text-align:left;font-weight:600;white-space:nowrap;}
-        th i{margin-right:6px;opacity:0.7;}
-        td{padding:10px 14px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
-        tr:hover td{background:#e8eaf6;}
-        
-        .badge{
-            display:inline-block;
-            padding:3px 14px;
-            border-radius:20px;
-            font-size:0.75rem;
-            font-weight:600;
-        }
-        .badge-active{background:#e8f5e9;color:#1b5e20;}
-        .badge-inactive{background:#eceff1;color:#78909c;}
-        
-        .q-count{
-            background:#e8eaf6;
-            color:#1a237e;
-            padding:3px 12px;
-            border-radius:20px;
-            font-weight:600;
-            font-size:0.8rem;
+
+        .alert-error {
+            background: #fee2e2;
+            border-left: 4px solid #dc2626;
+            color: #991b1b;
         }
         
-        .btn-icon{
-            background:none;
-            border:none;
-            cursor:pointer;
-            padding:6px 10px;
-            border-radius:8px;
-            transition:0.2s;
-            font-size:1rem;
+        /* ─── TABLE STYLING ────────────────────────────────────────────────── */
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            background: #ffffff;
+            box-shadow: var(--shadow-sm);
         }
-        .btn-icon.pdf{color:#c62828;}
-        .btn-icon.pdf:hover{background:#fce4ec;}
-        .btn-icon.toggle{color:#3949ab;}
-        .btn-icon.toggle:hover{background:#e8eaf6;}
-        .btn-icon.toggle.active{color:#2e7d32;}
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.83rem;
+            text-align: left;
+        }
+
+        thead tr {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+        }
+
+        th {
+            padding: 10px 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+
+        th i {
+            margin-right: 5px;
+            opacity: 0.85;
+            color: #818cf8;
+        }
+
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+            color: var(--text-main);
+            font-weight: 500;
+            line-height: 1.45;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
         
-        .loading{text-align:center;padding:40px;color:#999;}
-        .loading i{font-size:2rem;color:#3949ab;}
-        .empty{text-align:center;padding:50px;color:#999;}
-        .empty i{font-size:3rem;color:#ddd;display:block;margin-bottom:12px;}
+        /* Document title cell text wrapping */
+        .doc-cell {
+            max-width: 320px;
+            min-width: 220px;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+        .doc-title-flex {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .doc-icon {
+            color: #2563eb;
+            font-size: 1.05rem;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        .doc-name {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 0.84rem;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 16px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .badge-active {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .badge-inactive {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #cbd5e1;
+        }
+        
+        .q-count {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 3px 10px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 0.74rem;
+            border: 1px solid #c7d2fe;
+            white-space: nowrap;
+        }
+
+        /* Action Pill Buttons */
+        .btn-action-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+            white-space: nowrap;
+        }
+
+        .btn-doc-download {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff !important;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.76rem;
+            padding: 5px 14px;
+            border: none;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.22);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .btn-doc-download:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        }
+
+        .btn-paper-delete {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #ffffff !important;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.76rem;
+            padding: 5px 14px;
+            border: none;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.22);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .btn-paper-delete:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        }
+        
+        .btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 7px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-size: 1.1rem;
+        }
+
+        .btn-icon.pdf {
+            color: #ef4444;
+        }
+
+        .btn-icon.pdf:hover {
+            background: #fee2e2;
+        }
+
+        .btn-icon.toggle {
+            color: #64748b;
+        }
+
+        .btn-icon.toggle:hover {
+            background: #f1f5f9;
+        }
+
+        .btn-icon.toggle.active {
+            color: #10b981;
+        }
+
+        .btn-icon.toggle.active:hover {
+            background: #d1fae5;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .empty {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .empty i {
+            font-size: 2.8rem;
+            color: #cbd5e1;
+            display: block;
+            margin-bottom: 12px;
+        }
         
         /* ─── RESPONSIVE ────────────────────────────────────────────────── */
-        @media(max-width:820px){
-            .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
-            .topbar a{font-size:0.75rem;padding:6px 14px;}
-            .container{padding:0 12px;}
-            .card{padding:16px;}
-            .template-banner{flex-direction:column;text-align:center;}
+        @media(max-width:820px) {
+            .topbar { flex-direction: column; text-align: center; padding: 14px 20px; }
+            .topbar .title-group { justify-content: center; }
+            .container { padding: 0 16px; }
+            .card { padding: 18px; }
+            .template-banner { flex-direction: column; text-align: center; }
         }
-        @media(max-width:600px){
-            table{font-size:0.75rem;}
-            th,td{padding:6px 8px;}
-            .btn-icon{padding:4px 6px;font-size:0.85rem;}
+
+        @media(max-width:600px) {
+            table { font-size: 0.78rem; }
+            th, td { padding: 8px 10px; }
+            .btn-icon { padding: 5px 8px; font-size: 0.95rem; }
         }
     </style>
 </head>
@@ -284,65 +609,86 @@
 
 <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
 <div class="topbar">
-    <h1><i class="fas fa-file-alt"></i> Test Papers</h1>
+    <div class="title-group">
+        <div class="icon-pill">
+            <i class="fas fa-file-invoice"></i>
+        </div>
+        <h1>Test Papers <span>Question Upload &amp; Repository</span></h1>
+    </div>
     <a href="javascript:void(0)" onclick="handleDashboardClick(event)"><i class="fas fa-arrow-left"></i> Dashboard</a>
 </div>
 
 <div class="container">
     <div id="alertBox" class="alert"></div>
 
-    <!-- Upload Section -->
+    <!-- ═══ SHARED CLASSWISE PAPER REPOSITORY ═══ -->
     <div class="card">
-        <div class="card-header"><i class="fas fa-upload"></i> Upload Question Paper CSV</div>
-
-        <div class="convention-box">
-            <strong><i class="fas fa-info-circle" style="color:#3949ab;"></i> File Naming Convention:</strong><br>
-            File name must follow: <code>ClassName_Subject_TestNo.csv</code><br>
-            Examples: <code>10A_Math_Test01.csv</code> &nbsp;|&nbsp; <code>8_Science_Test02.csv</code><br>
-            <small>CSV columns: question, option a, option b, option c, option d, correct_answer, question_type, marks, negative_mark</small>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+            <div class="card-header" style="border:none;padding:0;margin:0;">
+                <i class="fas fa-folder-tree" style="color:var(--primary);"></i> Shared Paper Repository (Class &amp; Section Folders)
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <select id="repoClassFilter" onchange="loadSharedRepository()" style="padding:6px 12px;border-radius:8px;border:1px solid #cbd5e1;font-size:0.82rem;font-weight:600;">
+                    <option value="">All Classes</option>
+                    <option value="1">Class 1</option>
+                    <option value="2">Class 2</option>
+                    <option value="3">Class 3</option>
+                    <option value="4">Class 4</option>
+                    <option value="5">Class 5</option>
+                    <option value="6">Class 6</option>
+                    <option value="7">Class 7</option>
+                    <option value="8">Class 8</option>
+                    <option value="9">Class 9</option>
+                    <option value="10">Class 10</option>
+                    <option value="11">Class 11</option>
+                    <option value="12">Class 12</option>
+                    <option value="1st">1st</option>
+                    <option value="2nd">2nd</option>
+                    <option value="3rd">3rd</option>
+                    <option value="4th">4th</option>
+                    <option value="5th">5th</option>
+                    <option value="6th">6th</option>
+                    <option value="7th">7th</option>
+                    <option value="8th">8th</option>
+                    <option value="9th">9th</option>
+                    <option value="10th">10th</option>
+                    <option value="11th">11th</option>
+                    <option value="12th">12th</option>
+                </select>
+                <select id="repoSecFilter" onchange="loadSharedRepository()" style="padding:6px 12px;border-radius:8px;border:1px solid #cbd5e1;font-size:0.82rem;font-weight:600;">
+                    <option value="">All Sections</option>
+                    <option value="A">Section A</option>
+                    <option value="B">Section B</option>
+                    <option value="C">Section C</option>
+                    <option value="D">Section D</option>
+                </select>
+                <button onclick="loadSharedRepository()" class="btn btn-primary btn-sm"><i class="fas fa-rotate"></i> Refresh</button>
+            </div>
         </div>
-
-        <!-- Template Download -->
-        <div class="template-banner">
-            <div>
-                <strong><i class="fas fa-table"></i> Need the correct format?</strong>
-                <div class="sub">Download the template CSV with sample rows, fill it in, then upload.</div>
-            </div>
-            <a href="/api/csv_template" download="question_upload_template.csv">
-                <i class="fas fa-download"></i> Download Template
-            </a>
+        
+        <div id="sharedRepoContainer">
+            <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading shared papers...</div>
         </div>
-
-        <form id="uploadForm" onsubmit="uploadPaper(event)">
-            <div class="upload-zone" onclick="document.getElementById('csvInput').click()">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <h4>Click to select CSV file</h4>
-                <p id="fileLabel">Format: Class_Subject_TestNo.csv</p>
-            </div>
-            <input type="file" id="csvInput" name="csv_file" accept=".csv" style="display:none"
-                   onchange="document.getElementById('fileLabel').textContent = this.files[0]?.name || 'No file selected'" required>
-            <div style="margin-top:15px;">
-                <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Upload & Import Questions</button>
-            </div>
-        </form>
     </div>
+
+    <!-- Shared Paper Repository -->
 
     <!-- Papers List -->
     <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
             <div class="card-header" style="border:none;padding:0;margin:0;">
-                <i class="fas fa-list"></i> All Test Papers
+                <i class="fas fa-folder-open"></i> Uploaded Test Papers Repository
             </div>
             <button onclick="loadPapers()" class="btn btn-success btn-sm">
-                <i class="fas fa-sync-alt"></i> Refresh
+                <i class="fas fa-rotate"></i> Refresh Repository
             </button>
         </div>
         <div id="papersContainer">
-            <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading test papers...</div>
         </div>
     </div>
 
-<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+<footer style="width:100%; text-align:center; padding:20px 10px; font-size:0.8rem; color:var(--text-muted); opacity:0.85; margin-top:24px;">
     Developed by Gaurav Shukla &amp; Team
 </footer>
 </div>
@@ -350,53 +696,112 @@
 <script>
 const ROLE = '{{ role }}';
 
+async function loadSharedRepository() {
+    const cls = document.getElementById('repoClassFilter').value;
+    const sec = document.getElementById('repoSecFilter').value;
+    const container = document.getElementById('sharedRepoContainer');
+    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading repository files...</div>';
+    
+    try {
+        const res = await fetch(`/api/shared_papers?class=${encodeURIComponent(cls)}&section=${encodeURIComponent(sec)}`);
+        const data = await res.json();
+        if (data.status !== 'success' || !data.files || data.files.length === 0) {
+            container.innerHTML = '<div class="empty"><i class="fas fa-folder-open"></i>No paper files found in repository</div>';
+            return;
+        }
+        
+        let html = `<div class="table-wrap"><table>
+            <thead>
+                <tr>
+                    <th style="width:45px;text-align:center;">#</th>
+                    <th><i class="fas fa-file-word"></i> Document Name</th>
+                    <th style="white-space:nowrap;"><i class="fas fa-graduation-cap"></i> Class</th>
+                    <th style="white-space:nowrap;"><i class="fas fa-layer-group"></i> Section</th>
+                    <th style="white-space:nowrap;"><i class="fas fa-weight-hanging"></i> Size</th>
+                    <th style="white-space:nowrap;"><i class="fas fa-calendar-days"></i> Generated Date</th>
+                    <th style="text-align:center;width:200px;"><i class="fas fa-gears"></i> Actions</th>
+                </tr>
+            </thead>
+            <tbody>`;
+            
+        data.files.forEach((f, i) => {
+            html += `<tr>
+                <td style="font-weight:700;color:#64748b;text-align:center;">${i+1}</td>
+                <td class="doc-cell">
+                    <div class="doc-title-flex">
+                        <i class="fas fa-file-word doc-icon"></i>
+                        <span class="doc-name">${f.filename}</span>
+                    </div>
+                </td>
+                <td style="white-space:nowrap;"><span class="badge" style="background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;">Class ${f.class}</span></td>
+                <td style="white-space:nowrap;"><span class="badge" style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;">Section ${f.section}</span></td>
+                <td style="white-space:nowrap;"><span class="q-count">${f.size_kb} KB</span></td>
+                <td style="font-size:0.78rem;color:#64748b;white-space:nowrap;">${f.modified_at}</td>
+                <td style="text-align:center;">
+                    <div class="btn-action-group">
+                        <a href="${f.download_url}" download class="btn-doc-download" title="Download Document">
+                            <i class="fas fa-download"></i> Download .doc
+                        </a>
+                        <button onclick="deleteSharedPaper('${f.rel_path}', '${f.filename}')" class="btn-paper-delete" title="Delete Paper File">
+                            <i class="fas fa-trash-can"></i> Delete
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+        });
+        html += `</tbody></table></div>`;
+        container.innerHTML = html;
+    } catch(e) {
+        container.innerHTML = '<div class="empty"><i class="fas fa-triangle-exclamation"></i>Failed to load repository</div>';
+    }
+}
+loadSharedRepository();
+
+async function deleteSharedPaper(relPath, filename) {
+    if (!confirm(`Are you sure you want to delete "${filename}" from the repository?`)) return;
+    
+    try {
+        const res = await fetch('/api/shared_papers/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rel_path: relPath })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            showAlert(data.message, 'success');
+            loadSharedRepository();
+        } else {
+            showAlert(data.message || 'Failed to delete paper file', 'error');
+        }
+    } catch(err) {
+        showAlert('Network error: ' + err.message, 'error');
+    }
+}
+
 function showAlert(msg, type) {
     const box = document.getElementById('alertBox');
     box.className = 'alert alert-' + type;
-    box.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}"></i> ${msg}`;
+    box.innerHTML = `<i class="fas fa-${type==='success'?'circle-check':'triangle-exclamation'}"></i> ${msg}`;
     box.style.display = 'flex';
     window.scrollTo(0,0);
     setTimeout(()=>box.style.display='none', 6000);
 }
 
-async function uploadPaper(e) {
-    e.preventDefault();
-    const form = e.target;
-    const formData = new FormData(form);
-    const btn = form.querySelector('button[type=submit]');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
-    try {
-        const res = await fetch('/api/test_papers/upload', {method:'POST', body:formData});
-        const data = await res.json();
-        showAlert(data.message, data.status);
-        if (data.status === 'success') { 
-            form.reset(); 
-            document.getElementById('fileLabel').textContent = 'Format: Class_Subject_TestNo.csv'; 
-            loadPapers(); 
-        }
-    } catch(err) { 
-        showAlert('Upload failed: '+err.message, 'error'); 
-    }
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-upload"></i> Upload & Import Questions';
-}
-
 async function loadPapers() {
-    document.getElementById('papersContainer').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+    document.getElementById('papersContainer').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading test papers...</div>';
     try {
         const res = await fetch('/api/test_papers?role='+ROLE);
         const data = await res.json();
         renderPapers(data.papers || []);
     } catch(err) { 
-        document.getElementById('papersContainer').innerHTML = '<div class="empty"><i class="fas fa-exclamation-triangle"></i>Failed to load</div>'; 
+        document.getElementById('papersContainer').innerHTML = '<div class="empty"><i class="fas fa-triangle-exclamation"></i>Failed to load repository</div>'; 
     }
 }
 
 function renderPapers(papers) {
     const container = document.getElementById('papersContainer');
     if (!papers.length) {
-        container.innerHTML = '<div class="empty"><i class="fas fa-file-alt"></i>No test papers uploaded yet</div>';
+        container.innerHTML = '<div class="empty"><i class="fas fa-file-excel"></i>No test papers uploaded yet</div>';
         return;
     }
     container.innerHTML = `<div class="table-wrap"><table>
@@ -407,28 +812,30 @@ function renderPapers(papers) {
                 <th><i class="fas fa-graduation-cap"></i> Class</th>
                 <th><i class="fas fa-layer-group"></i> Section</th>
                 <th><i class="fas fa-book"></i> Subject</th>
-                <th><i class="fas fa-question-circle"></i> Questions</th>
+                <th><i class="fas fa-circle-question"></i> Questions</th>
                 <th><i class="fas fa-flag"></i> Status</th>
-                <th><i class="fas fa-calendar-alt"></i> Uploaded</th>
-                <th><i class="fas fa-cog"></i> Actions</th>
+                <th><i class="fas fa-calendar-days"></i> Uploaded</th>
+                <th style="text-align:center;"><i class="fas fa-gears"></i> Actions</th>
             </tr>
         </thead>
         <tbody>${papers.map((p,i)=>`<tr>
-            <td>${i+1}</td>
-            <td><strong>${p.filename}</strong></td>
-            <td>${p.class}</td>
-            <td>${p.section||'—'}</td>
-            <td>${p.subject}</td>
-            <td><span class="q-count">${p.question_count}</span></td>
+            <td style="font-weight:700;color:var(--dark);">${i+1}</td>
+            <td><strong style="color:var(--dark);">${p.filename}</strong></td>
+            <td><span class="badge" style="background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;">${p.class}</span></td>
+            <td>${p.section ? `<span class="badge" style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;">${p.section}</span>` : '<span style="color:#94a3b8;font-size:0.78rem;">—</span>'}</td>
+            <td><span class="badge" style="background:#f3e8ff;color:#6b21a8;border:1px solid #e9d5ff;">${p.subject}</span></td>
+            <td><span class="q-count">${p.question_count} Qs</span></td>
             <td><span class="badge ${p.is_active?'badge-active':'badge-inactive'}">${p.is_active?'Active':'Inactive'}</span></td>
-            <td style="font-size:0.78rem;color:#666;">${(p.created_at||'').slice(0,10)}</td>
-            <td style="display:flex;gap:4px;flex-wrap:wrap;">
-                <button class="btn-icon pdf" title="Download PDF" onclick="downloadPDF(${p.id}, '${p.filename}')">
-                    <i class="fas fa-file-pdf"></i>
-                </button>
-                <button class="btn-icon toggle ${p.is_active?'active':''}" title="${p.is_active?'Deactivate':'Activate'}" onclick="togglePaper(${p.id})">
-                    <i class="fas fa-${p.is_active?'toggle-on':'toggle-off'}"></i>
-                </button>
+            <td style="font-size:0.8rem;color:var(--text-muted);">${(p.created_at||'').slice(0,10)}</td>
+            <td style="text-align:center;">
+                <div style="display:inline-flex;gap:6px;justify-content:center;">
+                    <button class="btn btn-danger btn-sm" title="Download PDF Paper" onclick="downloadPDF(${p.id}, '${p.filename}')">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                    <button class="btn ${p.is_active?'btn-success':'btn-outline'} btn-sm" title="${p.is_active?'Deactivate Paper':'Activate Paper'}" onclick="togglePaper(${p.id})">
+                        <i class="fas fa-${p.is_active?'toggle-on':'toggle-off'}"></i> ${p.is_active?'Active':'Inactive'}
+                    </button>
+                </div>
             </td>
         </tr>`).join('')}</tbody>
     </table></div>`;
@@ -444,10 +851,12 @@ async function togglePaper(id) {
         const data = await res.json();
         if (data.status === 'success') {
             loadPapers();
-            showAlert('Paper status toggled successfully', 'success');
+            showAlert(data.message || (data.is_active ? 'Paper activated (visible to students)' : 'Paper deactivated (hidden from students)'), 'success');
+        } else {
+            showAlert(data.message || 'Failed to toggle status', 'error');
         }
     } catch(err) { 
-        showAlert('Failed to toggle status', 'error'); 
+        showAlert('Failed to toggle status: ' + err.message, 'error'); 
     }
 }
 
