@@ -2,6 +2,48 @@
 title RRB CBT v1.13 - Exam Manager
 color 0A
 setlocal enabledelayedexpansion
+cd /d "%~dp0"
+
+:: --- Python & Virtual Environment Auto-Detection ---
+set "PYTHON_CMD="
+if exist ".venv\Scripts\python.exe" (
+    set "PYTHON_CMD=.venv\Scripts\python.exe"
+    set "PIP_CMD=.venv\Scripts\python.exe -m pip"
+) else if exist "..\.venv\Scripts\python.exe" (
+    set "PYTHON_CMD=..\.venv\Scripts\python.exe"
+    set "PIP_CMD=..\.venv\Scripts\python.exe -m pip"
+) else (
+    python --version >nul 2>&1
+    if not errorlevel 1 (
+        set "PYTHON_CMD=python"
+        set "PIP_CMD=python -m pip"
+    ) else (
+        py --version >nul 2>&1
+        if not errorlevel 1 (
+            set "PYTHON_CMD=py -3"
+            set "PIP_CMD=py -3 -m pip"
+        )
+    )
+)
+
+:: Ensure essential folders exist
+if not exist "uploads" mkdir uploads
+if not exist "backups" mkdir backups
+if not exist "logs" mkdir logs
+
+:: Ensure .env exists
+if not exist ".env" (
+    if exist ".env.example" (
+        copy ".env.example" ".env" >nul
+    )
+)
+
+:: Ensure apikey.env exists
+if not exist "apikey.env" (
+    if exist "apikey.env.example" (
+        copy "apikey.env.example" "apikey.env" >nul
+    )
+)
 
 :MENU
 cls
@@ -60,22 +102,21 @@ echo       Starting RRB CBT Server (Network Mode)
 echo  ============================================================
 echo.
 echo   Checking Python...
-python --version >nul 2>&1
-if errorlevel 1 (
+if "%PYTHON_CMD%"=="" (
     echo   [ERROR] Python is not installed or not in PATH!
     echo   Please install Python 3.9+ from https://python.org
     echo   Make sure to check "Add Python to PATH" during install.
     pause
     goto MENU
 )
-for /f "tokens=*" %%v in ('python --version 2^>^&1') do echo   Found: %%v
+for /f "tokens=*" %%v in ('%PYTHON_CMD% --version 2^>^&1') do echo   Found: %%v (%PYTHON_CMD%)
 echo   Checking packages...
-pip show PyJWT >nul 2>&1
+%PYTHON_CMD% -c "import flask, openpyxl, weasyprint, jwt" >nul 2>&1
 if errorlevel 1 (
-    echo   Installing packages...
-    pip install -r requirements.txt
+    echo   Installing missing packages from requirements.txt...
+    %PIP_CMD% install -r requirements.txt
 ) else (
-    echo   Packages OK.
+    echo   Core packages verified.
 )
 echo.
 echo  ============================================================
@@ -101,7 +142,7 @@ if exist ".api_key" (
     echo   Gemini API Key loaded.
     echo.
 )
-python app.py
+%PYTHON_CMD% app.py
 goto MENU
 
 :SERVER_LOCAL
@@ -112,22 +153,21 @@ echo       Starting RRB CBT Server (Localhost Mode)
 echo  ============================================================
 echo.
 echo   Checking Python...
-python --version >nul 2>&1
-if errorlevel 1 (
+if "%PYTHON_CMD%"=="" (
     echo   [ERROR] Python is not installed or not in PATH!
     echo   Please install Python 3.9+ from https://python.org
     echo   Make sure to check "Add Python to PATH" during install.
     pause
     goto MENU
 )
-for /f "tokens=*" %%v in ('python --version 2^>^&1') do echo   Found: %%v
+for /f "tokens=*" %%v in ('%PYTHON_CMD% --version 2^>^&1') do echo   Found: %%v (%PYTHON_CMD%)
 echo   Checking packages...
-pip show PyJWT >nul 2>&1
+%PYTHON_CMD% -c "import flask, openpyxl, weasyprint, jwt" >nul 2>&1
 if errorlevel 1 (
-    echo   Installing packages...
-    pip install -r requirements.txt
+    echo   Installing missing packages from requirements.txt...
+    %PIP_CMD% install -r requirements.txt
 ) else (
-    echo   Packages OK.
+    echo   Core packages verified.
 )
 echo.
 echo  ============================================================
@@ -146,7 +186,7 @@ if exist ".api_key" (
     echo   Gemini API Key loaded.
     echo.
 )
-python app.py
+%PYTHON_CMD% app.py
 goto MENU
 
 :OPEN_ADMIN
@@ -177,23 +217,22 @@ echo  ============================================================
 echo       Installing / Updating Dependencies
 echo  ============================================================
 echo.
-python --version >nul 2>&1
-if errorlevel 1 (
+if "%PYTHON_CMD%"=="" (
     echo   [ERROR] Python not found!
     echo   Download from: https://python.org
     pause
     goto MENU
 )
-for /f "tokens=*" %%v in ('python --version 2^>^&1') do echo   Found: %%v
+for /f "tokens=*" %%v in ('%PYTHON_CMD% --version 2^>^&1') do echo   Found: %%v (%PYTHON_CMD%)
 echo.
 echo   Installing packages from requirements.txt...
 echo   (This may take a few minutes the first time)
 echo.
-pip install -r requirements.txt
+%PIP_CMD% install -r requirements.txt
 echo.
 if errorlevel 1 (
     echo   [WARNING] Some packages failed.
-    echo   Try manually: pip install Flask openpyxl weasyprint PyJWT python-dotenv
+    echo   Try manually: %PIP_CMD% install Flask openpyxl weasyprint PyJWT python-dotenv
 ) else (
     echo   [SUCCESS] All packages installed successfully!
 )
@@ -314,7 +353,7 @@ echo  ============================================================
 echo       Starting RRB CBT RQ Redis Worker
 echo  ============================================================
 echo.
-python rq_worker.py
+%PYTHON_CMD% rq_worker.py
 pause
 goto MENU
 
