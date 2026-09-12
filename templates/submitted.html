@@ -5,7 +5,20 @@
     <title>Exam Submitted - RRB CBT</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <style>
         * {
             margin: 0;
@@ -437,6 +450,44 @@
 
     <!-- ── MAIN SUBMITTED CARD ────────────────────────────────────────── -->
     <div class="card">
+        {% if reason in ['tab_switch', 'fullscreen_exit'] %}
+        <div class="icon-circle" style="background: linear-gradient(135deg, #fef2f2, #fee2e2); color: #dc2626;">
+            <i class="fas fa-shield-alt"></i>
+        </div>
+
+        <h2 style="color: #991b1b;">Exam Auto-Submitted</h2>
+        <p class="subtitle" style="color: #b91c1c; font-weight: 600;">Security Violation Triggered</p>
+
+        <div class="exam-details" style="background:#fff1f2; border-color:#fecdd3; color:#9f1239;">
+            <i class="fas fa-graduation-cap" style="color:#be123c;"></i>
+            <span>{{ session.get('class', '—') }}</span>
+            <span style="opacity:0.3;">|</span>
+            <i class="fas fa-book" style="color:#be123c;"></i>
+            <span>{{ session.get('subject', '—') }}</span>
+            {% if session.get('test_no') %}
+                <span style="opacity:0.3;">|</span>
+                <i class="fas fa-file-alt" style="color:#be123c;"></i>
+                <span>{{ session.get('test_no') }}</span>
+            {% endif %}
+        </div>
+
+        <div style="background: #fff1f2; border: 1.5px solid #fecdd3; border-radius: 16px; padding: 16px; margin-bottom: 22px; text-align: left;">
+            <div style="display:flex; align-items:center; gap:8px; color:#be123c; font-weight:700; font-size:0.92rem; margin-bottom:6px;">
+                <i class="fas fa-exclamation-triangle" style="font-size:1.1rem;"></i> Security Auto-Submission Reason:
+            </div>
+            <p style="color:#9f1239; font-size:0.85rem; margin-bottom:0; line-height:1.5;">
+                Your exam was automatically submitted because 
+                {% if reason == 'tab_switch' %}
+                <strong>a browser tab switch or window focus loss</strong> was detected during your active test session.
+                {% elif reason == 'fullscreen_exit' %}
+                <strong>full screen mode was exited</strong> during your active test session.
+                {% else %}
+                <strong>a security policy violation</strong> was detected.
+                {% endif %}
+                All answers marked up to that point have been securely recorded and locked.
+            </p>
+        </div>
+        {% else %}
         <div class="icon-circle success">
             <i class="fas fa-check-circle"></i>
         </div>
@@ -460,6 +511,7 @@
         <p>
             You have successfully submitted your exam answers. Thank you!
         </p>
+        {% endif %}
 
         {% if pending %}
             <button class="btn btn-primary" disabled>
@@ -562,6 +614,8 @@
 
         if (startBtn) {
             startBtn.addEventListener('click', function() {
+                sessionStorage.removeItem('examSubmitted');
+                sessionStorage.removeItem('submitted');
                 window.location.href = '/exam';
             });
         }
