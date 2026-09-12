@@ -364,7 +364,7 @@
     <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
     <nav class="topbar">
         <h1><i class="fas fa-redo-alt"></i> Reattempt Requests</h1>
-        <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
+        <a href="javascript:void(0)" onclick="handleDashboardClick(event)"><i class="fas fa-arrow-left"></i> Dashboard</a>
     </nav>
 
     <div class="container">
@@ -410,7 +410,22 @@
 </div>
 
     <script>
+        const ROLE = '{{ role | default("admin") }}';
+        const API_BASE = '{{ api_base | default("/admin") }}';
         let examActive = false;
+
+        function handleDashboardClick(e) {
+            if (e) e.preventDefault();
+            if (window.parent && window.parent !== window && typeof window.parent.loadTab === 'function') {
+                window.parent.loadTab('dashboard');
+                return;
+            }
+            if (ROLE === 'teacher') {
+                window.location.href = '/teacher/dashboard';
+            } else {
+                window.location.href = '/admin/dashboard';
+            }
+        }
 
         // ─── TOAST ────────────────────────────────────────────────────────
         function showToast(message, type = 'success') {
@@ -440,7 +455,7 @@
         // ─── FETCH REQUESTS ──────────────────────────────────────────────
         function fetchRequests() {
             const status = document.getElementById('statusFilter').value;
-            fetch(`/admin/reattempt_requests/data?status=${status}`)
+            fetch(`${API_BASE}/reattempt_requests/data?status=${status}`)
                 .then(res => res.json())
                 .then(data => {
                     examActive = data.exam_is_active;
@@ -527,7 +542,7 @@
 
             const note = prompt(`Add a note (optional) for ${action}:`);
             try {
-                const res = await fetch(`/admin/reattempt_request/${reqId}/${action}`, {
+                const res = await fetch(`${API_BASE}/reattempt_request/${reqId}/${action}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ note: note || '' })
