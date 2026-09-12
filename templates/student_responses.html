@@ -5,7 +5,20 @@
     <title>Student Responses - RRB CBT</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
     <style>
         * {
             margin: 0;
@@ -850,6 +863,9 @@
             function updateVisibleCount() {
                 const visibleRows = document.querySelectorAll('.response-row:not(.hidden-row)');
                 visibleCountSpan.textContent = visibleRows.length;
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    window.MathJax.typesetPromise().catch(() => {});
+                }
             }
 
             function filterRows(filterType) {
