@@ -1,254 +1,593 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Teacher – Test Generator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+        }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --primary-light: #e0e7ff;
+            --accent: #10b981;
+            --dark: #0f172a;
+            --slate: #475569;
+            --border: #e2e8f0;
+            --radius: 16px;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+            min-height: 100vh;
+            color: #0f172a;
+        }
+
         /* ─── TOP BAR ────────────────────────────────────────────────────── */
-        .topbar{
-            background:linear-gradient(90deg,#1a237e,#3949ab);
-            color:#fff;
-            padding:14px 28px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            flex-wrap:wrap;
-            gap:10px;
-            box-shadow:0 4px 20px rgba(0,0,0,0.15);
-            position:sticky;
-            top:0;
-            z-index:100;
+        .topbar {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            color: #fff;
+            padding: 16px 32px;
+            display: flex;
+            justify-space: between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.25);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
-        .topbar h1 i{color:#667eea;}
-        .topbar a{
-            color:#fff;
-            text-decoration:none;
-            background:rgba(255,255,255,0.15);
-            padding:8px 20px;
-            border-radius:25px;
-            font-size:0.85rem;
-            transition:0.3s;
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            border:1px solid rgba(255,255,255,0.1);
+
+        .topbar h1 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.02em;
         }
-        .topbar a:hover{
-            background:rgba(255,255,255,0.25);
-            transform:translateY(-2px);
+
+        .topbar h1 i {
+            color: #818cf8;
         }
-        
-        .container{max-width:960px;margin:22px auto;padding:0 18px;}
+
+        .topbar a {
+            color: #fff;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .topbar a:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            color: #ffffff;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 16px 0;
+            padding: 0 16px;
+        }
+
         @media (max-width: 1024px) {
-            .container { max-width: 100%; padding: 0 12px; margin: 12px auto; }
-            .card { padding: 18px 20px; }
+            .container {
+                padding: 0 12px;
+                margin: 12px 0;
+            }
+
+            .card {
+                padding: 20px 22px;
+            }
         }
-        @media (max-height: 800px) {
-            .card { padding: 16px 18px; margin-bottom: 14px; }
-        }
-        
+
         /* ─── CARDS ────────────────────────────────────────────────────── */
-        .card{
-            background:rgba(255,255,255,0.95);
-            backdrop-filter:blur(10px);
-            border-radius:16px;
-            padding:24px 26px;
-            box-shadow:0 4px 16px rgba(0,0,0,0.06);
-            border:1px solid rgba(26,35,126,0.08);
-            margin-bottom:20px;
-            transition:0.3s;
+        .card {
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 24px 28px;
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 22px;
+            transition: all 0.25s ease;
         }
-        .card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
-        .card-header{
-            color:#1a237e;
-            font-size:1.05rem;
-            font-weight:600;
-            display:flex;
-            align-items:center;
-            gap:10px;
-            border-bottom:2px dashed #e8eaf6;
-            padding-bottom:10px;
-            margin-bottom:16px;
+
+        .card:hover {
+            box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+            border-color: rgba(99, 102, 241, 0.3);
         }
-        .card-header i{color:#3949ab;}
-        
+
+        .card-header {
+            color: #1e1b4b;
+            font-size: 1rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1.5px solid #f1f5f9;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+        }
+
+        .card-header i {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 6px 8px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            border: 1px solid #c7d2fe;
+        }
+
         /* ─── TEACHER BANNER ────────────────────────────────────────────── */
-        .teacher-banner{
-            background:linear-gradient(135deg,#e8eaf6,#e0f2fe);
-            border:1.5px solid #a5b4fc;
-            border-radius:12px;
-            padding:14px 20px;
-            margin-bottom:18px;
-            display:flex;
-            align-items:center;
-            gap:14px;
+        .teacher-banner {
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            border: 1px solid #c7d2fe;
+            border-radius: 14px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
         }
-        .teacher-banner i{font-size:1.6rem;color:#3949ab;}
-        .teacher-banner p{font-size:.88rem;color:#1a237e;margin:0;}
-        .teacher-banner strong{font-size:.95rem;color:#1a237e;}
-        
+
+        .teacher-banner i {
+            font-size: 1.6rem;
+            color: var(--primary);
+        }
+
+        .teacher-banner p {
+            font-size: .88rem;
+            color: #1e1b4b;
+            margin: 0;
+        }
+
+        .teacher-banner strong {
+            font-size: .95rem;
+            color: #1e1b4b;
+        }
+
         /* ─── TABS ────────────────────────────────────────────────────── */
-        .tabs{display:flex;gap:8px;margin-bottom:22px;}
-        .tab{
-            padding:9px 22px;
-            border:none;
-            border-radius:22px;
-            cursor:pointer;
-            font-family:'Poppins',sans-serif;
-            font-weight:600;
-            font-size:.88rem;
-            transition:all .3s;
-            background:white;
-            color:#555;
-            box-shadow:0 2px 8px rgba(0,0,0,.06);
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 22px;
         }
-        .tab.active{
-            background:linear-gradient(135deg,#1a237e,#3949ab);
-            color:white;
+
+        .tab {
+            padding: 10px 24px;
+            border: 1px solid #e2e8f0;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: .86rem;
+            transition: all .25s ease;
+            background: white;
+            color: #475569;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, .04);
         }
-        .tab-content{display:none;} .tab-content.active{display:block;}
-        
+
+        .tab:hover {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            color: white;
+            border-color: #3730a3;
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         /* ─── FORM ────────────────────────────────────────────────────── */
-        .fg{margin-bottom:13px;}
-        .fg label{
-            display:block;
-            font-weight:500;
-            margin-bottom:5px;
-            color:#333;
-            font-size:.85rem;
+        .fg {
+            margin-bottom: 14px;
         }
-        .fg label i{color:#3949ab;margin-right:4px;width:18px;}
-        .fg input,.fg select,.fg textarea{
-            width:100%;
-            padding:9px 14px;
-            border:2px solid #e0e0e0;
-            border-radius:10px;
-            font-family:'Poppins',sans-serif;
-            font-size:.9rem;
-            transition:border-color .25s;
-            background:#fafafa;
+
+        .fg label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #475569;
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
         }
-        .fg input:focus,.fg select:focus,.fg textarea:focus{
-            outline:none;
-            border-color:#3949ab;
-            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
-            background:#fff;
+
+        .fg label i {
+            color: var(--primary);
+            margin-right: 6px;
         }
-        .fg textarea{min-height:75px;resize:vertical;}
-        .fg select:disabled{opacity:0.5;cursor:not-allowed;}
-        
-        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
-        
+
+        .fg input,
+        .fg select,
+        .fg textarea {
+            width: 100%;
+            padding: 11px 15px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: .88rem;
+            font-weight: 500;
+            transition: all .2s ease;
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .fg input:focus,
+        .fg select:focus,
+        .fg textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.14);
+            background: #fff;
+        }
+
+        .fg textarea {
+            min-height: 75px;
+            resize: vertical;
+        }
+
+        .fg select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Remove default spinner arrows for clean steppers */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        @media (max-width: 1100px) {
+            .form-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 700px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── CIRCULAR PROGRESS OVERLAY ────────────────────────────────────── */
+        .c-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .c-modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .c-modal-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 32px 40px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            border: 1px solid #e2e8f0;
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .c-progress-wrapper {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin-bottom: 16px;
+        }
+
+        .c-progress-ring-fg {
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.3s ease;
+            stroke-linecap: round;
+        }
+
+        .c-logo-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.18);
+            border: 1px solid #e0e7ff;
+        }
+
+        .rrb-pulse-logo {
+            max-width: 50px;
+            max-height: 50px;
+            object-fit: contain;
+            animation: rrbPulse 1.8s infinite ease-in-out;
+        }
+
+        @keyframes rrbPulse {
+            0% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 3px rgba(79, 70, 229, 0.3));
+            }
+
+            50% {
+                transform: scale(1.12);
+                filter: drop-shadow(0 0 14px rgba(79, 70, 229, 0.6));
+            }
+
+            100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 3px rgba(79, 70, 229, 0.3));
+            }
+        }
+
+        .c-percentage {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #4f46e5;
+            margin-bottom: 2px;
+            line-height: 1;
+        }
+
+        .c-status-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 2px;
+        }
+
+        .c-status-sub {
+            font-size: 0.78rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
         /* ─── QUESTION TYPES ──────────────────────────────────────────── */
-        .qt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin:14px 0;}
-        .qt-card{
-            background:#f8f9fa;
-            border:2px solid #e0e0e0;
-            border-radius:11px;
-            padding:13px;
-            text-align:center;
-            transition:all .25s;
+        .qt-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin: 14px 0;
         }
-        .qt-card.active{border-color:#3949ab;background:#e8eaf6;}
-        .qt-card i{font-size:1.5rem;color:#3949ab;display:block;margin-bottom:5px;}
-        .qt-card .ql{font-weight:600;font-size:.8rem;color:#333;margin-bottom:7px;}
-        .qt-card input[type=number]{
-            width:68px;
-            padding:5px;
-            border:2px solid #e0e0e0;
-            border-radius:6px;
-            text-align:center;
-            font-family:'Poppins',sans-serif;
-            background:white;
+
+        .qt-card {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px;
+            text-align: center;
+            transition: all .25s ease;
         }
-        .qt-card input[type=number]:focus{
-            outline:none;
-            border-color:#3949ab;
+
+        .qt-card:focus-within,
+        .qt-card:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
         }
-        
-        .total-badge{
-            background:linear-gradient(135deg,#1a237e,#3949ab);
-            color:white;
-            padding:4px 14px;
-            border-radius:18px;
-            font-weight:600;
-            font-size:.88rem;
-            display:inline-block;
+
+        .qt-card i {
+            font-size: 1.5rem;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 5px;
         }
-        
+
+        .qt-card .ql {
+            font-weight: 700;
+            font-size: .82rem;
+            color: #1e1b4b;
+            margin-bottom: 7px;
+        }
+
+        .qt-card input[type=number] {
+            width: 70px;
+            padding: 6px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 0.92rem;
+            background: white;
+            color: #0f172a;
+        }
+
+        .qt-card input[type=number]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        .total-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: .85rem;
+            display: inline-block;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
         /* ─── OUTPUT MODE ──────────────────────────────────────────────── */
-        .mode-row{display:flex;gap:12px;margin:14px 0;}
-        .mode-btn{
-            flex:1;
-            padding:13px;
-            border:2px solid #e0e0e0;
-            border-radius:11px;
-            cursor:pointer;
-            text-align:center;
-            transition:all .25s;
-            background:white;
+        .mode-row {
+            display: flex;
+            gap: 12px;
+            margin: 14px 0;
         }
-        .mode-btn.selected{border-color:#3949ab;background:#e8eaf6;}
-        .mode-btn i{font-size:1.6rem;color:#3949ab;display:block;margin-bottom:5px;}
-        .mode-btn .ml{font-weight:600;font-size:.86rem;color:#333;}
-        .mode-btn .ms{font-size:.74rem;color:#666;margin-top:2px;}
-        
+
+        .mode-btn {
+            flex: 1;
+            padding: 14px 18px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 14px;
+            cursor: pointer;
+            text-align: center;
+            transition: all .25s ease;
+            background: #f8fafc;
+        }
+
+        .mode-btn:hover {
+            background: #eef2ff;
+            border-color: #a5b4fc;
+        }
+
+        .mode-btn.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.12);
+        }
+
+        .mode-btn i {
+            font-size: 1.6rem;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .mode-btn .ml {
+            font-weight: 700;
+            font-size: .88rem;
+            color: #1e1b4b;
+        }
+
+        .mode-btn .ms {
+            font-size: .76rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
         /* ─── REMARK BOX ────────────────────────────────────────────── */
-        .remark-box{
-            background:#e8eaf6;
-            border:2px dashed #c5cae9;
-            border-radius:11px;
-            padding:16px;
-            margin-top:14px;
+        .remark-box {
+            background: var(--primary-light);
+            border: 1.5px dashed #c7d2fe;
+            border-radius: 14px;
+            padding: 16px;
+            margin-top: 16px;
         }
-        .remark-box .rl{
-            font-weight:600;
-            color:#1a237e;
-            margin-bottom:7px;
-            font-size:.88rem;
-            display:flex;
-            align-items:center;
-            gap:6px;
+
+        .remark-box .rl {
+            font-weight: 700;
+            color: #1e1b4b;
+            margin-bottom: 7px;
+            font-size: .85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
         }
-        .remark-box textarea{
-            background:transparent;
-            border:none;
-            width:100%;
-            font-family:'Poppins',sans-serif;
-            font-size:.88rem;
-            resize:vertical;
-            min-height:65px;
+
+        .remark-box textarea {
+            background: transparent;
+            border: none;
+            width: 100%;
+            font-family: 'Poppins', sans-serif;
+            font-size: .88rem;
+            resize: vertical;
+            min-height: 65px;
         }
-        .remark-box textarea:focus{outline:none;}
-        
+
+        .remark-box textarea:focus {
+            outline: none;
+        }
+
         /* ─── BUTTONS ────────────────────────────────────────────────── */
-        .gen-btn{
-            width:100%;
-            padding:13px;
-            background:linear-gradient(135deg,#1a237e,#3949ab);
-            color:white;
-            border:none;
-            border-radius:10px;
-            font-size:.95rem;
-            font-weight:600;
-            cursor:pointer;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:9px;
-            transition:transform .2s;
-            margin-top:16px;
-            font-family:'Poppins',sans-serif;
+        .gen-btn {
+            width: 100%;
+            padding: 16px 28px;
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.02rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all .25s ease;
+            margin-top: 18px;
+            font-family: 'Poppins', sans-serif;
+            box-shadow: 0 12px 30px rgba(79, 70, 229, 0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
-        .gen-btn:hover{transform:translateY(-2px);}
-        .gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-        
+
+        .gen-btn:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 18px 40px rgba(79, 70, 229, 0.45);
+            background: linear-gradient(135deg, #4338ca 0%, #2e2a85 100%);
+        }
+
+        .gen-btn:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
         /* ─── DUAL UPLOAD GRID ────────────────────────────────────────── */
         .dual-upload-grid {
             display: grid;
@@ -256,6 +595,7 @@
             gap: 16px;
             margin: 18px 0;
         }
+
         .upload-card-box {
             border-radius: 12px;
             padding: 22px 18px;
@@ -264,25 +604,30 @@
             transition: all 0.25s ease;
             position: relative;
         }
+
         .upload-card-box.compulsory {
             border: 2px solid #2563eb;
             background: #f0f7ff;
-            box-shadow: 0 2px 10px rgba(37,99,235,0.06);
+            box-shadow: 0 2px 10px rgba(37, 99, 235, 0.06);
         }
+
         .upload-card-box.compulsory:hover {
             border-color: #1d4ed8;
             background: #e0f2fe;
             transform: translateY(-2px);
         }
+
         .upload-card-box.optional {
             border: 2px dashed #94a3b8;
             background: #f8fafc;
         }
+
         .upload-card-box.optional:hover {
             border-color: #64748b;
             background: #f1f5f9;
             transform: translateY(-2px);
         }
+
         .upload-card-title {
             font-weight: 600;
             font-size: 0.95rem;
@@ -292,8 +637,15 @@
             justify-content: center;
             gap: 8px;
         }
-        .upload-card-box.compulsory .upload-card-title { color: #1e40af; }
-        .upload-card-box.optional .upload-card-title { color: #475569; }
+
+        .upload-card-box.compulsory .upload-card-title {
+            color: #1e40af;
+        }
+
+        .upload-card-box.optional .upload-card-title {
+            color: #475569;
+        }
+
         .badge-comp {
             background: #2563eb;
             color: white;
@@ -302,6 +654,7 @@
             border-radius: 12px;
             font-weight: 600;
         }
+
         .badge-opt {
             background: #94a3b8;
             color: white;
@@ -310,12 +663,20 @@
             border-radius: 12px;
             font-weight: 600;
         }
+
         .upload-card-icon {
             font-size: 2rem;
             margin-bottom: 8px;
         }
-        .upload-card-box.compulsory .upload-card-icon { color: #2563eb; }
-        .upload-card-box.optional .upload-card-icon { color: #64748b; }
+
+        .upload-card-box.compulsory .upload-card-icon {
+            color: #2563eb;
+        }
+
+        .upload-card-box.optional .upload-card-icon {
+            color: #64748b;
+        }
+
         .file-label-text {
             font-size: 0.86rem;
             font-weight: 500;
@@ -323,539 +684,794 @@
             margin-top: 4px;
             word-break: break-all;
         }
-        
+
         /* ─── ALERTS ────────────────────────────────────────────────── */
-        .alert{
-            padding:12px 18px;
-            border-radius:10px;
-            margin-bottom:14px;
-            display:none;
-            align-items:center;
-            gap:10px;
+        .alert {
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin-bottom: 14px;
+            display: none;
+            align-items: center;
+            gap: 10px;
         }
-        .alert-success{
-            background:#e8f5e9;
-            border-left:4px solid #2e7d32;
-            color:#1b5e20;
+
+        .alert-success {
+            background: #e8f5e9;
+            border-left: 4px solid #2e7d32;
+            color: #1b5e20;
         }
-        .alert-error{
-            background:#fce4ec;
-            border-left:4px solid #c62828;
-            color:#c62828;
+
+        .alert-error {
+            background: #fce4ec;
+            border-left: 4px solid #c62828;
+            color: #c62828;
         }
-        
-        .loading{
-            display:none;
-            text-align:center;
-            padding:18px;
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 18px;
         }
-        .loading i{
-            font-size:2.2rem;
-            color:#3949ab;
-            animation:spin 1s linear infinite;
+
+        .loading i {
+            font-size: 2.2rem;
+            color: #3949ab;
+            animation: spin 1s linear infinite;
         }
-        .loading p{color:#1a237e;font-weight:600;margin-top:10px;}
-        @keyframes spin{100%{transform:rotate(360deg)}}
-        
-        .test-note{font-size:.78rem;color:#666;margin-top:4px;}
-        .test-note i{color:#3949ab;}
-        select option:disabled{color:#ccc;}
-        
+
+        .loading p {
+            color: #1a237e;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg)
+            }
+        }
+
+        .test-note {
+            font-size: .78rem;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .test-note i {
+            color: #3949ab;
+        }
+
+        select option:disabled {
+            color: #ccc;
+        }
+
         /* ─── RESPONSIVE ────────────────────────────────────────────────── */
-        @media(max-width:768px){
-            .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
-            .topbar a{font-size:0.75rem;padding:6px 14px;}
-            .container{padding:0 12px;}
-            .card{padding:16px 18px;}
-            .mode-row{flex-direction:column;}
-            .qt-grid{grid-template-columns:1fr 1fr;}
+        @media(max-width:768px) {
+            .topbar {
+                flex-direction: column;
+                text-align: center;
+                padding: 12px 16px;
+            }
+
+            .topbar a {
+                font-size: 0.75rem;
+                padding: 6px 14px;
+            }
+
+            .container {
+                padding: 0 12px;
+            }
+
+            .card {
+                padding: 16px 18px;
+            }
+
+            .mode-row {
+                flex-direction: column;
+            }
+
+            .qt-grid {
+                grid-template-columns: 1fr 1fr;
+            }
         }
-        @media(max-width:480px){
-            .qt-grid{grid-template-columns:1fr;}
-            .teacher-banner{flex-direction:column;text-align:center;}
-            .form-grid{grid-template-columns:1fr;}
+
+        @media(max-width:480px) {
+            .qt-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .teacher-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
-<div class="topbar">
-    <h1><i class="fas fa-magic"></i> Test Generator</h1>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <a href="javascript:void(0)" onclick="handleDashboardClick(event)"><i class="fas fa-arrow-left"></i> Dashboard</a>
-    </div>
-</div>
-
-<div class="container">
-    
-    <!-- Teacher Banner -->
-    <div class="teacher-banner">
-        <i class="fas fa-user-shield"></i>
-        <div>
-            <strong>Teacher Access — Assigned Classes &amp; Subjects Only</strong>
-            <p>Class &amp; Subject dropdowns are limited to your allotted classes and subjects assigned by the Administrator. All test generation options, question types, output modes, and AI features match the Admin generator.</p>
+    <!-- CIRCULAR PROCESSING OVERLAY WITH RRB LOGO -->
+    <div id="circularLoadingOverlay" class="c-modal-overlay">
+        <div class="c-modal-card">
+            <div class="c-progress-wrapper">
+                <svg class="c-progress-ring" width="140" height="140">
+                    <circle class="c-progress-ring-bg" cx="70" cy="70" r="60" stroke="#e0e7ff" stroke-width="8"
+                        fill="transparent" />
+                    <circle id="cProgressRing" class="c-progress-ring-fg" cx="70" cy="70" r="60" stroke="#4f46e5"
+                        stroke-width="8" fill="transparent" stroke-dasharray="376.99" stroke-dashoffset="376.99" />
+                </svg>
+                <div class="c-logo-center">
+                    <img src="/static/logo.png" id="cModalLogo" alt="RRB Logo" class="rrb-pulse-logo"
+                        onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/graduation-cap.svg';">
+                </div>
+            </div>
+            <div class="c-percentage" id="cProgressPercent">0%</div>
+            <div class="c-status-title" id="cProgressStatus">Initializing AI Engine...</div>
+            <div class="c-status-sub" id="cProgressSub">Generating test questions via Gemini AI...</div>
         </div>
     </div>
 
-    <div id="alertBox" class="alert"></div>
-    <div id="loadingBox" class="loading">
-        <i class="fas fa-spinner"></i>
-        <p>Gemini AI is generating questions…</p>
-    </div>
-
-    <!-- ─── TABS ──────────────────────────────────────────────────────── -->
-    <div class="tabs">
-        <button class="tab active" onclick="switchTab('ai',this)"><i class="fas fa-robot"></i> AI Generate</button>
-        <button class="tab" onclick="switchTab('upload',this)"><i class="fas fa-upload"></i> Upload CSV</button>
-    </div>
-
-    <!-- ─── AI TAB ───────────────────────────────────────────────────── -->
-    <div id="ai-tab" class="tab-content active">
-        <div class="card">
-            <div class="card-header"><i class="fas fa-cog"></i> Test Configuration — Assigned Classes</div>
-            <form id="aiForm" onsubmit="generateAI(event)">
-                <div class="form-grid">
-                    <div class="fg">
-                        <label><i class="fas fa-graduation-cap"></i> Class *</label>
-                        <select name="class" id="classSelect" required onchange="onTeacherClassChange('ai')">
-                            <option value="">Select Assigned Class</option>
-                            {% if class_subject_map %}
-                                {% for cls in class_subject_map.keys() %}
-                                <option value="{{ cls }}">Class {{ cls }}</option>
-                                {% endfor %}
-                            {% endif %}
-                        </select>
-                    </div>
-                    <div class="fg">
-                        <label><i class="fas fa-layer-group"></i> Section</label>
-                        <select name="section" id="sectionSelect" onchange="onTeacherClassChange('ai')">
-                            <option value="">All Sections</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="C">C</option>
-                            <option value="D">D</option>
-                        </select>
-                    </div>
-                    <div class="fg">
-                        <label><i class="fas fa-book"></i> Subject *</label>
-                        <select name="subject" id="subjectSelect" required onchange="onTeacherSubjectChange('ai')">
-                            <option value="">Select Class First</option>
-                        </select>
-                    </div>
-                    <div class="fg">
-                        <label><i class="fas fa-bookmark"></i> Chapter / Topic *</label>
-                        <input type="text" name="chapter" required placeholder="e.g. Electrochemistry">
-                    </div>
-                    <div class="fg">
-                        <label><i class="fas fa-hashtag"></i> Test Number *</label>
-                        <select name="test_no" id="testNoSelect" required>
-                            <option value="">Select Class &amp; Subject first</option>
-                        </select>
-                        <div class="test-note"><i class="fas fa-info-circle"></i> Used Test Numbers are disabled</div>
-                    </div>
-                </div>
-
-                <!-- Question Types -->
-                <div style="margin-top:4px;">
-                    <label style="font-weight:600;color:#333;font-size:.88rem;display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                        <i class="fas fa-list-ol" style="color:#3949ab;"></i>
-                        Question Types &amp; Quantities
-                        <span class="total-badge" id="totalBadge">Total: 0</span>
-                    </label>
-                    <div class="qt-grid">
-                        <div class="qt-card"><i class="fas fa-check-circle"></i><div class="ql">MCQ</div>
-                            <input type="number" name="mcq_count" min="0" max="50" value="0" onchange="updateTotal()"></div>
-                        <div class="qt-card"><i class="fas fa-balance-scale"></i><div class="ql">Assertion-Reason</div>
-                            <input type="number" name="assertion_count" min="0" max="20" value="0" onchange="updateTotal()"></div>
-                    </div>
-                </div>
-
-                <!-- Output Mode -->
-                <div>
-                    <label style="font-weight:600;color:#333;font-size:.88rem;margin-bottom:7px;display:block;">
-                        <i class="fas fa-share-square" style="color:#3949ab;"></i> Output Mode
-                    </label>
-                    <div class="mode-row">
-                        <div class="mode-btn selected" id="mode-cbt" onclick="selectMode('cbt')">
-                            <i class="fas fa-desktop"></i>
-                            <div class="ml">CBT Online Exam</div>
-                            <div class="ms">Push MCQs to exam module</div>
-                        </div>
-                        <div class="mode-btn" id="mode-print" onclick="selectMode('print')">
-                            <i class="fas fa-print"></i>
-                            <div class="ml">Print / Save PDF</div>
-                            <div class="ms">Opens browser print dialog</div>
-                        </div>
-                    </div>
-                    <input type="hidden" name="output_mode" id="outputMode" value="cbt">
-                </div>
-
-                <!-- Remark Box -->
-                <div class="remark-box">
-                    <div class="rl"><i class="fas fa-lightbulb"></i> Instructions / Remark</div>
-                    <textarea name="remark" placeholder="e.g. CBSE 2024 pattern, include PYQ-style, focus on Chapters 3-5, 40% HOTS…"></textarea>
-                </div>
-
-                <button type="submit" class="gen-btn" id="genBtn">
-                    <i class="fas fa-magic"></i> Generate with Gemini AI
-                </button>
-            </form>
+    <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
+    <div class="topbar">
+        <h1><i class="fas fa-magic"></i> Test Generator</h1>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a href="javascript:void(0)" onclick="handleDashboardClick(event)"><i class="fas fa-arrow-left"></i>
+                Dashboard</a>
         </div>
     </div>
 
-    <!-- ─── UPLOAD TAB ───────────────────────────────────────────────── -->
-    <div id="upload-tab" class="tab-content">
-        <div class="card">
-            <div class="card-header"><i class="fas fa-upload"></i> Upload CSV</div>
-            <form id="uploadForm" onsubmit="uploadCSV(event)">
-                <div class="form-grid">
-                    <div class="fg">
-                        <label><i class="fas fa-graduation-cap"></i> Class *</label>
-                        <select name="class" id="uploadClassSelect" required onchange="onTeacherClassChange('upload')">
-                            <option value="">Select Assigned Class</option>
-                            {% if class_subject_map %}
+    <div class="container">
+
+        <!-- Teacher Banner -->
+        <div class="teacher-banner">
+            <i class="fas fa-user-shield"></i>
+            <div>
+                <strong>Teacher Access — Assigned Classes &amp; Subjects Only</strong>
+                <p>Class &amp; Subject dropdowns are limited to your allotted classes and subjects assigned by the
+                    Administrator. All test generation options, question types, output modes, and AI features match the
+                    Admin generator.</p>
+            </div>
+        </div>
+
+        <div id="alertBox" class="alert"></div>
+        <div id="loadingBox" class="loading">
+            <i class="fas fa-spinner"></i>
+            <p>Gemini AI is generating questions…</p>
+        </div>
+
+        <!-- ─── TABS ──────────────────────────────────────────────────────── -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('ai',this)"><i class="fas fa-robot"></i> Generate Test
+                Papers</button>
+            <button class="tab" onclick="switchTab('upload',this)"><i class="fas fa-upload"></i> Upload CSV</button>
+        </div>
+
+        <!-- ─── AI TAB ───────────────────────────────────────────────────── -->
+        <div id="ai-tab" class="tab-content active">
+            <div class="card">
+                <div class="card-header"><i class="fas fa-cog"></i> Test Configuration — Assigned Classes</div>
+                <form id="aiForm" onsubmit="generateAI(event)">
+                    <div class="form-grid">
+                        <div class="fg">
+                            <label><i class="fas fa-graduation-cap"></i> Class *</label>
+                            <select name="class" id="classSelect" required onchange="onTeacherClassChange('ai')">
+                                <option value="">Select Assigned Class</option>
+                                {% if class_subject_map %}
                                 {% for cls in class_subject_map.keys() %}
                                 <option value="{{ cls }}">Class {{ cls }}</option>
                                 {% endfor %}
-                            {% endif %}
-                        </select>
-                    </div>
-                    <div class="fg">
-                        <label><i class="fas fa-layer-group"></i> Section</label>
-                        <select name="section" id="uploadSectionSelect" onchange="onTeacherClassChange('upload')">
-                            <option value="">All Sections</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="C">C</option>
-                            <option value="D">D</option>
-                        </select>
-                    </div>
-                    <div class="fg">
-                        <label><i class="fas fa-book"></i> Subject *</label>
-                        <select name="subject" id="uploadSubjectSelect" required onchange="onTeacherSubjectChange('upload')">
-                            <option value="">Select Class First</option>
-                        </select>
-                    </div>
-                    <div class="fg">
-                        <label><i class="fas fa-bookmark"></i> Chapter</label>
-                        <input type="text" name="chapter" placeholder="Chapter name">
-                    </div>
-                    <div class="fg">
-                        <label><i class="fas fa-hashtag"></i> Test Number</label>
-                        <select name="test_no" id="uploadTestNoSelect">
-                            <option value="">Select Class &amp; Subject first</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <!-- Dual Upload Zone: English (Compulsory) & Hindi (Optional) -->
-                <div class="dual-upload-grid">
-                    <!-- Left Box: English CSV (Compulsory) -->
-                    <div class="upload-card-box compulsory" onclick="document.getElementById('englishCsv').click()">
-                        <div class="upload-card-icon"><i class="fas fa-file-csv"></i></div>
-                        <div class="upload-card-title">
-                            <i class="fas fa-language"></i> Upload English CSV <span class="badge-comp">Compulsory</span>
+                                {% endif %}
+                            </select>
                         </div>
-                        <p id="englishFileName" class="file-label-text">Click to select English CSV file</p>
-                        <small style="color:#64748b; font-size:0.78rem;">Required: Questions, option a–d, correct option</small>
-                        <input type="file" id="englishCsv" name="english_csv" accept=".csv" required style="display:none"
-                               onchange="document.getElementById('englishFileName').textContent=this.files[0]?.name || 'Click to select English CSV file'">
+                        <div class="fg">
+                            <label><i class="fas fa-layer-group"></i> Section</label>
+                            <select name="section" id="sectionSelect" onchange="onTeacherClassChange('ai')">
+                                <option value="">All Sections</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label><i class="fas fa-book"></i> Subject *</label>
+                            <select name="subject" id="subjectSelect" required onchange="onTeacherSubjectChange('ai')">
+                                <option value="">Select Class First</option>
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label><i class="fas fa-bookmark"></i> Chapter / Topic *</label>
+                            <input type="text" name="chapter" id="chapterInput" required placeholder="e.g. Electrochemistry" list="chapterSuggestionsList">
+                            <datalist id="chapterSuggestionsList"></datalist>
+                        </div>
+                        <div class="fg">
+                            <label><i class="fas fa-hashtag"></i> Test Number *</label>
+                            <select name="test_no" id="testNoSelect" required>
+                                <option value="">Select Class &amp; Subject first</option>
+                            </select>
+                            <div class="test-note"><i class="fas fa-info-circle"></i> Used Test Numbers are disabled
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Right Box: Hindi CSV (Optional) -->
-                    <div class="upload-card-box optional" onclick="document.getElementById('hindiCsv').click()">
-                        <div class="upload-card-icon"><i class="fas fa-file-csv"></i></div>
-                        <div class="upload-card-title">
-                            <i class="fas fa-language"></i> Upload Hindi CSV <span class="badge-opt">Optional</span>
+                    <!-- Question Types -->
+                    <div style="margin-top:4px;">
+                        <label
+                            style="font-weight:600;color:#333;font-size:.88rem;display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                            <i class="fas fa-list-ol" style="color:#3949ab;"></i>
+                            Question Types &amp; Quantities
+                            <span class="total-badge" id="totalBadge">Total: 0</span>
+                        </label>
+                        <div class="qt-grid">
+                            <div class="qt-card"><i class="fas fa-check-circle"></i>
+                                <div class="ql">MCQ</div>
+                                <input type="number" name="mcq_count" min="0" max="50" value="0"
+                                    onchange="updateTotal()">
+                            </div>
+                            <div class="qt-card"><i class="fas fa-balance-scale"></i>
+                                <div class="ql">Assertion-Reason</div>
+                                <input type="number" name="assertion_count" min="0" max="20" value="0"
+                                    onchange="updateTotal()">
+                            </div>
                         </div>
-                        <p id="hindiFileName" class="file-label-text">Click to select Hindi CSV file</p>
-                        <small style="color:#64748b; font-size:0.78rem;">Optional: Hindi Question &amp; Option Translations</small>
-                        <input type="file" id="hindiCsv" name="hindi_csv" accept=".csv" style="display:none"
-                               onchange="document.getElementById('hindiFileName').textContent=this.files[0]?.name || 'Click to select Hindi CSV file'">
                     </div>
-                </div>
 
-                <div style="text-align:center; margin-top:18px;">
-                    <button type="submit" class="gen-btn" style="min-width:220px;">
-                        <i class="fas fa-upload"></i> Upload Questions
+                    <!-- Output Mode -->
+                    <div>
+                        <label style="font-weight:600;color:#333;font-size:.88rem;margin-bottom:7px;display:block;">
+                            <i class="fas fa-share-square" style="color:#3949ab;"></i> Output Mode
+                        </label>
+                        <div class="mode-row">
+                            <div class="mode-btn selected" id="mode-cbt" onclick="selectMode('cbt')">
+                                <i class="fas fa-desktop"></i>
+                                <div class="ml">CBT Online Exam</div>
+                                <div class="ms">Push MCQs to exam module</div>
+                            </div>
+                            <div class="mode-btn" id="mode-print" onclick="selectMode('print')">
+                                <i class="fas fa-print"></i>
+                                <div class="ml">Print / Save PDF</div>
+                                <div class="ms">Opens browser print dialog</div>
+                            </div>
+                        </div>
+                        <input type="hidden" name="output_mode" id="outputMode" value="cbt">
+                    </div>
+
+                    <!-- Remark Box -->
+                    <div class="remark-box">
+                        <div class="rl"><i class="fas fa-lightbulb"></i> Instructions / Remark</div>
+                        <textarea name="remark"
+                            placeholder="e.g. CBSE 2024 pattern, include PYQ-style, focus on Chapters 3-5, 40% HOTS…"></textarea>
+                    </div>
+
+                    <button type="submit" class="gen-btn" id="genBtn">
+                        <i class="fas fa-magic"></i> Generate with Gemini AI
                     </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
+
+        <!-- ─── UPLOAD TAB ───────────────────────────────────────────────── -->
+        <div id="upload-tab" class="tab-content">
+            <div class="card">
+                <div class="card-header"><i class="fas fa-upload"></i> Upload CSV</div>
+                <form id="uploadForm" onsubmit="uploadCSV(event)">
+                    <div class="form-grid">
+                        <div class="fg">
+                            <label><i class="fas fa-graduation-cap"></i> Class *</label>
+                            <select name="class" id="uploadClassSelect" required
+                                onchange="onTeacherClassChange('upload')">
+                                <option value="">Select Assigned Class</option>
+                                {% if class_subject_map %}
+                                {% for cls in class_subject_map.keys() %}
+                                <option value="{{ cls }}">Class {{ cls }}</option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label><i class="fas fa-layer-group"></i> Section</label>
+                            <select name="section" id="uploadSectionSelect" onchange="onTeacherClassChange('upload')">
+                                <option value="">All Sections</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label><i class="fas fa-book"></i> Subject *</label>
+                            <select name="subject" id="uploadSubjectSelect" required
+                                onchange="onTeacherSubjectChange('upload')">
+                                <option value="">Select Class First</option>
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label><i class="fas fa-bookmark"></i> Chapter</label>
+                            <input type="text" name="chapter" placeholder="Chapter name">
+                        </div>
+                        <div class="fg">
+                            <label><i class="fas fa-hashtag"></i> Test Number</label>
+                            <select name="test_no" id="uploadTestNoSelect">
+                                <option value="">Select Class &amp; Subject first</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Dual Upload Grid: English (Compulsory) & Hindi (Optional) -->
+                    <div class="dual-upload-grid">
+                        <!-- Left Box: English CSV (Compulsory) -->
+                        <div class="upload-card-box compulsory" onclick="triggerFileInput('englishCsv', event)">
+                            <div class="upload-card-icon"><i class="fas fa-file-csv"></i></div>
+                            <div class="upload-card-title">
+                                <i class="fas fa-language"></i> Upload English CSV <span
+                                    class="badge-comp">Compulsory</span>
+                            </div>
+                            <p id="englishFileName" class="file-label-text">Click to select English CSV file</p>
+                            <small style="color:#64748b; font-size:0.78rem;">Required: Questions, option a–d, correct
+                                option</small>
+                            <input type="file" id="englishCsv" name="english_csv" accept=".csv" required
+                                style="display:none" onclick="event.stopPropagation()"
+                                onchange="document.getElementById('englishFileName').textContent=this.files[0]?.name || 'Click to select English CSV file'">
+                        </div>
+
+                        <!-- Right Box: Hindi CSV (Optional) -->
+                        <div class="upload-card-box optional" onclick="triggerFileInput('hindiCsv', event)">
+                            <div class="upload-card-icon"><i class="fas fa-file-csv"></i></div>
+                            <div class="upload-card-title">
+                                <i class="fas fa-language"></i> Upload Hindi CSV <span class="badge-opt">Optional</span>
+                            </div>
+                            <p id="hindiFileName" class="file-label-text">Click to select Hindi CSV file</p>
+                            <small style="color:#64748b; font-size:0.78rem;">Optional: Hindi Question &amp; Option
+                                Translations</small>
+                            <input type="file" id="hindiCsv" name="hindi_csv" accept=".csv" style="display:none"
+                                onclick="event.stopPropagation()"
+                                onchange="document.getElementById('hindiFileName').textContent=this.files[0]?.name || 'Click to select Hindi CSV file'">
+                        </div>
+                    </div>
+
+                    <div style="text-align:center; margin-top:18px;">
+                        <button type="submit" class="gen-btn" style="min-width:220px;">
+                            <i class="fas fa-upload"></i> Upload Questions
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ─── RECENT TEST HISTORY CARD ──────────────────────────────────── -->
+        {% if history %}
+        <div class="card" style="margin-top:24px;">
+            <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                <span><i class="fas fa-history" style="color:#3949ab;"></i> History of Generated &amp; Uploaded
+                    Tests</span>
+                <a href="/teacher/test_history"
+                    style="font-size:0.8rem;color:#3949ab;text-decoration:none;font-weight:700;">View All <i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                    <thead>
+                        <tr style="background:#1a237e;color:#fff;text-align:left;">
+                            <th style="padding:10px 12px;">Class</th>
+                            <th style="padding:10px 12px;">Subject</th>
+                            <th style="padding:10px 12px;">Chapter / Topic</th>
+                            <th style="padding:10px 12px;">Test No</th>
+                            <th style="padding:10px 12px;">Questions</th>
+                            <th style="padding:10px 12px;">Date</th>
+                            <th style="padding:10px 12px;text-align:center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in history %}
+                        <tr style="border-bottom:1px solid #e0e0e0;">
+                            <td style="padding:10px 12px;font-weight:700;"><span
+                                    style="background:#e8eaf6;color:#1a237e;padding:2px 8px;border-radius:10px;">{{
+                                    h.class }}{{ h.section }}</span></td>
+                            <td style="padding:10px 12px;font-weight:600;">{{ h.subject }}</td>
+                            <td style="padding:10px 12px;color:#555;">{{ h.chapter or '—' }}</td>
+                            <td style="padding:10px 12px;font-weight:700;color:#28a745;">{{ h.test_no or '—' }}</td>
+                            <td style="padding:10px 12px;font-weight:700;">{{ h.total_questions }} Qs</td>
+                            <td style="padding:10px 12px;font-size:0.78rem;color:#666;">{{ (h.created_at or '')[:16] }}
+                            </td>
+                            <td style="padding:10px 12px;text-align:center;">
+                                <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+                                    <a href="/api/test_generation_history/{{ h.id }}/print_preview" target="_blank"
+                                        rel="noopener" class="btn"
+                                        style="padding:4px 10px;background:#0284c7;color:#fff;border-radius:6px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                                        <i class="fas fa-print"></i> Print PDF
+                                    </a>
+                                    <a href="/admin/generate_question_paper?class={{ h.class }}&subject={{ h.subject }}&section={{ h.section }}&test_no={{ h.test_no }}"
+                                        target="_blank" rel="noopener" class="btn"
+                                        style="padding:4px 10px;background:#4f46e5;color:#fff;border-radius:6px;font-size:0.75rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                                        <i class="fas fa-file-pdf"></i> Generate Paper &amp; PDF
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <footer class="app-global-footer"
+            style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+            Developed by Gaurav Shukla &amp; Team
+        </footer>
     </div>
 
-<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
-</footer>
-</div>
+    <script>
+        const classSubjectMap = {{ (class_subject_map or { }) | tojson | safe }} || {};
+        const classSectionSubjectMap = {{ (class_section_subject_map or { }) | tojson | safe }} || {};
 
-<script>
-const classSubjectMap = {{ (class_subject_map or {}) | tojson | safe }} || {};
-const classSectionSubjectMap = {{ (class_section_subject_map or {}) | tojson | safe }} || {};
+        // ─── TEACHER CLASS & SUBJECT FILTER ────────────────────────────
+        function onTeacherClassChange(mode) {
+            try {
+                const classSel = mode === 'ai' ? document.getElementById('classSelect') : document.getElementById('uploadClassSelect');
+                const sectionSel = mode === 'ai' ? document.getElementById('sectionSelect') : document.getElementById('uploadSectionSelect');
+                const subjSel = mode === 'ai' ? document.getElementById('subjectSelect') : document.getElementById('uploadSubjectSelect');
 
-// ─── TEACHER CLASS & SUBJECT FILTER ────────────────────────────
-function onTeacherClassChange(mode) {
-    try {
-        const classSel   = mode === 'ai' ? document.getElementById('classSelect') : document.getElementById('uploadClassSelect');
-        const sectionSel = mode === 'ai' ? document.getElementById('sectionSelect') : document.getElementById('uploadSectionSelect');
-        const subjSel    = mode === 'ai' ? document.getElementById('subjectSelect') : document.getElementById('uploadSubjectSelect');
+                if (!classSel || !subjSel) return;
 
-        if (!classSel || !subjSel) return;
+                const cls = String(classSel.value || '').trim();
+                const sec = String(sectionSel ? sectionSel.value : '').trim().toUpperCase();
 
-        const cls = String(classSel.value || '').trim();
-        const sec = String(sectionSel ? sectionSel.value : '').trim().toUpperCase();
+                subjSel.innerHTML = '<option value="">Select Assigned Subject</option>';
 
-        subjSel.innerHTML = '<option value="">Select Assigned Subject</option>';
+                let availableSubjects = [];
+                const secMap = (typeof classSectionSubjectMap === 'object' && classSectionSubjectMap) ? classSectionSubjectMap : {};
+                const subMap = (typeof classSubjectMap === 'object' && classSubjectMap) ? classSubjectMap : {};
 
-        let availableSubjects = [];
-        const secMap = (typeof classSectionSubjectMap === 'object' && classSectionSubjectMap) ? classSectionSubjectMap : {};
-        const subMap = (typeof classSubjectMap === 'object' && classSubjectMap) ? classSubjectMap : {};
-
-        if (cls) {
-            // 1. Check secMap by exact key or trimmed string comparison
-            let classData = secMap[cls];
-            if (!classData) {
-                for (let k in secMap) {
-                    if (String(k).trim() === cls) {
-                        classData = secMap[k];
-                        break;
+                if (cls) {
+                    // 1. Check secMap by exact key or trimmed string comparison
+                    let classData = secMap[cls];
+                    if (!classData) {
+                        for (let k in secMap) {
+                            if (String(k).trim() === cls) {
+                                classData = secMap[k];
+                                break;
+                            }
+                        }
                     }
-                }
-            }
 
-            if (classData) {
-                if (sec && classData.sections && classData.sections[sec] && classData.sections[sec].length > 0) {
-                    availableSubjects = classData.sections[sec];
-                } else if (classData.all_subjects && classData.all_subjects.length > 0) {
-                    availableSubjects = classData.all_subjects;
-                }
-            }
+                    if (classData) {
+                        if (sec && classData.sections && classData.sections[sec] && classData.sections[sec].length > 0) {
+                            availableSubjects = classData.sections[sec];
+                        } else if (classData.all_subjects && classData.all_subjects.length > 0) {
+                            availableSubjects = classData.all_subjects;
+                        }
+                    }
 
-            // 2. Fallback to subMap
-            if (availableSubjects.length === 0) {
-                let list = subMap[cls];
-                if (!list) {
-                    for (let k in subMap) {
-                        if (String(k).trim() === cls) {
-                            list = subMap[k];
-                            break;
+                    // 2. Fallback to subMap
+                    if (availableSubjects.length === 0) {
+                        let list = subMap[cls];
+                        if (!list) {
+                            for (let k in subMap) {
+                                if (String(k).trim() === cls) {
+                                    list = subMap[k];
+                                    break;
+                                }
+                            }
+                        }
+                        if (Array.isArray(list)) {
+                            availableSubjects = list;
                         }
                     }
                 }
-                if (Array.isArray(list)) {
-                    availableSubjects = list;
+
+                if (availableSubjects.length > 0) {
+                    const uniqueSubjs = [...new Set(availableSubjects)];
+                    uniqueSubjs.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s;
+                        opt.textContent = s;
+                        subjSel.appendChild(opt);
+                    });
+                    if (uniqueSubjs.length === 1) {
+                        subjSel.selectedIndex = 1;
+                    }
+                }
+                onTeacherSubjectChange(mode);
+            } catch (err) {
+                console.error('Error in onTeacherClassChange:', err);
+            }
+        }
+
+        function onTeacherSubjectChange(mode) {
+            try {
+                const classVal = mode === 'ai' ? (document.getElementById('classSelect') ? document.getElementById('classSelect').value : '') : (document.getElementById('uploadClassSelect') ? document.getElementById('uploadClassSelect').value : '');
+                const subjectVal = mode === 'ai' ? (document.getElementById('subjectSelect') ? document.getElementById('subjectSelect').value : '') : (document.getElementById('uploadSubjectSelect') ? document.getElementById('uploadSubjectSelect').value : '');
+                const selectId = mode === 'ai' ? 'testNoSelect' : 'uploadTestNoSelect';
+                updateTestNumbers(classVal, subjectVal, selectId);
+
+                // Fetch curriculum topics for autocomplete in AI mode
+                if (mode === 'ai' && classVal && subjectVal) {
+                    fetch(`/api/curriculum/topics?class=${encodeURIComponent(classVal)}&subject=${encodeURIComponent(subjectVal)}`)
+                        .then(r => r.json())
+                        .then(d => {
+                            if (d.status === 'success' && d.chapters) {
+                                const dl = document.getElementById('chapterSuggestionsList');
+                                if (dl) {
+                                    dl.innerHTML = '';
+                                    d.chapters.forEach(ch => {
+                                        const opt = document.createElement('option');
+                                        opt.value = ch.chapter;
+                                        dl.appendChild(opt);
+                                    });
+                                }
+                            }
+                        })
+                        .catch(err => console.error('Error fetching curriculum chapters:', err));
+                }
+            } catch (err) {
+                console.error('Error in onTeacherSubjectChange:', err);
+            }
+        }
+
+        function triggerFileInput(id, e) {
+            if (e && e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON')) return;
+            const inp = document.getElementById(id);
+            if (inp) inp.click();
+        }
+
+        // ─── SWITCH TABS ──────────────────────────────────────────────
+        function switchTab(tab, btn) {
+            try {
+                document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                if (btn) btn.classList.add('active');
+                const target = document.getElementById(tab + '-tab');
+                if (target) target.classList.add('active');
+            } catch (err) {
+                console.error('Error in switchTab:', err);
+            }
+        }
+
+        // ─── OUTPUT MODE ──────────────────────────────────────────────
+        function selectMode(m) {
+            document.getElementById('outputMode').value = m;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById('mode-' + m).classList.add('selected');
+        }
+
+        // ─── TOTAL QUESTIONS ──────────────────────────────────────────
+        function updateTotal() {
+            const inputs = document.querySelectorAll('.qt-card input[type=number]');
+            let total = 0;
+            inputs.forEach(inp => {
+                const v = parseInt(inp.value) || 0; total += v;
+                inp.closest('.qt-card').classList.toggle('active', v > 0);
+            });
+            document.getElementById('totalBadge').textContent = 'Total: ' + total;
+        }
+
+        // ─── ALERT ─────────────────────────────────────────────────────
+        function showAlert(msg, type) {
+            const box = document.getElementById('alertBox');
+            box.className = 'alert alert-' + type;
+            box.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
+            box.style.display = 'flex';
+            window.scrollTo(0, 0);
+            setTimeout(() => box.style.display = 'none', 8000);
+        }
+
+        // ─── FETCH EXISTING TEST NUMBERS ─────────────────────────────
+        async function fetchTestNumbers(classVal, subjectVal) {
+            if (!classVal || !subjectVal) return [];
+            try {
+                const res = await fetch(`/api/test_numbers?class=${encodeURIComponent(classVal)}&subject=${encodeURIComponent(subjectVal)}`);
+                const data = await res.json();
+                const existing = [];
+                if (data.test_numbers) existing.push(...data.test_numbers);
+                if (data.combined_tests) {
+                    data.combined_tests.forEach(ct => {
+                        if (ct.test_no) existing.push(ct.test_no);
+                    });
+                }
+                return existing;
+            } catch (e) {
+                console.error('Failed to fetch test numbers:', e);
+                return [];
+            }
+        }
+
+        // ─── POPULATE TEST NUMBER DROPDOWN ──────────────────────────
+        function populateTestNoSelect(selectId, existingTests) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            const maxTest = 20;
+            let html = '<option value="">Select Test Number</option>';
+            for (let i = 1; i <= maxTest; i++) {
+                const num = String(i).padStart(2, '0');
+                const val = 'Test' + num;
+                const disabled = existingTests.includes(val) ? 'disabled' : '';
+                html += `<option value="${val}" ${disabled}>${val} ${disabled ? '✔ (Used)' : ''}</option>`;
+            }
+            select.innerHTML = html;
+        }
+
+        // ─── UPDATE DROPDOWNS ────────────────────────────────────────
+        async function updateTestNumbers(classVal, subjectVal, selectId) {
+            if (!classVal || !subjectVal) {
+                const select = document.getElementById(selectId);
+                if (select) select.innerHTML = '<option value="">Select Class &amp; Subject first</option>';
+                return;
+            }
+            const existing = await fetchTestNumbers(classVal, subjectVal);
+            populateTestNoSelect(selectId, existing);
+        }
+
+        // ─── WIRE EVENTS ──────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', function () {
+            // Auto select first assigned class if available
+            const clsSel = document.getElementById('classSelect');
+            if (clsSel && clsSel.options.length > 1) {
+                clsSel.selectedIndex = 1;
+                onTeacherClassChange('ai');
+            }
+            const uClsSel = document.getElementById('uploadClassSelect');
+            if (uClsSel && uClsSel.options.length > 1) {
+                uClsSel.selectedIndex = 1;
+                onTeacherClassChange('upload');
+            }
+            updateTotal();
+        });
+
+        function animateCircularProgress(expectedDurationMs = 25000) {
+            const overlay = document.getElementById('circularLoadingOverlay');
+            const ring = document.getElementById('cProgressRing');
+            const percentText = document.getElementById('cProgressPercent');
+            const statusTitle = document.getElementById('cProgressStatus');
+            const statusSub = document.getElementById('cProgressSub');
+
+            if (!overlay || !ring) return { finish: (cb) => { if (cb) cb(); }, error: () => { } };
+
+            overlay.classList.add('active');
+            const circumference = 376.99;
+
+            const stages = [
+                { p: 15, title: 'Initializing AI Engine...', sub: 'Establishing connection to Gemini AI...' },
+                { p: 35, title: 'Generating Test Questions...', sub: 'Formulating MCQs and Assertion-Reason questions...' },
+                { p: 65, title: 'Verifying Answer Keys...', sub: 'Validating options and solution keys...' },
+                { p: 88, title: 'Finalizing Test Paper...', sub: 'Saving to CBT database and test repository...' }
+            ];
+
+            let currentP = 0;
+            let stageIdx = 0;
+            const interval = setInterval(() => {
+                currentP += 2;
+                if (currentP > 98) currentP = 98;
+
+                const offset = circumference - (currentP / 100 * circumference);
+                ring.style.strokeDashoffset = offset;
+                percentText.textContent = `${currentP}%`;
+
+                if (stageIdx < stages.length && currentP >= stages[stageIdx].p) {
+                    statusTitle.textContent = stages[stageIdx].title;
+                    statusSub.textContent = stages[stageIdx].sub;
+                    stageIdx++;
+                }
+            }, expectedDurationMs / 50);
+
+            return {
+                finish: (callback) => {
+                    clearInterval(interval);
+                    ring.style.strokeDashoffset = 0;
+                    percentText.textContent = '100%';
+                    statusTitle.textContent = 'Test Paper Generated!';
+                    statusSub.textContent = 'Saved to database successfully.';
+                    setTimeout(() => {
+                        overlay.classList.remove('active');
+                        if (callback) callback();
+                    }, 600);
+                },
+                error: (msg) => {
+                    clearInterval(interval);
+                    overlay.classList.remove('active');
+                    if (msg) showAlert(msg, 'error');
+                }
+            };
+        }
+
+        // ─── GENERATE AI ──────────────────────────────────────────────
+        async function generateAI(e) {
+            e.preventDefault();
+            const total = parseInt(document.getElementById('totalBadge').textContent.replace('Total: ', ''));
+            if (total === 0) { showAlert('Enter at least 1 question quantity', 'error'); return; }
+            const formData = new FormData(e.target);
+            formData.append('method', 'ai');
+            document.getElementById('genBtn').disabled = true;
+
+            const progress = animateCircularProgress(25000);
+
+            try {
+                const res = await fetch('/teacher/create_test_v2', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.status === 429 || data.rate_limit) {
+                    progress.error();
+                    let seconds = data.retry_after || 60;
+                    const btn = document.getElementById('genBtn');
+                    btn.disabled = true;
+                    let timer = setInterval(() => {
+                        showAlert(`Server rate limit reached (13 req/min). Retrying available in ${seconds}s...`, 'error');
+                        btn.innerHTML = `<i class="fas fa-hourglass-half fa-spin"></i> Retry in ${seconds}s`;
+                        seconds--;
+                        if (seconds < 0) {
+                            clearInterval(timer);
+                            btn.disabled = false;
+                            btn.innerHTML = `<i class="fas fa-magic"></i> Generate Paper`;
+                            showAlert('Rate limit reset. You can generate tests now.', 'success');
+                        }
+                    }, 1000);
+                    return;
+                }
+                if (data.status === 'success') {
+                    progress.finish(() => {
+                        if (data.mode === 'print' && data.preview_url) {
+                            showAlert(data.message + ' — Opening print preview…', 'success');
+                            setTimeout(() => window.open(data.preview_url, '_blank'), 600);
+                        } else {
+                            showAlert(data.message, 'success');
+                            e.target.reset(); updateTotal();
+                            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
+                            document.getElementById('mode-cbt').classList.add('selected');
+                            document.getElementById('outputMode').value = 'cbt';
+                            const cls = document.getElementById('classSelect').value;
+                            const sub = document.getElementById('subjectSelect').value;
+                            if (cls && sub) updateTestNumbers(cls, sub, 'testNoSelect');
+                            else document.getElementById('testNoSelect').innerHTML = '<option value="">Select Class &amp; Subject first</option>';
+                        }
+                    });
+                } else { progress.error(data.message || 'Generation failed'); }
+            } catch (err) { progress.error('Error: ' + err.message); }
+            document.getElementById('genBtn').disabled = false;
+        }
+
+        // ─── UPLOAD CSV ──────────────────────────────────────────────
+        async function uploadCSV(e) {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading CSV...';
+            }
+            const formData = new FormData(e.target);
+            formData.append('method', 'upload');
+
+            try {
+                const res = await fetch('/teacher/create_test_v2', { method: 'POST', body: formData });
+                const data = await res.json();
+                showAlert(data.message, data.status === 'success' ? 'success' : 'error');
+                if (data.status === 'success') {
+                    e.target.reset();
+                    if (document.getElementById('englishFileName')) document.getElementById('englishFileName').textContent = 'Click to select English CSV file';
+                    if (document.getElementById('hindiFileName')) document.getElementById('hindiFileName').textContent = 'Click to select Hindi CSV file';
+                    document.getElementById('uploadTestNoSelect').innerHTML = '<option value="">Select Class &amp; Subject first</option>';
+                }
+            } catch (err) {
+                showAlert('Upload failed: ' + err.message, 'error');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Questions';
                 }
             }
         }
 
-        if (availableSubjects.length > 0) {
-            const uniqueSubjs = [...new Set(availableSubjects)];
-            uniqueSubjs.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s;
-                opt.textContent = s;
-                subjSel.appendChild(opt);
-            });
-            if (uniqueSubjs.length === 1) {
-                subjSel.selectedIndex = 1;
+        function handleDashboardClick(e) {
+            if (e) e.preventDefault();
+            if (window.parent && window.parent !== window && typeof window.parent.loadTab === 'function') {
+                window.parent.loadTab('dashboard');
+                return;
             }
+            window.location.href = '/teacher/dashboard';
         }
-        onTeacherSubjectChange(mode);
-    } catch(err) {
-        console.error('Error in onTeacherClassChange:', err);
-    }
-}
-
-function onTeacherSubjectChange(mode) {
-    try {
-        const classVal   = mode === 'ai' ? (document.getElementById('classSelect') ? document.getElementById('classSelect').value : '') : (document.getElementById('uploadClassSelect') ? document.getElementById('uploadClassSelect').value : '');
-        const subjectVal = mode === 'ai' ? (document.getElementById('subjectSelect') ? document.getElementById('subjectSelect').value : '') : (document.getElementById('uploadSubjectSelect') ? document.getElementById('uploadSubjectSelect').value : '');
-        const selectId   = mode === 'ai' ? 'testNoSelect' : 'uploadTestNoSelect';
-        updateTestNumbers(classVal, subjectVal, selectId);
-    } catch(err) {
-        console.error('Error in onTeacherSubjectChange:', err);
-    }
-}
-
-// ─── SWITCH TABS ──────────────────────────────────────────────
-function switchTab(tab, btn) {
-    try {
-        document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-        if (btn) btn.classList.add('active');
-        const target = document.getElementById(tab+'-tab');
-        if (target) target.classList.add('active');
-    } catch(err) {
-        console.error('Error in switchTab:', err);
-    }
-}
-
-// ─── OUTPUT MODE ──────────────────────────────────────────────
-function selectMode(m) {
-    document.getElementById('outputMode').value = m;
-    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));
-    document.getElementById('mode-'+m).classList.add('selected');
-}
-
-// ─── TOTAL QUESTIONS ──────────────────────────────────────────
-function updateTotal() {
-    const inputs = document.querySelectorAll('.qt-card input[type=number]');
-    let total = 0;
-    inputs.forEach(inp => {
-        const v = parseInt(inp.value)||0; total += v;
-        inp.closest('.qt-card').classList.toggle('active', v>0);
-    });
-    document.getElementById('totalBadge').textContent = 'Total: '+total;
-}
-
-// ─── ALERT ─────────────────────────────────────────────────────
-function showAlert(msg, type) {
-    const box = document.getElementById('alertBox');
-    box.className = 'alert alert-'+type;
-    box.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}"></i> ${msg}`;
-    box.style.display = 'flex';
-    window.scrollTo(0,0);
-    setTimeout(()=>box.style.display='none', 8000);
-}
-
-// ─── FETCH EXISTING TEST NUMBERS ─────────────────────────────
-async function fetchTestNumbers(classVal, subjectVal) {
-    if (!classVal || !subjectVal) return [];
-    try {
-        const res = await fetch(`/api/test_numbers?class=${encodeURIComponent(classVal)}&subject=${encodeURIComponent(subjectVal)}`);
-        const data = await res.json();
-        const existing = [];
-        if (data.test_numbers) existing.push(...data.test_numbers);
-        if (data.combined_tests) {
-            data.combined_tests.forEach(ct => {
-                if (ct.test_no) existing.push(ct.test_no);
-            });
-        }
-        return existing;
-    } catch(e) {
-        console.error('Failed to fetch test numbers:', e);
-        return [];
-    }
-}
-
-// ─── POPULATE TEST NUMBER DROPDOWN ──────────────────────────
-function populateTestNoSelect(selectId, existingTests) {
-    const select = document.getElementById(selectId);
-    if (!select) return;
-    const maxTest = 20;
-    let html = '<option value="">Select Test Number</option>';
-    for (let i=1; i<=maxTest; i++) {
-        const num = String(i).padStart(2, '0');
-        const val = 'Test' + num;
-        const disabled = existingTests.includes(val) ? 'disabled' : '';
-        html += `<option value="${val}" ${disabled}>${val} ${disabled ? '✔ (Used)' : ''}</option>`;
-    }
-    select.innerHTML = html;
-}
-
-// ─── UPDATE DROPDOWNS ────────────────────────────────────────
-async function updateTestNumbers(classVal, subjectVal, selectId) {
-    if (!classVal || !subjectVal) {
-        const select = document.getElementById(selectId);
-        if (select) select.innerHTML = '<option value="">Select Class &amp; Subject first</option>';
-        return;
-    }
-    const existing = await fetchTestNumbers(classVal, subjectVal);
-    populateTestNoSelect(selectId, existing);
-}
-
-// ─── WIRE EVENTS ──────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto select first assigned class if available
-    const clsSel = document.getElementById('classSelect');
-    if (clsSel && clsSel.options.length > 1) {
-        clsSel.selectedIndex = 1;
-        onTeacherClassChange('ai');
-    }
-    const uClsSel = document.getElementById('uploadClassSelect');
-    if (uClsSel && uClsSel.options.length > 1) {
-        uClsSel.selectedIndex = 1;
-        onTeacherClassChange('upload');
-    }
-    updateTotal();
-});
-
-// ─── GENERATE AI ──────────────────────────────────────────────
-async function generateAI(e) {
-    e.preventDefault();
-    const total = parseInt(document.getElementById('totalBadge').textContent.replace('Total: ',''));
-    if (total===0) { showAlert('Enter at least 1 question quantity','error'); return; }
-    const formData = new FormData(e.target);
-    formData.append('method','ai');
-    document.getElementById('loadingBox').style.display='block';
-    document.getElementById('genBtn').disabled=true;
-    try {
-        const res  = await fetch('/teacher/create_test_v2',{method:'POST',body:formData});
-        const data = await res.json();
-        if (res.status === 429 || data.rate_limit) {
-            document.getElementById('loadingBox').style.display = 'none';
-            let seconds = data.retry_after || 60;
-            const btn = document.getElementById('genBtn');
-            btn.disabled = true;
-            let timer = setInterval(() => {
-                showAlert(`Server rate limit reached (13 req/min). Retrying available in ${seconds}s...`, 'error');
-                btn.innerHTML = `<i class="fas fa-hourglass-half fa-spin"></i> Retry in ${seconds}s`;
-                seconds--;
-                if (seconds < 0) {
-                    clearInterval(timer);
-                    btn.disabled = false;
-                    btn.innerHTML = `<i class="fas fa-magic"></i> Generate Paper`;
-                    showAlert('Rate limit reset. You can generate tests now.', 'success');
-                }
-            }, 1000);
-            return;
-        }
-        if (data.status==='success') {
-            if (data.mode==='print' && data.preview_url) {
-                showAlert(data.message+' — Opening print preview…','success');
-                setTimeout(()=>window.open(data.preview_url,'_blank'),600);
-            } else {
-                showAlert(data.message,'success');
-                e.target.reset(); updateTotal();
-                document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));
-                document.getElementById('mode-cbt').classList.add('selected');
-                document.getElementById('outputMode').value='cbt';
-                const cls = document.getElementById('classSelect').value;
-                const sub = document.getElementById('subjectSelect').value;
-                if (cls && sub) updateTestNumbers(cls, sub, 'testNoSelect');
-                else document.getElementById('testNoSelect').innerHTML = '<option value="">Select Class &amp; Subject first</option>';
-            }
-        } else { showAlert(data.message||'Generation failed','error'); }
-    } catch(err) { showAlert('Error: '+err.message,'error'); }
-    document.getElementById('loadingBox').style.display='none';
-    document.getElementById('genBtn').disabled=false;
-}
-
-// ─── UPLOAD CSV ──────────────────────────────────────────────
-async function uploadCSV(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    formData.append('method','upload');
-    try {
-        const res  = await fetch('/teacher/create_test_v2',{method:'POST',body:formData});
-        const data = await res.json();
-        showAlert(data.message, data.status);
-        if (data.status==='success') {
-            e.target.reset();
-            if (document.getElementById('englishFileName')) document.getElementById('englishFileName').textContent='Click to select English CSV file';
-            if (document.getElementById('hindiFileName')) document.getElementById('hindiFileName').textContent='Click to select Hindi CSV file';
-            document.getElementById('uploadTestNoSelect').innerHTML = '<option value="">Select Class &amp; Subject first</option>';
-        }
-    } catch(err) { showAlert('Error: '+err.message,'error'); }
-function handleDashboardClick(e) {
-    if (e) e.preventDefault();
-    if (window.parent && window.parent !== window && typeof window.parent.loadTab === 'function') {
-        window.parent.loadTab('dashboard');
-        return;
-    }
-    window.location.href = '/teacher/dashboard';
-}
-</script>
+    </script>
 </body>
+
 </html>
