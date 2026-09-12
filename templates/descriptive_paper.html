@@ -1,798 +1,2373 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Descriptive Paper Generator — RRB CBT</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-:root{
-  --primary:#4338ca;
-  --primary-dark:#312e81;
-  --primary-light:#eef2ff;
-  --accent:#10b981;
-  --accent-light:#ecfdf5;
-  --dark:#0f172a;
-  --slate:#475569;
-  --border:rgba(99, 102, 241, 0.15);
-  --shadow:0 10px 30px rgba(15, 23, 42, 0.06);
-  --radius:16px;
-}
-body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);min-height:100vh;color:#0f172a;}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Question Bank &amp; Descriptive Paper Generator — RRB CBT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-/* ── HEADER ────────────────────────────────────────────────────────── */
-.hdr{
-  background:linear-gradient(90deg, #0f172a, #1e1b4b);
-  color:#fff;
-  padding:14px 32px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  box-shadow:0 4px 20px rgba(15, 23, 42, 0.25);
-  position:sticky;
-  top:0;
-  z-index:100;
-}
-.hdr h1{font-size:1.25rem;font-weight:700;display:flex;align-items:center;gap:12px;letter-spacing:-0.3px;}
-.hdr h1 i{color:#818cf8;}
-.hdr-badge{background:rgba(99, 102, 241, 0.25);color:#c7d2fe;padding:4px 12px;border-radius:20px;font-size:0.75rem;font-weight:600;border:1px solid rgba(199, 210, 254, 0.3);}
-.hdr-links{display:flex;gap:12px;}
-.hdr-btn{
-  background:rgba(255,255,255,0.12);
-  color:#fff;
-  padding:8px 18px;
-  border-radius:25px;
-  text-decoration:none;
-  font-size:0.84rem;
-  font-weight:600;
-  border:1px solid rgba(255,255,255,0.25);
-  transition:all 0.2s ease;
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-}
-.hdr-btn:hover{background:rgba(255,255,255,0.25);transform:translateY(-1px);}
+    :root {
+      --primary: #4338ca;
+      --primary-dark: #312e81;
+      --primary-light: #eef2ff;
+      --accent: #10b981;
+      --accent-light: #ecfdf5;
+      --dark: #0f172a;
+      --slate: #475569;
+      --border: rgba(99, 102, 241, 0.15);
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+      --radius: 16px;
+    }
 
-/* ── LAYOUT ────────────────────────────────────────────────────────── */
-.wrap{
-  display:grid;
-  grid-template-columns:460px 1fr;
-  gap:24px;
-  max-width:1500px;
-  margin:24px auto;
-  padding:0 24px;
-}
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+      min-height: 100vh;
+      color: #0f172a;
+    }
 
-/* ── FORM PANEL ────────────────────────────────────────────────────── */
-.form-panel{display:flex;flex-direction:column;gap:18px;}
-.card{
-  background:#ffffff;
-  border-radius:var(--radius);
-  padding:22px 24px;
-  box-shadow:var(--shadow);
-  border:1px solid var(--border);
-  transition:transform 0.2s ease, box-shadow 0.2s ease;
-}
-.card-title{
-  font-size:0.98rem;
-  font-weight:700;
-  color:var(--primary-dark);
-  margin-bottom:16px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  border-bottom:2px solid var(--primary-light);
-  padding-bottom:10px;
-}
-.card-title i{color:var(--primary);font-size:1.1rem;}
+    /* ── HEADER ────────────────────────────────────────────────────────── */
+    .hdr {
+      background: linear-gradient(90deg, #0f172a, #1e1b4b);
+      color: #fff;
+      padding: 14px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.25);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-.fg{margin-bottom:14px;}
-.fg:last-child{margin-bottom:0;}
-.fg label{display:block;font-size:0.82rem;font-weight:600;color:var(--slate);margin-bottom:6px;}
-.fg label i{color:var(--primary);margin-right:6px;}
-.fg input, .fg select, .fg textarea{
-  width:100%;
-  padding:10px 14px;
-  border:1.5px solid #cbd5e1;
-  border-radius:12px;
-  font-family:'Poppins',sans-serif;
-  font-size:0.88rem;
-  transition:all 0.2s ease;
-  background:#f8fafc;
-  color:#0f172a;
-}
-.fg input:focus, .fg select:focus, .fg textarea:focus{
-  outline:none;
-  border-color:var(--primary);
-  box-shadow:0 0 0 4px rgba(99, 102, 241, 0.12);
-  background:#ffffff;
-}
-.fg textarea{min-height:75px;resize:vertical;}
-.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.fg-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+    .hdr h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      letter-spacing: -0.3px;
+    }
 
-/* ── QUESTION TYPE GRID (Testbook Style) ───────────────────────────── */
-.qtype-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.qt-card{
-  border:1.5px solid #e2e8f0;
-  border-radius:14px;
-  padding:12px 14px;
-  transition:all 0.25s ease;
-  background:#f8fafc;
-}
-.qt-card:focus-within, .qt-card:hover{
-  border-color:var(--primary);
-  background:var(--primary-light);
-  box-shadow:0 4px 12px rgba(99, 102, 241, 0.08);
-}
-.qt-label{
-  font-size:0.78rem;
-  font-weight:700;
-  color:#1e293b;
-  display:flex;
-  align-items:center;
-  gap:6px;
-  margin-bottom:8px;
-  line-height:1.3;
-}
-.qt-label i{color:var(--primary);font-size:0.85rem;}
-.qt-stepper{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-.qt-stepper button{
-  width:28px;
-  height:28px;
-  border-radius:8px;
-  border:1px solid #cbd5e1;
-  background:#fff;
-  color:var(--primary-dark);
-  font-weight:bold;
-  font-size:1rem;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  transition:background 0.2s;
-}
-.qt-stepper button:hover{background:var(--primary-light);border-color:var(--primary);}
-.qt-stepper input[type=number]{
-  flex:1;
-  width:100%;
-  padding:5px 8px;
-  border:1.5px solid #cbd5e1;
-  border-radius:8px;
-  font-family:'Poppins',sans-serif;
-  font-size:0.9rem;
-  font-weight:700;
-  text-align:center;
-  background:#ffffff;
-}
+    .hdr h1 i {
+      color: #818cf8;
+    }
 
-.total-summary{
-  background:linear-gradient(135deg, #1e1b4b, #312e81);
-  color:#ffffff;
-  border-radius:14px;
-  padding:12px 16px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-top:14px;
-  box-shadow:0 6px 16px rgba(49, 46, 129, 0.2);
-}
-.total-summary span{font-size:0.85rem;font-weight:600;}
-.total-chip{
-  background:#10b981;
-  color:#ffffff;
-  padding:4px 14px;
-  border-radius:20px;
-  font-size:0.9rem;
-  font-weight:700;
-}
+    .hdr-badge {
+      background: rgba(99, 102, 241, 0.25);
+      color: #c7d2fe;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid rgba(199, 210, 254, 0.3);
+    }
 
-/* Full-syllabus toggle */
-.toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.toggle-row label{font-size:0.82rem;font-weight:600;color:var(--slate);cursor:pointer;}
-.toggle-switch{position:relative;display:inline-block;width:40px;height:22px;}
-.toggle-switch input{opacity:0;width:0;height:0;}
-.slider-round{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#cbd5e1;border-radius:22px;transition:.3s;}
-.slider-round::before{position:absolute;content:'';height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}
-.toggle-switch input:checked + .slider-round{background:var(--primary);}
-.toggle-switch input:checked + .slider-round::before{transform:translateX(18px);}
+    .hdr-links {
+      display: flex;
+      gap: 12px;
+    }
 
-/* Image upload */
-.img-drop{
-  border:2px dashed var(--primary);
-  border-radius:12px;
-  padding:16px;
-  text-align:center;
-  background:var(--primary-light);
-  cursor:pointer;
-  transition:all 0.2s ease;
-}
-.img-drop:hover{background:#e0e7ff;}
-.img-drop i{font-size:1.6rem;color:var(--primary);display:block;margin-bottom:4px;}
-.img-drop p{font-size:0.82rem;color:#334155;font-weight:600;}
-.img-drop small{color:#64748b;font-size:0.75rem;}
-.img-preview{max-width:100%;max-height:120px;border-radius:8px;margin-top:8px;}
+    .hdr-btn {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-size: 0.84rem;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-/* Generate button */
-.gen-btn{
-  width:100%;
-  background:linear-gradient(90deg, #4338ca, #6366f1);
-  color:#fff;
-  border:none;
-  padding:14px;
-  border-radius:14px;
-  font-size:1rem;
-  font-weight:700;
-  font-family:'Poppins',sans-serif;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  transition:all 0.2s ease;
-  box-shadow:0 12px 24px rgba(67, 56, 202, 0.25);
-}
-.gen-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 16px 32px rgba(67, 56, 202, 0.35);}
-.gen-btn:disabled{opacity:.55;cursor:not-allowed;}
+    .hdr-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
 
-/* Alert */
-.alert{padding:12px 16px;border-radius:12px;margin-bottom:14px;display:none;font-size:0.88rem;}
-.alert-err{background:#fef2f2;border-left:4px solid #ef4444;color:#991b1b;}
-.alert-ok{background:#ecfdf5;border-left:4px solid #10b981;color:#065f46;}
+    /* ── LAYOUT ────────────────────────────────────────────────────────── */
+    .wrap {
+      display: grid;
+      grid-template-columns: 520px 1fr;
+      gap: 24px;
+      max-width: 1650px;
+      margin: 16px auto;
+      padding: 0 24px;
+      align-items: start;
+    }
 
-/* PREVIEW PANEL */
-.preview-panel{position:sticky;top:24px;height:calc(100vh - 90px);display:flex;flex-direction:column;}
-.preview-toolbar{
-  background:#ffffff;
-  border-radius:var(--radius) var(--radius) 0 0;
-  padding:14px 24px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  border-bottom:2px solid var(--primary-light);
-  box-shadow:var(--shadow);
-  flex-shrink:0;
-}
-.preview-toolbar h3{font-size:1rem;font-weight:700;color:var(--dark);flex:1;display:flex;align-items:center;gap:8px;}
-.tb-btn{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:9px 20px;
-  border:none;
-  border-radius:25px;
-  font-family:'Poppins',sans-serif;
-  font-size:0.84rem;
-  font-weight:700;
-  cursor:pointer;
-  transition:all 0.2s ease;
-  text-decoration:none;
-}
-.tb-print{background:#10b981;color:#fff;}
-.tb-print:hover:not(:disabled){background:#059669;transform:translateY(-1px);}
-.tb-doc{background:#2563eb;color:#fff;}
-.tb-doc:hover:not(:disabled){background:#1d4ed8;transform:translateY(-1px);}
-.tb-disabled{background:#e2e8f0;color:#94a3b8;cursor:not-allowed;}
-.preview-frame{flex:1;border:none;background:#ffffff;border-radius:0 0 var(--radius) var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+    /* Remove default spinner arrows for clean steppers */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
 
-/* LOADING OVERLAY */
-#loadingOverlay{display:none;position:fixed;inset:0;background:rgba(15, 23, 42, 0.75);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;}
-#loadingOverlay.on{display:flex;}
-.loader-box{background:#fff;border-radius:24px;padding:40px 50px;text-align:center;box-shadow:0 25px 70px rgba(0,0,0,0.4);}
-.loader-box .spin{width:52px;height:52px;border:4px solid #e2e8f0;border-top-color:var(--primary);border-radius:50%;animation:sp 0.9s linear infinite;margin:0 auto 18px;}
-@keyframes sp{100%{transform:rotate(360deg)}}
-.loader-box p{color:#0f172a;font-weight:700;font-size:1.1rem;}
-.loader-box small{color:#64748b;font-size:0.85rem;}
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
 
-/* RESPONSIVE */
-@media(max-width:1100px){
-  .wrap{grid-template-columns:1fr;}
-  .preview-panel{position:static;height:650px;}
-}
-@media(max-width:640px){.fg-row,.fg-row3,.qtype-grid{grid-template-columns:1fr;}}
-</style>
+    /* ── FORM PANEL ────────────────────────────────────────────────────── */
+    .form-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: all 0.25s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+      border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    .card-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1.5px solid #f1f5f9;
+      padding-bottom: 12px;
+    }
+
+    .card-title i {
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 6px 8px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      border: 1px solid #c7d2fe;
+    }
+
+    .fg {
+      margin-bottom: 14px;
+    }
+
+    .fg:last-child {
+      margin-bottom: 0;
+    }
+
+    .fg label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #475569;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .fg label i {
+      color: var(--primary);
+      margin-right: 6px;
+    }
+
+    .fg input,
+    .fg select,
+    .fg textarea {
+      width: 100%;
+      padding: 11px 15px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+
+    .fg input:focus,
+    .fg select:focus,
+    .fg textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.14);
+      background: #ffffff;
+    }
+
+    .fg textarea {
+      min-height: 75px;
+      resize: vertical;
+    }
+
+    .fg-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .fg-row3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* ── QUESTION TYPE GRID (Testbook Style) ───────────────────────────── */
+    .qtype-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .qt-card {
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 10px 12px;
+      transition: all 0.25s ease;
+      background: #f8fafc;
+      overflow: hidden;
+    }
+
+    .qt-card:focus-within,
+    .qt-card:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+    }
+
+    .qt-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .qt-label i {
+      color: var(--primary);
+      font-size: 0.88rem;
+    }
+
+    .qt-controls-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .ungraded-mode .qt-controls-row {
+      grid-template-columns: 1fr !important;
+    }
+
+    .ungraded-mode .qt-ctrl-marks {
+      display: none !important;
+    }
+
+    .qt-ctrl-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .qt-ctrl-lbl {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    .qt-stepper {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      width: 100%;
+    }
+
+    .qt-stepper button {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid #c7d2fe;
+      background: #e0e7ff;
+      color: #3730a3;
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .qt-stepper button:hover {
+      background: #4f46e5;
+      color: #ffffff;
+      border-color: #3730a3;
+      transform: scale(1.05);
+    }
+
+    .qt-stepper input[type=number] {
+      flex: 1;
+      width: 100%;
+      min-width: 0;
+      padding: 3px 2px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 800;
+      text-align: center;
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    .total-summary {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);
+      color: #ffffff;
+      border-radius: 14px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+      box-shadow: 0 10px 25px rgba(30, 27, 75, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .total-summary span {
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .total-chip {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      padding: 5px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    /* Full-syllabus toggle */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .toggle-row label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--slate);
+      cursor: pointer;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider-round {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #cbd5e1;
+      border-radius: 22px;
+      transition: .3s;
+    }
+
+    .slider-round::before {
+      position: absolute;
+      content: '';
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: .3s;
+    }
+
+    .toggle-switch input:checked+.slider-round {
+      background: var(--primary);
+    }
+
+    .toggle-switch input:checked+.slider-round::before {
+      transform: translateX(18px);
+    }
+
+    /* Image upload */
+    .img-drop {
+      border: 2px dashed var(--primary);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      background: var(--primary-light);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .img-drop:hover {
+      background: #e0e7ff;
+    }
+
+    .img-drop i {
+      font-size: 1.6rem;
+      color: var(--primary);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .img-drop p {
+      font-size: 0.82rem;
+      color: #334155;
+      font-weight: 600;
+    }
+
+    .img-drop small {
+      color: #64748b;
+      font-size: 0.75rem;
+    }
+
+    .img-preview {
+      max-width: 100%;
+      max-height: 120px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+
+    /* Generate button */
+    .gen-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+      color: #ffffff;
+      border: none;
+      padding: 16px 28px;
+      border-radius: 16px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      font-family: 'Poppins', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+      box-shadow: 0 12px 30px rgba(79, 70, 229, 0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .gen-btn:hover:not(:disabled) {
+      transform: translateY(-3px) scale(1.01);
+      box-shadow: 0 18px 40px rgba(79, 70, 229, 0.45);
+      background: linear-gradient(135deg, #4338ca 0%, #2e2a85 100%);
+    }
+
+    .gen-btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Alert */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      display: none;
+      font-size: 0.88rem;
+    }
+
+    .alert-err {
+      background: #fef2f2;
+      border-left: 4px solid #ef4444;
+      color: #991b1b;
+    }
+
+    .alert-ok {
+      background: #ecfdf5;
+      border-left: 4px solid #10b981;
+      color: #065f46;
+    }
+
+    /* PREVIEW PANEL */
+    .preview-panel {
+      position: sticky;
+      top: 16px;
+      height: calc(100vh - 50px);
+      display: flex;
+      flex-direction: column;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      background: #ffffff;
+      transition: all 0.3s ease;
+    }
+
+    .preview-panel.full-window {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 99999 !important;
+      background: #ffffff !important;
+      border-radius: 0 !important;
+    }
+
+    .preview-panel.full-window .preview-toolbar {
+      border-radius: 0 !important;
+      padding: 12px 24px !important;
+      background: #1e1b4b !important;
+      color: #ffffff !important;
+    }
+
+    .preview-panel.full-window .preview-toolbar h3 {
+      color: #ffffff !important;
+    }
+
+    .preview-toolbar {
+      background: #ffffff;
+      border-radius: 0;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 2px solid var(--primary-light);
+      box-shadow: var(--shadow);
+      flex-shrink: 0;
+    }
+
+    .preview-toolbar h3 {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--dark);
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .preview-frame {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      border: none;
+      background: #ffffff;
+    }
+
+    .tb-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tb-btn-full {
+      background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+      color: #3730a3;
+      border: 1px solid #a5b4fc !important;
+      box-shadow: 0 2px 6px rgba(55, 48, 163, 0.1);
+    }
+
+    .tb-btn-full:hover {
+      background: #3730a3 !important;
+      color: #ffffff !important;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(55, 48, 163, 0.25);
+    }
+
+    .tb-btn-print {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+    }
+
+    .tb-btn-print:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
+      background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+    }
+
+    .tb-btn-doc {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
+    }
+
+    .tb-btn-doc:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(22, 163, 74, 0.35);
+      background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+    }
+
+    .tb-btn:disabled,
+    .tb-disabled {
+      opacity: 0.5;
+      cursor: not-allowed !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* ── CIRCULAR PROGRESS OVERLAY ────────────────────────────────────── */
+    .c-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .c-modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .c-modal-card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 32px 40px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      border: 1px solid #e2e8f0;
+      width: 350px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .c-progress-wrapper {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      margin-bottom: 16px;
+    }
+
+    .c-progress-ring-fg {
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+      transition: stroke-dashoffset 0.3s ease;
+      stroke-linecap: round;
+    }
+
+    .c-logo-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.18);
+      border: 1px solid #e0e7ff;
+    }
+
+    .rrb-pulse-logo {
+      max-width: 50px;
+      max-height: 50px;
+      object-fit: contain;
+      animation: rrbPulse 1.8s infinite ease-in-out;
+    }
+
+    @keyframes rrbPulse {
+      0% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 3px rgba(79, 70, 229, 0.3));
+      }
+
+      50% {
+        transform: scale(1.12);
+        filter: drop-shadow(0 0 14px rgba(79, 70, 229, 0.6));
+      }
+
+      100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 3px rgba(79, 70, 229, 0.3));
+      }
+    }
+
+    .c-percentage {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #4f46e5;
+      margin-bottom: 2px;
+      line-height: 1;
+    }
+
+    .c-status-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+
+    .c-status-sub {
+      font-size: 0.78rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- LOADING OVERLAY -->
-<div id="loadingOverlay">
-  <div class="loader-box">
-    <div class="spin"></div>
-    <p>Generating Descriptive Question Paper…</p>
-    <small>AI is framing questions and solution layout. Please wait.</small>
-  </div>
-</div>
-
-<!-- HEADER -->
-<div class="hdr">
-  <h1>
-    <i class="fas fa-pen-nib"></i> Descriptive Question Paper Generator
-    <span class="hdr-badge">Testbook AI Engine</span>
-  </h1>
-  <div class="hdr-links">
-    <a href="javascript:void(0)" onclick="handleDashboardClick(event)" class="hdr-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
-  </div>
-</div>
-
-<div class="wrap">
-
-  <!-- ── FORM PANEL ─────────────────────────────────────────────── -->
-  <div class="form-panel">
-
-    <div id="alertBox" class="alert"></div>
-
-    <!-- Paper Identity -->
-    <div class="card">
-      <div class="card-title"><i class="fas fa-file-signature"></i> Paper Identity & Subject Setup</div>
-
-      {% if is_admin %}
-      <div class="fg-row">
-        <div class="fg">
-          <label><i class="fas fa-layer-group"></i>Class</label>
-          <input type="text" id="classInput" placeholder="e.g. 11, 12, X" list="classSuggestions">
-          <datalist id="classSuggestions">
-            {% for p in all_pairs if is_admin %}
-            <option value="{{ p.class }}">
-            {% endfor %}
-          </datalist>
-        </div>
-        <div class="fg">
-          <label><i class="fas fa-book-open"></i>Subject</label>
-          <input type="text" id="subjectInput" placeholder="e.g. Computer Science" list="subjectSuggestions">
-          <datalist id="subjectSuggestions">
-            {% for p in all_pairs if is_admin %}
-            <option value="{{ p.subject }}">
-            {% endfor %}
-          </datalist>
+  <!-- CIRCULAR PROCESSING OVERLAY WITH RRB LOGO -->
+  <div id="circularLoadingOverlay" class="c-modal-overlay">
+    <div class="c-modal-card">
+      <div class="c-progress-wrapper">
+        <svg class="c-progress-ring" width="140" height="140">
+          <circle class="c-progress-ring-bg" cx="70" cy="70" r="60" stroke="#e0e7ff" stroke-width="8"
+            fill="transparent" />
+          <circle id="cProgressRing" class="c-progress-ring-fg" cx="70" cy="70" r="60" stroke="#4f46e5" stroke-width="8"
+            fill="transparent" stroke-dasharray="376.99" stroke-dashoffset="376.99" />
+        </svg>
+        <div class="c-logo-center">
+          <img src="/static/logo.png" id="cModalLogo" alt="RRB Logo" class="rrb-pulse-logo"
+            onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/graduation-cap.svg';">
         </div>
       </div>
-      {% else %}
-      <div class="fg-row">
-        <div class="fg">
-          <label><i class="fas fa-layer-group"></i>Class</label>
-          <select id="classInput" onchange="filterSubjects(this.value)">
-            <option value="">Select Class</option>
-            {% set seen_cls = [] %}
-            {% for a in assignments %}
+      <div class="c-percentage" id="cProgressPercent">0%</div>
+      <div class="c-status-title" id="cProgressStatus">Initializing AI Engine...</div>
+      <div class="c-status-sub" id="cProgressSub">Building paper blueprint and structure...</div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <h1>
+      <i class="fas fa-layer-group" id="headerIcon"></i> <span id="headerTitle">Question Bank &amp; Paper Generator</span>
+      <span class="hdr-badge" id="headerBadge">RRB CBT AI Engine</span>
+    </h1>
+    <div class="hdr-links">
+      <a href="javascript:void(0)" onclick="handleDashboardClick(event)" class="hdr-btn"><i
+          class="fas fa-arrow-left"></i> Dashboard</a>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- ── FORM PANEL ─────────────────────────────────────────────── -->
+    <div class="form-panel">
+
+      <div id="alertBox" class="alert"></div>
+
+      <!-- Paper Identity -->
+      <div class="card">
+        <div class="card-title"><i class="fas fa-file-signature"></i> Paper Identity &amp; Subject Setup</div>
+
+        <div class="fg-row" style="margin-bottom:14px;">
+          <div class="fg">
+            <label><i class="fas fa-file-invoice"></i>Paper Type</label>
+            <select id="paperType" onchange="onPaperTypeChange(this.value)">
+              <option value="Descriptive Paper">Descriptive Paper</option>
+              <option value="DPP">DPP</option>
+              <option value="Practice Set">Practice Set</option>
+              <option value="Question Bank">Question Bank</option>
+              <option value="Worksheet">Worksheet</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label><i class="fas fa-university"></i>Education Board</label>
+            <select id="boardSelect" onchange="onBoardOrClassChange()">
+              <option value="CBSE" selected>CBSE (NCERT)</option>
+              <option value="ICSE">ICSE / CISCE</option>
+              <option value="State / Other Board">State / Other Board</option>
+            </select>
+          </div>
+        </div>
+
+        {% if is_admin %}
+        <div class="fg-row">
+          <div class="fg">
+            <label><i class="fas fa-layer-group"></i>Class</label>
+            <input type="text" id="classInput" placeholder="e.g. 1 to 12" list="classSuggestions"
+              onchange="onAdminClassChange(this.value)">
+            <datalist id="classSuggestions">
+              <option value="1">Class 1</option>
+              <option value="2">Class 2</option>
+              <option value="3">Class 3</option>
+              <option value="4">Class 4</option>
+              <option value="5">Class 5</option>
+              <option value="6">Class 6</option>
+              <option value="7">Class 7</option>
+              <option value="8">Class 8</option>
+              <option value="9">Class 9</option>
+              <option value="10">Class 10</option>
+              <option value="11">Class 11</option>
+              <option value="12">Class 12</option>
+            </datalist>
+          </div>
+          <div class="fg">
+            <label><i class="fas fa-cubes"></i>Section</label>
+            <select id="sectionInput">
+              <option value="A">Section A</option>
+              <option value="B">Section B</option>
+              <option value="C">Section C</option>
+              <option value="D">Section D</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label><i class="fas fa-book-open"></i>Subject</label>
+            <input type="text" id="subjectInput" placeholder="e.g. Science, Physics, Mathematics"
+              list="subjectSuggestions" onchange="onSubjectChange(this.value)">
+            <datalist id="subjectSuggestions">
+            </datalist>
+          </div>
+        </div>
+        {% else %}
+        <div class="fg-row">
+          <div class="fg">
+            <label><i class="fas fa-layer-group"></i>Class</label>
+            <select id="classInput" onchange="filterSubjects(this.value)">
+              <option value="">Select Class</option>
+              {% set seen_cls = [] %}
+              {% for a in assignments %}
               {% if a.class not in seen_cls %}
-              <option value="{{ a.class }}">{{ a.class }}</option>
+              <option value="{{ a.class }}">Class {{ a.class }}</option>
               {% set _ = seen_cls.append(a.class) %}
               {% endif %}
-            {% endfor %}
-          </select>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="fg">
+            <label><i class="fas fa-cubes"></i>Section</label>
+            <select id="sectionInput">
+              <option value="A">Section A</option>
+              <option value="B">Section B</option>
+              <option value="C">Section C</option>
+              <option value="D">Section D</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label><i class="fas fa-book-open"></i>Subject</label>
+            <select id="subjectInput" onchange="onSubjectChange(this.value)">
+              <option value="">Select Subject</option>
+            </select>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="fg">
+          <label><i class="fas fa-bookmark"></i>Topics / Chapters</label>
+          <div class="toggle-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="fullSyllabusToggle" onchange="toggleTopics(this.checked)">
+              <span class="slider-round"></span>
+            </label>
+            <label for="fullSyllabusToggle">Full / Complete Syllabus</label>
+          </div>
+          <textarea id="topicsInput"
+            placeholder="e.g. Chapter 1: Chemical Reactions, Chapter 2: Acids and Bases&#10;Type topics or click on the syllabus chapters below to auto-add"></textarea>
+        </div>
+
+        <!-- Dynamic Curriculum Chapter & Topic Selector Box -->
+        <div id="curriculumBox"
+          style="margin-top:12px;display:none;background:#f8fafc;border:1.5px solid #c7d2fe;border-radius:12px;padding:12px 14px;">
+          <div
+            style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+            <div style="font-size:0.84rem;font-weight:700;color:#312e81;display:flex;align-items:center;gap:6px;">
+              <i class="fas fa-book-reader" style="color:#4f46e5;"></i> <span id="curriculumTitle">NCERT / Board
+                Curriculum (Class 1-12)</span>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button type="button"
+                style="background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;padding:4px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"
+                onclick="selectAllCurriculumChapters()"><i class="fas fa-check-double"></i> Add All</button>
+              <button type="button"
+                style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;padding:4px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"
+                onclick="clearCurriculumTopics()"><i class="fas fa-times"></i> Clear</button>
+            </div>
+          </div>
+          <input type="text" id="chapterFilterInput" placeholder="🔍 Filter chapters or topics..."
+            style="width:100%;padding:6px 10px;font-size:0.8rem;border:1px solid #cbd5e1;border-radius:8px;margin-bottom:8px;background:#fff;"
+            oninput="filterCurriculumChips(this.value)">
+          <div id="curriculumChips" style="max-height:180px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:6px;">
+          </div>
+        </div>
+
+        <div class="fg-row3" id="examMetaRow">
+          <div class="fg" id="examTypeGroup">
+            <label><i class="fas fa-clipboard-list"></i>Exam Type</label>
+            <select id="examType">
+              <option>Unit Test</option>
+              <option>Half Yearly</option>
+              <option>Pre-Board</option>
+              <option>Yearly</option>
+              <option>Practice Test</option>
+              <option>Term 1</option>
+              <option>Term 2</option>
+            </select>
+          </div>
+          <div class="fg" id="durationGroup">
+            <label><i class="far fa-clock"></i>Duration</label>
+            <input type="text" id="durationInput" value="3 Hours" placeholder="e.g. 3 Hours">
+          </div>
+          <div class="fg" id="maxMarksGroup">
+            <label><i class="fas fa-award"></i>Total Marks</label>
+            <select id="maxMarksSelect" onchange="onTotalMarksSelectChange(this.value)">
+              <option value="30">30 Marks</option>
+              <option value="50" selected>50 Marks</option>
+            </select>
+            <input type="number" id="maxMarksInput" value="50" min="1" style="display:none;">
+          </div>
+        </div>
+      </div>
+
+      <!-- School Info -->
+      <div class="card">
+        <div class="card-title"><i class="fas fa-university"></i> School Header Information</div>
+        <div class="fg">
+          <label><i class="fas fa-school"></i>School Name</label>
+          <input type="text" id="schoolName" value="{{ school_name }}">
         </div>
         <div class="fg">
-          <label><i class="fas fa-book-open"></i>Subject</label>
-          <select id="subjectInput">
-            <option value="">Select Subject</option>
-          </select>
-        </div>
-      </div>
-      {% endif %}
-
-      <div class="fg">
-        <label><i class="fas fa-bookmark"></i>Topics / Chapters</label>
-        <div class="toggle-row">
-          <label class="toggle-switch">
-            <input type="checkbox" id="fullSyllabusToggle" onchange="toggleTopics(this.checked)">
-            <span class="slider-round"></span>
-          </label>
-          <label for="fullSyllabusToggle">Full / Complete Syllabus</label>
-        </div>
-        <textarea id="topicsInput" placeholder="e.g. Chapter 1: Networking, Chapter 2: Python Fundamentals&#10;Separate topics with commas or new lines"></textarea>
-      </div>
-
-      <div class="fg-row3">
-        <div class="fg">
-          <label><i class="fas fa-clipboard-list"></i>Exam Type</label>
-          <select id="examType">
-            <option>Unit Test</option>
-            <option>Half Yearly</option>
-            <option>Pre-Board</option>
-            <option>Yearly</option>
-            <option>Practice Test</option>
-            <option>Term 1</option>
-            <option>Term 2</option>
-          </select>
+          <label><i class="fas fa-map-marked-alt"></i>School Address</label>
+          <input type="text" id="schoolAddress" value="{{ school_address }}" placeholder="Full address (optional)">
         </div>
         <div class="fg">
-          <label><i class="far fa-clock"></i>Duration</label>
-          <input type="text" id="durationInput" value="3 Hours" placeholder="e.g. 3 Hours">
+          <label><i class="fas fa-calendar-alt"></i>Academic Session</label>
+          <input type="text" id="academicSession" value="{{ academic_session }}" placeholder="e.g. 2024–25">
+        </div>
+      </div>
+
+      <!-- Question Types Grid (Expanded with Fill in Blanks & True/False) -->
+      <div class="card">
+        <div class="card-title"
+          style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <span><i class="fas fa-th-list"></i> Questions Per Type & Blueprint</span>
+          <div id="blueprintBadge">
+            <span
+              style="background:#dcfce7;color:#166534;font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid #86efac;display:inline-flex;align-items:center;gap:5px;">
+              <i class="fas fa-shield-alt"></i> Official Board Blueprint Active
+            </span>
+          </div>
+        </div>
+
+        <!-- Auto Official / Manual Blueprint Toggle Switch -->
+        <div
+          style="background:linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);border:1.5px solid #86efac;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <label class="toggle-switch" style="margin:0;">
+              <input type="checkbox" id="autoBlueprintToggle" checked onchange="onAutoBlueprintToggle(this.checked)">
+              <span class="slider-round"></span>
+            </label>
+            <div>
+              <div style="font-weight:700;font-size:0.88rem;color:#0f172a;" id="blueprintToggleTitle">
+                <i class="fas fa-magic" style="color:#10b981;margin-right:4px;"></i> Auto Official Blueprint Mode
+                (Latest Board Pattern)
+              </div>
+              <div style="font-size:0.73rem;color:#475569;" id="blueprintToggleSub">
+                Auto blueprint ON: Official latest board pattern is active &amp; buttons are disabled. Turn toggle OFF
+                to manually enter questions &amp; marks.
+              </div>
+            </div>
+          </div>
+          <button type="button" id="refreshBlueprintBtn" onclick="applyOfficialBlueprint(true)"
+            style="background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;padding:5px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+            <i class="fas fa-sync-alt"></i> Re-apply Official Pattern
+          </button>
+        </div>
+
+        <div class="qtype-grid">
+          <div class="qt-card">
+            <div class="qt-label"><i class="fas fa-list-ul"></i>MCQ</div>
+            <div class="qt-controls-row">
+              <div class="qt-ctrl-group qt-ctrl-count">
+                <span class="qt-ctrl-lbl">Questions</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('mcqCount', -1, 0)">-</button>
+                  <input type="number" id="mcqCount" min="0" max="200" data-normal-max="40" value="0" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('mcqCount', 1, 0)">+</button>
+                </div>
+              </div>
+              <div class="qt-ctrl-group qt-ctrl-marks">
+                <span class="qt-ctrl-lbl">Marks / Q</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('mcqMarks', -1, 1)">-</button>
+                  <input type="number" id="mcqMarks" min="1" max="20" value="1" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('mcqMarks', 1, 1)">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="qt-card">
+            <div class="qt-label"><i class="fas fa-pen-nib"></i>Fill in Blanks</div>
+            <div class="qt-controls-row">
+              <div class="qt-ctrl-group qt-ctrl-count">
+                <span class="qt-ctrl-lbl">Questions</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('fibCount', -1, 0)">-</button>
+                  <input type="number" id="fibCount" min="0" max="200" data-normal-max="30" value="0" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('fibCount', 1, 0)">+</button>
+                </div>
+              </div>
+              <div class="qt-ctrl-group qt-ctrl-marks">
+                <span class="qt-ctrl-lbl">Marks / Q</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('fibMarks', -1, 1)">-</button>
+                  <input type="number" id="fibMarks" min="1" max="20" value="1" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('fibMarks', 1, 1)">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="qt-card">
+            <div class="qt-label"><i class="fas fa-toggle-on"></i>True / False</div>
+            <div class="qt-controls-row">
+              <div class="qt-ctrl-group qt-ctrl-count">
+                <span class="qt-ctrl-lbl">Questions</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('tfCount', -1, 0)">-</button>
+                  <input type="number" id="tfCount" min="0" max="200" data-normal-max="30" value="0" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('tfCount', 1, 0)">+</button>
+                </div>
+              </div>
+              <div class="qt-ctrl-group qt-ctrl-marks">
+                <span class="qt-ctrl-lbl">Marks / Q</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('tfMarks', -1, 1)">-</button>
+                  <input type="number" id="tfMarks" min="1" max="20" value="1" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('tfMarks', 1, 1)">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="qt-card">
+            <div class="qt-label"><i class="fas fa-balance-scale-right"></i>Assertion-Reason</div>
+            <div class="qt-controls-row">
+              <div class="qt-ctrl-group qt-ctrl-count">
+                <span class="qt-ctrl-lbl">Questions</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('arCount', -1, 0)">-</button>
+                  <input type="number" id="arCount" min="0" max="200" data-normal-max="20" value="0" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('arCount', 1, 0)">+</button>
+                </div>
+              </div>
+              <div class="qt-ctrl-group qt-ctrl-marks">
+                <span class="qt-ctrl-lbl">Marks / Q</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('arMarks', -1, 1)">-</button>
+                  <input type="number" id="arMarks" min="1" max="20" value="1" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('arMarks', 1, 1)">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="qt-card">
+            <div class="qt-label"><i class="fas fa-comment-alt"></i>Very Short</div>
+            <div class="qt-controls-row">
+              <div class="qt-ctrl-group qt-ctrl-count">
+                <span class="qt-ctrl-lbl">Questions</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('vsCount', -1, 0)">-</button>
+                  <input type="number" id="vsCount" min="0" max="200" data-normal-max="20" value="0" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('vsCount', 1, 0)">+</button>
+                </div>
+              </div>
+              <div class="qt-ctrl-group qt-ctrl-marks">
+                <span class="qt-ctrl-lbl">Marks / Q</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('vsMarks', -1, 1)">-</button>
+                  <input type="number" id="vsMarks" min="1" max="20" value="2" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('vsMarks', 1, 1)">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="qt-card">
+            <div class="qt-label"><i class="fas fa-align-left"></i>Short Answer</div>
+            <div class="qt-controls-row">
+              <div class="qt-ctrl-group qt-ctrl-count">
+                <span class="qt-ctrl-lbl">Questions</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('shCount', -1, 0)">-</button>
+                  <input type="number" id="shCount" min="0" max="200" data-normal-max="15" value="0" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('shCount', 1, 0)">+</button>
+                </div>
+              </div>
+              <div class="qt-ctrl-group qt-ctrl-marks">
+                <span class="qt-ctrl-lbl">Marks / Q</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('shMarks', -1, 1)">-</button>
+                  <input type="number" id="shMarks" min="1" max="20" value="3" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('shMarks', 1, 1)">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="qt-card">
+            <div class="qt-label"><i class="fas fa-align-justify"></i>Long Answer</div>
+            <div class="qt-controls-row">
+              <div class="qt-ctrl-group qt-ctrl-count">
+                <span class="qt-ctrl-lbl">Questions</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('lgCount', -1, 0)">-</button>
+                  <input type="number" id="lgCount" min="0" max="200" data-normal-max="10" value="0" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('lgCount', 1, 0)">+</button>
+                </div>
+              </div>
+              <div class="qt-ctrl-group qt-ctrl-marks">
+                <span class="qt-ctrl-lbl">Marks / Q</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('lgMarks', -1, 1)">-</button>
+                  <input type="number" id="lgMarks" min="1" max="20" value="5" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('lgMarks', 1, 1)">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="qt-card">
+            <div class="qt-label"><i class="fas fa-microscope"></i>Case Study</div>
+            <div class="qt-controls-row">
+              <div class="qt-ctrl-group qt-ctrl-count">
+                <span class="qt-ctrl-lbl">Questions</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('csCount', -1, 0)">-</button>
+                  <input type="number" id="csCount" min="0" max="200" data-normal-max="5" value="0" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('csCount', 1, 0)">+</button>
+                </div>
+              </div>
+              <div class="qt-ctrl-group qt-ctrl-marks">
+                <span class="qt-ctrl-lbl">Marks / Q</span>
+                <div class="qt-stepper">
+                  <button type="button" onclick="stepVal('csMarks', -1, 1)">-</button>
+                  <input type="number" id="csMarks" min="1" max="20" value="4" oninput="updateTotal()">
+                  <button type="button" onclick="stepVal('csMarks', 1, 1)">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="total-summary">
+          <span><i class="fas fa-calculator" style="margin-right:6px;"></i> Total Blueprint Questions</span>
+          <span id="totalBadge" class="total-chip">0 Questions</span>
+        </div>
+      </div>
+
+      <!-- AI Instructions & Image -->
+      <div class="card">
+        <div class="card-title"><i class="fas fa-robot"></i> AI Instructions & Reference Diagram</div>
+        <div class="fg">
+          <label><i class="fas fa-magic"></i>Remarks / Custom AI Guidelines</label>
+          <textarea id="remarksInput"
+            placeholder="Guide AI paper setter — e.g.:&#10;• Focus 40% on Electrochemistry&#10;• Include PYQ-style board questions&#10;• Include diagram-based questions"></textarea>
         </div>
         <div class="fg">
-          <label><i class="fas fa-award"></i>Max Marks</label>
-          <input type="number" id="maxMarksInput" value="100" min="1">
-        </div>
-      </div>
-    </div>
-
-    <!-- School Info -->
-    <div class="card">
-      <div class="card-title"><i class="fas fa-university"></i> School Header Information</div>
-      <div class="fg">
-        <label><i class="fas fa-school"></i>School Name</label>
-        <input type="text" id="schoolName" value="{{ school_name }}">
-      </div>
-      <div class="fg">
-        <label><i class="fas fa-map-marked-alt"></i>School Address</label>
-        <input type="text" id="schoolAddress" value="{{ school_address }}" placeholder="Full address (optional)">
-      </div>
-      <div class="fg">
-        <label><i class="fas fa-calendar-alt"></i>Academic Session</label>
-        <input type="text" id="academicSession" value="{{ academic_session }}" placeholder="e.g. 2024–25">
-      </div>
-    </div>
-
-    <!-- Question Types Grid (Expanded with Fill in Blanks & True/False) -->
-    <div class="card">
-      <div class="card-title"><i class="fas fa-th-list"></i> Questions Per Type & Blueprint</div>
-      
-      <div class="qtype-grid">
-        <div class="qt-card">
-          <div class="qt-label"><i class="fas fa-list-ul"></i>MCQ (1 mark)</div>
-          <div class="qt-stepper">
-            <button type="button" onclick="stepVal('mcqCount', -1)">-</button>
-            <input type="number" id="mcqCount" min="0" max="40" value="0" oninput="updateTotal()">
-            <button type="button" onclick="stepVal('mcqCount', 1)">+</button>
+          <label><i class="fas fa-image"></i>Optional Reference Image</label>
+          <div class="img-drop" onclick="document.getElementById('imgFileInput').click()" id="imgDrop">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p id="imgDropLabel">Click to upload an image / diagram</p>
+            <small>Base paper questions on this visual graph or diagram</small>
           </div>
-        </div>
-
-        <div class="qt-card">
-          <div class="qt-label"><i class="fas fa-pen-nib"></i>Fill in Blanks (1 mark)</div>
-          <div class="qt-stepper">
-            <button type="button" onclick="stepVal('fibCount', -1)">-</button>
-            <input type="number" id="fibCount" min="0" max="30" value="0" oninput="updateTotal()">
-            <button type="button" onclick="stepVal('fibCount', 1)">+</button>
-          </div>
-        </div>
-
-        <div class="qt-card">
-          <div class="qt-label"><i class="fas fa-toggle-on"></i>True / False (1 mark)</div>
-          <div class="qt-stepper">
-            <button type="button" onclick="stepVal('tfCount', -1)">-</button>
-            <input type="number" id="tfCount" min="0" max="30" value="0" oninput="updateTotal()">
-            <button type="button" onclick="stepVal('tfCount', 1)">+</button>
-          </div>
-        </div>
-
-        <div class="qt-card">
-          <div class="qt-label"><i class="fas fa-balance-scale-right"></i>Assertion-Reason (1 mark)</div>
-          <div class="qt-stepper">
-            <button type="button" onclick="stepVal('arCount', -1)">-</button>
-            <input type="number" id="arCount" min="0" max="20" value="0" oninput="updateTotal()">
-            <button type="button" onclick="stepVal('arCount', 1)">+</button>
-          </div>
-        </div>
-
-        <div class="qt-card">
-          <div class="qt-label"><i class="fas fa-comment-alt"></i>Very Short (2 marks)</div>
-          <div class="qt-stepper">
-            <button type="button" onclick="stepVal('vsCount', -1)">-</button>
-            <input type="number" id="vsCount" min="0" max="20" value="0" oninput="updateTotal()">
-            <button type="button" onclick="stepVal('vsCount', 1)">+</button>
-          </div>
-        </div>
-
-        <div class="qt-card">
-          <div class="qt-label"><i class="fas fa-align-left"></i>Short Answer (3 marks)</div>
-          <div class="qt-stepper">
-            <button type="button" onclick="stepVal('shCount', -1)">-</button>
-            <input type="number" id="shCount" min="0" max="15" value="0" oninput="updateTotal()">
-            <button type="button" onclick="stepVal('shCount', 1)">+</button>
-          </div>
-        </div>
-
-        <div class="qt-card">
-          <div class="qt-label"><i class="fas fa-align-justify"></i>Long Answer (5 marks)</div>
-          <div class="qt-stepper">
-            <button type="button" onclick="stepVal('lgCount', -1)">-</button>
-            <input type="number" id="lgCount" min="0" max="10" value="0" oninput="updateTotal()">
-            <button type="button" onclick="stepVal('lgCount', 1)">+</button>
-          </div>
-        </div>
-
-        <div class="qt-card">
-          <div class="qt-label"><i class="fas fa-microscope"></i>Case Study (4 marks)</div>
-          <div class="qt-stepper">
-            <button type="button" onclick="stepVal('csCount', -1)">-</button>
-            <input type="number" id="csCount" min="0" max="5" value="0" oninput="updateTotal()">
-            <button type="button" onclick="stepVal('csCount', 1)">+</button>
-          </div>
+          <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="previewImage(this)">
+          <img id="imgPreview" class="img-preview" style="display:none">
         </div>
       </div>
 
-      <div class="total-summary">
-        <span><i class="fas fa-calculator" style="margin-right:6px;"></i> Total Blueprint Questions</span>
-        <span id="totalBadge" class="total-chip">0 Questions</span>
-      </div>
-    </div>
-
-    <!-- AI Instructions & Image -->
-    <div class="card">
-      <div class="card-title"><i class="fas fa-robot"></i> AI Instructions & Reference Diagram</div>
-      <div class="fg">
-        <label><i class="fas fa-magic"></i>Remarks / Custom AI Guidelines</label>
-        <textarea id="remarksInput" placeholder="Guide AI paper setter — e.g.:&#10;• Focus 40% on Electrochemistry&#10;• Include PYQ-style board questions&#10;• Include diagram-based questions"></textarea>
-      </div>
-      <div class="fg">
-        <label><i class="fas fa-image"></i>Optional Reference Image</label>
-        <div class="img-drop" onclick="document.getElementById('imgFileInput').click()" id="imgDrop">
-          <i class="fas fa-cloud-upload-alt"></i>
-          <p id="imgDropLabel">Click to upload an image / diagram</p>
-          <small>Base paper questions on this visual graph or diagram</small>
-        </div>
-        <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="previewImage(this)">
-        <img id="imgPreview" class="img-preview" style="display:none">
-      </div>
-    </div>
-
-    <!-- Generate Button -->
-    <button class="gen-btn" id="genBtn" onclick="generatePaper()">
-      <i class="fas fa-magic"></i> Generate Question Paper
-    </button>
-
-  </div><!-- end form-panel -->
-
-  <!-- ── PREVIEW PANEL ───────────────────────────────────────────── -->
-  <div class="preview-panel">
-    <div class="preview-toolbar">
-      <h3><i class="fas fa-eye" style="color:var(--primary);margin-right:6px;"></i> Testbook Live Paper Preview</h3>
-      <button class="tb-btn tb-print tb-disabled" id="btnPrint" onclick="doPrint()" disabled>
-        <i class="fas fa-print"></i> Print / Save PDF
+      <!-- Generate Button -->
+      <button class="gen-btn" id="genBtn" onclick="generatePaper()">
+        <i class="fas fa-magic"></i> Generate Question Paper
       </button>
-      <button class="tb-btn tb-doc tb-disabled" id="btnDoc" onclick="doDoc()" disabled>
-        <i class="fas fa-file-word"></i> Download Word
-      </button>
+
+    </div><!-- end form-panel -->
+
+    <!-- ── PREVIEW PANEL ───────────────────────────────────────────── -->
+    <div class="preview-panel">
+      <div class="preview-toolbar">
+        <h3><i class="fas fa-eye" style="color:var(--primary);margin-right:6px;"></i> RRB CBT Live Paper Preview</h3>
+        <button class="tb-btn tb-btn-full" id="btnFullWindow" onclick="toggleFullWindowPreview()">
+          <i class="fas fa-expand"></i> Full Window
+        </button>
+        <button class="tb-btn tb-btn-print tb-disabled" id="btnPrint" onclick="doPrint()" disabled>
+          <i class="fas fa-print"></i> Print / PDF
+        </button>
+        <button class="tb-btn tb-btn-doc tb-disabled" id="btnDoc" onclick="doDoc()" disabled>
+          <i class="fas fa-file-word"></i> Word (.doc)
+        </button>
+      </div>
+      <iframe id="previewFrame" class="preview-frame" title="Paper Preview"
+        srcdoc="<html><body style='font-family:Arial;text-align:center;padding:80px 20px;color:#94a3b8;background:#f8fafc;'><div style='font-size:3rem;margin-bottom:12px;'>📄</div><h3 style='color:#475569;margin-bottom:6px;'>No Paper Generated Yet</h3><p style='font-size:0.9rem;'>Fill in paper details and click 'Generate Question Paper' to view instant preview.</p></body></html>">
+      </iframe>
     </div>
-    <iframe id="previewFrame" class="preview-frame" title="Paper Preview"
-            srcdoc="<html><body style='font-family:Arial;text-align:center;padding:80px 20px;color:#94a3b8;background:#f8fafc;'><div style='font-size:3rem;margin-bottom:12px;'>📄</div><h3 style='color:#475569;margin-bottom:6px;'>No Paper Generated Yet</h3><p style='font-size:0.9rem;'>Fill in paper details and click 'Generate Question Paper' to view instant preview.</p></body></html>">
-    </iframe>
-  </div>
 
-</div><!-- end .wrap -->
+  </div><!-- end .wrap -->
 
-<script>
-const assignments = {{ assignments | tojson | safe }};
-const IS_ADMIN    = {{ 'true' if is_admin else 'false' }};
+  <script>
+    const assignments = {{ assignments | tojson | safe }};
+    const IS_ADMIN = {{ 'true' if is_admin else 'false' }};
+    const DEFAULT_PAPER_TYPE = {{ default_paper_type | tojson | safe }};
+    let _currentChaptersList = [];
 
-function filterSubjects(cls) {
-  const sel = document.getElementById('subjectInput');
-  sel.innerHTML = '<option value="">Select Subject</option>';
-  assignments.filter(a => a.class === cls).forEach(a => {
-    const o = document.createElement('option');
-    o.value = a.subject; o.textContent = a.subject;
-    sel.appendChild(o);
-  });
-}
-
-function toggleTopics(checked) {
-  const ta = document.getElementById('topicsInput');
-  ta.disabled = checked;
-  ta.style.opacity = checked ? '.4' : '1';
-  if (checked) ta.value = '';
-}
-
-function stepVal(id, delta) {
-  const el = document.getElementById(id);
-  let val = (parseInt(el.value) || 0) + delta;
-  if (val < 0) val = 0;
-  el.value = val;
-  updateTotal();
-}
-
-function updateTotal() {
-  const ids = ['mcqCount','fibCount','tfCount','arCount','vsCount','shCount','lgCount','csCount'];
-  const total = ids.reduce((s,id) => s + (parseInt(document.getElementById(id).value)||0), 0);
-  document.getElementById('totalBadge').textContent = `${total} Question${total!==1?'s':''}`;
-}
-
-function previewImage(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('imgPreview').src = e.target.result;
-    document.getElementById('imgPreview').style.display = 'block';
-    document.getElementById('imgDropLabel').textContent = file.name;
-  };
-  reader.readAsDataURL(file);
-}
-
-function showAlert(msg, type='err') {
-  const el = document.getElementById('alertBox');
-  el.className = `alert alert-${type}`;
-  el.innerHTML = `<i class="fas fa-${type==='ok'?'check-circle':'exclamation-circle'}"></i> ${msg}`;
-  el.style.display = 'block';
-  el.scrollIntoView({behavior:'smooth'});
-  if (type === 'ok') setTimeout(() => el.style.display='none', 5000);
-}
-
-let _paperMeta     = null;
-let _paperSections = null;
-
-async function generatePaper() {
-  const cls = document.getElementById('classInput').value.trim();
-  const subj = document.getElementById('subjectInput').value.trim();
-  if (!cls || !subj) { showAlert('Please select Class and Subject.'); return; }
-  
-  const ids = ['mcqCount','fibCount','tfCount','arCount','vsCount','shCount','lgCount','csCount'];
-  const total = ids.reduce((s,id) => s + (parseInt(document.getElementById(id).value)||0), 0);
-  if (total === 0) { showAlert('Enter at least 1 question in any section.'); return; }
-
-  document.getElementById('alertBox').style.display = 'none';
-  document.getElementById('loadingOverlay').classList.add('on');
-  document.getElementById('genBtn').disabled = true;
-
-  try {
-    const fd = new FormData();
-    fd.append('class',            cls);
-    fd.append('subject',          subj);
-    fd.append('full_syllabus',    document.getElementById('fullSyllabusToggle').checked ? 'yes' : 'no');
-    fd.append('topics',           document.getElementById('topicsInput').value);
-    fd.append('exam_type',        document.getElementById('examType').value);
-    fd.append('duration',         document.getElementById('durationInput').value);
-    fd.append('max_marks',        document.getElementById('maxMarksInput').value);
-    fd.append('school_name',      document.getElementById('schoolName').value);
-    fd.append('school_address',   document.getElementById('schoolAddress').value);
-    fd.append('academic_session', document.getElementById('academicSession').value);
-    fd.append('remarks',          document.getElementById('remarksInput').value);
-    fd.append('mcq_count',        document.getElementById('mcqCount').value);
-    fd.append('fib_count',        document.getElementById('fibCount').value);
-    fd.append('tf_count',         document.getElementById('tfCount').value);
-    fd.append('ar_count',         document.getElementById('arCount').value);
-    fd.append('vs_count',         document.getElementById('vsCount').value);
-    fd.append('sh_count',         document.getElementById('shCount').value);
-    fd.append('lg_count',         document.getElementById('lgCount').value);
-    fd.append('cs_count',         document.getElementById('csCount').value);
-
-    const imgFile = document.getElementById('imgFileInput').files[0];
-    if (imgFile) fd.append('image_file', imgFile);
-
-    const res  = await fetch('/descriptive_paper', {method:'POST', body:fd});
-    const data = await res.json();
-
-    if (data.status !== 'success') throw new Error(data.message || 'Generation failed');
-
-    _paperMeta     = data.meta;
-    _paperSections = data.paper.sections || [];
-
-    renderPreview(_paperMeta, _paperSections);
-
-    ['btnPrint','btnDoc'].forEach(id => {
-      const btn = document.getElementById(id);
-      btn.disabled = false;
-      btn.classList.remove('tb-disabled');
-    });
-
-  } catch(e) {
-    showAlert('Error: ' + e.message);
-  } finally {
-    document.getElementById('loadingOverlay').classList.remove('on');
-    document.getElementById('genBtn').disabled = false;
-  }
-}
-
-function renderPreview(meta, sections) {
-  let secHtml = '';
-  sections.forEach(sec => {
-    let qHtml = '';
-    (sec.questions || []).forEach(q => {
-      let cleanQText = String(q.question || '').replace(/\{"?meta(data)?"?:?.*?\}/gi, '').trim();
-      let optsHtml = '';
-      if (q.options && q.options.length) {
-        optsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;font-size:9.5pt;">` +
-          q.options.map(o => `<div>${String(o).replace(/\{"?meta(data)?"?:?.*?\}/gi, '').trim()}</div>`).join('') + `</div>`;
+    function handleDashboardClick(e) {
+      if (e) e.preventDefault();
+      if (window.parent && window.parent !== window) {
+        window.parent.location.href = IS_ADMIN ? '/admin/dashboard' : '/teacher_dashboard';
+      } else {
+        window.location.href = IS_ADMIN ? '/admin/dashboard' : '/teacher_dashboard';
       }
-      let subHtml = '';
-      if (q.sub_questions && q.sub_questions.length) {
-        subHtml = `<ol type="i" style="margin-top:6px;padding-left:20px;font-size:9.5pt;">` +
-          q.sub_questions.map(sq => {
-            let sqText = typeof sq === 'object' ? (sq.question || '') : String(sq);
-            sqText = sqText.replace(/\{"?meta(data)?"?:?.*?\}/gi, '').trim();
-            return `<li style="margin-bottom:4px;">${sqText}</li>`;
-          }).join('') + `</ol>`;
+    }
+
+    async function onBoardOrClassChange() {
+      const cls = document.getElementById('classInput').value.trim();
+      const board = document.getElementById('boardSelect').value;
+      if (cls) {
+        await loadCurriculumSubjects(cls, board);
       }
-      qHtml += `
+      applyOfficialBlueprint();
+      onSubjectChange(document.getElementById('subjectInput').value);
+    }
+
+    async function onAdminClassChange(cls) {
+      const board = document.getElementById('boardSelect').value;
+      if (cls) {
+        await loadCurriculumSubjects(cls, board);
+      }
+      applyOfficialBlueprint();
+      onSubjectChange(document.getElementById('subjectInput').value);
+    }
+
+    async function loadCurriculumSubjects(cls, board) {
+      try {
+        const res = await fetch(`/api/curriculum/subjects?class=${encodeURIComponent(cls)}&board=${encodeURIComponent(board)}`);
+        const data = await res.json();
+        if (data.status === 'success' && data.subjects && data.subjects.length) {
+          const datalist = document.getElementById('subjectSuggestions');
+          if (datalist) {
+            datalist.innerHTML = '';
+            data.subjects.forEach(s => {
+              const opt = document.createElement('option');
+              opt.value = s;
+              datalist.appendChild(opt);
+            });
+          }
+          if (!IS_ADMIN) {
+            const sel = document.getElementById('subjectInput');
+            if (sel && sel.tagName.toLowerCase() === 'select') {
+              const curVal = sel.value;
+              sel.innerHTML = '<option value="">Select Subject</option>';
+              data.subjects.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                sel.appendChild(opt);
+              });
+              if (curVal) sel.value = curVal;
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Error loading curriculum subjects:", e);
+      }
+    }
+
+    async function onSubjectChange(subj) {
+      const cls = document.getElementById('classInput').value.trim();
+      const board = document.getElementById('boardSelect').value;
+      applyOfficialBlueprint();
+      if (!cls || !subj) {
+        document.getElementById('curriculumBox').style.display = 'none';
+        return;
+      }
+      await loadCurriculumTopics(cls, subj, board);
+    }
+
+    async function loadCurriculumTopics(cls, subj, board) {
+      try {
+        const res = await fetch(`/api/curriculum/topics?class=${encodeURIComponent(cls)}&subject=${encodeURIComponent(subj)}&board=${encodeURIComponent(board)}`);
+        const data = await res.json();
+        const box = document.getElementById('curriculumBox');
+        const title = document.getElementById('curriculumTitle');
+
+        if (data.status === 'success' && data.chapters && data.chapters.length) {
+          _currentChaptersList = data.chapters;
+          title.textContent = `${board} Curriculum — Class ${cls} ${subj} (${data.chapters.length} Chapters)`;
+          renderCurriculumChips(data.chapters);
+          box.style.display = 'block';
+        } else {
+          _currentChaptersList = [];
+          box.style.display = 'none';
+        }
+      } catch (e) {
+        console.error("Error loading curriculum topics:", e);
+      }
+    }
+
+    function renderCurriculumChips(chapters) {
+      const container = document.getElementById('curriculumChips');
+      if (!container) return;
+      container.innerHTML = '';
+      const ta = document.getElementById('topicsInput');
+      const currentTopics = ta.value;
+
+      chapters.forEach(ch => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        const isSelected = currentTopics.includes(ch.chapter);
+        chip.style.cssText = `padding:5px 10px;border-radius:20px;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.2s;text-align:left;border:1px solid ${isSelected ? '#4f46e5' : '#cbd5e1'};background:${isSelected ? '#4f46e5' : '#ffffff'};color:${isSelected ? '#ffffff' : '#1e1b4b'};`;
+
+        const topicsPreview = ch.topics && ch.topics.length ? ` — ${ch.topics.slice(0, 3).join(', ')}` : '';
+        chip.title = `${ch.chapter}${topicsPreview}`;
+        chip.innerHTML = `<i class="fas fa-bookmark" style="margin-right:4px;font-size:0.7rem;"></i> ${ch.chapter}`;
+
+        chip.onclick = () => toggleChapterSelection(ch.chapter, chip);
+        container.appendChild(chip);
+      });
+    }
+
+    function toggleChapterSelection(chapterName, chipEl) {
+      const ta = document.getElementById('topicsInput');
+      let lines = ta.value.split('\n').map(l => l.trim()).filter(Boolean);
+      const idx = lines.indexOf(chapterName);
+      if (idx > -1) {
+        lines.splice(idx, 1);
+        chipEl.style.background = '#ffffff';
+        chipEl.style.color = '#1e1b4b';
+        chipEl.style.borderColor = '#cbd5e1';
+      } else {
+        lines.push(chapterName);
+        chipEl.style.background = '#4f46e5';
+        chipEl.style.color = '#ffffff';
+        chipEl.style.borderColor = '#4f46e5';
+      }
+      ta.value = lines.join('\n');
+    }
+
+    function selectAllCurriculumChapters() {
+      const ta = document.getElementById('topicsInput');
+      if (_currentChaptersList && _currentChaptersList.length) {
+        ta.value = _currentChaptersList.map(c => c.chapter).join('\n');
+        renderCurriculumChips(_currentChaptersList);
+      }
+    }
+
+    function clearCurriculumTopics() {
+      const ta = document.getElementById('topicsInput');
+      ta.value = '';
+      if (_currentChaptersList && _currentChaptersList.length) {
+        renderCurriculumChips(_currentChaptersList);
+      }
+    }
+
+    function filterCurriculumChips(query) {
+      const q = query.trim().toLowerCase();
+      if (!q) {
+        renderCurriculumChips(_currentChaptersList);
+        return;
+      }
+      const filtered = _currentChaptersList.filter(c => {
+        const cMatch = c.chapter.toLowerCase().includes(q);
+        const tMatch = c.topics && c.topics.some(t => t.toLowerCase().includes(q));
+        return cMatch || tMatch;
+      });
+      renderCurriculumChips(filtered);
+    }
+
+    function filterSubjects(cls) {
+      const sel = document.getElementById('subjectInput');
+      sel.innerHTML = '<option value="">Select Subject</option>';
+      assignments.filter(a => a.class === cls).forEach(a => {
+        const o = document.createElement('option');
+        o.value = a.subject; o.textContent = a.subject;
+        sel.appendChild(o);
+      });
+      onBoardOrClassChange();
+    }
+
+    function toggleTopics(checked) {
+      const ta = document.getElementById('topicsInput');
+      ta.disabled = checked;
+      ta.style.opacity = checked ? '.4' : '1';
+      if (checked) ta.value = '';
+    }
+
+    function stepVal(id, delta, minVal = 0) {
+      const el = document.getElementById(id);
+      const pType = document.getElementById('paperType') ? document.getElementById('paperType').value : 'Descriptive Paper';
+      const isLarge = ['Question Bank', 'Worksheet'].includes(pType);
+      const maxLimit = isLarge ? 200 : (parseInt(el.getAttribute('data-normal-max')) || 50);
+      let val = (parseInt(el.value) || 0) + delta;
+      if (val < minVal) val = minVal;
+      if (val > maxLimit) val = maxLimit;
+      el.value = val;
+      updateTotal();
+    }
+
+    function updateTotal() {
+      const pType = document.getElementById('paperType') ? document.getElementById('paperType').value : 'Descriptive Paper';
+      const isGraded = ['Descriptive Paper', 'DPP'].includes(pType);
+
+      const types = [
+        { countId: 'mcqCount', marksId: 'mcqMarks' },
+        { countId: 'fibCount', marksId: 'fibMarks' },
+        { countId: 'tfCount', marksId: 'tfMarks' },
+        { countId: 'arCount', marksId: 'arMarks' },
+        { countId: 'vsCount', marksId: 'vsMarks' },
+        { countId: 'shCount', marksId: 'shMarks' },
+        { countId: 'lgCount', marksId: 'lgMarks' },
+        { countId: 'csCount', marksId: 'csMarks' }
+      ];
+      let totalQ = 0;
+      let totalM = 0;
+      types.forEach(t => {
+        const q = parseInt(document.getElementById(t.countId).value) || 0;
+        const m = parseInt(document.getElementById(t.marksId).value) || 1;
+        totalQ += q;
+        totalM += (q * m);
+      });
+      const totalBadge = document.getElementById('totalBadge');
+      if (!isGraded) {
+        totalBadge.textContent = `${totalQ} Question${totalQ !== 1 ? 's' : ''}`;
+      } else {
+        totalBadge.textContent = `${totalQ} Question${totalQ !== 1 ? 's' : ''} (${totalM} Marks)`;
+      }
+    }
+
+    function onPaperTypeChange(pType) {
+      const isGraded = ['Descriptive Paper', 'DPP'].includes(pType);
+      const isLarge = ['Question Bank', 'Worksheet'].includes(pType);
+
+      // 1. Update Title and Header
+      const titleEl = document.getElementById('headerTitle');
+      if (titleEl) {
+        titleEl.textContent = `${pType} Generator`;
+      }
+      document.title = `${pType} Generator — RRB CBT`;
+
+      // 2. Marks Group visibility
+      const marksGroup = document.getElementById('maxMarksGroup');
+      const examMetaRow = document.getElementById('examMetaRow');
+      if (marksGroup) {
+        marksGroup.style.display = isGraded ? 'block' : 'none';
+      }
+      if (examMetaRow) {
+        examMetaRow.style.gridTemplateColumns = isGraded ? '1fr 1fr 1fr' : '1fr 1fr';
+      }
+
+      // 3. Question Grid Ungraded Mode (hide marks per question)
+      const qGrid = document.querySelector('.qtype-grid');
+      if (qGrid) {
+        if (isGraded) {
+          qGrid.classList.remove('ungraded-mode');
+        } else {
+          qGrid.classList.add('ungraded-mode');
+        }
+      }
+
+      // 4. Mode adjustment for blueprint
+      const autoToggle = document.getElementById('autoBlueprintToggle');
+      const bpTitle = document.getElementById('blueprintToggleTitle');
+      if (isLarge) {
+        if (autoToggle && autoToggle.checked) {
+          autoToggle.checked = false;
+          onAutoBlueprintToggle(false);
+        } else {
+          setStepperInputsState(false);
+        }
+        if (bpTitle) {
+          bpTitle.innerHTML = `<i class="fas fa-layer-group" style="color:#4f46e5;margin-right:4px;"></i> ${pType} Mode (Up to 200 Questions)`;
+        }
+      } else {
+        if (bpTitle) {
+          bpTitle.innerHTML = `<i class="fas fa-magic" style="color:#10b981;margin-right:4px;"></i> Auto Official Blueprint Mode (Latest Board Pattern)`;
+        }
+        if (autoToggle && autoToggle.checked) {
+          applyOfficialBlueprint();
+        }
+      }
+
+      updateTotal();
+    }
+
+    function onTotalMarksSelectChange(marksVal) {
+      const maxMarksInput = document.getElementById('maxMarksInput');
+      if (maxMarksInput) maxMarksInput.value = marksVal;
+      applyOfficialBlueprint();
+      updateTotal();
+    }
+
+    function onAutoBlueprintToggle(isAuto) {
+      const title = document.getElementById('blueprintToggleTitle');
+      const sub = document.getElementById('blueprintToggleSub');
+      const badge = document.getElementById('blueprintBadge');
+      const refreshBtn = document.getElementById('refreshBlueprintBtn');
+
+      if (isAuto) {
+        title.innerHTML = '<i class="fas fa-magic" style="color:#10b981;margin-right:4px;"></i> Auto Official Blueprint Mode (Latest Board Pattern)';
+        sub.textContent = 'Auto blueprint ON: Official latest board pattern is active & buttons are disabled. Turn toggle OFF to manually enter questions & marks.';
+        badge.innerHTML = '<span style="background:#dcfce7;color:#166534;font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid #86efac;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-lock"></i> Auto Blueprint Active (Buttons Disabled)</span>';
+        if (refreshBtn) refreshBtn.style.display = 'none';
+        applyOfficialBlueprint(true);
+        setStepperInputsState(true);
+      } else {
+        title.innerHTML = '<i class="fas fa-edit" style="color:#4f46e5;margin-right:4px;"></i> Manual Enter Mode';
+        sub.textContent = 'Manual entry ACTIVE: You can now freely click +/- and enter questions and marks per section.';
+        badge.innerHTML = '<span style="background:#e0e7ff;color:#3730a3;font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid #c7d2fe;display:inline-flex;align-items:center;gap:5px;"><i class="fas fa-unlock"></i> Manual Enter Active (Buttons Enabled)</span>';
+        if (refreshBtn) refreshBtn.style.display = 'inline-flex';
+        setStepperInputsState(false);
+      }
+    }
+
+    function setStepperInputsState(isReadOnly) {
+      const countIds = ['mcqCount', 'fibCount', 'tfCount', 'arCount', 'vsCount', 'shCount', 'lgCount', 'csCount'];
+      const marksIds = ['mcqMarks', 'fibMarks', 'tfMarks', 'arMarks', 'vsMarks', 'shMarks', 'lgMarks', 'csMarks'];
+
+      [...countIds, ...marksIds].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.readOnly = isReadOnly;
+          el.style.background = isReadOnly ? '#f8fafc' : '#ffffff';
+          el.style.color = isReadOnly ? '#475569' : '#0f172a';
+          el.style.cursor = isReadOnly ? 'not-allowed' : 'text';
+        }
+      });
+      document.querySelectorAll('.qt-stepper button').forEach(btn => {
+        btn.disabled = isReadOnly;
+        btn.style.opacity = isReadOnly ? '0.35' : '1';
+        btn.style.cursor = isReadOnly ? 'not-allowed' : 'pointer';
+        btn.style.pointerEvents = isReadOnly ? 'none' : 'auto';
+      });
+    }
+
+    function applyOfficialBlueprint(force = false) {
+      const autoToggle = document.getElementById('autoBlueprintToggle');
+      if (autoToggle && !autoToggle.checked && !force) {
+        return; // User has manual mode ON, don't overwrite
+      }
+      if (force && autoToggle && !autoToggle.checked) {
+        autoToggle.checked = true;
+        onAutoBlueprintToggle(true);
+        return;
+      }
+
+      const board = document.getElementById('boardSelect') ? document.getElementById('boardSelect').value : 'CBSE';
+      const cls = document.getElementById('classInput') ? document.getElementById('classInput').value.trim() : '10';
+      const subj = document.getElementById('subjectInput') ? document.getElementById('subjectInput').value.trim().toLowerCase() : '';
+      const exam = document.getElementById('examType') ? document.getElementById('examType').value : 'Unit Test';
+      const pType = document.getElementById('paperType') ? document.getElementById('paperType').value : 'Descriptive Paper';
+      const isGraded = ['Descriptive Paper', 'DPP'].includes(pType);
+      const selMarks = document.getElementById('maxMarksSelect') ? document.getElementById('maxMarksSelect').value : '50';
+
+      let blueprint = {
+        mcqCount: 0, mcqMarks: 1,
+        fibCount: 0, fibMarks: 1,
+        tfCount: 0, tfMarks: 1,
+        arCount: 0, arMarks: 1,
+        vsCount: 0, vsMarks: 2,
+        shCount: 0, shMarks: 3,
+        lgCount: 0, lgMarks: 5,
+        csCount: 0, csMarks: 4,
+        maxMarks: 80,
+        duration: '3 Hours'
+      };
+
+      const isSeniorScience = ['physics', 'chemistry', 'biology', 'biotechnology'].some(s => subj.includes(s));
+      const isUnitTest = exam === 'Unit Test' || exam === 'Practice Test';
+
+      if (['Question Bank', 'Worksheet'].includes(pType)) {
+        // High-volume practice bank blueprint with ALL 8 question types included!
+        blueprint = {
+          mcqCount: 10, mcqMarks: 1,
+          fibCount: 6,  fibMarks: 1,
+          tfCount: 6,   tfMarks: 1,
+          arCount: 4,   arMarks: 1,
+          vsCount: 8,   vsMarks: 1,
+          shCount: 8,   shMarks: 1,
+          lgCount: 5,   lgMarks: 1,
+          csCount: 3,   csMarks: 1,
+          maxMarks: '',
+          duration: 'Self-Paced / Practice'
+        };
+      } else if (pType === 'Practice Set') {
+        // Ungraded practice set blueprint with all question types included
+        blueprint = {
+          mcqCount: 8, mcqMarks: 1,
+          fibCount: 4, fibMarks: 1,
+          tfCount: 4,  tfMarks: 1,
+          arCount: 2,  arMarks: 1,
+          vsCount: 5,  vsMarks: 1,
+          shCount: 5,  shMarks: 1,
+          lgCount: 2,  lgMarks: 1,
+          csCount: 1,  csMarks: 1,
+          maxMarks: '',
+          duration: 'Self-Paced'
+        };
+      } else if (isGraded && selMarks === '30') {
+        // Graded 30 Marks Blueprint
+        blueprint = {
+          mcqCount: 6, mcqMarks: 1,
+          fibCount: 2, fibMarks: 1,
+          tfCount: 0, tfMarks: 1,
+          arCount: 1, arMarks: 1,
+          vsCount: 3, vsMarks: 2,
+          shCount: 3, shMarks: 3,
+          lgCount: 1, lgMarks: 6,
+          csCount: 0, csMarks: 4,
+          maxMarks: 30,
+          duration: '1.5 Hours'
+        };
+      } else if (isGraded && selMarks === '50') {
+        // Graded 50 Marks Blueprint
+        blueprint = {
+          mcqCount: 10, mcqMarks: 1,
+          fibCount: 4, fibMarks: 1,
+          tfCount: 0, tfMarks: 1,
+          arCount: 2, arMarks: 1,
+          vsCount: 4, vsMarks: 2,
+          shCount: 4, shMarks: 3,
+          lgCount: 2, lgMarks: 5,
+          csCount: 1, csMarks: 4,
+          maxMarks: 50,
+          duration: '2 Hours'
+        };
+      } else if (isUnitTest) {
+        // Standard Unit Test Pattern (25 Marks, 1 Hour)
+        blueprint = {
+          mcqCount: 5, mcqMarks: 1,
+          fibCount: 2, fibMarks: 1,
+          tfCount: 0, tfMarks: 1,
+          arCount: 1, arMarks: 1,
+          vsCount: 3, vsMarks: 2,
+          shCount: 2, shMarks: 3,
+          lgCount: 1, lgMarks: 5,
+          csCount: 0, csMarks: 4,
+          maxMarks: 25,
+          duration: '1 Hour'
+        };
+      } else if (cls === '12') {
+        if (board.includes('ICSE') || board.includes('ISC')) {
+          // ISC Class 12 Official Blueprint (70 Marks for Science / 80 Marks for Commerce/Maths)
+          if (isSeniorScience) {
+            blueprint = {
+              mcqCount: 14, mcqMarks: 1,
+              fibCount: 0, fibMarks: 1,
+              tfCount: 0, tfMarks: 1,
+              arCount: 0, arMarks: 1,
+              vsCount: 7, vsMarks: 2,
+              shCount: 9, shMarks: 3,
+              lgCount: 3, lgMarks: 5,
+              csCount: 0, csMarks: 4,
+              maxMarks: 70,
+              duration: '3 Hours'
+            };
+          } else {
+            blueprint = {
+              mcqCount: 15, mcqMarks: 1,
+              fibCount: 0, fibMarks: 1,
+              tfCount: 0, tfMarks: 1,
+              arCount: 0, arMarks: 1,
+              vsCount: 5, vsMarks: 2,
+              shCount: 6, shMarks: 4,
+              lgCount: 4, lgMarks: 6,
+              csCount: 0, csMarks: 4,
+              maxMarks: 80,
+              duration: '3 Hours'
+            };
+          }
+        } else {
+          // CBSE Class 12 Official Latest Rationalized Blueprint
+          if (isSeniorScience) {
+            blueprint = {
+              mcqCount: 12, mcqMarks: 1,
+              fibCount: 0, fibMarks: 1,
+              tfCount: 0, tfMarks: 1,
+              arCount: 4, arMarks: 1,
+              vsCount: 5, vsMarks: 2,
+              shCount: 7, shMarks: 3,
+              lgCount: 3, lgMarks: 5,
+              csCount: 2, csMarks: 4,
+              maxMarks: 70,
+              duration: '3 Hours'
+            };
+          } else {
+            blueprint = {
+              mcqCount: 18, mcqMarks: 1,
+              fibCount: 0, fibMarks: 1,
+              tfCount: 0, tfMarks: 1,
+              arCount: 2, arMarks: 1,
+              vsCount: 5, vsMarks: 2,
+              shCount: 6, shMarks: 3,
+              lgCount: 4, lgMarks: 5,
+              csCount: 3, csMarks: 4,
+              maxMarks: 80,
+              duration: '3 Hours'
+            };
+          }
+        }
+      } else if (cls === '10' || cls === '9' || cls === '11') {
+        if (board.includes('ICSE')) {
+          blueprint = {
+            mcqCount: 15, mcqMarks: 1,
+            fibCount: 5, fibMarks: 1,
+            tfCount: 5, tfMarks: 1,
+            arCount: 0, arMarks: 1,
+            vsCount: 5, vsMarks: 2,
+            shCount: 5, shMarks: 3,
+            lgCount: 4, lgMarks: 5,
+            csCount: 2, csMarks: 4,
+            maxMarks: 80,
+            duration: '3 Hours'
+          };
+        } else {
+          blueprint = {
+            mcqCount: 16, mcqMarks: 1,
+            fibCount: 0, fibMarks: 1,
+            tfCount: 0, tfMarks: 1,
+            arCount: 2, arMarks: 1,
+            vsCount: 5, vsMarks: 2,
+            shCount: 6, shMarks: 3,
+            lgCount: 4, lgMarks: 5,
+            csCount: 3, csMarks: 4,
+            maxMarks: 80,
+            duration: '3 Hours'
+          };
+        }
+      } else if (parseInt(cls) <= 5) {
+        blueprint = {
+          mcqCount: 8, mcqMarks: 1,
+          fibCount: 5, fibMarks: 1,
+          tfCount: 5, tfMarks: 1,
+          arCount: 0, arMarks: 1,
+          vsCount: 6, vsMarks: 2,
+          shCount: 4, shMarks: 3,
+          lgCount: 1, lgMarks: 4,
+          csCount: 0, csMarks: 4,
+          maxMarks: 40,
+          duration: '2 Hours'
+        };
+      } else {
+        blueprint = {
+          mcqCount: 10, mcqMarks: 1,
+          fibCount: 5, fibMarks: 1,
+          tfCount: 5, tfMarks: 1,
+          arCount: 0, arMarks: 1,
+          vsCount: 5, vsMarks: 2,
+          shCount: 5, shMarks: 3,
+          lgCount: 3, lgMarks: 5,
+          csCount: 1, csMarks: 4,
+          maxMarks: 60,
+          duration: '2.5 Hours'
+        };
+      }
+
+      // Populate input values
+      for (const [key, val] of Object.entries(blueprint)) {
+        const el = document.getElementById(key) || document.getElementById(key + 'Input');
+        if (el) el.value = val;
+      }
+      updateTotal();
+    }
+
+    function previewImage(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('imgPreview').src = e.target.result;
+        document.getElementById('imgPreview').style.display = 'block';
+        document.getElementById('imgDropLabel').textContent = file.name;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function showAlert(msg, type = 'err') {
+      const el = document.getElementById('alertBox');
+      el.className = `alert alert-${type}`;
+      el.innerHTML = `<i class="fas fa-${type === 'ok' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
+      el.style.display = 'block';
+      el.scrollIntoView({ behavior: 'smooth' });
+      if (type === 'ok') setTimeout(() => el.style.display = 'none', 5000);
+    }
+
+    function animateCircularProgress(expectedDurationMs) {
+      const overlay = document.getElementById('circularLoadingOverlay');
+      const ring = document.getElementById('cProgressRing');
+      const percentText = document.getElementById('cProgressPercent');
+      const statusTitle = document.getElementById('cProgressStatus');
+      const statusSub = document.getElementById('cProgressSub');
+
+      if (!overlay || !ring) return { finish: (cb) => { if (cb) cb(); }, error: () => { } };
+
+      overlay.classList.add('active');
+      const circumference = 376.99;
+
+      const stages = [
+        { p: 15, title: 'Initializing AI Engine...', sub: 'Establishing provider connection...' },
+        { p: 35, title: 'Generating Blueprint...', sub: 'Formulating Section A (MCQs & Objective)...' },
+        { p: 60, title: 'Constructing Questions...', sub: 'Building short, long & case study problems...' },
+        { p: 85, title: 'Formatting Formulas...', sub: 'Applying MathJax & LaTeX typesetting...' },
+        { p: 98, title: 'Finalizing Paper...', sub: 'Saving to classwise repository paper/Class_X/Section_Y/' }
+      ];
+
+      let currentP = 0;
+      let stageIdx = 0;
+      const interval = setInterval(() => {
+        currentP += 2;
+        if (currentP > 98) currentP = 98;
+
+        const offset = circumference - (currentP / 100 * circumference);
+        ring.style.strokeDashoffset = offset;
+        percentText.textContent = `${currentP}%`;
+
+        if (stageIdx < stages.length && currentP >= stages[stageIdx].p) {
+          statusTitle.textContent = stages[stageIdx].title;
+          statusSub.textContent = stages[stageIdx].sub;
+          stageIdx++;
+        }
+      }, expectedDurationMs / 50);
+
+      return {
+        finish: (callback) => {
+          clearInterval(interval);
+          ring.style.strokeDashoffset = 0;
+          percentText.textContent = '100%';
+          statusTitle.textContent = 'Paper Generated!';
+          statusSub.textContent = 'Saved to repository successfully.';
+          setTimeout(() => {
+            overlay.classList.remove('active');
+            if (callback) callback();
+          }, 500);
+        },
+        error: () => {
+          clearInterval(interval);
+          overlay.classList.remove('active');
+        }
+      };
+    }
+
+    let _paperMeta = null;
+    let _paperSections = null;
+
+    async function generatePaper() {
+      const cls = document.getElementById('classInput').value.trim();
+      const subj = document.getElementById('subjectInput').value.trim();
+      if (!cls || !subj) { showAlert('Please select Class and Subject.'); return; }
+
+      const ids = ['mcqCount', 'fibCount', 'tfCount', 'arCount', 'vsCount', 'shCount', 'lgCount', 'csCount'];
+      const total = ids.reduce((s, id) => s + (parseInt(document.getElementById(id).value) || 0), 0);
+      if (total === 0) { showAlert('Enter at least 1 question in any section.'); return; }
+
+      const pType = document.getElementById('paperType') ? document.getElementById('paperType').value : 'Descriptive Paper';
+      const isGraded = ['Descriptive Paper', 'DPP'].includes(pType);
+      const isLarge = ['Question Bank', 'Worksheet'].includes(pType);
+      const maxAllowedQ = isLarge ? 250 : 80;
+
+      if (total > maxAllowedQ) {
+        showAlert(`Total questions (${total}) exceeds maximum limit of ${maxAllowedQ} for ${pType}.`);
+        return;
+      }
+
+      document.getElementById('alertBox').style.display = 'none';
+      document.getElementById('genBtn').disabled = true;
+
+      const expectedDuration = total > 40 ? 35000 : 14000;
+      const progAnim = animateCircularProgress(expectedDuration);
+
+      try {
+        const fd = new FormData();
+        fd.append('paper_type', pType);
+        fd.append('board', document.getElementById('boardSelect') ? document.getElementById('boardSelect').value : 'CBSE');
+        fd.append('class', cls);
+        fd.append('section', document.getElementById('sectionInput') ? document.getElementById('sectionInput').value : 'A');
+        fd.append('subject', subj);
+        fd.append('full_syllabus', document.getElementById('fullSyllabusToggle').checked ? 'yes' : 'no');
+        fd.append('topics', document.getElementById('topicsInput').value);
+        fd.append('exam_type', document.getElementById('examType').value);
+        fd.append('duration', document.getElementById('durationInput').value);
+        fd.append('max_marks', isGraded ? document.getElementById('maxMarksSelect').value : '');
+        fd.append('school_name', document.getElementById('schoolName').value);
+        fd.append('school_address', document.getElementById('schoolAddress').value);
+        fd.append('academic_session', document.getElementById('academicSession').value);
+        fd.append('remarks', document.getElementById('remarksInput').value);
+        fd.append('mcq_count', document.getElementById('mcqCount').value);
+        fd.append('mcq_marks', isGraded ? document.getElementById('mcqMarks').value : '1');
+        fd.append('fib_count', document.getElementById('fibCount').value);
+        fd.append('fib_marks', isGraded ? document.getElementById('fibMarks').value : '1');
+        fd.append('tf_count', document.getElementById('tfCount').value);
+        fd.append('tf_marks', isGraded ? document.getElementById('tfMarks').value : '1');
+        fd.append('ar_count', document.getElementById('arCount').value);
+        fd.append('ar_marks', isGraded ? document.getElementById('arMarks').value : '1');
+        fd.append('vs_count', document.getElementById('vsCount').value);
+        fd.append('vs_marks', isGraded ? document.getElementById('vsMarks').value : '1');
+        fd.append('sh_count', document.getElementById('shCount').value);
+        fd.append('sh_marks', isGraded ? document.getElementById('shMarks').value : '1');
+        fd.append('lg_count', document.getElementById('lgCount').value);
+        fd.append('lg_marks', isGraded ? document.getElementById('lgMarks').value : '1');
+        fd.append('cs_count', document.getElementById('csCount').value);
+        fd.append('cs_marks', isGraded ? document.getElementById('csMarks').value : '1');
+
+        const imgFile = document.getElementById('imgFileInput').files[0];
+        if (imgFile) fd.append('image_file', imgFile);
+
+        const targetUrl = window.location.pathname.includes('question_bank') ? '/question_bank' : '/descriptive_paper';
+        const res = await fetch(targetUrl, { method: 'POST', body: fd });
+        const data = await res.json();
+
+        if (data.status !== 'success') throw new Error(data.message || 'Generation failed');
+
+        _paperMeta = data.meta;
+        _paperSections = data.paper.sections || [];
+
+        progAnim.finish(() => {
+          renderPreview(_paperMeta, _paperSections);
+
+          ['btnPrint', 'btnDoc'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+              btn.disabled = false;
+              btn.classList.remove('tb-disabled');
+            }
+          });
+          if (data.docx_link || data.doc_link) {
+            const dl = data.docx_link || data.doc_link;
+            const btnDoc = document.getElementById('btnDoc');
+            if (btnDoc) btnDoc.onclick = () => window.open(dl, '_blank');
+          }
+        });
+
+      } catch (e) {
+        progAnim.error();
+        showAlert('Error: ' + e.message);
+      } finally {
+        document.getElementById('genBtn').disabled = false;
+      }
+    }
+
+    /**
+     * Convert LaTeX / mhchem notation into Word-safe HTML.
+     * Used so downloaded .doc files show rendered chemistry/math
+     * instead of raw $\ce{...}$ or \(...\) strings.
+     */
+    function latexToDocHtml(text) {
+      if (!text) return text;
+      let s = String(text);
+
+      // 1. mhchem \ce{...} → human-readable HTML (allow nested braces for ions like Fe^{2+})
+      s = s.replace(/\\ce\{((?:[^{}]|\{[^{}]*\})+)\}/g, (_, eq) => {
+        eq = eq.replace(/\(s\)/g, '<sub>(s)</sub>');
+        eq = eq.replace(/\(l\)/g, '<sub>(l)</sub>');
+        eq = eq.replace(/\(g\)/g, '<sub>(g)</sub>');
+        eq = eq.replace(/\(aq\)/g, '<sub>(aq)</sub>');
+        eq = eq.replace(/<=>/g, ' &#8652; ');   // ⇌
+        eq = eq.replace(/->/g, ' &rarr; ');    // →
+        eq = eq.replace(/<-/g, ' &larr; ');    // ←
+        eq = eq.replace(/\^\{([^}]+)\}/g, '<sup>$1</sup>');
+        eq = eq.replace(/\^([+\-\d])/g, '<sup>$1</sup>');
+        eq = eq.replace(/([A-Za-z)\]]+)(\d+)/g, '$1<sub>$2</sub>');
+        eq = eq.replace(/\be-\b/g, 'e<sup>-</sup>');
+        return eq;
+      });
+
+      // 2. \frac{a}{b}
+      for (let i = 0; i < 3; i++) {
+        s = s.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g,
+          '<span style="display:inline-block;vertical-align:-0.4em;text-align:center;margin:0 2px;">' +
+          '<span style="border-bottom:1px solid #000;display:block;padding:0 2px;font-size:0.9em;">$1</span>' +
+          '<span style="display:block;padding:0 2px;font-size:0.9em;">$2</span></span>');
+      }
+
+      // 3. \sqrt{x}
+      s = s.replace(/\\sqrt\{([^{}]+)\}/g, '&radic;<span style="border-top:1px solid #000;padding-top:1px;margin-left:1px;">$1</span>');
+
+      // 3b. Math functions
+      s = s.replace(/\\int\b/g, '&#8747;');
+      s = s.replace(/\\sum\b/g, '&#8721;');
+      s = s.replace(/\\prod\b/g, '&#8719;');
+      s = s.replace(/\\lim\b/g, 'lim');
+      s = s.replace(/\\sin\b/g, 'sin');
+      s = s.replace(/\\cos\b/g, 'cos');
+      s = s.replace(/\\tan\b/g, 'tan');
+      s = s.replace(/\\cot\b/g, 'cot');
+      s = s.replace(/\\log\b/g, 'log');
+      s = s.replace(/\\ln\b/g, 'ln');
+      s = s.replace(/\\hat\{([^{}]+)\}/g, '$1&#x0302;');
+
+      // 4. Vectors / bold
+      s = s.replace(/\\vec\{([^{}]+)\}/g, '<b>$1&#8407;</b>');
+      s = s.replace(/\\mathbf\{([^{}]+)\}/g, '<b>$1</b>');
+      s = s.replace(/\\text\{([^{}]+)\}/g, '$1');
+
+      // 5. Greek capital
+      const greekCap = {
+        Phi: '&Phi;', Psi: '&Psi;', Sigma: '&Sigma;', Pi: '&Pi;', Omega: '&Omega;',
+        Gamma: '&Gamma;', Theta: '&Theta;', Lambda: '&Lambda;', Delta: '&Delta;'
+      };
+      for (const [k, v] of Object.entries(greekCap)) s = s.replace(new RegExp('\\\\' + k, 'g'), v);
+
+      // 6. Greek lowercase & common symbols
+      const syms = {
+        alpha: '&alpha;', beta: '&beta;', gamma: '&gamma;', delta: '&delta;',
+        epsilon: '&epsilon;', varepsilon: '&epsilon;', theta: '&theta;',
+        lambda: '&lambda;', mu: '&mu;', pi: '&pi;', rho: '&rho;', sigma: '&sigma;',
+        tau: '&tau;', chi: '&chi;', phi: '&phi;', omega: '&omega;', infty: '&infin;',
+        pm: '&plusmn;', times: '&times;', div: '&divide;', neq: '&ne;',
+        leq: '&le;', geq: '&ge;', approx: '&approx;', cdot: '&middot;',
+        rightarrow: '&rarr;', to: '&rarr;', leftarrow: '&larr;',
+        leftrightarrow: '&harr;', Rightarrow: '&rArr;', propto: '&prop;',
+        quad: '&nbsp;&nbsp;',
+      };
+      for (const [k, v] of Object.entries(syms)) s = s.replace(new RegExp('\\\\' + k + '\\b', 'g'), v);
+
+      // 7. Exponents: x^{2} → x<sup>2</sup>, x^2 → x<sup>2</sup>
+      s = s.replace(/([a-zA-Z0-9&;>\}\)]+)\^\{([^}]+)\}/g, '$1<sup>$2</sup>');
+      s = s.replace(/([a-zA-Z0-9&;>\}\)]+)\^([0-9a-zA-Z])/g, '$1<sup>$2</sup>');
+
+      // 8. Subscripts: x_{n} → x<sub>n</sub>, x_n → x<sub>n</sub>
+      s = s.replace(/([a-zA-Z0-9&;>\}\)]+)_\{([^}]+)\}/g, '$1<sub>$2</sub>');
+      s = s.replace(/([a-zA-Z0-9&;>\}\)]+)_([0-9a-zA-Z])/g, '$1<sub>$2</sub>');
+
+      // 9. Strip remaining LaTeX delimiters \( \) \[ \] $$ $
+      s = s.replace(/\\\(|\\\)|\\\[|\\\]/g, '');
+      s = s.replace(/\$\$|\$/g, '');
+
+      return s;
+    }
+
+    /**
+     * Formats question text with robust support for:
+     * 1. Programming code (Java, Python, C++, C, SQL, HTML, etc.): multi-line code blocks & inline backticks.
+     * 2. Physics formulas: intact LaTeX \( ... \) & \[ ... \] delimiters for MathJax typesetting.
+     * 3. Chemistry reactions: intact LaTeX \ce{...} for MathJax mhchem rendering.
+     */
+    function formatQuestionContent(text) {
+      if (!text) return '';
+      let s = String(text).replace(/\{"?meta(data)?"?:?.*?\}/gi, '').trim();
+
+      // 1. Extract and protect multi-line code blocks ```lang ... ```
+      const codeRegex = /```(?:([a-zA-Z0-9_+-]+))?\s*\n?([\s\S]*?)\n?```/g;
+      const codeBlocks = [];
+      s = s.replace(codeRegex, (_, lang, code) => {
+        const langName = (lang || '').trim().toUpperCase();
+        const langBadge = langName ? `<div style="background:#1e1b4b;color:#a5b4fc;font-size:7.5pt;font-weight:800;padding:2px 10px;border-radius:4px 4px 0 0;text-transform:uppercase;letter-spacing:0.06em;display:inline-block;border:1px solid #4338ca;border-bottom:none;">${langName}</div>` : '';
+        const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const codeHtml = `<div style="margin:8px 0;text-align:left;">${langBadge}<pre style="background:#f8fafc;border:1.5px solid #cbd5e1;border-left:4px solid #4f46e5;border-radius:${langName ? '0 6px 6px 6px' : '6px'};padding:10px 14px;font-family:'Consolas','Courier New',monospace;font-size:9.5pt;line-height:1.45;white-space:pre-wrap;overflow-x:auto;margin:0;color:#0f172a;tab-size:4;"><code>${escaped}</code></pre></div>`;
+        codeBlocks.push(codeHtml);
+        return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
+      });
+
+      // 2. Extract and protect inline code `...`
+      const inlineCodeRegex = /`([^`\n]+)`/g;
+      const inlineBlocks = [];
+      s = s.replace(inlineCodeRegex, (_, code) => {
+        const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const inlineHtml = `<code style="background:#f1f5f9;color:#1e1b4b;border:1px solid #cbd5e1;padding:1px 5px;border-radius:4px;font-family:'Consolas','Courier New',monospace;font-size:0.92em;font-weight:600;">${escaped}</code>`;
+        inlineBlocks.push(inlineHtml);
+        return `__INLINE_CODE_${inlineBlocks.length - 1}__`;
+      });
+
+      // 3. Chemistry helper: ensure standalone \ce{...} is wrapped in \( \ce{...} \) for MathJax mhchem
+      s = s.replace(/(?<!\\\()\\ce\{((?:[^{}]|\{[^{}]*\})+)\}(?!\\\))/g, '\\(\\ce{$1}\\)');
+
+      // 3b. Math helper: ensure unwrapped LaTeX fractions, sqrts, and vectors are enclosed in \( ... \)
+      s = s.replace(/(?<![\\$])(\\frac\{[^{}]+\}\{[^{}]+\})/g, '\\($1\\)');
+      s = s.replace(/(?<![\\$])(\\sqrt\{[^{}]+\})/g, '\\($1\\)');
+
+      // 4. Restore code blocks and inline code
+      codeBlocks.forEach((cb, i) => {
+        s = s.replace(`__CODE_BLOCK_${i}__`, cb);
+      });
+      inlineBlocks.forEach((ib, i) => {
+        s = s.replace(`__INLINE_CODE_${i}__`, ib);
+      });
+
+      return s;
+    }
+
+    function renderPreview(meta, sections) {
+      const pType = meta.paper_type || (document.getElementById('paperType') ? document.getElementById('paperType').value : 'Descriptive Paper');
+      const isGraded = meta.is_graded !== undefined ? meta.is_graded : ['Descriptive Paper', 'DPP'].includes(pType);
+
+      let secHtml = '';
+      sections.forEach(sec => {
+        let qHtml = '';
+        (sec.questions || []).forEach(q => {
+          let cleanQText = formatQuestionContent(q.question);
+          let optsHtml = '';
+          if (q.options && q.options.length) {
+            optsHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;font-size:9.5pt;">` +
+              q.options.map(o => `<div>${formatQuestionContent(o)}</div>`).join('') + `</div>`;
+          }
+          let subHtml = '';
+
+          if (q.sub_questions && q.sub_questions.length) {
+            subHtml = `<ol type="i" style="margin-top:6px;padding-left:20px;font-size:9.5pt;">` +
+              q.sub_questions.map(sq => {
+                let sqText = typeof sq === 'object' ? (sq.question || '') : String(sq);
+                return `<li style="margin-bottom:4px;">${formatQuestionContent(sqText)}</li>`;
+              }).join('') + `</ol>`;
+          }
+          let imgHtml = '';
+          if (q.image_base64) {
+            imgHtml = `<div style="text-align:center;margin:8px 0;"><img src="${q.image_base64}" style="max-width:320px;max-height:220px;object-fit:contain;border:1px solid #e2e8f0;border-radius:6px;padding:4px;background:#fff;" alt="Diagram"></div>`;
+          } else if (q.image_path) {
+            let cleanImgSrc = String(q.image_path).replace(/\\/g, '/');
+            if (!cleanImgSrc.startsWith('/') && !cleanImgSrc.startsWith('http')) cleanImgSrc = '/' + cleanImgSrc;
+            imgHtml = `<div style="text-align:center;margin:8px 0;"><img src="${cleanImgSrc}" style="max-width:320px;max-height:220px;object-fit:contain;border:1px solid #e2e8f0;border-radius:6px;padding:4px;background:#fff;" alt="Diagram"></div>`;
+          } else if (q.image_placeholder) {
+            imgHtml = `<div style="background:#fef08a;color:#854d0e;padding:6px 12px;border-radius:4px;font-size:8.5pt;font-weight:bold;margin:6px 0;display:inline-block;">[IMAGE NEEDED: ${q.image_placeholder}]</div>`;
+          } else if (q.needs_image) {
+            imgHtml = `<div style="background:#fef08a;color:#854d0e;padding:6px 12px;border-radius:4px;font-size:8.5pt;font-weight:bold;margin:6px 0;display:inline-block;">[IMAGE NEEDED: Diagram for Question ${q.number || ''}]</div>`;
+          }
+
+          const marksColHtml = isGraded ? `<td style="vertical-align:top;width:55px;text-align:right;font-weight:bold;color:#475569;">[${sec.marks_per_question || 1}M]</td>` : '';
+
+          qHtml += `
         <div style="margin-bottom:12px;page-break-inside:avoid;">
           <table style="width:100%;border-collapse:collapse;">
             <tr>
               <td style="vertical-align:top;width:30px;font-weight:bold;">Q${q.number}.</td>
-              <td style="vertical-align:top;">${cleanQText} ${optsHtml} ${subHtml}</td>
-              <td style="vertical-align:top;width:45px;text-align:right;font-weight:bold;color:#475569;">[${sec.marks_per_question || 1}M]</td>
+              <td style="vertical-align:top;">${cleanQText} ${imgHtml} ${optsHtml} ${subHtml}</td>
+              ${marksColHtml}
             </tr>
           </table>
         </div>`;
-    });
+        });
 
-    secHtml += `
+        const secInstructionHtml = (isGraded && sec.instruction) ? `<span>(${sec.instruction})</span>` : '';
+
+        secHtml += `
       <div style="margin-bottom:20px;">
         <div style="background:#1e1b4b;color:#fff;padding:6px 12px;font-weight:bold;font-size:10pt;border-radius:4px;margin-bottom:10px;display:flex;justify-content:space-between;">
           <span>${sec.section_label || ''}: ${sec.section_title || ''}</span>
-          <span>(${sec.instruction || ''})</span>
+          ${secInstructionHtml}
         </div>
         ${qHtml}
       </div>`;
-  });
+      });
 
-  const fullHtml = `<!DOCTYPE html>
+      // Conditional Topic / Chapter display (Omit if whole / full syllabus)
+      const topicStr = String(meta.topic || '').trim();
+      const isFullSyl = meta.full_syllabus === true || meta.full_syllabus === 'yes' || ['full syllabus', 'complete syllabus', 'all chapters', 'whole syllabus', 'none', ''].includes(topicStr.toLowerCase());
+      const topicHtml = (!isFullSyl && topicStr) ? `<div style="font-size:10pt;font-weight:bold;color:#334155;margin-top:2px;">TOPIC / CHAPTER: ${topicStr}</div>` : '';
+
+      const logoHtml = meta.logo_base64 ? `<div style="text-align:center;margin-bottom:6px;"><img src="${meta.logo_base64}" style="max-height:65px;max-width:180px;object-fit:contain;" alt="Logo"></div>` : '';
+
+      const fullHtml = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <script>
+  var _bs = String.fromCharCode(92);
   window.MathJax = {
+    loader: { load: ['[tex]/mhchem', '[tex]/boldsymbol'] },
     tex: {
-      inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
-      displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
+      packages: {'[+]': ['mhchem', 'boldsymbol']},
+      inlineMath: [['$', '$'], [_bs + '(', _bs + ')']],
+      displayMath: [['$$', '$$'], [_bs + '[', _bs + ']']],
+      processEscapes: true
+    },
+    options: {
+      skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    startup: {
+      pageReady: () => {
+        return MathJax.startup.defaultPageReady();
+      }
     }
   };
 <\/script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"><\/script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"><\/script>
 <style>
   body{font-family:Arial,sans-serif;font-size:10pt;line-height:1.45;color:#000;margin:20mm 15mm;}
-  .p-hdr{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px;}
-  .p-school{font-size:16pt;font-weight:bold;text-transform:uppercase;margin-bottom:2px;}
-  .p-sub{font-size:10pt;color:#333;margin-bottom:6px;}
-  .p-meta{display:flex;justify-content:space-between;border-top:1px solid #000;border-bottom:1px solid #000;padding:5px 0;font-weight:bold;font-size:9.5pt;margin-bottom:16px;}
+  .p-hdr{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px;}
+  .p-school{font-size:16pt;font-weight:bold;text-transform:uppercase;color:#1e1b4b;margin-bottom:2px;}
+  .p-addr{font-size:9.5pt;color:#475569;margin-bottom:3px;}
+  .p-sub{font-size:10.5pt;font-weight:bold;color:#0f172a;margin-top:2px;}
+  .p-cls{font-size:11pt;font-weight:bold;color:#1e1b4b;margin-top:2px;}
+  .p-meta{display:flex;justify-content:space-between;border-top:1px solid #000;border-bottom:1px solid #000;padding:6px 2px;font-weight:bold;font-size:9.5pt;margin-bottom:14px;}
+  pre, code { font-family: 'Consolas', 'Courier New', monospace; }
   @media print{body{margin:10mm;}}
 </style>
 </head>
 <body>
   <div class="p-hdr">
-    <div class="p-school">${meta.school_name || ''}</div>
-    ${meta.school_address ? `<div style="font-size:9pt;color:#555;">${meta.school_address}</div>` : ''}
-    <div class="p-sub" style="font-weight:bold;margin-top:4px;">${meta.exam_type} (${meta.academic_session || ''})</div>
-    <div style="font-size:11pt;font-weight:bold;margin-top:2px;">CLASS: ${meta.class} — SUBJECT: ${meta.subject.toUpperCase()}</div>
+    ${logoHtml}
+    <div class="p-school">${meta.school_name || 'RRB GROUP OF SCHOOLS'}</div>
+    ${meta.school_address ? `<div class="p-addr">${meta.school_address}</div>` : ''}
+    <div class="p-sub">${pType.toUpperCase()} &nbsp;·&nbsp; ${meta.exam_type} ${meta.academic_session ? `(Academic Session: ${meta.academic_session})` : ''}</div>
+    <div class="p-cls">CLASS: ${meta.class} &nbsp;|&nbsp; SUBJECT: ${(meta.subject || '').toUpperCase()}</div>
+    ${topicHtml}
   </div>
   <div class="p-meta">
-    <span>Time Allowed: ${meta.duration}</span>
-    <span>Maximum Marks: ${meta.max_marks}</span>
+    <span>Time Allowed: ${meta.duration || '3 Hours'}</span>
+    ${isGraded && meta.max_marks ? `<span>Maximum Marks (MM): ${meta.max_marks}</span>` : `<span>Total Questions: ${meta.total_questions || ''}</span>`}
   </div>
   ${secHtml}
-  <div style="margin-top:30px;text-align:center;font-size:9pt;font-style:italic;border-top:1px solid #ccc;padding-top:8px;">
-    *** End of Question Paper ***
+  <div style="margin-top:30px;text-align:center;font-size:9pt;font-style:italic;color:#666;border-top:1px solid #ccc;padding-top:8px;">
+    *** End of ${pType} ***<br>Generated by RRB CBT &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
   </div>
+  <script>
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise();
+    }
+  <\/script>
 </body>
 </html>`;
 
-  const frame = document.getElementById('previewFrame');
-  frame.srcdoc = fullHtml;
-}
+      const frame = document.getElementById('previewFrame');
+      frame.onload = () => {
+        try {
+          const win = frame.contentWindow;
+          if (win && win.MathJax && win.MathJax.typesetPromise) {
+            win.MathJax.typesetPromise();
+          } else {
+            let checkCount = 0;
+            const timer = setInterval(() => {
+              checkCount++;
+              if (win && win.MathJax && win.MathJax.typesetPromise) {
+                win.MathJax.typesetPromise();
+                clearInterval(timer);
+              } else if (checkCount > 25) {
+                clearInterval(timer);
+              }
+            }, 200);
+          }
+        } catch (e) { }
+      };
+      frame.srcdoc = fullHtml;
+    }
 
-function doPrint() {
-  const frame = document.getElementById('previewFrame');
-  if (frame.contentWindow) frame.contentWindow.print();
-}
+    function doPrint() {
+      const frame = document.getElementById('previewFrame');
+      if (frame && frame.contentWindow) {
+        const win = frame.contentWindow;
+        if (win.MathJax && win.MathJax.typesetPromise) {
+          win.MathJax.typesetPromise().then(() => {
+            win.print();
+          }).catch(() => {
+            win.print();
+          });
+        } else {
+          win.print();
+        }
+      }
+    }
 
-function doDoc() {
-  const frame = document.getElementById('previewFrame');
-  const content = frame.srcdoc;
-  const blob = new Blob(['\ufeff', content], {type:'application/msword'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = `Descriptive_Paper_${_paperMeta ? _paperMeta.class + '_' + _paperMeta.subject : 'Export'}.doc`;
-  a.click();
-}
+    function doDoc() {
+      const frame = document.getElementById('previewFrame');
+      const content = frame.srcdoc;
+      const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const pTypeClean = (_paperMeta && _paperMeta.paper_type ? _paperMeta.paper_type : 'Paper').replace(/\s+/g, '_');
+      a.download = `${pTypeClean}_Class_${_paperMeta ? _paperMeta.class + '_' + _paperMeta.subject : 'Export'}.doc`;
+      a.click();
+    }
 
-function handleDashboardClick(e) {
-  if (e) e.preventDefault();
-  if (window.parent && window.parent !== window && typeof window.parent.loadTab === 'function') {
-    window.parent.loadTab('dashboard');
-    return;
-  }
-  const IS_ADMIN = {{ 'true' if is_admin else 'false' }};
-  if (IS_ADMIN) {
-    window.location.href = '/admin/dashboard';
-  } else {
-    window.location.href = '/teacher/dashboard';
-  }
-}
-</script>
+    function toggleFullWindowPreview() {
+      const panel = document.querySelector('.preview-panel');
+      const btn = document.getElementById('btnFullWindow');
+      const isFull = panel.classList.toggle('full-window');
+      if (isFull) {
+        btn.innerHTML = '<i class="fas fa-compress"></i> Exit Full Window';
+        btn.style.background = '#e11d48';
+        btn.style.color = '#ffffff';
+        btn.style.borderColor = '#be123c';
+        document.body.style.overflow = 'hidden';
+      } else {
+        btn.innerHTML = '<i class="fas fa-expand"></i> Full Window';
+        btn.style.background = '#e0e7ff';
+        btn.style.color = '#3730a3';
+        btn.style.borderColor = '#c7d2fe';
+        document.body.style.overflow = '';
+      }
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        const panel = document.querySelector('.preview-panel');
+        if (panel && panel.classList.contains('full-window')) {
+          toggleFullWindowPreview();
+        }
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Initialize paper type from backend passed default_paper_type
+      const defaultType = typeof DEFAULT_PAPER_TYPE !== 'undefined' && DEFAULT_PAPER_TYPE ? DEFAULT_PAPER_TYPE : 'Descriptive Paper';
+      const ptSelect = document.getElementById('paperType');
+      if (ptSelect && defaultType) {
+        ptSelect.value = defaultType;
+      }
+      onPaperTypeChange(ptSelect ? ptSelect.value : 'Descriptive Paper');
+
+      // 2. Initialize blueprint
+      applyOfficialBlueprint();
+      const isAuto = document.getElementById('autoBlueprintToggle') ? document.getElementById('autoBlueprintToggle').checked : true;
+      setStepperInputsState(isAuto);
+
+      const examSelect = document.getElementById('examType');
+      if (examSelect) {
+        examSelect.addEventListener('change', () => applyOfficialBlueprint());
+      }
+    });
+  </script>
 </body>
+
 </html>
