@@ -496,10 +496,15 @@
                         <strong>Parent:</strong> <span id="mParent"></span>
                     </p>
                 </div>
-                <!-- Print PDF Button -->
-                <button onclick="window.print()" class="btn-action no-print" style="background:#dc2626;">
-                    <i class="fas fa-print"></i> Print / Save PDF
-                </button>
+                <!-- Action Buttons -->
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button type="button" onclick="allowReattemptCurrentStudent()" class="btn-action no-print" style="background:#2563eb;" title="Reset exam answers and allow student to reattempt">
+                        <i class="fas fa-redo-alt"></i> Allow Reattempt
+                    </button>
+                    <button type="button" onclick="window.print()" class="btn-action no-print" style="background:#dc2626;">
+                        <i class="fas fa-print"></i> Print / Save PDF
+                    </button>
+                </div>
             </div>
 
             <!-- Performance Metric Cards -->
@@ -696,6 +701,34 @@ async function openStudentModal(studentId) {
         console.error(e);
         alert('Failed to load performance analysis');
         modal.style.display = 'none';
+    }
+}
+
+let currentModalStudentId = null;
+
+const origOpenStudentModal = openStudentModal;
+openStudentModal = async function(studentId) {
+    currentModalStudentId = studentId;
+    return origOpenStudentModal(studentId);
+};
+
+async function allowReattemptCurrentStudent() {
+    if (!currentModalStudentId) return;
+    if (!confirm(`Allow student (${currentModalStudentId}) to reattempt the exam?\n\nThis will reset their previous answers and status back to "Not Started".`)) return;
+    try {
+        const res = await fetch(`/teacher/student/${encodeURIComponent(currentModalStudentId)}/allow_reattempt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            alert('Success: Student has been reset and is now authorized to reattempt the exam!');
+            openStudentModal(currentModalStudentId);
+        } else {
+            alert(data.message || 'Error granting reattempt');
+        }
+    } catch(err) {
+        alert('Network error while allowing reattempt');
     }
 }
 
