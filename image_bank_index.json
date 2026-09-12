@@ -1,0 +1,1177 @@
+[
+  {
+    "file": "static/images/ncert/math_number_line_integers.png",
+    "keywords": [
+      "number line",
+      "integers",
+      "positive negative numbers",
+      "addition subtraction on number line",
+      "math basic"
+    ],
+    "topic": "Knowing Our Numbers / Integers",
+    "class": "1-7",
+    "subject": "Mathematics"
+  },
+  {
+    "file": "static/images/ncert/math_3d_shapes_solids.png",
+    "keywords": [
+      "3d shapes",
+      "cube",
+      "cuboid",
+      "cylinder",
+      "cone",
+      "sphere",
+      "solid shapes",
+      "mensuration geometry"
+    ],
+    "topic": "Visualising Solid Shapes",
+    "class": "2-8",
+    "subject": "Mathematics"
+  },
+  {
+    "file": "static/images/ncert/math_trigonometry_right_triangle.png",
+    "keywords": [
+      "trigonometry",
+      "right angled triangle",
+      "sin cos tan",
+      "hypotenuse",
+      "pythagoras theorem",
+      "trigonometric ratios",
+      "angle theta"
+    ],
+    "topic": "Introduction to Trigonometry",
+    "class": "10-11",
+    "subject": "Mathematics"
+  },
+  {
+    "file": "static/images/ncert/math_circle_terms_geometry.png",
+    "keywords": [
+      "circle geometry",
+      "radius",
+      "diameter",
+      "chord",
+      "tangent",
+      "secant",
+      "circumference",
+      "sector segment"
+    ],
+    "topic": "Circles",
+    "class": "9-10",
+    "subject": "Mathematics"
+  },
+  {
+    "file": "static/images/ncert/math_coordinate_geometry_cartesian.png",
+    "keywords": [
+      "coordinate geometry",
+      "cartesian plane",
+      "quadrants",
+      "x axis",
+      "y axis",
+      "origin",
+      "abscissa ordinate",
+      "point coordinates"
+    ],
+    "topic": "Coordinate Geometry",
+    "class": "9-11",
+    "subject": "Mathematics"
+  },
+  {
+    "file": "static/images/ncert/math_venn_diagram_sets.png",
+    "keywords": [
+      "venn diagram",
+      "sets",
+      "union of sets",
+      "intersection of sets",
+      "universal set",
+      "set theory"
+    ],
+    "topic": "Sets",
+    "class": "11",
+    "subject": "Mathematics"
+  },
+  {
+    "file": "static/images/ncert/math_conic_sections_geometry.png",
+    "keywords": [
+      "conic sections",
+      "parabola",
+      "ellipse",
+      "hyperbola",
+      "focus directrix",
+      "coordinate geometry 11"
+    ],
+    "topic": "Conic Sections",
+    "class": "11-12",
+    "subject": "Mathematics"
+  },
+  {
+    "file": "static/images/ncert/geo_earth_grid_latitudes_longitudes.png",
+    "keywords": [
+      "latitudes",
+      "longitudes",
+      "equator",
+      "tropic of cancer",
+      "tropic of capricorn",
+      "prime meridian",
+      "globe grid",
+      "geography earth"
+    ],
+    "topic": "Globe: Latitudes and Longitudes",
+    "class": "6-9",
+    "subject": "Social Science"
+  },
+  {
+    "file": "static/images/ncert/geo_atmosphere_layers.png",
+    "keywords": [
+      "layers of atmosphere",
+      "troposphere",
+      "stratosphere",
+      "mesosphere",
+      "thermosphere",
+      "exosphere",
+      "ozone layer",
+      "meteor atmosphere"
+    ],
+    "topic": "Air and Atmosphere",
+    "class": "7-9",
+    "subject": "Social Science"
+  },
+  {
+    "file": "static/images/ncert/geo_rock_cycle_geology.png",
+    "keywords": [
+      "rock cycle",
+      "igneous rock",
+      "sedimentary rock",
+      "metamorphic rock",
+      "magma",
+      "weathering erosion",
+      "geology"
+    ],
+    "topic": "Inside Our Earth",
+    "class": "7-9",
+    "subject": "Social Science"
+  },
+  {
+    "file": "static/images/ncert/civics_three_organs_government.png",
+    "keywords": [
+      "organs of government",
+      "legislature",
+      "executive",
+      "judiciary",
+      "parliament",
+      "supreme court",
+      "democracy civics",
+      "constitution"
+    ],
+    "topic": "Democracy and Governance",
+    "class": "6-10",
+    "subject": "Social Science"
+  },
+  {
+    "file": "static/images/ncert/eco_sectors_of_indian_economy.png",
+    "keywords": [
+      "sectors of economy",
+      "primary sector",
+      "secondary sector",
+      "tertiary sector",
+      "agriculture manufacturing services",
+      "gdp economics"
+    ],
+    "topic": "Sectors of the Indian Economy",
+    "class": "9-10",
+    "subject": "Social Science"
+  },
+  {
+    "file": "static/images/ncert/cs_computer_block_diagram.png",
+    "keywords": [
+      "computer architecture",
+      "cpu block diagram",
+      "alu",
+      "control unit",
+      "input output unit",
+      "memory unit",
+      "computer hardware"
+    ],
+    "topic": "Computer Fundamentals",
+    "class": "3-11",
+    "subject": "Computer Science"
+  },
+  {
+    "file": "static/images/ncert/cs_network_topologies.png",
+    "keywords": [
+      "network topologies",
+      "star topology",
+      "bus topology",
+      "ring topology",
+      "mesh topology",
+      "computer networks",
+      "lan wan"
+    ],
+    "topic": "Computer Networks",
+    "class": "8-12",
+    "subject": "Computer Science"
+  },
+  {
+    "file": "static/images/ncert/cs_flowchart_standard_symbols.png",
+    "keywords": [
+      "flowchart symbols",
+      "algorithm flowchart",
+      "start stop oval",
+      "input output parallelogram",
+      "process rectangle",
+      "decision diamond",
+      "python coding"
+    ],
+    "topic": "Algorithms and Flowcharts",
+    "class": "6-11",
+    "subject": "Computer Science"
+  },
+  {
+    "file": "static/images/ncert/english_grammar_parts_of_speech.png",
+    "keywords": [
+      "parts of speech",
+      "noun",
+      "pronoun",
+      "verb",
+      "adjective",
+      "adverb",
+      "preposition",
+      "conjunction",
+      "interjection",
+      "grammar chart"
+    ],
+    "topic": "Grammar and Vocabulary",
+    "class": "3-10",
+    "subject": "English"
+  },
+  {
+    "file": "static/images/ncert/hindi_vyakaran_sangya_bhed.png",
+    "keywords": [
+      "sangya",
+      "vyakaran",
+      "sangya ke bhed",
+      "vyaktivachak",
+      "jativachak",
+      "bhavvachak",
+      "hindi grammar"
+    ],
+    "topic": "हिंदी व्याकरण",
+    "class": "1-8",
+    "subject": "Hindi"
+  },
+  {
+    "file": "static/images/ncert/class1_2_shapes_geometry.png",
+    "keywords": [
+      "shapes",
+      "circle",
+      "square",
+      "triangle",
+      "rectangle",
+      "star",
+      "oval",
+      "basic geometry",
+      "2d shapes"
+    ],
+    "topic": "Shapes and Space",
+    "class": "1-2"
+  },
+  {
+    "file": "static/images/ncert/class1_2_clock_time.png",
+    "keywords": [
+      "clock",
+      "time",
+      "hour hand",
+      "minute hand",
+      "telling time",
+      "analog clock",
+      "o clock"
+    ],
+    "topic": "Time Goes On",
+    "class": "1-3"
+  },
+  {
+    "file": "static/images/ncert/class1_2_traffic_lights.png",
+    "keywords": [
+      "traffic light",
+      "traffic signal",
+      "road safety",
+      "red stop",
+      "green go",
+      "yellow wait",
+      "evs rules"
+    ],
+    "topic": "Safety Rules and Transport",
+    "class": "1-3"
+  },
+  {
+    "file": "static/images/ncert/class1_2_parts_of_plant_basic.png",
+    "keywords": [
+      "plant parts",
+      "root",
+      "stem",
+      "leaf",
+      "flower",
+      "parts of a plant",
+      "botany basic"
+    ],
+    "topic": "The Plant Fairy",
+    "class": "1-4"
+  },
+  {
+    "file": "static/images/ncert/class3_4_compass_directions.png",
+    "keywords": [
+      "compass",
+      "directions",
+      "north south east west",
+      "cardinal directions",
+      "map reading"
+    ],
+    "topic": "Left-Right and Maps",
+    "class": "3-5"
+  },
+  {
+    "file": "static/images/ncert/class3_4_water_cycle.png",
+    "keywords": [
+      "water cycle",
+      "evaporation",
+      "condensation",
+      "precipitation",
+      "clouds",
+      "rain",
+      "hydrological cycle"
+    ],
+    "topic": "Water O Water",
+    "class": "3-6"
+  },
+  {
+    "file": "static/images/ncert/class3_4_food_chain.png",
+    "keywords": [
+      "food chain",
+      "producer",
+      "consumer",
+      "herbivore",
+      "carnivore",
+      "predator",
+      "ecosystem",
+      "energy flow"
+    ],
+    "topic": "Web of Life",
+    "class": "3-6"
+  },
+  {
+    "file": "static/images/ncert/class3_4_fractions_visual.png",
+    "keywords": [
+      "fractions",
+      "half",
+      "quarter",
+      "three fourths",
+      "visual fractions",
+      "math fractions",
+      "pie chart fraction"
+    ],
+    "topic": "Halves and Quarters",
+    "class": "3-5"
+  },
+  {
+    "file": "static/images/ncert/class5_angles_protractor.png",
+    "keywords": [
+      "angles",
+      "acute angle",
+      "right angle",
+      "obtuse angle",
+      "straight angle",
+      "geometry angles",
+      "protractor"
+    ],
+    "topic": "Shapes and Angles",
+    "class": "5-7"
+  },
+  {
+    "file": "static/images/ncert/class5_layers_of_earth.png",
+    "keywords": [
+      "layers of earth",
+      "crust",
+      "mantle",
+      "outer core",
+      "inner core",
+      "earth interior",
+      "geography geology"
+    ],
+    "topic": "Our Changing Earth",
+    "class": "5-7"
+  },
+  {
+    "file": "static/images/ncert/class6_simple_electric_circuit.png",
+    "keywords": [
+      "simple circuit",
+      "electric cell",
+      "bulb",
+      "switch",
+      "closed circuit",
+      "electricity basic"
+    ],
+    "topic": "Electricity and Circuits",
+    "class": "6"
+  },
+  {
+    "file": "static/images/ncert/class6_types_of_roots_venation.png",
+    "keywords": [
+      "tap root",
+      "fibrous root",
+      "reticulate venation",
+      "parallel venation",
+      "leaf venation",
+      "plant morphology"
+    ],
+    "topic": "Getting to Know Plants",
+    "class": "6-7"
+  },
+  {
+    "file": "static/images/ncert/class7_clinical_laboratory_thermometer.png",
+    "keywords": [
+      "thermometer",
+      "clinical thermometer",
+      "laboratory thermometer",
+      "mercury bulb",
+      "kink",
+      "temperature measurement",
+      "heat"
+    ],
+    "topic": "Heat",
+    "class": "7"
+  },
+  {
+    "file": "static/images/ncert/class7_electromagnet_circuit.png",
+    "keywords": [
+      "electromagnet",
+      "iron nail",
+      "copper wire",
+      "magnetic effect of current",
+      "paper pins",
+      "temporary magnet"
+    ],
+    "topic": "Electric Current and its Effects",
+    "class": "7-8"
+  },
+  {
+    "file": "static/images/ncert/class8_electroplating_copper.png",
+    "keywords": [
+      "electroplating",
+      "copper sulphate",
+      "chemical effect of current",
+      "anode",
+      "cathode",
+      "metal coating"
+    ],
+    "topic": "Chemical Effects of Electric Current",
+    "class": "8"
+  },
+  {
+    "file": "static/images/ncert/class8_sound_wave_properties.png",
+    "keywords": [
+      "sound wave",
+      "amplitude",
+      "wavelength",
+      "frequency",
+      "crest",
+      "trough",
+      "pitch",
+      "loudness"
+    ],
+    "topic": "Sound",
+    "class": "8-9"
+  },
+  {
+    "file": "static/images/ncert/class11_projectile_motion_trajectory.png",
+    "keywords": [
+      "projectile motion",
+      "trajectory",
+      "maximum height",
+      "horizontal range",
+      "time of flight",
+      "kinematics 2d",
+      "parabola"
+    ],
+    "topic": "Motion in a Plane",
+    "class": "11"
+  },
+  {
+    "file": "static/images/ncert/class11_carnot_engine_cycle.png",
+    "keywords": [
+      "carnot cycle",
+      "carnot engine",
+      "thermodynamics",
+      "isothermal expansion",
+      "adiabatic",
+      "heat engine efficiency",
+      "pv diagram"
+    ],
+    "topic": "Thermodynamics",
+    "class": "11"
+  },
+  {
+    "file": "static/images/ncert/class12_transformer_step_up_step_down.png",
+    "keywords": [
+      "transformer",
+      "step up transformer",
+      "step down transformer",
+      "mutual induction",
+      "primary coil",
+      "secondary coil",
+      "alternating current"
+    ],
+    "topic": "Alternating Current",
+    "class": "12"
+  },
+  {
+    "file": "static/images/ncert/class12_electric_dipole_field.png",
+    "keywords": [
+      "electric dipole",
+      "dipole moment",
+      "electric field lines",
+      "electrostatics",
+      "axial line",
+      "equatorial line",
+      "coulombs law"
+    ],
+    "topic": "Electric Charges and Fields",
+    "class": "12"
+  },
+  {
+    "file": "static/images/ncert/class12_human_antibody_structure.png",
+    "keywords": [
+      "antibody structure",
+      "h2l2 immunoglobulin",
+      "antigen binding site",
+      "heavy chain",
+      "light chain",
+      "immunity",
+      "disulfide bond"
+    ],
+    "topic": "Human Health and Disease",
+    "class": "12"
+  },
+  {
+    "file": "static/images/ncert/refraction_glass_slab.png",
+    "keywords": [
+      "refraction",
+      "glass slab",
+      "lateral displacement",
+      "ray diagram",
+      "refractive index",
+      "angle of incidence",
+      "angle of emergence"
+    ],
+    "topic": "Light - Reflection and Refraction"
+  },
+  {
+    "file": "static/images/ncert/human_eye_diagram.png",
+    "keywords": [
+      "human eye",
+      "eye anatomy",
+      "retina",
+      "cornea",
+      "iris",
+      "pupil",
+      "ciliary muscles",
+      "optic nerve",
+      "eye lens",
+      "crystalline lens"
+    ],
+    "topic": "Human Eye and Colourful World"
+  },
+  {
+    "file": "static/images/ncert/myopia_hypermetropia_correction.png",
+    "keywords": [
+      "myopia",
+      "hypermetropia",
+      "defects of vision",
+      "concave lens",
+      "convex lens",
+      "eye defect correction",
+      "near point",
+      "far point"
+    ],
+    "topic": "Human Eye and Colourful World"
+  },
+  {
+    "file": "static/images/ncert/dispersion_glass_prism.png",
+    "keywords": [
+      "dispersion",
+      "glass prism",
+      "spectrum",
+      "vibgyor",
+      "refraction prism",
+      "white light",
+      "angle of deviation"
+    ],
+    "topic": "Human Eye and Colourful World"
+  },
+  {
+    "file": "static/images/ncert/concave_mirror_ray_diagram.png",
+    "keywords": [
+      "concave mirror",
+      "ray diagram",
+      "mirror formula",
+      "focus",
+      "center of curvature",
+      "real and inverted image",
+      "spherical mirrors"
+    ],
+    "topic": "Light - Reflection and Refraction"
+  },
+  {
+    "file": "static/images/ncert/convex_lens_ray_diagram.png",
+    "keywords": [
+      "convex lens",
+      "ray diagram",
+      "lens formula",
+      "optical center",
+      "focal length",
+      "real inverted image",
+      "magnification"
+    ],
+    "topic": "Light - Reflection and Refraction"
+  },
+  {
+    "file": "static/images/ncert/magnetic_field_bar_magnet.png",
+    "keywords": [
+      "magnetic field lines",
+      "bar magnet",
+      "magnetic poles",
+      "north pole",
+      "south pole",
+      "magnetic field loop",
+      "magnetism"
+    ],
+    "topic": "Magnetic Effects of Electric Current"
+  },
+  {
+    "file": "static/images/ncert/magnetic_field_solenoid.png",
+    "keywords": [
+      "solenoid",
+      "magnetic field solenoid",
+      "electromagnet",
+      "current carrying coil",
+      "uniform magnetic field",
+      "right hand thumb rule"
+    ],
+    "topic": "Magnetic Effects of Electric Current"
+  },
+  {
+    "file": "static/images/ncert/electric_motor.png",
+    "keywords": [
+      "electric motor",
+      "armature",
+      "split rings",
+      "commutator",
+      "carbon brushes",
+      "flemings left hand rule",
+      "magnetic torque"
+    ],
+    "topic": "Magnetic Effects of Electric Current"
+  },
+  {
+    "file": "static/images/ncert/electromagnetic_induction.png",
+    "keywords": [
+      "electromagnetic induction",
+      "faraday law",
+      "galvanometer deflection",
+      "induced current",
+      "flemings right hand rule",
+      "bar magnet coil"
+    ],
+    "topic": "Magnetic Effects of Electric Current"
+  },
+  {
+    "file": "static/images/ncert/domestic_electric_circuit.png",
+    "keywords": [
+      "domestic circuit",
+      "live wire",
+      "neutral wire",
+      "earth wire",
+      "fuse",
+      "electricity meter",
+      "mcb",
+      "parallel appliances"
+    ],
+    "topic": "Electricity"
+  },
+  {
+    "file": "static/images/ncert/human_heart.png",
+    "keywords": [
+      "human heart",
+      "heart chambers",
+      "atrium",
+      "ventricle",
+      "aorta",
+      "vena cava",
+      "pulmonary artery",
+      "pulmonary vein",
+      "double circulation",
+      "septum"
+    ],
+    "topic": "Life Processes"
+  },
+  {
+    "file": "static/images/ncert/human_respiratory_system.png",
+    "keywords": [
+      "respiratory system",
+      "lungs",
+      "alveoli",
+      "trachea",
+      "bronchi",
+      "diaphragm",
+      "gas exchange",
+      "breathing"
+    ],
+    "topic": "Life Processes"
+  },
+  {
+    "file": "static/images/ncert/human_digestive_system.png",
+    "keywords": [
+      "digestive system",
+      "alimentary canal",
+      "stomach",
+      "liver",
+      "pancreas",
+      "small intestine",
+      "large intestine",
+      "villi",
+      "enzymes",
+      "pepsin",
+      "trypsin"
+    ],
+    "topic": "Life Processes"
+  },
+  {
+    "file": "static/images/ncert/human_excretory_system.png",
+    "keywords": [
+      "excretory system",
+      "kidney",
+      "nephron",
+      "ureter",
+      "urinary bladder",
+      "urethra",
+      "renal artery",
+      "renal vein",
+      "urine formation"
+    ],
+    "topic": "Life Processes"
+  },
+  {
+    "file": "static/images/ncert/nephron_structure.png",
+    "keywords": [
+      "nephron",
+      "bowman capsule",
+      "glomerulus",
+      "loop of henle",
+      "collecting duct",
+      "ultrafiltration",
+      "reabsorption",
+      "kidney functional unit"
+    ],
+    "topic": "Life Processes"
+  },
+  {
+    "file": "static/images/ncert/neuron_structure.png",
+    "keywords": [
+      "neuron",
+      "nerve cell",
+      "dendrite",
+      "axon",
+      "myelin sheath",
+      "cyton",
+      "synapse",
+      "nervous system",
+      "electrical impulse"
+    ],
+    "topic": "Control and Coordination"
+  },
+  {
+    "file": "static/images/ncert/human_brain.png",
+    "keywords": [
+      "human brain",
+      "cerebrum",
+      "cerebellum",
+      "medulla oblongata",
+      "pons",
+      "spinal cord",
+      "forebrain",
+      "midbrain",
+      "hindbrain",
+      "nervous system"
+    ],
+    "topic": "Control and Coordination"
+  },
+  {
+    "file": "static/images/ncert/flower_reproductive_parts.png",
+    "keywords": [
+      "flower reproduction",
+      "stamen",
+      "carpel",
+      "pistil",
+      "anther",
+      "filament",
+      "stigma",
+      "style",
+      "ovary",
+      "ovule",
+      "pollination"
+    ],
+    "topic": "How do Organisms Reproduce"
+  },
+  {
+    "file": "static/images/ncert/cross_section_leaf.png",
+    "keywords": [
+      "cross section leaf",
+      "leaf anatomy",
+      "chloroplast",
+      "stomata",
+      "guard cells",
+      "epidermis",
+      "mesophyll",
+      "photosynthesis"
+    ],
+    "topic": "Life Processes"
+  },
+  {
+    "file": "static/images/ncert/electrolysis_of_water.png",
+    "keywords": [
+      "electrolysis of water",
+      "anode",
+      "cathode",
+      "hydrogen gas",
+      "oxygen gas",
+      "water decomposition",
+      "chemical reaction"
+    ],
+    "topic": "Chemical Reactions and Equations"
+  },
+  {
+    "file": "static/images/ncert/acid_metal_reaction_hydrogen.png",
+    "keywords": [
+      "zinc sulphuric acid",
+      "hydrogen pop test",
+      "metal acid reaction",
+      "hydrogen gas evolution",
+      "soap bubbles test"
+    ],
+    "topic": "Acids, Bases and Salts"
+  },
+  {
+    "file": "static/images/ncert/chlor_alkali_process.png",
+    "keywords": [
+      "chlor alkali process",
+      "electrolysis brine",
+      "sodium hydroxide",
+      "chlorine gas",
+      "caustic soda",
+      "bleaching powder"
+    ],
+    "topic": "Acids, Bases and Salts"
+  },
+  {
+    "file": "static/images/ncert/carbon_allotropes.png",
+    "keywords": [
+      "carbon allotropes",
+      "diamond",
+      "graphite",
+      "fullerene c60",
+      "covalent bonding",
+      "tetrahedral structure",
+      "hexagonal layers"
+    ],
+    "topic": "Carbon and its Compounds"
+  },
+  {
+    "file": "static/images/ncert/plant_vs_animal_cell.png",
+    "keywords": [
+      "plant cell",
+      "animal cell",
+      "cell wall",
+      "cell membrane",
+      "nucleus",
+      "vacuole",
+      "chloroplast",
+      "mitochondria",
+      "cell organelles"
+    ],
+    "topic": "Fundamental Unit of Life"
+  },
+  {
+    "file": "static/images/ncert/fractional_distillation.png",
+    "keywords": [
+      "fractional distillation",
+      "separation techniques",
+      "boiling points",
+      "fractionating column",
+      "condenser",
+      "miscible liquids"
+    ],
+    "topic": "Is Matter Around Us Pure"
+  },
+  {
+    "file": "static/images/ncert/sublimation_ammonium_chloride.png",
+    "keywords": [
+      "sublimation",
+      "ammonium chloride",
+      "solid to gas",
+      "china dish",
+      "inverted funnel",
+      "matter in our surroundings"
+    ],
+    "topic": "Matter in Our Surroundings"
+  },
+  {
+    "file": "static/images/ncert/distance_time_velocity_time_graphs.png",
+    "keywords": [
+      "distance time graph",
+      "velocity time graph",
+      "motion graphs",
+      "uniform acceleration",
+      "kinematics",
+      "slope acceleration",
+      "area distance"
+    ],
+    "topic": "Motion"
+  },
+  {
+    "file": "static/images/ncert/rutherford_gold_foil_experiment.png",
+    "keywords": [
+      "rutherford model",
+      "alpha particle scattering",
+      "gold foil experiment",
+      "atomic nucleus",
+      "discovery of nucleus",
+      "subatomic particles"
+    ],
+    "topic": "Structure of the Atom"
+  },
+  {
+    "file": "static/images/ncert/bohr_atomic_model.png",
+    "keywords": [
+      "bohr model",
+      "energy levels",
+      "electron shells",
+      "k l m n shells",
+      "quantum orbits",
+      "structure of atom"
+    ],
+    "topic": "Structure of the Atom"
+  },
+  {
+    "file": "static/images/ncert/galvanometer_conversion_ammeter_voltmeter.png",
+    "keywords": [
+      "galvanometer to ammeter",
+      "galvanometer to voltmeter",
+      "shunt resistance",
+      "moving coil galvanometer",
+      "figure of merit",
+      "series multiplier"
+    ],
+    "topic": "Moving Charges and Magnetism"
+  },
+  {
+    "file": "static/images/ncert/youngs_double_slit_experiment.png",
+    "keywords": [
+      "young double slit",
+      "ydse",
+      "wave optics",
+      "interference of light",
+      "fringe width",
+      "path difference",
+      "coherent sources"
+    ],
+    "topic": "Wave Optics"
+  },
+  {
+    "file": "static/images/ncert/pn_junction_diode_characteristics.png",
+    "keywords": [
+      "pn junction",
+      "semiconductor diode",
+      "forward bias",
+      "reverse bias",
+      "vi characteristics",
+      "knee voltage",
+      "depletion layer"
+    ],
+    "topic": "Semiconductor Electronics"
+  },
+  {
+    "file": "static/images/ncert/logic_gates_symbols_truth_tables.png",
+    "keywords": [
+      "logic gates",
+      "and gate",
+      "or gate",
+      "not gate",
+      "nand gate",
+      "nor gate",
+      "boolean algebra",
+      "digital electronics"
+    ],
+    "topic": "Semiconductor Electronics"
+  },
+  {
+    "file": "static/images/ncert/galvanic_cell_daniell_cell.png",
+    "keywords": [
+      "daniell cell",
+      "galvanic cell",
+      "electrochemical cell",
+      "salt bridge",
+      "anode oxidation",
+      "cathode reduction",
+      "cell emf"
+    ],
+    "topic": "Electrochemistry"
+  },
+  {
+    "file": "static/images/ncert/dna_double_helix.png",
+    "keywords": [
+      "dna double helix",
+      "watson crick model",
+      "adenine thymine",
+      "guanine cytosine",
+      "hydrogen bonds",
+      "sugar phosphate backbone",
+      "molecular genetics"
+    ],
+    "topic": "Molecular Basis of Inheritance"
+  },
+  {
+    "file": "static/images/ncert/wiki_blast_furnace_metallurgy.png",
+    "keywords": [
+      "blast furnace",
+      "metallurgy"
+    ],
+    "topic": "Extraction of Iron / Blast Furnace",
+    "class": "10-12",
+    "subject": "Chemistry",
+    "source": "Wikimedia Commons"
+  },
+  {
+    "file": "scratch/test_output/test_heart.png",
+    "keywords": [
+      "human",
+      "heart",
+      "diagram"
+    ],
+    "topic": "Human Heart Diagram",
+    "class": "General",
+    "subject": "General",
+    "source": "Wikimedia Commons"
+  },
+  {
+    "file": "static/images/ncert/bio_reflex_arc.png",
+    "keywords": [
+      "reflex arc",
+      "spinal reflex",
+      "reflex action",
+      "sensory neuron",
+      "motor neuron",
+      "effector",
+      "receptor",
+      "spinal cord",
+      "reflex arc diagram",
+      "spinal reflex arc",
+      "reflex action pathway"
+    ],
+    "topic": "Spinal Reflex Arc and Reflex Action",
+    "class": "10",
+    "subject": "Biology",
+    "source": "Wikimedia Commons"
+  },
+  {
+    "file": "static/images/ncert/bio_human_eye.png",
+    "keywords": [
+      "human eye",
+      "eye anatomy",
+      "eye structure",
+      "cross section of eye",
+      "cornea",
+      "retina",
+      "lens",
+      "ciliary muscles",
+      "suspensory ligaments",
+      "iris",
+      "pupil",
+      "human eye diagram",
+      "structure of human eye"
+    ],
+    "topic": "Structure of Human Eye and Vision",
+    "class": "10",
+    "subject": "Biology",
+    "source": "Wikimedia Commons"
+  },
+  {
+    "file": "static/images/ncert/bio_human_heart.png",
+    "keywords": [
+      "human heart",
+      "heart diagram",
+      "circulation",
+      "atrium",
+      "ventricle",
+      "aorta",
+      "pulmonary artery",
+      "cardiac structure",
+      "human heart diagram",
+      "cross section of heart"
+    ],
+    "topic": "Human Heart and Circulatory System",
+    "class": "10",
+    "subject": "Biology",
+    "source": "Wikimedia Commons"
+  },
+  {
+    "file": "static/images/ncert/bio_neuron.png",
+    "keywords": [
+      "neuron",
+      "nerve cell",
+      "cyton",
+      "axon",
+      "dendrite",
+      "myelin sheath",
+      "axon terminal",
+      "synapse",
+      "neuron diagram",
+      "structure of neuron"
+    ],
+    "topic": "Structure of a Neuron / Nerve Cell",
+    "class": "10",
+    "subject": "Biology",
+    "source": "Wikimedia Commons"
+  },
+  {
+    "file": "static/images/ncert/bio_nephron.png",
+    "keywords": [
+      "nephron",
+      "kidney tubule",
+      "bowmans capsule",
+      "glomerulus",
+      "henle loop",
+      "excretion",
+      "malpighian body",
+      "nephron diagram",
+      "structure of nephron"
+    ],
+    "topic": "Structure of Nephron / Excretory System",
+    "class": "10",
+    "subject": "Biology",
+    "source": "Wikimedia Commons"
+  },
+  {
+    "file": "static/images/ncert/bio_stomata.png",
+    "keywords": [
+      "stomata",
+      "stoma",
+      "guard cells",
+      "opening and closing of stomata",
+      "transpiration",
+      "stomata diagram",
+      "guard cell structure"
+    ],
+    "topic": "Stomatal Apparatus and Guard Cells",
+    "class": "10",
+    "subject": "Biology",
+    "source": "Wikimedia Commons"
+  }
+]
