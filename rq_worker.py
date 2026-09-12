@@ -7,6 +7,10 @@ load_dotenv('.env')
 
 import redis
 from rq import Worker, Queue, Connection
+try:
+    from rq.worker import SimpleWorker
+except ImportError:
+    SimpleWorker = Worker
 
 listen = ['paper_generation', 'default']
 redis_host = os.environ.get('REDIS_HOST', 'localhost')
@@ -20,7 +24,9 @@ def start_worker():
         conn.ping()
         print("[+] Redis connection successful! Worker ready for jobs.")
         with Connection(conn):
-            worker = Worker(list(map(Queue, listen)))
+            # On Windows, use SimpleWorker because os.fork is unavailable
+            worker_cls = SimpleWorker if sys.platform == 'win32' else Worker
+            worker = worker_cls(list(map(Queue, listen)))
             worker.work()
     except Exception as e:
         print(f"[!] Unable to connect to Redis at {redis_host}:{redis_port}: {e}")
