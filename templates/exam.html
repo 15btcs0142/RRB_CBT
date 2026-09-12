@@ -682,6 +682,10 @@
         </div>
     </div>
 
+    <script>
+        sessionStorage.removeItem('examSubmitted');
+        sessionStorage.removeItem('submitted');
+    </script>
     <script src="{{ url_for('static', filename='js/multimodal.js') }}"></script>
     <script src="{{ url_for('static', filename='js/exam.js') }}"></script>
     <script>
