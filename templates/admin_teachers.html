@@ -513,23 +513,54 @@
                 <input type="hidden" name="teacher_id" id="assignTeacherId">
                 <div class="form-group">
                     <label><i class="fas fa-graduation-cap"></i> Class *</label>
-                    <input type="text" name="class" required placeholder="e.g. 6, 8, 10">
+                    <select name="class" id="assignClassSelect" required onchange="checkClassTeacherGuard()" style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-family:inherit;font-size:0.9rem;">
+                        <option value="">Select Class (1 to 12)</option>
+                        <option value="1">Class 1</option>
+                        <option value="2">Class 2</option>
+                        <option value="3">Class 3</option>
+                        <option value="4">Class 4</option>
+                        <option value="5">Class 5</option>
+                        <option value="6">Class 6</option>
+                        <option value="7">Class 7</option>
+                        <option value="8">Class 8</option>
+                        <option value="9">Class 9</option>
+                        <option value="10">Class 10</option>
+                        <option value="11">Class 11</option>
+                        <option value="12">Class 12</option>
+                        <option value="1st">1st</option>
+                        <option value="2nd">2nd</option>
+                        <option value="3rd">3rd</option>
+                        <option value="4th">4th</option>
+                        <option value="5th">5th</option>
+                        <option value="6th">6th</option>
+                        <option value="7th">7th</option>
+                        <option value="8th">8th</option>
+                        <option value="9th">9th</option>
+                        <option value="10th">10th</option>
+                        <option value="11th">11th</option>
+                        <option value="12th">12th</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label><i class="fas fa-layer-group"></i> Section</label>
-                    <input type="text" name="section" placeholder="e.g. A, B (optional)">
+                    <label><i class="fas fa-layer-group"></i> Section *</label>
+                    <select name="section" id="assignSectionSelect" required onchange="checkClassTeacherGuard()" style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-family:inherit;font-size:0.9rem;">
+                        <option value="A">Section A</option>
+                        <option value="B">Section B</option>
+                        <option value="C">Section C</option>
+                        <option value="D">Section D</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label><i class="fas fa-book"></i> Subject *</label>
-                    <input type="text" name="subject" required placeholder="e.g. English, Computer">
+                    <input type="text" name="subject" required placeholder="e.g. Mathematics, Science, English">
                 </div>
                 <div class="form-group">
-                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                        <input type="checkbox" name="is_class_teacher" value="true" style="width:auto;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;" id="ctLabel">
+                        <input type="checkbox" name="is_class_teacher" id="ctCheckbox" value="true" style="width:auto;">
                         <span><i class="fas fa-crown" style="color:#f59e0b;"></i> Class Teacher</span>
                     </label>
-                    <small style="color:#64748b; font-size:0.8rem; display:block; margin-top:4px; margin-left:24px;">
-                        Designated class teacher can view overall progress of their class across all subjects.
+                    <small id="ctNote" style="color:#64748b; font-size:0.8rem; display:block; margin-top:4px; margin-left:24px;">
+                        Class teacher has full access of that class (see all subject test progress at once for each student).
                     </small>
                 </div>
                 <button type="submit" class="btn-theme" style="width:100%; justify-content:center; margin-top:10px;">
@@ -616,6 +647,7 @@
             document.getElementById('assignTeacherId').value = id;
             document.getElementById('assignTeacherName').innerHTML = `<i class="fas fa-user-circle"></i> <strong>${name}</strong>`;
             document.getElementById('assignModal').style.display = 'flex';
+            checkClassTeacherGuard();
 
             // Load existing assignments
             const res = await fetch(`/admin/teacher/${id}`);
@@ -630,6 +662,44 @@
                         </span>`).join('') + '</div>';
             } else {
                 container.innerHTML = '<p style="color:#94a3b8; font-size:0.85rem;">No assignments currently assigned</p>';
+            }
+        }
+
+        async function checkClassTeacherGuard() {
+            const clsSelect = document.getElementById('assignClassSelect');
+            const secSelect = document.getElementById('assignSectionSelect');
+            const teacherId = document.getElementById('assignTeacherId').value;
+            const ctCheckbox = document.getElementById('ctCheckbox');
+            const ctNote = document.getElementById('ctNote');
+            
+            if (!clsSelect || !clsSelect.value) {
+                if (ctCheckbox) ctCheckbox.disabled = false;
+                if (ctNote) {
+                    ctNote.style.color = '#64748b';
+                    ctNote.innerHTML = 'Class teacher has full access of that class (see all subject test progress at once for each student).';
+                }
+                return;
+            }
+            
+            const cls = clsSelect.value;
+            const sec = secSelect ? secSelect.value : 'A';
+            
+            try {
+                const res = await fetch(`/admin/check_class_teacher?class=${encodeURIComponent(cls)}&section=${encodeURIComponent(sec)}&teacher_id=${teacherId}`);
+                const data = await res.json();
+                
+                if (data.has_ct) {
+                    ctCheckbox.checked = false;
+                    ctCheckbox.disabled = true;
+                    ctNote.style.color = '#dc2626';
+                    ctNote.innerHTML = `<i class="fas fa-lock" style="margin-right:4px;"></i> <strong>Class Teacher already assigned (${data.ct_name}).</strong> Option disabled to maintain 1:1 assignment.`;
+                } else {
+                    ctCheckbox.disabled = false;
+                    ctNote.style.color = '#64748b';
+                    ctNote.innerHTML = 'Class teacher has full access of that class (see all subject test progress at once for each student).';
+                }
+            } catch(e) {
+                console.error('Guard check error:', e);
             }
         }
 
