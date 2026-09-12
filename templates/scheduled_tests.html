@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Scheduler — RRB CBT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Poppins', sans-serif; background:#f0f4f8; padding:20px; color:#1e293b; }
+        .card { background:#fff; border-radius:14px; padding:20px; margin-bottom:20px; box-shadow:0 4px 20px rgba(0,0,0,0.06); }
+        .card-header { font-size:1.05rem; font-weight:700; color:#1a237e; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #e2e8f0; padding-bottom:10px; }
+        .form-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px; }
+        .fg { display:flex; flex-direction:column; gap:4px; }
+        .fg label { font-size:0.8rem; font-weight:600; color:#475569; }
+        .fg input, .fg select { padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.88rem; font-family:inherit; }
+        .btn { padding:8px 16px; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px; transition:0.2s; text-decoration:none; }
+        .btn-primary { background:#1a237e; color:#fff; }
+        .btn-primary:hover { background:#3949ab; }
+        .btn-warning { background:#eab308; color:#fff; }
+        .btn-danger { background:#ef4444; color:#fff; }
+        .btn-success { background:#22c55e; color:#fff; }
+        .btn-sm { padding:4px 10px; font-size:0.78rem; }
+        .badge { padding:3px 10px; border-radius:12px; font-size:0.75rem; font-weight:700; text-transform:uppercase; display:inline-block; }
+        .badge-scheduled { background:#fef08a; color:#854d0e; }
+        .badge-active { background:#dcfce7; color:#166534; }
+        .badge-expired { background:#fee2e2; color:#991b1b; }
+        .badge-cancelled { background:#f1f5f9; color:#64748b; }
+        table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+        th, td { padding:10px 12px; border-bottom:1px solid #e2e8f0; text-align:left; }
+        th { background:#0f172a; color:#fff; font-weight:600; }
+        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:9999; backdrop-filter:blur(3px); }
+        .modal-card { background:#fff; padding:24px; border-radius:14px; width:100%; max-width:450px; box-shadow:0 10px 30px rgba(0,0,0,0.2); }
+        .alert { padding:12px 16px; border-radius:8px; font-size:0.85rem; font-weight:600; margin-bottom:16px; display:none; align-items:center; gap:8px; }
+        .alert-success { background:#dcfce7; color:#166534; border:1px solid #bbf7d0; }
+        .alert-error { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+    </style>
+</head>
+<body>
+
+    <div id="alertBox" class="alert"></div>
+
+    <!-- ─── SCHEDULE FORM ─────────────────────────────────────────────── -->
+    <div class="card">
+        <div class="card-header">
+            <span><i class="fas fa-calendar-plus"></i> Schedule New Test Window</span>
+            <span style="font-size:0.8rem;color:#64748b;font-weight:400;">Select class, section, subject, date &amp; existing test</span>
+        </div>
+        <form id="scheduleForm" onsubmit="handleScheduleSubmit(event)">
+            <div class="form-grid">
+                <div class="fg">
+                    <label>Class *</label>
+                    <select name="class" id="schedClass" required onchange="loadTestNumbers()">
+                        <option value="">Select Class</option>
+                        <option value="1">Class 1</option>
+                        <option value="2">Class 2</option>
+                        <option value="3">Class 3</option>
+                        <option value="4">Class 4</option>
+                        <option value="5">Class 5</option>
+                        <option value="6">Class 6</option>
+                        <option value="7">Class 7</option>
+                        <option value="8">Class 8</option>
+                        <option value="9">Class 9</option>
+                        <option value="10">Class 10</option>
+                        <option value="11">Class 11</option>
+                        <option value="12">Class 12</option>
+                    </select>
+                </div>
+                <div class="fg">
+                    <label>Section</label>
+                    <select name="section" id="schedSection">
+                        <option value="">All Sections</option>
+                        <option value="A">Section A</option>
+                        <option value="B">Section B</option>
+                        <option value="C">Section C</option>
+                        <option value="D">Section D</option>
+                    </select>
+                </div>
+                <div class="fg">
+                    <label>Subject *</label>
+                    <input type="text" name="subject" id="schedSubject" required placeholder="e.g. Mathematics" oninput="loadTestNumbers()">
+                </div>
+                <div class="fg">
+                    <label>Existing Test No *</label>
+                    <select name="test_no" id="schedTestNo" required>
+                        <option value="">Select Class / Subject first</option>
+                    </select>
+                </div>
+                <div class="fg">
+                    <label>Scheduled Date *</label>
+                    <input type="date" name="scheduled_date" id="schedDate" required>
+                </div>
+                <div class="fg">
+                    <label>Start Time *</label>
+                    <input type="time" name="start_time" id="schedStartTime" required>
+                </div>
+                <div class="fg">
+                    <label>End Time (Window Close) *</label>
+                    <input type="time" name="end_time" id="schedEndTime" required>
+                </div>
+                <div class="fg">
+                    <label>Exam Duration (Minutes) *</label>
+                    <input type="number" name="duration_minutes" id="schedDuration" min="1" max="180" value="30" required>
+                </div>
+            </div>
+            <div style="margin-top:16px;text-align:right;">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-calendar-check"></i> Schedule Test</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ─── SCHEDULED TESTS LIST ──────────────────────────────────────── -->
+    <div class="card">
+        <div class="card-header">
+            <span><i class="fas fa-list-check"></i> Scheduled &amp; Active Test Windows</span>
+            <button class="btn btn-sm btn-primary" onclick="loadScheduledTests()"><i class="fas fa-rotate"></i> Refresh</button>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Class &amp; Sec</th>
+                        <th>Subject &amp; Test</th>
+                        <th>Scheduled Date</th>
+                        <th>Window (Start — End)</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Created By</th>
+                        <th style="text-align:center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleTableBody">
+                    <tr><td colspan="9" style="text-align:center;padding:20px;color:#64748b;">Loading scheduled tests…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ─── REOPEN MODAL ─────────────────────────────────────────────── -->
+    <div class="modal-overlay" id="reopenModal">
+        <div class="modal-card">
+            <h3 style="margin-bottom:12px;color:#1a237e;"><i class="fas fa-redo"></i> Reopen Expired Test</h3>
+            <p style="font-size:0.82rem;color:#64748b;margin-bottom:16px;">Creates a fresh schedule entry for this test with a new date and time window.</p>
+            <form id="reopenForm" onsubmit="handleReopenSubmit(event)">
+                <input type="hidden" id="reopenId">
+                <div class="fg" style="margin-bottom:10px;">
+                    <label>New Scheduled Date *</label>
+                    <input type="date" id="reopenDate" required>
+                </div>
+                <div class="fg" style="margin-bottom:10px;">
+                    <label>New Start Time *</label>
+                    <input type="time" id="reopenStart" required>
+                </div>
+                <div class="fg" style="margin-bottom:10px;">
+                    <label>New End Time *</label>
+                    <input type="time" id="reopenEnd" required>
+                </div>
+                <div class="fg" style="margin-bottom:16px;">
+                    <label>Exam Duration (Minutes) *</label>
+                    <input type="number" id="reopenDuration" min="1" max="180" value="30" required>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;">
+                    <button type="button" class="btn" style="background:#e2e8f0;color:#333;" onclick="closeReopenModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Reopen Test</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('schedDate').value = today;
+            loadTestNumbers();
+            loadScheduledTests();
+        });
+
+        function showAlert(msg, type) {
+            const box = document.getElementById('alertBox');
+            box.className = 'alert alert-' + type;
+            box.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}"></i> ${msg}`;
+            box.style.display = 'flex';
+            window.scrollTo(0,0);
+            setTimeout(() => box.style.display = 'none', 6000);
+        }
+
+        async function loadTestNumbers() {
+            const cls = document.getElementById('schedClass').value;
+            const subj = document.getElementById('schedSubject').value;
+            const select = document.getElementById('schedTestNo');
+
+            try {
+                const res = await fetch(`/api/available_test_numbers?class=${encodeURIComponent(cls)}&subject=${encodeURIComponent(subj)}`);
+                const data = await res.json();
+                if (data.status === 'success' && data.test_numbers && data.test_numbers.length > 0) {
+                    select.innerHTML = '<option value="">Select Existing Test No</option>' + 
+                        data.test_numbers.map(t => `<option value="${t}">${t}</option>`).join('');
+                } else {
+                    select.innerHTML = '<option value="">No existing tests found for selection</option>';
+                }
+            } catch(e) {
+                console.error("Failed to load test numbers", e);
+            }
+        }
+
+        async function loadScheduledTests() {
+            const tbody = document.getElementById('scheduleTableBody');
+            try {
+                const res = await fetch('/api/scheduled_tests');
+                const data = await res.json();
+                if (data.status !== 'success' || !data.scheduled_tests || data.scheduled_tests.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:#94a3b8;">No scheduled test windows found.</td></tr>';
+                    return;
+                }
+                let html = '';
+                data.scheduled_tests.forEach((s, idx) => {
+                    let badgeCls = 'badge-scheduled';
+                    let statusLabel = 'Scheduled';
+                    if (s.status === 'active') { badgeCls = 'badge-active'; statusLabel = '🟢 Active Now'; }
+                    else if (s.status === 'expired') { badgeCls = 'badge-expired'; statusLabel = '🔴 Expired'; }
+                    else if (s.status === 'cancelled') { badgeCls = 'badge-cancelled'; statusLabel = '⚪ Cancelled'; }
+
+                    const stTime = s.start_time.split(' ')[1] || s.start_time;
+                    const endTime = s.end_time.split(' ')[1] || s.end_time;
+
+                    html += `<tr>
+                        <td>${idx + 1}</td>
+                        <td><strong>${s.class}${s.section ? ' (Sec ' + s.section + ')' : ''}</strong></td>
+                        <td>${s.subject} <br><span style="color:#4f46e5;font-weight:700;">${s.test_no}</span></td>
+                        <td>${s.scheduled_date}</td>
+                        <td>${stTime.slice(0,5)} — ${endTime.slice(0,5)}</td>
+                        <td>${s.duration_minutes} mins</td>
+                        <td><span class="badge ${badgeCls}">${statusLabel}</span></td>
+                        <td>${s.created_by || 'Admin'}</td>
+                        <td style="text-align:center; display:flex; gap:4px; justify-content:center;">
+                            <button onclick="openReopenModal(${s.id}, '${s.scheduled_date}', '${stTime.slice(0,5)}', '${endTime.slice(0,5)}', ${s.duration_minutes})" class="btn btn-sm btn-warning" title="Reschedule Test Window"><i class="fas fa-clock"></i> Reschedule</button>
+                            ${s.status === 'scheduled' || s.status === 'active' ? `<button onclick="cancelSchedule(${s.id})" class="btn btn-sm btn-danger" title="Cancel Window"><i class="fas fa-ban"></i> Cancel</button>` : ''}
+                        </td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#ef4444;">Failed to load scheduled tests.</td></tr>';
+            }
+        }
+
+        async function handleScheduleSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                const res = await fetch('/api/scheduled_test/create', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showAlert(data.message, 'success');
+                    e.target.reset();
+                    document.getElementById('schedDate').value = new Date().toISOString().split('T')[0];
+                    loadScheduledTests();
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch(err) {
+                showAlert('Error creating schedule: ' + err.message, 'error');
+            }
+        }
+
+        async function cancelSchedule(id) {
+            if (!confirm('Are you sure you want to cancel this scheduled test window?')) return;
+            try {
+                const res = await fetch(`/api/scheduled_test/${id}/cancel`, { method: 'POST' });
+                const data = await res.json();
+                showAlert(data.message, data.status);
+                loadScheduledTests();
+            } catch(e) {
+                showAlert('Error cancelling schedule: ' + e.message, 'error');
+            }
+        }
+
+        function openReopenModal(id, dateStr, startStr, endStr, dur) {
+            document.getElementById('reopenId').value = id;
+            document.getElementById('reopenDate').value = dateStr || new Date().toISOString().split('T')[0];
+            document.getElementById('reopenStart').value = startStr || '';
+            document.getElementById('reopenEnd').value = endStr || '';
+            document.getElementById('reopenDuration').value = dur || 30;
+            document.getElementById('reopenModal').style.display = 'flex';
+        }
+
+        function closeReopenModal() {
+            document.getElementById('reopenModal').style.display = 'none';
+        }
+
+        async function handleReopenSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('reopenId').value;
+            const formData = new FormData();
+            formData.append('scheduled_date', document.getElementById('reopenDate').value);
+            formData.append('start_time', document.getElementById('reopenStart').value);
+            formData.append('end_time', document.getElementById('reopenEnd').value);
+            formData.append('duration_minutes', document.getElementById('reopenDuration').value);
+
+            try {
+                const res = await fetch(`/api/scheduled_test/${id}/reopen`, { method: 'POST', body: formData });
+                const data = await res.json();
+                showAlert(data.message, data.status);
+                closeReopenModal();
+                loadScheduledTests();
+            } catch(err) {
+                showAlert('Error rescheduling test: ' + err.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
