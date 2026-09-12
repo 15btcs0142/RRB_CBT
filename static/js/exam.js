@@ -139,7 +139,11 @@ const isMobile = isMobileDevice();
 let fullscreenEnabled = false;
 
 // ── GLOBAL TAB SWITCH & FULLSCREEN SECURITY MONITOR ──────────────────────────
+// Reset stale submission state for fresh/reattempted exam sessions
+sessionStorage.removeItem('examSubmitted');
+sessionStorage.removeItem('submitted');
 let _submittingTriggered = false;
+window._isSubmittingModalOpen = false;
 
 function triggerAutoSubmit(reason) {
     if (_submittingTriggered) return;
@@ -942,13 +946,13 @@ Do not add any explanation or markdown.
 Input JSON:
 ${JSON.stringify(textsToTranslate)}`;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
         const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.1, maxOutputTokens: 1024 }
+                generationConfig: { temperature: 0.1, maxOutputTokens: 1024, response_mime_type: 'application/json' }
             })
         });
 
