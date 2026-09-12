@@ -477,45 +477,94 @@
 
     <!-- ─── Main Waiting Card ──────────────────────────────────────────── -->
     <div class="waiting-card">
-        <div class="icon-circle">
-            <i class="fas fa-user-graduate"></i>
-        </div>
+        {% if lock_info %}
+            <div class="icon-circle" style="background: linear-gradient(135deg, {{ lock_info.color }}, #1a237e);">
+                <i class="fas {{ lock_info.icon }}"></i>
+            </div>
 
-        <h2>Hello, {{ session.get('student_name', 'Student') }}</h2>
-        <p class="subtitle">Your exam is being set up</p>
+            <h2>{{ lock_info.title }}</h2>
+            <p class="subtitle">{{ session.get('student_name', 'Student') }}</p>
 
-        <div class="student-badge">
-            <i class="fas fa-id-card"></i>
-            {{ session.get('student_id', '—') }}
-            <span style="opacity:0.3;margin:0 4px;">|</span>
-            {{ session.get('class', '—') }}
-            <span style="opacity:0.3;margin:0 4px;">|</span>
-            {{ session.get('subject', '—') }}
-            {% if session.get('test_no') %}
+            <div class="student-badge">
+                <i class="fas fa-id-card"></i>
+                {{ session.get('student_id', '—') }}
                 <span style="opacity:0.3;margin:0 4px;">|</span>
-                {{ session.get('test_no') }}
+                {{ session.get('class', '—') }}
+                <span style="opacity:0.3;margin:0 4px;">|</span>
+                {{ session.get('subject', '—') }}
+                {% if session.get('test_no') %}
+                    <span style="opacity:0.3;margin:0 4px;">|</span>
+                    {{ session.get('test_no') }}
+                {% endif %}
+            </div>
+
+            <p style="color: #1a237e; font-size: 0.95rem; font-weight:600; margin: 10px 0 16px; padding: 12px; background: rgba(26,35,126,0.06); border-radius: 10px;">
+                {{ lock_info.message }}
+            </p>
+
+            {% if lock_info.state == 'upcoming' %}
+                <div class="loader-container">
+                    <div class="loader-dot"></div>
+                    <div class="loader-dot"></div>
+                    <div class="loader-dot"></div>
+                </div>
+                <p class="status-message">
+                    <i class="fas fa-clock"></i>
+                    Waiting for schedule window to open
+                </p>
+                <div class="refresh-note">
+                    <i class="fas fa-sync-alt"></i>
+                    Auto‑checking every 5 seconds
+                </div>
+            {% else %}
+                <p style="color: #64748b; font-size: 0.85rem; margin-top: 10px;">
+                    Please contact Admin or Teacher for rescheduling.
+                </p>
+                <div style="margin-top:16px;">
+                    <a href="/logout" style="display:inline-block; padding:8px 20px; background:#1a237e; color:#fff; text-decoration:none; border-radius:30px; font-size:0.85rem; font-weight:600;">
+                        <i class="fas fa-arrow-left"></i> Return to Login
+                    </a>
+                </div>
             {% endif %}
-        </div>
+        {% else %}
+            <div class="icon-circle">
+                <i class="fas fa-user-graduate"></i>
+            </div>
 
-        <p style="color: #555; font-size: 0.92rem; margin-bottom: 6px;">The exam has not started yet.</p>
+            <h2>Hello, {{ session.get('student_name', 'Student') }}</h2>
+            <p class="subtitle">Your exam is being set up</p>
 
-        <div class="loader-container">
-            <div class="loader-dot"></div>
-            <div class="loader-dot"></div>
-            <div class="loader-dot"></div>
-        </div>
+            <div class="student-badge">
+                <i class="fas fa-id-card"></i>
+                {{ session.get('student_id', '—') }}
+                <span style="opacity:0.3;margin:0 4px;">|</span>
+                {{ session.get('class', '—') }}
+                <span style="opacity:0.3;margin:0 4px;">|</span>
+                {{ session.get('subject', '—') }}
+                {% if session.get('test_no') %}
+                    <span style="opacity:0.3;margin:0 4px;">|</span>
+                    {{ session.get('test_no') }}
+                {% endif %}
+            </div>
 
-        <p class="status-message">
-            <i class="fas fa-sync-alt fa-spin"></i>
-            Waiting for the administrator to begin the exam
-        </p>
+            <p style="color: #555; font-size: 0.92rem; margin-bottom: 6px;">The exam has not started yet.</p>
 
-        <div class="refresh-note">
-            <i class="fas fa-sync-alt"></i>
-            Auto‑checking every 3 seconds
-        </div>
+            <div class="loader-container">
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+            </div>
 
-        
+            <p class="status-message">
+                <i class="fas fa-sync-alt fa-spin"></i>
+                Waiting for the administrator to begin the exam
+            </p>
+
+            <div class="refresh-note">
+                <i class="fas fa-sync-alt"></i>
+                Auto‑checking every 3 seconds
+            </div>
+        {% endif %}
 
         <div class="footer-note" style="text-align:center; margin-top:20px; padding-top:15px; border-top:1px dashed rgba(0,0,0,0.1); font-size:0.85rem; color:#666;">
     <i class="fas fa-shield-alt" style="color:#1a237e; margin-right:5px;"></i> RRB CBT &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
