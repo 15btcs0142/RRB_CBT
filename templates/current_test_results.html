@@ -219,44 +219,69 @@
         <div class="sub-info"><i class="fas fa-file-alt" style="color:#3949ab;margin-right:6px;"></i> Current Test Results</div>
     </div>
 
-    <!-- ─── META GRID ──────────────────────────────────────────────────── -->
+    <!-- ─── META & STATS SUMMARY ────────────────────────────────────── -->
     <div class="meta-grid">
         <div class="meta-item"><strong><i class="fas fa-graduation-cap" style="color:#3949ab;"></i> Class:</strong> {{ display_class }}</div>
         <div class="meta-item"><strong><i class="fas fa-columns" style="color:#3949ab;"></i> Section:</strong> {{ display_section }}</div>
         <div class="meta-item"><strong><i class="fas fa-book" style="color:#3949ab;"></i> Subject:</strong> {{ display_subject }}</div>
         <div class="meta-item"><strong><i class="fas fa-hashtag" style="color:#3949ab;"></i> Test No:</strong> {{ display_test_no }}</div>
-        <div class="meta-item"><strong><i class="fas fa-calendar-alt" style="color:#3949ab;"></i> Date:</strong> {{ start_time[:10] if start_time else '—' }}</div>
+        <div class="meta-item"><strong><i class="fas fa-calendar-alt" style="color:#3949ab;"></i> Date:</strong> {{ date_filter or (start_time[:10] if start_time else '—') }}</div>
         <div class="meta-item"><strong><i class="fas fa-users" style="color:#3949ab;"></i> Total Students:</strong> {{ total_students }}</div>
+        <div class="meta-item"><strong><i class="fas fa-trophy" style="color:#f57c00;"></i> Highest:</strong> {{ highest_score }}/{{ max_total_marks }}</div>
+        <div class="meta-item"><strong><i class="fas fa-chart-line" style="color:#1a237e;"></i> Class Avg:</strong> {{ avg_score }}/{{ max_total_marks }}</div>
+        <div class="meta-item"><strong><i class="fas fa-check-circle" style="color:#2e7d32;"></i> Pass Rate:</strong> {{ pass_rate }}%</div>
+    </div>
+
+    <!-- ─── QUICK SEARCH (NO-PRINT) ──────────────────────────────────────── -->
+    <div class="no-print" style="margin-bottom:14px; display:flex; justify-content:flex-end;">
+        <div style="position:relative; width:260px;">
+            <i class="fas fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:0.85rem;"></i>
+            <input type="text" id="studentSearch" placeholder="Search student name / ID..." 
+                   oninput="filterReportTable()"
+                   style="width:100%; padding:8px 12px 8px 34px; border-radius:20px; border:1.5px solid #c5cae9; font-size:0.82rem; font-family:inherit; outline:none;">
+        </div>
     </div>
 
     <!-- ─── TABLE ───────────────────────────────────────────────────────── -->
     <div class="table-wrap">
-        <table>
+        <table id="resultsTable">
             <thead>
                 <tr>
+                    <th><i class="fas fa-trophy"></i> Rank</th>
                     <th><i class="fas fa-hashtag"></i> S.No.</th>
                     <th><i class="fas fa-id-card"></i> Admission No</th>
                     <th><i class="fas fa-user"></i> Student Name</th>
                     <th><i class="fas fa-star"></i> Marks (out of {{ max_total_marks }})</th>
-                    <th><i class="fas fa-trophy"></i> Rank</th>
+                    <th><i class="fas fa-percentage"></i> Percentage</th>
                 </tr>
             </thead>
             <tbody>
                 {% for res in results %}
                 <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ res.admission_no or '—' }}</td>
-                    <td><i class="fas fa-user-circle" style="color:#3949ab;margin-right:6px;"></i>{{ res.name }}</td>
-                    <td><span style="background:#e8eaf6;padding:3px 14px;border-radius:20px;font-weight:600;color:#1a237e;">{{ res.score }} / {{ total_q_map.get(res.class + '_' + res.subject, res.total_questions or 0) }}</span></td>
                     <td>
-                        {% if loop.index == 1 %}
-                            <span class="rank-badge gold">🥇 #{{ res.rank }}</span>
-                        {% elif loop.index == 2 %}
-                            <span class="rank-badge silver">🥈 #{{ res.rank }}</span>
-                        {% elif loop.index == 3 %}
-                            <span class="rank-badge bronze">🥉 #{{ res.rank }}</span>
+                        {% if res.rank == 1 %}
+                            <span class="rank-badge gold">🥇 #1</span>
+                        {% elif res.rank == 2 %}
+                            <span class="rank-badge silver">🥈 #2</span>
+                        {% elif res.rank == 3 %}
+                            <span class="rank-badge bronze">🥉 #3</span>
                         {% else %}
                             <span class="rank-badge">#{{ res.rank }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ loop.index }}</td>
+                    <td><span style="font-family:monospace; font-weight:600;">{{ res.admission_no or res.student_id or '—' }}</span></td>
+                    <td><i class="fas fa-user-circle" style="color:#3949ab;margin-right:6px;"></i><strong>{{ res.name }}</strong></td>
+                    <td><span style="background:#e8eaf6;padding:3px 14px;border-radius:20px;font-weight:700;color:#1a237e;">{{ res.score }} / {{ max_total_marks }}</span></td>
+                    <td>
+                        {% if res.percentage is not none %}
+                            {% if res.percentage >= 40 %}
+                                <span style="background:#ecfdf5; color:#047857; padding:3px 10px; border-radius:12px; font-weight:700; font-size:0.8rem;">{{ "%.1f"|format(res.percentage) }}%</span>
+                            {% else %}
+                                <span style="background:#fef2f2; color:#b91c1c; padding:3px 10px; border-radius:12px; font-weight:700; font-size:0.8rem;">{{ "%.1f"|format(res.percentage) }}%</span>
+                            {% endif %}
+                        {% else %}
+                            <span style="color:#94a3b8;">—</span>
                         {% endif %}
                     </td>
                 </tr>
@@ -281,20 +306,30 @@
 
     <!-- ─── BUTTON GROUP ───────────────────────────────────────────────── -->
     <div class="btn-group no-print">
-        <a href="{{ url_for('current_test_results', format='pdf') }}" class="btn btn-pdf" target="_blank">
+        <a href="{{ url_for('current_test_results', format='pdf', **{'class': display_class, 'section': display_section, 'subject': display_subject, 'test_no': display_test_no, 'date': date_filter}) }}" class="btn btn-pdf" target="_blank">
             <i class="fas fa-file-pdf"></i> Export PDF
         </a>
-        <a href="{{ url_for('current_test_results', format='excel') }}" class="btn btn-excel">
+        <a href="{{ url_for('current_test_results', format='excel', **{'class': display_class, 'section': display_section, 'subject': display_subject, 'test_no': display_test_no, 'date': date_filter}) }}" class="btn btn-excel">
             <i class="fas fa-file-excel"></i> Export Excel
         </a>
         <button class="btn btn-print" onclick="window.print()">
             <i class="fas fa-print"></i> Print / Save as PDF
         </button>
-        <a href="{{ url_for('results_page') }}" class="btn btn-back">
-            <i class="fas fa-arrow-left"></i> Back to Results
+        <a href="{{ url_for('admin_current_test_sessions') }}" class="btn btn-back">
+            <i class="fas fa-layer-group"></i> All Test Sessions
         </a>
     </div>
 
+    <script>
+        function filterReportTable() {
+            const query = (document.getElementById('studentSearch').value || '').toLowerCase();
+            const rows = document.querySelectorAll('#resultsTable tbody tr');
+            rows.forEach(r => {
+                const text = r.textContent.toLowerCase();
+                r.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+    </script>
 
 <footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
     Developed by Gaurav Shukla &amp; Team
