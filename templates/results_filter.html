@@ -25,7 +25,7 @@
             z-index:100;
         }
         .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
-        .topbar h1 i{color:#667eea;}
+        .topbar h1 i{color:#818cf8;}
         .topbar a{
             color:#fff;
             text-decoration:none;
@@ -44,7 +44,7 @@
             transform:translateY(-2px);
         }
         
-        .container{max-width:1100px;margin:24px auto;padding:0 20px;}
+        .container{max-width:1200px;margin:24px auto;padding:0 20px;}
         
         /* ─── CARDS ────────────────────────────────────────────────────── */
         .card{
@@ -107,7 +107,7 @@
             border:2px solid #e0e0e0;
             border-radius:10px;
             font-size:0.9rem;
-            transition:border-color .3s;
+            transition:border-color .3s, box-shadow .3s;
             font-family:'Poppins',sans-serif;
             background:#fafafa;
         }
@@ -116,6 +116,18 @@
             box-shadow:0 0 0 3px rgba(57,73,171,0.12);
             outline:none;
             background:#fff;
+        }
+        
+        /* Highlight sort group */
+        .sort-group select {
+            border-color: #c7d2fe;
+            background: #f5f7ff;
+            font-weight: 500;
+            color: #1e1b4b;
+        }
+        .sort-group select:focus {
+            border-color: #4f46e5;
+            background: #fff;
         }
         
         /* ─── BUTTONS ────────────────────────────────────────────────────── */
@@ -184,6 +196,100 @@
         }
         .hint i{color:#3949ab;}
         
+        /* ─── TABLE STYLES & SORT HEADERS ──────────────────────────────── */
+        .sortable-th {
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+            position: relative;
+            padding-right: 22px !important;
+        }
+        .sortable-th:hover {
+            background: #283593 !important;
+        }
+        .sortable-th .sort-icon {
+            font-size: 0.75rem;
+            opacity: 0.6;
+            margin-left: 6px;
+        }
+        .sortable-th.active-sort {
+            background: #3949ab !important;
+        }
+        .sortable-th.active-sort .sort-icon {
+            opacity: 1;
+            color: #ffd700;
+        }
+        
+        /* ─── RANK BADGES ──────────────────────────────────────────────── */
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            min-width: 32px;
+        }
+        .rank-1 {
+            background: linear-gradient(135deg, #ffd700, #ffb300);
+            color: #451a03;
+            box-shadow: 0 2px 6px rgba(255, 179, 0, 0.4);
+        }
+        .rank-2 {
+            background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
+            color: #1e293b;
+            box-shadow: 0 2px 6px rgba(189, 189, 189, 0.4);
+        }
+        .rank-3 {
+            background: linear-gradient(135deg, #f97316, #d97706);
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(217, 119, 6, 0.4);
+        }
+        .rank-default {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+
+        /* ─── QUICK SEARCH ─────────────────────────────────────────────── */
+        .preview-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .search-box {
+            position: relative;
+            max-width: 280px;
+            width: 100%;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px 8px 34px;
+            border-radius: 20px;
+            border: 1.5px solid #cbd5e1;
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            transition: 0.2s;
+        }
+        .search-box input:focus {
+            border-color: #3949ab;
+            box-shadow: 0 0 0 3px rgba(57, 73, 171, 0.12);
+        }
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
         /* ─── RESPONSIVE ────────────────────────────────────────────────── */
         @media(max-width:768px){
             .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
@@ -192,6 +298,8 @@
             .filter-grid{grid-template-columns:1fr;}
             .btn-row{flex-direction:column;}
             .btn{width:100%;justify-content:center;}
+            .preview-header-bar{flex-direction:column;align-items:stretch;}
+            .search-box{max-width:100%;}
         }
     </style>
 </head>
@@ -208,7 +316,7 @@
         <!-- ─── FILTERS CARD ───────────────────────────────────────────── -->
         <div class="card">
             <div class="card-title">
-                <i class="fas fa-sliders-h"></i> Filter Criteria
+                <i class="fas fa-sliders-h"></i> Filter &amp; Sorting Options
                 <span class="badge-info" id="recordCount">Loading records...</span>
             </div>
             <form id="exportForm">
@@ -219,6 +327,15 @@
                             <option value="All">All Classes</option>
                             {% for c in classes %}
                             <option value="{{ c }}">{{ c }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filterSection"><i class="fas fa-columns"></i> Section</label>
+                        <select id="filterSection" name="section">
+                            <option value="All">All Sections</option>
+                            {% for sec in sections %}
+                            <option value="{{ sec }}">{{ sec }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -237,6 +354,30 @@
                             <option value="">All Tests / Latest</option>
                         </select>
                     </div>
+
+                    <!-- ─── SORTING CONTROLS ─────────────────────────────────── -->
+                    <div class="form-group sort-group">
+                        <label for="sortBy"><i class="fas fa-sort-amount-down"></i> Sort By Column</label>
+                        <select id="sortBy" name="sort_by">
+                            <option value="rank" selected>🏆 Rank (By Score/Percentage)</option>
+                            <option value="name">🔤 Student Name</option>
+                            <option value="student_id">🆔 Student ID</option>
+                            <option value="percentage">📊 Percentage</option>
+                            <option value="score">🎯 Score / Marks</option>
+                            <option value="class">🎓 Class &amp; Section</option>
+                            <option value="subject">📚 Subject</option>
+                            <option value="test_no">📝 Test No</option>
+                            <option value="test_date">📅 Test Date</option>
+                        </select>
+                    </div>
+                    <div class="form-group sort-group">
+                        <label for="sortOrder"><i class="fas fa-sort"></i> Sort Order</label>
+                        <select id="sortOrder" name="sort_order">
+                            <option value="asc" selected>▲ Ascending (1→9, A→Z, Top Rank)</option>
+                            <option value="desc">▼ Descending (9→1, Z→A, Low Rank)</option>
+                        </select>
+                    </div>
+
                     <div class="form-group">
                         <label for="startDate"><i class="fas fa-calendar-alt"></i> From Date</label>
                         <input type="date" id="startDate" name="start_date">
@@ -262,34 +403,57 @@
                     </button>
                 </div>
                 <div class="hint">
-                    <i class="fas fa-info-circle"></i> Select Class, Subject, or Test No to filter records in real-time.
+                    <i class="fas fa-info-circle"></i> Use the <strong>Sort By Column</strong> and <strong>Sort Order</strong> drop-down menus, or click any table column header to sort instantly.
                 </div>
             </form>
         </div>
 
         <!-- ─── LIVE PREVIEW DATA TABLE CARD ──────────────────────────── -->
         <div class="card" id="previewCard">
-            <div class="card-title">
-                <i class="fas fa-table"></i> Filtered Student Results Preview
-                <span class="badge-info" id="previewCount">0 Students</span>
+            <div class="preview-header-bar">
+                <div class="card-title" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">
+                    <i class="fas fa-table"></i> Filtered Student Results
+                    <span class="badge-info" id="previewCount">0 Students</span>
+                </div>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="tableSearch" placeholder="Search table (Name, ID...)" autocomplete="off">
+                </div>
             </div>
-            <div style="overflow-x:auto;">
+            <div style="overflow-x:auto; margin-top:10px;">
                 <table style="width:100%; border-collapse:collapse; font-size:0.88rem;" id="previewTable">
                     <thead>
                         <tr style="background:#1a237e; color:#fff; text-align:left;">
-                            <th style="padding:10px 12px;">#</th>
-                            <th style="padding:10px 12px;">Student ID</th>
-                            <th style="padding:10px 12px;">Name</th>
-                            <th style="padding:10px 12px;">Class (Sec)</th>
-                            <th style="padding:10px 12px;">Subject</th>
-                            <th style="padding:10px 12px;">Test No</th>
-                            <th style="padding:10px 12px;">Score</th>
-                            <th style="padding:10px 12px;">Percentage</th>
+                            <th style="padding:10px 12px; width:45px;">#</th>
+                            <th class="sortable-th active-sort" data-sort="rank" style="padding:10px 12px;">
+                                Rank <span class="sort-icon"><i class="fas fa-sort-up"></i></span>
+                            </th>
+                            <th class="sortable-th" data-sort="student_id" style="padding:10px 12px;">
+                                Student ID <span class="sort-icon"><i class="fas fa-sort"></i></span>
+                            </th>
+                            <th class="sortable-th" data-sort="name" style="padding:10px 12px;">
+                                Name <span class="sort-icon"><i class="fas fa-sort"></i></span>
+                            </th>
+                            <th class="sortable-th" data-sort="class" style="padding:10px 12px;">
+                                Class (Sec) <span class="sort-icon"><i class="fas fa-sort"></i></span>
+                            </th>
+                            <th class="sortable-th" data-sort="subject" style="padding:10px 12px;">
+                                Subject <span class="sort-icon"><i class="fas fa-sort"></i></span>
+                            </th>
+                            <th class="sortable-th" data-sort="test_no" style="padding:10px 12px;">
+                                Test No <span class="sort-icon"><i class="fas fa-sort"></i></span>
+                            </th>
+                            <th class="sortable-th" data-sort="score" style="padding:10px 12px;">
+                                Score <span class="sort-icon"><i class="fas fa-sort"></i></span>
+                            </th>
+                            <th class="sortable-th" data-sort="percentage" style="padding:10px 12px;">
+                                Percentage <span class="sort-icon"><i class="fas fa-sort"></i></span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="previewTbody">
                         <tr>
-                            <td colspan="8" style="text-align:center; padding:20px; color:#666;">
+                            <td colspan="9" style="text-align:center; padding:20px; color:#666;">
                                 <i class="fas fa-spinner fa-spin"></i> Loading preview data...
                             </td>
                         </tr>
@@ -305,8 +469,11 @@
 
     <script>
         const classSelect = document.getElementById('filterClass');
+        const sectionSelect = document.getElementById('filterSection');
         const subjectSelect = document.getElementById('filterSubject');
         const testNoSelect = document.getElementById('filterTestNo');
+        const sortBySelect = document.getElementById('sortBy');
+        const sortOrderSelect = document.getElementById('sortOrder');
         const startDate = document.getElementById('startDate');
         const endDate = document.getElementById('endDate');
         const previewBtn = document.getElementById('previewBtn');
@@ -315,6 +482,9 @@
         const clearBtn = document.getElementById('clearBtn');
         const recordCount = document.getElementById('recordCount');
         const exportForm = document.getElementById('exportForm');
+        const tableSearch = document.getElementById('tableSearch');
+
+        let rawResultsData = [];
 
         async function loadTestNumbers(classVal, subjectVal) {
             testNoSelect.innerHTML = '<option value="">All Tests / Latest</option>';
@@ -332,67 +502,129 @@
             } catch(e) { /* silent */ }
         }
 
+        function updateHeaderSortIcons() {
+            const currentSort = sortBySelect.value;
+            const currentOrder = sortOrderSelect.value;
+            
+            document.querySelectorAll('.sortable-th').forEach(th => {
+                const colSort = th.dataset.sort;
+                const iconSpan = th.querySelector('.sort-icon');
+                if (colSort === currentSort) {
+                    th.classList.add('active-sort');
+                    iconSpan.innerHTML = currentOrder === 'asc' ? '<i class="fas fa-sort-up"></i>' : '<i class="fas fa-sort-down"></i>';
+                } else {
+                    th.classList.remove('active-sort');
+                    iconSpan.innerHTML = '<i class="fas fa-sort"></i>';
+                }
+            });
+        }
+
+        function renderTableRows(results) {
+            const previewTbody = document.getElementById('previewTbody');
+            const previewCount = document.getElementById('previewCount');
+
+            recordCount.textContent = `${results.length} student${results.length !== 1 ? 's' : ''} found`;
+            recordCount.style.background = results.length > 0 ? '#e8f5e9' : '#fff3e0';
+            recordCount.style.color = results.length > 0 ? '#1b5e20' : '#e65100';
+            previewCount.textContent = `${results.length} Student${results.length !== 1 ? 's' : ''}`;
+
+            if (results.length === 0) {
+                previewTbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:24px; color:#888;"><i class="fas fa-info-circle" style="font-size:1.4rem; color:#f57c00; margin-bottom:8px; display:block;"></i>No student records found for the selected criteria. Try selecting "All Classes" or clearing date filters.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            results.forEach((r, idx) => {
+                const pct = r.percentage !== null && r.percentage !== undefined ? parseFloat(r.percentage).toFixed(1) : 'N/A';
+                const clsSec = `${r.class || ''} ${r.section ? '(' + r.section + ')' : ''}`.trim();
+                const badgeBg = parseFloat(pct) >= 40 ? '#e8f5e9' : '#ffebee';
+                const badgeColor = parseFloat(pct) >= 40 ? '#2e7d32' : '#c62828';
+
+                // Rank badge formatting
+                const rNum = parseInt(r.rank || (idx + 1));
+                let rankBadge = '';
+                if (rNum === 1) {
+                    rankBadge = `<span class="rank-badge rank-1" title="Rank 1 - Gold"><i class="fas fa-crown"></i> 1</span>`;
+                } else if (rNum === 2) {
+                    rankBadge = `<span class="rank-badge rank-2" title="Rank 2 - Silver"><i class="fas fa-medal"></i> 2</span>`;
+                } else if (rNum === 3) {
+                    rankBadge = `<span class="rank-badge rank-3" title="Rank 3 - Bronze"><i class="fas fa-award"></i> 3</span>`;
+                } else {
+                    rankBadge = `<span class="rank-badge rank-default">#${rNum}</span>`;
+                }
+
+                html += `<tr style="border-bottom:1px solid #e2e8f0; transition:background .15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+                    <td style="padding:10px 12px; font-weight:600; color:#64748b;">${idx + 1}</td>
+                    <td style="padding:10px 12px;">${rankBadge}</td>
+                    <td style="padding:10px 12px; font-family:monospace; font-weight:600; color:#1e293b;">${r.student_id || ''}</td>
+                    <td style="padding:10px 12px; font-weight:600; color:#0f172a;">${r.name || ''}</td>
+                    <td style="padding:10px 12px; color:#475569;">${clsSec || '—'}</td>
+                    <td style="padding:10px 12px; color:#475569;">${r.subject || ''}</td>
+                    <td style="padding:10px 12px; color:#475569;">${r.test_no || '—'}</td>
+                    <td style="padding:10px 12px; font-weight:600; color:#1d4ed8;">${r.score || 0} / ${r.total_questions || 0}</td>
+                    <td style="padding:10px 12px;"><span style="background:${badgeBg}; color:${badgeColor}; padding:3px 10px; border-radius:12px; font-weight:bold; font-size:0.8rem;">${pct}%</span></td>
+                </tr>`;
+            });
+            previewTbody.innerHTML = html;
+        }
+
         async function loadPreview() {
             const classVal = classSelect.value;
+            const sectionVal = sectionSelect ? sectionSelect.value : 'All';
             const subjectVal = subjectSelect.value;
             const testNo = testNoSelect.value;
             const sDate = startDate.value;
             const eDate = endDate.value;
+            const sortBy = sortBySelect.value;
+            const sortOrder = sortOrderSelect.value;
 
             const params = new URLSearchParams();
             if (classVal && classVal !== 'All') params.append('class', classVal);
+            if (sectionVal && sectionVal !== 'All') params.append('section', sectionVal);
             if (subjectVal && subjectVal !== 'All') params.append('subject', subjectVal);
             if (testNo && testNo !== 'Select Test' && testNo !== 'All Tests / Latest') params.append('test_no', testNo);
             if (sDate) params.append('start_date', sDate);
             if (eDate) params.append('end_date', eDate);
+            params.append('sort_by', sortBy);
+            params.append('sort_order', sortOrder);
             params.append('format', 'json');
+
+            updateHeaderSortIcons();
 
             const previewCard = document.getElementById('previewCard');
             const previewTbody = document.getElementById('previewTbody');
-            const previewCount = document.getElementById('previewCount');
 
             previewCard.style.display = 'block';
-            previewTbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#666;"><i class="fas fa-spinner fa-spin"></i> Loading student records...</td></tr>';
+            previewTbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:20px; color:#666;"><i class="fas fa-spinner fa-spin"></i> Loading student records...</td></tr>';
 
             try {
                 const res = await fetch(`/admin/export/results?${params.toString()}`);
                 const data = await res.json();
-                const results = data.results || [];
-                results.sort((a, b) => (a.name || '').trim().localeCompare((b.name || '').trim(), undefined, { sensitivity: 'base' }));
-
-                recordCount.textContent = `${results.length} student${results.length !== 1 ? 's' : ''} found`;
-                recordCount.style.background = results.length > 0 ? '#e8f5e9' : '#fff3e0';
-                recordCount.style.color = results.length > 0 ? '#1b5e20' : '#e65100';
-                previewCount.textContent = `${results.length} Student${results.length !== 1 ? 's' : ''}`;
-
-                if (results.length === 0) {
-                    previewTbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:#888;"><i class="fas fa-info-circle" style="font-size:1.4rem; color:#f57c00; margin-bottom:8px; display:block;"></i>No student records found for the selected criteria. Try selecting "All Classes" or clearing date filters.</td></tr>';
-                    return;
-                }
-
-                let html = '';
-                results.forEach((r, idx) => {
-                    const pct = r.percentage ? parseFloat(r.percentage).toFixed(1) : 'N/A';
-                    const clsSec = `${r.class || ''} ${r.section ? '(' + r.section + ')' : ''}`.trim();
-                    const badgeBg = parseFloat(pct) >= 40 ? '#e8f5e9' : '#ffebee';
-                    const badgeColor = parseFloat(pct) >= 40 ? '#2e7d32' : '#c62828';
-
-                    html += `<tr style="border-bottom:1px solid #e2e8f0;">
-                        <td style="padding:10px 12px; font-weight:600; color:#64748b;">${idx + 1}</td>
-                        <td style="padding:10px 12px; font-family:monospace; font-weight:600; color:#1e293b;">${r.student_id || ''}</td>
-                        <td style="padding:10px 12px; font-weight:600; color:#0f172a;">${r.name || ''}</td>
-                        <td style="padding:10px 12px; color:#475569;">${clsSec}</td>
-                        <td style="padding:10px 12px; color:#475569;">${r.subject || ''}</td>
-                        <td style="padding:10px 12px; color:#475569;">${r.test_no || '—'}</td>
-                        <td style="padding:10px 12px; font-weight:600; color:#1d4ed8;">${r.score || 0} / ${r.total_questions || 0}</td>
-                        <td style="padding:10px 12px;"><span style="background:${badgeBg}; color:${badgeColor}; padding:3px 10px; border-radius:12px; font-weight:bold; font-size:0.8rem;">${pct}%</span></td>
-                    </tr>`;
-                });
-                previewTbody.innerHTML = html;
+                rawResultsData = data.results || [];
+                
+                // Filter by local search query if present
+                applyLocalSearch();
             } catch(e) {
                 console.error('Preview error:', e);
-                previewTbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#c62828;"><i class="fas fa-exclamation-triangle"></i> Failed to load student preview.</td></tr>';
+                previewTbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:20px; color:#c62828;"><i class="fas fa-exclamation-triangle"></i> Failed to load student preview.</td></tr>';
             }
+        }
+
+        function applyLocalSearch() {
+            const query = (tableSearch.value || '').trim().toLowerCase();
+            if (!query) {
+                renderTableRows(rawResultsData);
+                return;
+            }
+            const filtered = rawResultsData.filter(r => {
+                const name = (r.name || '').toLowerCase();
+                const id = (r.student_id || '').toLowerCase();
+                const cls = (r.class || '').toLowerCase();
+                const sec = (r.section || '').toLowerCase();
+                const sub = (r.subject || '').toLowerCase();
+                return name.includes(query) || id.includes(query) || cls.includes(query) || sec.includes(query) || sub.includes(query);
+            });
+            renderTableRows(filtered);
         }
 
         function buildExportUrl(format) {
@@ -407,17 +639,23 @@
             return `/admin/export/results?${params.toString()}`;
         }
 
+        // Event Listeners for Filter Changes
         classSelect.addEventListener('change', () => {
             loadTestNumbers(classSelect.value, subjectSelect.value);
             loadPreview();
         });
+        if (sectionSelect) sectionSelect.addEventListener('change', loadPreview);
         subjectSelect.addEventListener('change', () => {
             loadTestNumbers(classSelect.value, subjectSelect.value);
             loadPreview();
         });
         testNoSelect.addEventListener('change', loadPreview);
+        sortBySelect.addEventListener('change', loadPreview);
+        sortOrderSelect.addEventListener('change', loadPreview);
         startDate.addEventListener('change', loadPreview);
         endDate.addEventListener('change', loadPreview);
+
+        tableSearch.addEventListener('input', applyLocalSearch);
 
         previewBtn.addEventListener('click', loadPreview);
 
@@ -434,8 +672,29 @@
         clearBtn.addEventListener('click', () => {
             setTimeout(() => {
                 testNoSelect.innerHTML = '<option value="">All Tests / Latest</option>';
+                sortBySelect.value = 'rank';
+                sortOrderSelect.value = 'asc';
+                tableSearch.value = '';
                 loadPreview();
             }, 50);
+        });
+
+        // Clickable Table Headers Sorting
+        document.querySelectorAll('.sortable-th').forEach(th => {
+            th.addEventListener('click', () => {
+                const sortCol = th.dataset.sort;
+                if (!sortCol) return;
+
+                if (sortBySelect.value === sortCol) {
+                    // Toggle direction
+                    sortOrderSelect.value = (sortOrderSelect.value === 'asc') ? 'desc' : 'asc';
+                } else {
+                    sortBySelect.value = sortCol;
+                    // Default direction: desc for score/percentage, asc for name/id/rank/class
+                    sortOrderSelect.value = (sortCol === 'percentage' || sortCol === 'score') ? 'desc' : 'asc';
+                }
+                loadPreview();
+            });
         });
 
         document.addEventListener('DOMContentLoaded', () => {
