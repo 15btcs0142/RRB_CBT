@@ -9,212 +9,299 @@
         *{margin:0;padding:0;box-sizing:border-box;}
         body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
         
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --primary-light: #e0e7ff;
+            --accent: #10b981;
+            --dark: #0f172a;
+            --slate: #475569;
+            --border: #e2e8f0;
+            --radius: 16px;
+        }
+
+        body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);min-height:100vh;color:#0f172a;}
+        
         /* ─── TOP BAR ────────────────────────────────────────────────────── */
         .topbar{
-            background:linear-gradient(90deg,#1a237e,#3949ab);
+            background:linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
             color:#fff;
-            padding:14px 28px;
+            padding:16px 32px;
             display:flex;
-            justify-content:space-between;
+            justify-space:between;
             align-items:center;
             flex-wrap:wrap;
-            gap:10px;
-            box-shadow:0 4px 20px rgba(0,0,0,0.15);
+            gap:12px;
+            box-shadow:0 4px 20px rgba(15,23,42,0.25);
             position:sticky;
             top:0;
             z-index:100;
+            border-bottom:1px solid rgba(255,255,255,0.1);
         }
-        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
-        .topbar h1 i{color:#667eea;}
+        .topbar h1{font-size:1.3rem;font-weight:800;display:flex;align-items:center;gap:12px;letter-spacing:-0.02em;}
+        .topbar h1 i{color:#818cf8;}
         .topbar a{
             color:#fff;
             text-decoration:none;
-            background:rgba(255,255,255,0.15);
+            background:rgba(255,255,255,0.1);
             padding:8px 20px;
-            border-radius:25px;
-            font-size:0.85rem;
-            transition:0.3s;
+            border-radius:30px;
+            font-size:0.84rem;
+            font-weight:600;
+            transition:all 0.25s ease;
             display:inline-flex;
             align-items:center;
-            gap:6px;
-            border:1px solid rgba(255,255,255,0.1);
+            gap:8px;
+            border:1px solid rgba(255,255,255,0.18);
         }
         .topbar a:hover{
             background:rgba(255,255,255,0.25);
             transform:translateY(-2px);
+            color:#ffffff;
         }
         
-        .container{max-width:960px;margin:22px auto;padding:0 18px;}
+        .container{max-width:100%;margin:16px 0;padding:0 16px;}
         @media (max-width: 1024px) {
-            .container { max-width: 100%; padding: 0 12px; margin: 12px auto; }
-            .card { padding: 18px 20px; }
-        }
-        @media (max-height: 800px) {
-            .card { padding: 16px 18px; margin-bottom: 14px; }
+            .container { padding: 0 12px; margin: 12px 0; }
+            .card { padding: 20px 22px; }
         }
         
         /* ─── CARDS ────────────────────────────────────────────────────── */
         .card{
-            background:rgba(255,255,255,0.95);
-            backdrop-filter:blur(10px);
-            border-radius:16px;
-            padding:24px 26px;
-            box-shadow:0 4px 16px rgba(0,0,0,0.06);
-            border:1px solid rgba(26,35,126,0.08);
-            margin-bottom:20px;
-            transition:0.3s;
+            background:#ffffff;
+            border-radius:var(--radius);
+            padding:24px 28px;
+            box-shadow:0 8px 25px rgba(15,23,42,0.05);
+            border:1px solid #e2e8f0;
+            margin-bottom:22px;
+            transition:all 0.25s ease;
         }
-        .card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
+        .card:hover{
+            box-shadow:0 14px 35px rgba(15,23,42,0.08);
+            border-color:rgba(99,102,241,0.3);
+        }
         .card-header{
-            color:#1a237e;
-            font-size:1.05rem;
-            font-weight:600;
+            color:#1e1b4b;
+            font-size:1rem;
+            font-weight:800;
             display:flex;
             align-items:center;
             gap:10px;
-            border-bottom:2px dashed #e8eaf6;
-            padding-bottom:10px;
-            margin-bottom:16px;
+            border-bottom:1.5px solid #f1f5f9;
+            padding-bottom:12px;
+            margin-bottom:18px;
         }
-        .card-header i{color:#3949ab;}
+        .card-header i{
+            background:var(--primary-light);
+            color:var(--primary);
+            padding:6px 8px;
+            border-radius:10px;
+            font-size:0.95rem;
+            border:1px solid #c7d2fe;
+        }
         
         /* ─── ADMIN BANNER ────────────────────────────────────────────── */
         .admin-banner{
-            background:linear-gradient(135deg,#e8eaf6,#f3f0ff);
-            border:1.5px solid #c5cae9;
-            border-radius:12px;
+            background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 100%);
+            border:1px solid #c7d2fe;
+            border-radius:14px;
             padding:14px 20px;
-            margin-bottom:18px;
+            margin-bottom:20px;
             display:flex;
             align-items:center;
             gap:14px;
         }
-        .admin-banner i{font-size:1.6rem;color:#3949ab;}
-        .admin-banner p{font-size:.88rem;color:#1a237e;margin:0;}
-        .admin-banner strong{font-size:.95rem;color:#1a237e;}
+        .admin-banner i{font-size:1.6rem;color:var(--primary);}
+        .admin-banner p{font-size:.88rem;color:#1e1b4b;margin:0;}
+        .admin-banner strong{font-size:.95rem;color:#1e1b4b;}
         
         /* ─── TABS ────────────────────────────────────────────────────── */
-        .tabs{display:flex;gap:8px;margin-bottom:22px;}
+        .tabs{display:flex;gap:10px;margin-bottom:22px;}
         .tab{
-            padding:9px 22px;
-            border:none;
-            border-radius:22px;
+            padding:10px 24px;
+            border:1px solid #e2e8f0;
+            border-radius:30px;
             cursor:pointer;
             font-family:'Poppins',sans-serif;
-            font-weight:600;
-            font-size:.88rem;
-            transition:all .3s;
+            font-weight:700;
+            font-size:.86rem;
+            transition:all .25s ease;
             background:white;
-            color:#555;
-            box-shadow:0 2px 8px rgba(0,0,0,.06);
+            color:#475569;
+            box-shadow:0 2px 6px rgba(0,0,0,.04);
         }
+        .tab:hover{background:#f8fafc;color:#0f172a;}
         .tab.active{
-            background:linear-gradient(135deg,#1a237e,#3949ab);
+            background:linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
             color:white;
+            border-color:#3730a3;
+            box-shadow:0 4px 14px rgba(79,70,229,0.3);
         }
         .tab-content{display:none;} .tab-content.active{display:block;}
         
         /* ─── FORM ────────────────────────────────────────────────────── */
-        .fg{margin-bottom:13px;}
+        .fg{margin-bottom:14px;}
         .fg label{
             display:block;
-            font-weight:500;
-            margin-bottom:5px;
-            color:#333;
-            font-size:.85rem;
+            font-weight:700;
+            margin-bottom:6px;
+            color:#475569;
+            font-size:.78rem;
+            text-transform:uppercase;
+            letter-spacing:0.02em;
         }
-        .fg label i{color:#3949ab;margin-right:4px;width:18px;}
+        .fg label i{color:var(--primary);margin-right:6px;}
         .fg input,.fg select,.fg textarea{
             width:100%;
-            padding:9px 14px;
-            border:2px solid #e0e0e0;
-            border-radius:10px;
+            padding:11px 15px;
+            border:1.5px solid #cbd5e1;
+            border-radius:12px;
             font-family:'Poppins',sans-serif;
-            font-size:.9rem;
-            transition:border-color .25s;
-            background:#fafafa;
+            font-size:.88rem;
+            font-weight:500;
+            transition:all .2s ease;
+            background:#f8fafc;
+            color:#0f172a;
         }
         .fg input:focus,.fg select:focus,.fg textarea:focus{
             outline:none;
-            border-color:#3949ab;
-            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
+            border-color:var(--primary);
+            box-shadow:0 0 0 4px rgba(79,70,229,0.14);
             background:#fff;
         }
         .fg textarea{min-height:75px;resize:vertical;}
         .fg select:disabled{opacity:0.5;cursor:not-allowed;}
+
+        /* Remove default spinner arrows for clean steppers */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] { 
+          -moz-appearance: textfield; 
+        }
         
-        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+        .form-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+        @media (max-width: 1100px) {
+            .form-grid{grid-template-columns:repeat(3,1fr);}
+        }
+        @media (max-width: 700px) {
+            .form-grid{grid-template-columns:1fr;}
+        }
+
+        /* ── CIRCULAR PROGRESS OVERLAY ────────────────────────────────────── */
+        .c-modal-overlay {
+          position: fixed; inset: 0;
+          background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);
+          display: flex; align-items: center; justify-content: center;
+          z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .c-modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .c-modal-card {
+          background: #ffffff; border-radius: 24px; padding: 32px 40px; text-align: center;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid #e2e8f0; width: 350px;
+          display: flex; flex-direction: column; align-items: center;
+        }
+        .c-progress-wrapper { position: relative; width: 140px; height: 140px; margin-bottom: 16px; }
+        .c-progress-ring-fg { transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset 0.3s ease; stroke-linecap: round; }
+        .c-logo-center {
+          position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+          width: 76px; height: 76px; border-radius: 50%; background: #f8fafc;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 4px 14px rgba(79,70,229,0.18); border: 1px solid #e0e7ff;
+        }
+        .rrb-pulse-logo {
+          max-width: 50px; max-height: 50px; object-fit: contain;
+          animation: rrbPulse 1.8s infinite ease-in-out;
+        }
+        @keyframes rrbPulse {
+          0% { transform: scale(1); filter: drop-shadow(0 0 3px rgba(79, 70, 229, 0.3)); }
+          50% { transform: scale(1.12); filter: drop-shadow(0 0 14px rgba(79, 70, 229, 0.6)); }
+          100% { transform: scale(1); filter: drop-shadow(0 0 3px rgba(79, 70, 229, 0.3)); }
+        }
+        .c-percentage { font-size: 2.2rem; font-weight: 800; color: #4f46e5; margin-bottom: 2px; line-height: 1; }
+        .c-status-title { font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+        .c-status-sub { font-size: 0.78rem; color: #64748b; font-weight: 500; }
         
         /* ─── QUESTION TYPES ──────────────────────────────────────────── */
-        .qt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin:14px 0;}
+        .qt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:14px 0;}
         .qt-card{
-            background:#f8f9fa;
-            border:2px solid #e0e0e0;
-            border-radius:11px;
-            padding:13px;
+            background:#f8fafc;
+            border:1.5px solid #e2e8f0;
+            border-radius:14px;
+            padding:14px;
             text-align:center;
-            transition:all .25s;
+            transition:all .25s ease;
         }
-        .qt-card.active{border-color:#3949ab;background:#e8eaf6;}
-        .qt-card i{font-size:1.5rem;color:#3949ab;display:block;margin-bottom:5px;}
-        .qt-card .ql{font-weight:600;font-size:.8rem;color:#333;margin-bottom:7px;}
+        .qt-card:focus-within, .qt-card:hover{border-color:var(--primary);background:var(--primary-light);}
+        .qt-card i{font-size:1.5rem;color:var(--primary);display:block;margin-bottom:5px;}
+        .qt-card .ql{font-weight:700;font-size:.82rem;color:#1e1b4b;margin-bottom:7px;}
         .qt-card input[type=number]{
-            width:68px;
-            padding:5px;
-            border:2px solid #e0e0e0;
-            border-radius:6px;
+            width:70px;
+            padding:6px;
+            border:1.5px solid #cbd5e1;
+            border-radius:8px;
             text-align:center;
             font-family:'Poppins',sans-serif;
+            font-weight:800;
+            font-size:0.92rem;
             background:white;
+            color:#0f172a;
         }
         .qt-card input[type=number]:focus{
             outline:none;
-            border-color:#3949ab;
+            border-color:var(--primary);
+            box-shadow:0 0 0 3px rgba(79,70,229,0.15);
         }
         
         .total-badge{
-            background:linear-gradient(135deg,#1a237e,#3949ab);
+            background:linear-gradient(135deg, #10b981 0%, #059669 100%);
             color:white;
             padding:4px 14px;
-            border-radius:18px;
-            font-weight:600;
-            font-size:.88rem;
+            border-radius:20px;
+            font-weight:700;
+            font-size:.85rem;
             display:inline-block;
+            box-shadow:0 4px 12px rgba(16,185,129,0.3);
         }
         
         /* ─── OUTPUT MODE ──────────────────────────────────────────────── */
         .mode-row{display:flex;gap:12px;margin:14px 0;}
         .mode-btn{
             flex:1;
-            padding:13px;
-            border:2px solid #e0e0e0;
-            border-radius:11px;
+            padding:14px 18px;
+            border:1.5px solid #cbd5e1;
+            border-radius:14px;
             cursor:pointer;
             text-align:center;
-            transition:all .25s;
-            background:white;
+            transition:all .25s ease;
+            background:#f8fafc;
         }
-        .mode-btn.selected{border-color:#3949ab;background:#e8eaf6;}
-        .mode-btn i{font-size:1.6rem;color:#3949ab;display:block;margin-bottom:5px;}
-        .mode-btn .ml{font-weight:600;font-size:.86rem;color:#333;}
-        .mode-btn .ms{font-size:.74rem;color:#666;margin-top:2px;}
+        .mode-btn:hover{background:#eef2ff;border-color:#a5b4fc;}
+        .mode-btn.selected{border-color:var(--primary);background:var(--primary-light);box-shadow:0 4px 12px rgba(79,70,229,0.12);}
+        .mode-btn i{font-size:1.6rem;color:var(--primary);display:block;margin-bottom:6px;}
+        .mode-btn .ml{font-weight:700;font-size:.88rem;color:#1e1b4b;}
+        .mode-btn .ms{font-size:.76rem;color:#64748b;margin-top:2px;}
         
         /* ─── REMARK BOX ────────────────────────────────────────────── */
         .remark-box{
-            background:#e8eaf6;
-            border:2px dashed #c5cae9;
-            border-radius:11px;
+            background:var(--primary-light);
+            border:1.5px dashed #c7d2fe;
+            border-radius:14px;
             padding:16px;
-            margin-top:14px;
+            margin-top:16px;
         }
         .remark-box .rl{
-            font-weight:600;
-            color:#1a237e;
+            font-weight:700;
+            color:#1e1b4b;
             margin-bottom:7px;
-            font-size:.88rem;
+            font-size:.85rem;
             display:flex;
             align-items:center;
             gap:6px;
+            text-transform:uppercase;
+            letter-spacing:0.02em;
         }
         .remark-box textarea{
             background:transparent;
@@ -230,24 +317,27 @@
         /* ─── BUTTONS ────────────────────────────────────────────────── */
         .gen-btn{
             width:100%;
-            padding:13px;
-            background:linear-gradient(135deg,#1a237e,#3949ab);
+            padding:16px 28px;
+            background:linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
             color:white;
             border:none;
-            border-radius:10px;
-            font-size:.95rem;
-            font-weight:600;
+            border-radius:16px;
+            font-size:1.02rem;
+            font-weight:800;
             cursor:pointer;
             display:flex;
             align-items:center;
             justify-content:center;
-            gap:9px;
-            transition:transform .2s;
-            margin-top:16px;
+            gap:10px;
+            transition:all .25s ease;
+            margin-top:18px;
             font-family:'Poppins',sans-serif;
+            box-shadow:0 12px 30px rgba(79,70,229,0.35);
+            text-transform:uppercase;
+            letter-spacing:0.03em;
         }
-        .gen-btn:hover{transform:translateY(-2px);}
-        .gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+        .gen-btn:hover:not(:disabled){transform:translateY(-3px) scale(1.01);box-shadow:0 18px 40px rgba(79,70,229,0.45);background:linear-gradient(135deg, #4338ca 0%, #2e2a85 100%);}
+        .gen-btn:disabled{opacity:.55;cursor:not-allowed;transform:none !important;box-shadow:none !important;}
         
         /* ─── UPLOAD ZONE ────────────────────────────────────────────── */
         .upload-zone{
@@ -316,6 +406,24 @@
     </style>
 </head>
 <body>
+
+<!-- CIRCULAR PROCESSING OVERLAY WITH RRB LOGO -->
+<div id="circularLoadingOverlay" class="c-modal-overlay">
+  <div class="c-modal-card">
+    <div class="c-progress-wrapper">
+      <svg class="c-progress-ring" width="140" height="140">
+        <circle class="c-progress-ring-bg" cx="70" cy="70" r="60" stroke="#e0e7ff" stroke-width="8" fill="transparent"/>
+        <circle id="cProgressRing" class="c-progress-ring-fg" cx="70" cy="70" r="60" stroke="#4f46e5" stroke-width="8" fill="transparent" stroke-dasharray="376.99" stroke-dashoffset="376.99"/>
+      </svg>
+      <div class="c-logo-center">
+        <img src="/static/logo.png" id="cModalLogo" alt="RRB Logo" class="rrb-pulse-logo" onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/graduation-cap.svg';">
+      </div>
+    </div>
+    <div class="c-percentage" id="cProgressPercent">0%</div>
+    <div class="c-status-title" id="cProgressStatus">Initializing AI Engine...</div>
+    <div class="c-status-sub" id="cProgressSub">Generating test questions via Gemini AI...</div>
+  </div>
+</div>
 
 <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
 <div class="topbar">
@@ -669,6 +777,120 @@ async function fetchTestNumbers(classVal, subjectVal) {
 }
 
 // ─── POPULATE TEST NUMBER DROPDOWN ──────────────────────────
+function animateCircularProgress(expectedDurationMs = 25000) {
+  const overlay = document.getElementById('circularLoadingOverlay');
+  const ring = document.getElementById('cProgressRing');
+  const percentText = document.getElementById('cProgressPercent');
+  const statusTitle = document.getElementById('cProgressStatus');
+  const statusSub = document.getElementById('cProgressSub');
+  
+  if (!overlay || !ring) return { finish: (cb) => { if(cb) cb(); }, error: () => {} };
+  
+  overlay.classList.add('active');
+  const circumference = 376.99;
+  
+  const stages = [
+    { p: 15, title: 'Initializing AI Engine...', sub: 'Establishing connection to Gemini AI...' },
+    { p: 35, title: 'Generating Test Questions...', sub: 'Formulating MCQs and Assertion-Reason questions...' },
+    { p: 65, title: 'Verifying Answer Keys...', sub: 'Validating options and solution keys...' },
+    { p: 88, title: 'Finalizing Test Paper...', sub: 'Saving to CBT database and test repository...' }
+  ];
+  
+  let currentP = 0;
+  let stageIdx = 0;
+  const interval = setInterval(() => {
+    currentP += 2;
+    if (currentP > 98) currentP = 98;
+    
+    const offset = circumference - (currentP / 100 * circumference);
+    ring.style.strokeDashoffset = offset;
+    percentText.textContent = `${currentP}%`;
+    
+    if (stageIdx < stages.length && currentP >= stages[stageIdx].p) {
+      statusTitle.textContent = stages[stageIdx].title;
+      statusSub.textContent = stages[stageIdx].sub;
+      stageIdx++;
+    }
+  }, expectedDurationMs / 50);
+  
+  return {
+    finish: (callback) => {
+      clearInterval(interval);
+      ring.style.strokeDashoffset = 0;
+      percentText.textContent = '100%';
+      statusTitle.textContent = 'Test Paper Generated!';
+      statusSub.textContent = 'Saved to database successfully.';
+      setTimeout(() => {
+        overlay.classList.remove('active');
+        if (callback) callback();
+      }, 600);
+    },
+    error: (msg) => {
+      clearInterval(interval);
+      overlay.classList.remove('active');
+      if (msg) showAlert(msg, 'error');
+    }
+  };
+}
+
+// ─── GENERATE AI PAPER ─────────────────────────────────────────
+async function generateAI(e) {
+    e.preventDefault();
+    const total = parseInt(document.getElementById('totalBadge').textContent.replace('Total: ',''));
+    if (total===0) { showAlert('Enter at least 1 question quantity','error'); return; }
+    const formData = new FormData(e.target);
+    formData.append('method','ai');
+    document.getElementById('genBtn').disabled=true;
+    
+    const progress = animateCircularProgress(25000);
+    
+    try {
+        const res  = await fetch('/admin/create_test',{method:'POST',body:formData});
+        const data = await res.json();
+        if (res.status === 429 || data.rate_limit) {
+            progress.error();
+            let seconds = data.retry_after || 60;
+            const btn = document.getElementById('genBtn');
+            btn.disabled = true;
+            let timer = setInterval(() => {
+                showAlert(`Server rate limit reached (13 req/min). Retrying available in ${seconds}s...`, 'error');
+                btn.innerHTML = `<i class="fas fa-hourglass-half fa-spin"></i> Retry in ${seconds}s`;
+                seconds--;
+                if (seconds < 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fas fa-magic"></i> Generate Paper`;
+                    showAlert('Rate limit reset. You can generate tests now.', 'success');
+                }
+            }, 1000);
+            return;
+        }
+        if (data.status==='success') {
+            progress.finish(() => {
+                if (data.mode==='print' && data.preview_url) {
+                    showAlert(data.message+' — Opening print preview…','success');
+                    setTimeout(()=>window.open(data.preview_url,'_blank'),600);
+                } else {
+                    showAlert(data.message,'success');
+                    e.target.reset(); updateTotal();
+                    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));
+                    document.getElementById('mode-cbt').classList.add('selected');
+                    document.getElementById('outputMode').value='cbt';
+                    const cls = document.getElementById('classSelect').value;
+                    const sub = document.getElementById('subjectInput').value.trim();
+                    if (cls && sub) updateTestNumbers(cls, sub, 'testNoSelect');
+                    else document.getElementById('testNoSelect').innerHTML = '<option value="">Select Class & Subject first</option>';
+                }
+            });
+        } else {
+            progress.error(data.message || 'Generation failed');
+        }
+    } catch(err) {
+        progress.error('Error: ' + err.message);
+    }
+    document.getElementById('genBtn').disabled=false;
+}
+
 function populateTestNoSelect(selectId, existingTests) {
     const select = document.getElementById(selectId);
     if (!select) return;
@@ -725,73 +947,35 @@ document.addEventListener('DOMContentLoaded', function() {
     uploadSubjectInput.addEventListener('blur', updateUploadTestNo);
 });
 
-// ─── GENERATE AI ──────────────────────────────────────────────
-async function generateAI(e) {
-    e.preventDefault();
-    const total = parseInt(document.getElementById('totalBadge').textContent.replace('Total: ',''));
-    if (total===0) { showAlert('Enter at least 1 question quantity','error'); return; }
-    const formData = new FormData(e.target);
-    formData.append('method','ai');
-    document.getElementById('loadingBox').style.display='block';
-    document.getElementById('genBtn').disabled=true;
-    try {
-        const res  = await fetch('/admin/create_test',{method:'POST',body:formData});
-        const data = await res.json();
-        if (res.status === 429 || data.rate_limit) {
-            document.getElementById('loadingBox').style.display = 'none';
-            let seconds = data.retry_after || 60;
-            const btn = document.getElementById('genBtn');
-            btn.disabled = true;
-            let timer = setInterval(() => {
-                showAlert(`Server rate limit reached (13 req/min). Retrying available in ${seconds}s...`, 'error');
-                btn.innerHTML = `<i class="fas fa-hourglass-half fa-spin"></i> Retry in ${seconds}s`;
-                seconds--;
-                if (seconds < 0) {
-                    clearInterval(timer);
-                    btn.disabled = false;
-                    btn.innerHTML = `<i class="fas fa-magic"></i> Generate Paper`;
-                    showAlert('Rate limit reset. You can generate tests now.', 'success');
-                }
-            }, 1000);
-            return;
-        }
-        if (data.status==='success') {
-            if (data.mode==='print' && data.preview_url) {
-                showAlert(data.message+' — Opening print preview…','success');
-                setTimeout(()=>window.open(data.preview_url,'_blank'),600);
-            } else {
-                showAlert(data.message,'success');
-                e.target.reset(); updateTotal();
-                document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));
-                document.getElementById('mode-cbt').classList.add('selected');
-                document.getElementById('outputMode').value='cbt';
-                const cls = document.getElementById('classSelect').value;
-                const sub = document.getElementById('subjectInput').value.trim();
-                if (cls && sub) updateTestNumbers(cls, sub, 'testNoSelect');
-                else document.getElementById('testNoSelect').innerHTML = '<option value="">Select Class & Subject first</option>';
-            }
-        } else { showAlert(data.message||'Generation failed','error'); }
-    } catch(err) { showAlert('Error: '+err.message,'error'); }
-    document.getElementById('loadingBox').style.display='none';
-    document.getElementById('genBtn').disabled=false;
-}
-
 // ─── UPLOAD CSV ──────────────────────────────────────────────
 async function uploadCSV(e) {
     e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading CSV...';
+    }
     const formData = new FormData(e.target);
-    formData.append('method','upload');
+    formData.append('method', 'upload');
+    
     try {
-        const res  = await fetch('/admin/create_test',{method:'POST',body:formData});
+        const res  = await fetch('/admin/create_test', { method: 'POST', body: formData });
         const data = await res.json();
-        showAlert(data.message, data.status);
-        if (data.status==='success') {
+        showAlert(data.message, data.status === 'success' ? 'success' : 'error');
+        if (data.status === 'success') {
             e.target.reset();
-            if (document.getElementById('englishFileName')) document.getElementById('englishFileName').textContent='Click to select English CSV file';
-            if (document.getElementById('hindiFileName')) document.getElementById('hindiFileName').textContent='Click to select Hindi CSV file';
+            if (document.getElementById('englishFileName')) document.getElementById('englishFileName').textContent = 'Click to select English CSV file';
+            if (document.getElementById('hindiFileName')) document.getElementById('hindiFileName').textContent = 'Click to select Hindi CSV file';
             document.getElementById('uploadTestNoSelect').innerHTML = '<option value="">Select Class & Subject first</option>';
         }
-    } catch(err) { showAlert('Error: '+err.message,'error'); }
+    } catch(err) {
+        showAlert('Upload failed: ' + err.message, 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Questions';
+        }
+    }
 }
 </script>
 </body>
