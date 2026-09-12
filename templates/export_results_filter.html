@@ -301,6 +301,27 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label for="sortBy"><i class="fas fa-sort-amount-down"></i> Sort By Column</label>
+                        <select id="sortBy" name="sort_by">
+                            <option value="rank" selected>🏆 Rank (By Score/Percentage)</option>
+                            <option value="name">🔤 Student Name</option>
+                            <option value="student_id">🆔 Student ID</option>
+                            <option value="percentage">📊 Percentage</option>
+                            <option value="score">🎯 Score / Marks</option>
+                            <option value="class">🎓 Class &amp; Section</option>
+                            <option value="subject">📚 Subject</option>
+                            <option value="test_no">📝 Test No</option>
+                            <option value="test_date">📅 Test Date</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sortOrder"><i class="fas fa-sort"></i> Sort Order</label>
+                        <select id="sortOrder" name="sort_order">
+                            <option value="asc" selected>▲ Ascending (1→9, A→Z, Top Rank)</option>
+                            <option value="desc">▼ Descending (9→1, Z→A, Low Rank)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="startDate"><i class="fas fa-calendar-alt"></i> From Date</label>
                         <input type="date" id="startDate" name="start_date">
                     </div>
@@ -465,11 +486,12 @@
                     previewCount.textContent = rows.length + ' records';
                     let html = `<div style="overflow-x:auto;"><table>
                         <thead><tr>
-                            <th>#</th><th>Student ID</th><th>Name</th><th>Class</th><th>Section</th><th>Subject</th><th>Score</th><th>Percentage</th>
+                            <th>#</th><th>Rank</th><th>Student ID</th><th>Name</th><th>Class</th><th>Section</th><th>Subject</th><th>Score</th><th>Percentage</th>
                         </tr></thead><tbody>`;
                     rows.forEach((r, i) => {
                         html += `<tr>
                             <td>${i+1}</td>
+                            <td><strong>${r.rank || '—'}</strong></td>
                             <td>${r.student_id}</td>
                             <td>${r.name}</td>
                             <td>${r.class}</td>
