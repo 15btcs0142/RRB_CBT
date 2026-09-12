@@ -755,9 +755,21 @@
                     <i class="fas fa-file-alt"></i>
                     <span class="nav-label">Descriptive Paper</span>
                 </a>
+                <a href="javascript:void(0)" onclick="loadTab('/question_bank')" class="nav-item" id="nav-qb-generator">
+                    <i class="fas fa-layer-group"></i>
+                    <span class="nav-label">Question Bank</span>
+                </a>
+                <a href="javascript:void(0)" onclick="loadTab('/teacher/questions')" class="nav-item" id="nav-questions">
+                    <i class="fas fa-database"></i>
+                    <span class="nav-label">MCQ Bank Repository</span>
+                </a>
                 <a href="javascript:void(0)" onclick="loadTab('/teacher/test_papers')" class="nav-item" id="nav-question-bank">
                     <i class="fas fa-upload"></i>
-                    <span class="nav-label">Question Banks</span>
+                    <span class="nav-label">Test Papers &amp; Bundles</span>
+                </a>
+                <a href="javascript:void(0)" onclick="loadTab('/teacher/schedule_test')" class="nav-item" id="nav-schedule-test">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="nav-label">Test Scheduler</span>
                 </a>
             </div>
 
@@ -767,6 +779,11 @@
                     <i class="fas fa-user-graduate"></i>
                     <span class="nav-label">My Students</span>
                 </a>
+                <a href="javascript:void(0)" onclick="loadTab('/teacher/reattempt_requests')" class="nav-item" id="nav-reattempts">
+                    <i class="fas fa-redo-alt"></i>
+                    <span class="nav-label">Reattempts</span>
+                    <span class="badge-count" id="teacherReattemptBadgeSide" style="display:none;background:#ef4444;color:#fff;font-size:0.7rem;padding:2px 7px;border-radius:10px;margin-left:auto;font-weight:700;">0</span>
+                </a>
                 <a href="javascript:void(0)" onclick="loadTab('/teacher/monitoring')" class="nav-item" id="nav-monitoring">
                     <i class="fas fa-desktop"></i>
                     <span class="nav-label">Live Monitoring</span>
@@ -774,6 +791,10 @@
                 <a href="javascript:void(0)" onclick="loadTab('exam-control')" class="nav-item" id="nav-exam-control">
                     <i class="fas fa-play-circle"></i>
                     <span class="nav-label">Exam Control</span>
+                </a>
+                <a href="javascript:void(0)" onclick="loadTab('mcq-history')" class="nav-item" id="nav-mcq-history">
+                    <i class="fas fa-clock-rotate-left"></i>
+                    <span class="nav-label">MCQ Test History</span>
                 </a>
                 <a href="javascript:void(0)" onclick="loadTab('/teacher/class_report')" class="nav-item" id="nav-reports">
                     <i class="fas fa-chart-bar"></i>
@@ -844,55 +865,89 @@
 
         <!-- EXAM CONTROL VIEW (Teacher Panel) -->
         <main class="content-area" id="examControlView" style="display:none;padding:28px;">
-            <div style="background:#fff;border-radius:16px;padding:28px;box-shadow:var(--shadow);border:1px solid #e2e8f0;max-width:640px;margin:0 auto;">
-                <h2 style="font-size:1.3rem;font-weight:700;color:#1a237e;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
-                    <i class="fas fa-play-circle" style="color:#3949ab;"></i> Exam Control &amp; Negative Marking
+            <div style="background:#ffffff;border-radius:18px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,0.08);border:1px solid #e2e8f0;max-width:680px;margin:0 auto;">
+                <h2 style="font-size:1.35rem;font-weight:800;color:#0f172a;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+                    <span style="display:flex;align-items:center;gap:10px;">
+                        <i class="fas fa-play-circle" style="color:#4f46e5;font-size:1.4rem;"></i> Exam Control &amp; Portal Status
+                    </span>
+                    <span id="tExamStatusText" style="padding:6px 18px;border-radius:20px;font-size:0.8rem;font-weight:700;background:#fee2e2;color:#991b1b;border:1px solid rgba(0,0,0,0.05);letter-spacing:0.03em;">
+                        STOPPED / INACTIVE
+                    </span>
                 </h2>
-                
-                <div id="tExamStatusBadge" style="margin-bottom:20px;padding:14px 18px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
-                    <span style="font-weight:600;font-size:0.92rem;color:#1e293b;"><i class="fas fa-signal"></i> Exam Portal Status:</span>
-                    <span id="tExamStatusText" style="padding:5px 16px;border-radius:16px;font-size:0.82rem;font-weight:700;background:#fee2e2;color:#991b1b;">STOPPED / INACTIVE</span>
-                </div>
 
                 <form class="exam-form" action="/teacher/start_exam" method="POST" id="teacherStartExamForm">
-                    <div style="margin-bottom:18px;">
-                        <label style="display:block;font-size:.88rem;font-weight:600;color:#333;margin-bottom:6px;">
-                            <i class="far fa-clock" style="color:#3949ab;"></i> Exam Duration (Minutes) *
+                    <!-- Duration Field with Presets -->
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;font-size:0.85rem;font-weight:700;color:#1e293b;margin-bottom:8px;">
+                            <i class="far fa-clock" style="color:#4f46e5;margin-right:4px;"></i> Exam Duration (Minutes) *
                         </label>
-                        <input type="number" name="duration" id="tExamDuration" value="30" min="1" max="300" required style="width:100%;padding:11px 15px;border:2px solid #cbd5e1;border-radius:10px;font-family:'Poppins',sans-serif;font-size:0.92rem;">
-                    </div>
-
-                    <div style="margin-bottom:22px;">
-                        <label style="display:block;font-size:.88rem;font-weight:600;color:#333;margin-bottom:6px;">
-                            <i class="fas fa-minus-circle" style="color:#3949ab;"></i> Negative Marking Mode *
-                        </label>
-                        <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:12px;padding:16px;">
-                            <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
-                                <label style="display:flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer;font-weight:500;">
-                                    <input type="radio" name="negative_marking" value="no" id="tNegNo" checked onchange="document.getElementById('tNegValRow').style.display='none'"> Disabled
-                                </label>
-                                <label style="display:flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer;font-weight:500;">
-                                    <input type="radio" name="negative_marking" value="yes" id="tNegYes" onchange="document.getElementById('tNegValRow').style.display='flex'"> Enabled
-                                </label>
-                            </div>
-                            <div id="tNegValRow" style="display:none;align-items:center;gap:10px;margin-top:14px;padding-top:12px;border-top:1px dashed #cbd5e1;">
-                                <label style="font-size:.85rem;color:#475569;white-space:nowrap;">Deduct per wrong answer:</label>
-                                <input type="number" name="negative_value" id="tNegValue" value="0.33" min="0.01" max="1" step="0.01"
-                                       style="width:90px;padding:7px;border:2px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:.88rem;text-align:center;">
-                                <span style="font-size:.85rem;color:#64748b;">marks</span>
+                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                            <input type="number" name="duration" id="tExamDuration" value="30" min="1" max="300" required
+                                   style="width:120px;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-family:inherit;font-size:0.92rem;font-weight:700;background:#f8fafc;">
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                <button type="button" onclick="document.getElementById('tExamDuration').value=15" style="padding:6px 14px;border-radius:18px;border:1px solid #cbd5e1;background:#ffffff;font-size:0.78rem;font-weight:700;color:#475569;cursor:pointer;">15m</button>
+                                <button type="button" onclick="document.getElementById('tExamDuration').value=30" style="padding:6px 14px;border-radius:18px;border:1px solid #cbd5e1;background:#ffffff;font-size:0.78rem;font-weight:700;color:#475569;cursor:pointer;">30m</button>
+                                <button type="button" onclick="document.getElementById('tExamDuration').value=45" style="padding:6px 14px;border-radius:18px;border:1px solid #cbd5e1;background:#ffffff;font-size:0.78rem;font-weight:700;color:#475569;cursor:pointer;">45m</button>
+                                <button type="button" onclick="document.getElementById('tExamDuration').value=60" style="padding:6px 14px;border-radius:18px;border:1px solid #cbd5e1;background:#ffffff;font-size:0.78rem;font-weight:700;color:#475569;cursor:pointer;">60m</button>
+                                <button type="button" onclick="document.getElementById('tExamDuration').value=90" style="padding:6px 14px;border-radius:18px;border:1px solid #cbd5e1;background:#ffffff;font-size:0.78rem;font-weight:700;color:#475569;cursor:pointer;">90m</button>
                             </div>
                         </div>
                     </div>
 
-                    <div style="display:flex;gap:14px;flex-wrap:wrap;">
-                        <button type="submit" class="btn-submit" id="tStartExamBtn" style="flex:1;padding:13px;background:linear-gradient(135deg,#1b5e20,#2e7d32);color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;font-size:0.95rem;display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+                    <!-- Negative Marking Field with Presets -->
+                    <div style="margin-bottom:24px;">
+                        <label style="display:block;font-size:0.85rem;font-weight:700;color:#1e293b;margin-bottom:8px;">
+                            <i class="fas fa-shield-halved" style="color:#4f46e5;margin-right:4px;"></i> Negative Marking Settings *
+                        </label>
+                        <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;">
+                            <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+                                <label style="display:flex;align-items:center;gap:8px;font-size:0.88rem;cursor:pointer;font-weight:600;color:#1e293b;">
+                                    <input type="radio" name="negative_marking" value="no" id="tNegNo" checked onchange="document.getElementById('tNegValRow').style.display='none'" style="width:16px;height:16px;accent-color:#4f46e5;"> Disabled
+                                </label>
+                                <label style="display:flex;align-items:center;gap:8px;font-size:0.88rem;cursor:pointer;font-weight:600;color:#1e293b;">
+                                    <input type="radio" name="negative_marking" value="yes" id="tNegYes" onchange="document.getElementById('tNegValRow').style.display='flex'" style="width:16px;height:16px;accent-color:#4f46e5;"> Enabled
+                                </label>
+                            </div>
+                            <div id="tNegValRow" style="display:none;align-items:center;gap:12px;margin-top:14px;padding-top:12px;border-top:1px dashed #cbd5e1;flex-wrap:wrap;">
+                                <label style="font-size:0.82rem;font-weight:700;color:#475569;white-space:nowrap;">Penalty per incorrect answer:</label>
+                                <input type="number" name="negative_value" id="tNegValue" value="0.33" min="0.01" max="5" step="0.01"
+                                       style="width:90px;padding:8px 10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:0.88rem;font-weight:700;text-align:center;background:#ffffff;">
+                                <div style="display:flex;gap:6px;">
+                                    <button type="button" onclick="document.getElementById('tNegValue').value=0.25" style="padding:4px 10px;border-radius:12px;border:1px solid #cbd5e1;background:#ffffff;font-size:0.75rem;font-weight:700;color:#475569;cursor:pointer;">0.25</button>
+                                    <button type="button" onclick="document.getElementById('tNegValue').value=0.33" style="padding:4px 10px;border-radius:12px;border:1px solid #cbd5e1;background:#ffffff;font-size:0.75rem;font-weight:700;color:#475569;cursor:pointer;">0.33</button>
+                                    <button type="button" onclick="document.getElementById('tNegValue').value=0.50" style="padding:4px 10px;border-radius:12px;border:1px solid #cbd5e1;background:#ffffff;font-size:0.75rem;font-weight:700;color:#475569;cursor:pointer;">0.50</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Command Buttons -->
+                    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;">
+                        <button type="submit" class="btn-submit" id="tStartExamBtn" style="flex:1;padding:12px 20px;background:linear-gradient(135deg,#15803d,#166534);color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit;font-size:0.92rem;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 12px rgba(21,128,61,0.25);transition:all 0.2s ease;">
                             <i class="fas fa-play"></i> Start Exam
                         </button>
-                        <a href="/teacher/stop_exam" id="tStopExamBtn" onclick="return confirm('Stop exam for all students?')" style="flex:1;padding:13px;background:linear-gradient(135deg,#b91c1c,#dc2626);color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;font-size:0.95rem;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+                        <a href="/teacher/stop_exam" id="tStopExamBtn" onclick="return confirm('Stop exam for all students?')" style="flex:1;padding:12px 20px;background:linear-gradient(135deg,#b91c1c,#991b1b);color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit;font-size:0.92rem;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 12px rgba(185,28,28,0.25);transition:all 0.2s ease;">
                             <i class="fas fa-stop"></i> Stop Exam
                         </a>
                     </div>
                 </form>
+            </div>
+        </main>
+
+        <!-- MCQ TEST HISTORY VIEW -->
+        <main class="content-area" id="mcqHistoryView" style="display:none;padding:28px;">
+            <div style="background:#ffffff;border-radius:18px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,0.08);border:1px solid #e2e8f0;max-width:1100px;margin:0 auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+                    <h2 style="font-size:1.25rem;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:10px;">
+                        <i class="fas fa-clock-rotate-left" style="color:#4f46e5;"></i> MCQ Test Generation History
+                    </h2>
+                    <button onclick="loadMcqHistory()" style="padding:8px 18px;border-radius:20px;font-size:0.8rem;font-weight:700;background:#4f46e5;color:#fff;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                        <i class="fas fa-rotate"></i> Refresh History
+                    </button>
+                </div>
+                <div id="mcqHistoryContainer">
+                    <div style="text-align:center;padding:40px;color:#64748b;"><i class="fas fa-spinner fa-spin"></i> Loading test history...</div>
+                </div>
             </div>
         </main>
 
@@ -1020,6 +1075,9 @@
                                     </td>
                                     <td>
                                         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                            <button onclick="loadTab('/teacher/questions?class={{ item.class }}&subject={{ item.subject }}')" class="btn-mini btn-mini-primary" title="Manage Questions">
+                                                <i class="fas fa-layer-group"></i> Questions
+                                            </button>
                                             <button onclick="loadTab('/teacher/create_test_v2')" class="btn-mini btn-mini-primary" title="Create AI Test">
                                                 <i class="fas fa-robot"></i> AI Test
                                             </button>
@@ -1152,13 +1210,25 @@
                 frameView.style.display = 'none';
                 frameView.src = 'about:blank';
                 dashboardView.style.display = 'none';
+                if (document.getElementById('mcqHistoryView')) document.getElementById('mcqHistoryView').style.display = 'none';
                 if (examControlView) examControlView.style.display = 'block';
                 headerTitle.textContent = 'Exam Control & Negative Marking';
                 if (document.getElementById('nav-exam-control')) document.getElementById('nav-exam-control').classList.add('active');
                 checkTeacherExamSettings();
+            } else if (url === 'mcq-history') {
+                frameView.style.display = 'none';
+                frameView.src = 'about:blank';
+                dashboardView.style.display = 'none';
+                if (examControlView) examControlView.style.display = 'none';
+                const mcqView = document.getElementById('mcqHistoryView');
+                if (mcqView) mcqView.style.display = 'block';
+                headerTitle.textContent = 'MCQ Test History';
+                if (document.getElementById('nav-mcq-history')) document.getElementById('nav-mcq-history').classList.add('active');
+                loadMcqHistory();
             } else {
                 dashboardView.style.display = 'none';
                 if (examControlView) examControlView.style.display = 'none';
+                if (document.getElementById('mcqHistoryView')) document.getElementById('mcqHistoryView').style.display = 'none';
                 frameView.style.display = 'block';
                 frameView.src = url;
                 
@@ -1166,15 +1236,24 @@
                 if (url.includes('create_test_v2')) {
                     headerTitle.textContent = 'AI Test Generator';
                     document.getElementById('nav-ai-test').classList.add('active');
+                } else if (url.includes('question_bank')) {
+                    headerTitle.textContent = 'Question Bank Generator';
+                    if (document.getElementById('nav-qb-generator')) document.getElementById('nav-qb-generator').classList.add('active');
                 } else if (url.includes('descriptive_paper')) {
                     headerTitle.textContent = 'Descriptive Paper Generator';
                     document.getElementById('nav-descriptive').classList.add('active');
+                } else if (url.includes('questions')) {
+                    headerTitle.textContent = 'MCQ Bank Repository';
+                    if (document.getElementById('nav-questions')) document.getElementById('nav-questions').classList.add('active');
                 } else if (url.includes('test_papers')) {
                     headerTitle.textContent = 'Question Banks & Active Tests';
                     document.getElementById('nav-question-bank').classList.add('active');
                 } else if (url.includes('students')) {
                     headerTitle.textContent = 'My Students';
                     document.getElementById('nav-students').classList.add('active');
+                } else if (url.includes('reattempt')) {
+                    headerTitle.textContent = 'Student Reattempt Requests';
+                    if (document.getElementById('nav-reattempts')) document.getElementById('nav-reattempts').classList.add('active');
                 } else if (url.includes('monitoring')) {
                     headerTitle.textContent = 'Live Exam Monitoring';
                     document.getElementById('nav-monitoring').classList.add('active');
@@ -1246,6 +1325,75 @@
             if (data.status === 'success') e.target.reset();
             setTimeout(() => box.style.display = 'none', 4500);
         }
+
+        async function loadMcqHistory() {
+            const container = document.getElementById('mcqHistoryContainer');
+            if (!container) return;
+            container.innerHTML = '<div style="text-align:center;padding:30px;color:#64748b;"><i class="fas fa-spinner fa-spin"></i> Loading test history...</div>';
+            try {
+                const res = await fetch('/api/teacher/mcq_history');
+                const data = await res.json();
+                if (data.status !== 'success' || !data.history || data.history.length === 0) {
+                    container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-folder-open" style="font-size:2.5rem;display:block;margin-bottom:8px;"></i>No MCQ test generation history found.</div>';
+                    return;
+                }
+                let html = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+                    <thead>
+                        <tr style="background:#0f172a;color:#fff;text-align:left;">
+                            <th style="padding:10px 14px;">#</th>
+                            <th style="padding:10px 14px;">Teacher</th>
+                            <th style="padding:10px 14px;">Class</th>
+                            <th style="padding:10px 14px;">Section</th>
+                            <th style="padding:10px 14px;">Subject</th>
+                            <th style="padding:10px 14px;">Test No</th>
+                            <th style="padding:10px 14px;">Questions</th>
+                            <th style="padding:10px 14px;">Created Date</th>
+                            <th style="padding:10px 14px;text-align:center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+                data.history.forEach((h, i) => {
+                    html += `<tr style="border-bottom:1px solid #f1f5f9;">
+                        <td style="padding:10px 14px;font-weight:700;">${i+1}</td>
+                        <td style="padding:10px 14px;font-weight:700;color:#0f172a;">${h.teacher_name || 'Faculty'}</td>
+                        <td style="padding:10px 14px;"><span style="background:#e0e7ff;color:#3730a3;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;">${h.class}</span></td>
+                        <td style="padding:10px 14px;"><span style="background:#f1f5f9;color:#475569;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;">${h.section || 'All'}</span></td>
+                        <td style="padding:10px 14px;"><span style="background:#f3e8ff;color:#6b21a8;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;">${h.subject}</span></td>
+                        <td style="padding:10px 14px;font-weight:700;color:#4f46e5;">${h.test_no || '—'}</td>
+                        <td style="padding:10px 14px;font-weight:700;">${h.question_count} Qs</td>
+                        <td style="padding:10px 14px;font-size:0.8rem;color:#64748b;">${(h.created_at||'').slice(0,16)}</td>
+                        <td style="padding:10px 14px;text-align:center;">
+                            <button onclick="loadTab('/teacher/test_papers')" style="padding:5px 12px;background:#4f46e5;color:#fff;border:none;border-radius:12px;font-size:0.78rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                                <i class="fas fa-eye"></i> View Questions
+                            </button>
+                        </td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div>`;
+                container.innerHTML = html;
+            } catch(e) {
+                container.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;">Failed to load MCQ test history.</div>';
+            }
+        }
+
+        async function updateTeacherReattemptBadge() {
+            try {
+                const res = await fetch('/teacher/reattempt_requests/data?status=pending');
+                const data = await res.json();
+                const pending = (data.requests || []).filter(r => r.status === 'pending').length;
+                const badge = document.getElementById('teacherReattemptBadgeSide');
+                if (badge) {
+                    if (pending > 0) {
+                        badge.textContent = pending;
+                        badge.style.display = 'inline';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            } catch (e) {}
+        }
+        updateTeacherReattemptBadge();
+        setInterval(updateTeacherReattemptBadge, 30000);
     </script>
 </body>
 </html>
