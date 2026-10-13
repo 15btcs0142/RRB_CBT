@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Control & Lab Sessions - Admin Console</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4338ca;
+            --primary-light: #6366f1;
+            --primary-dark: #312e81;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f1f5f9;
+            color: var(--slate-800);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ── Top Bar ── */
+        .topbar {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+            color: #fff;
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(49, 46, 129, 0.3);
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .topbar-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: #a5b4fc;
+        }
+        .topbar-title h1 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+        .topbar-title p {
+            font-size: 0.8rem;
+            color: #c7d2fe;
+            margin-top: 2px;
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.12);
+            color: #e0e7ff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse 1.8s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .btn-global-stop {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 24px;
+            border: none;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-global-stop:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+        }
+
+        /* ── KPI Summary Cards ── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--slate-200);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+        .kpi-icon.running { background: #dcfce7; color: #15803d; }
+        .kpi-icon.labs { background: #e0e7ff; color: #4338ca; }
+        .kpi-icon.students { background: #fef3c7; color: #b45309; }
+        .kpi-icon.paused { background: #ffedd5; color: #c2410c; }
+        .kpi-content h3 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            line-height: 1;
+        }
+        .kpi-content p {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--slate-600);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* ── Controls & Filter Bar ── */
+        .filter-bar {
+            background: #fff;
+            padding: 14px 20px;
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 7px 16px;
+            border-radius: 20px;
+            border: 1.5px solid var(--slate-200);
+            background: #fff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--slate-600);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .search-box {
+            position: relative;
+            min-width: 260px;
+        }
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 8px 14px 8px 36px;
+            border-radius: 20px;
+            border: 1.5px solid var(--slate-200);
+            font-size: 0.82rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-box input:focus {
+            border-color: var(--primary);
+        }
+
+        /* ── Sessions Grid ── */
+        .sessions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        /* ── Session Card ── */
+        .session-card {
+            background: #fff;
+            border-radius: 18px;
+            border: 1.5px solid var(--slate-200);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        .session-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        }
+        .session-card.status-running {
+            border-top: 4px solid #10b981;
+        }
+        .session-card.status-paused {
+            border-top: 4px solid #f59e0b;
+        }
+        .session-card.status-ended {
+            border-top: 4px solid #94a3b8;
+            opacity: 0.85;
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--slate-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .lab-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--slate-900);
+        }
+        .lab-ip-sub {
+            font-size: 0.74rem;
+            color: #64748b;
+            font-family: monospace;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .edit-label-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: color 0.2s;
+        }
+        .edit-label-btn:hover { color: var(--primary); }
+
+        .session-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        .badge-running { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .badge-paused { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .badge-ended { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+
+        .card-body {
+            padding: 18px 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .exam-scope {
+            background: var(--slate-50);
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--slate-200);
+        }
+        .scope-main {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--slate-900);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .scope-sub {
+            font-size: 0.76rem;
+            color: var(--slate-600);
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .scope-tag {
+            background: #fff;
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            font-weight: 600;
+        }
+
+        /* ── Live Timer Display ── */
+        .timer-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-radius: 12px;
+            color: #fff;
+        }
+        .timer-left {
+            display: flex;
+            flex-direction: column;
+        }
+        .timer-label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+        .timer-display {
+            font-size: 1.55rem;
+            font-weight: 800;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            color: #38bdf8;
+        }
+        .timer-display.paused {
+            color: #fbbf24;
+            animation: pulse-timer 1.5s infinite;
+        }
+        @keyframes pulse-timer {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .timer-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* ── Student Metrics ── */
+        .metrics-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .metric-pill {
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--slate-200);
+            background: var(--slate-50);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .metric-pill span {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--slate-600);
+        }
+        .metric-pill strong {
+            font-size: 0.92rem;
+            font-weight: 800;
+        }
+        .metric-pill.in-progress strong { color: #0284c7; }
+        .metric-pill.submitted strong { color: #16a34a; }
+
+        /* ── Card Actions ── */
+        .card-actions {
+            padding: 14px 20px;
+            border-top: 1px solid var(--slate-100);
+            background: #fafafa;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: none;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.18s ease;
+            font-family: inherit;
+        }
+        .btn-pause {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+        .btn-pause:hover { background: #fde68a; }
+
+        .btn-resume {
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+        .btn-resume:hover { background: #bbf7d0; }
+
+        .btn-time {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            flex: 0 0 auto;
+            padding: 8px 12px;
+        }
+        .btn-time:hover { background: #e2e8f0; }
+
+        .btn-end {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .btn-end:hover { background: #fca5a5; color: #7f1d1d; }
+
+        /* ── Empty State ── */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            background: #fff;
+            border-radius: 16px;
+            border: 1.5px dashed var(--slate-200);
+            color: var(--slate-600);
+        }
+        .empty-icon {
+            font-size: 3rem;
+            color: #cbd5e1;
+            margin-bottom: 14px;
+        }
+        .empty-state h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--slate-800);
+            margin-bottom: 6px;
+        }
+        .empty-state p {
+            font-size: 0.85rem;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: #fff;
+            border-radius: 18px;
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: modalIn 0.2s ease-out;
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .modal-header h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--slate-900);
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+        .modal-body label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--slate-700);
+            margin-bottom: 6px;
+        }
+        .modal-body textarea, .modal-body input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid var(--slate-200);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            outline: none;
+            margin-bottom: 16px;
+        }
+        .modal-body textarea:focus, .modal-body input:focus {
+            border-color: var(--primary);
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .btn-modal {
+            padding: 9px 18px;
+            border-radius: 10px;
+            border: none;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-modal-cancel { background: var(--slate-100); color: var(--slate-700); }
+        .btn-modal-confirm { background: var(--danger); color: #fff; }
+    </style>
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="topbar-icon">
+                <i class="fas fa-network-wired"></i>
+            </div>
+            <div class="topbar-title">
+                <h1>Live Lab Sessions &amp; Exam Control</h1>
+                <p>Per-Teacher Isolated Lab Control Center &bull; Real-time Monitoring</p>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div class="status-pill">
+                <span class="pulse-dot"></span>
+                <span>Live Sync Active</span>
+            </div>
+            <a href="/admin/stop_exam" class="btn-global-stop" onclick="return confirm('WARNING: This is the MASTER KILL SWITCH. It will immediately terminate ALL running exams across ALL labs and submit all students. Are you absolutely sure?')">
+                <i class="fas fa-power-off"></i> Emergency Global Stop
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI Summary Row -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon running"><i class="fas fa-play"></i></div>
+            <div class="kpi-content">
+                <h3 id="kpiRunning">0</h3>
+                <p>Active Running Sessions</p>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon labs"><i class="fas fa-desktop"></i></div>
+            <div class="kpi-content">
+                <h3 id="kpiLabs">0</h3>
+                <p>Distinct Active Labs</p>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon students"><i class="fas fa-user-clock"></i></div>
+            <div class="kpi-content">
+                <h3 id="kpiStudents">0</h3>
+                <p>In-Progress Students</p>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon paused"><i class="fas fa-pause"></i></div>
+            <div class="kpi-content">
+                <h3 id="kpiPaused">0</h3>
+                <p>Paused Sessions</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Bar -->
+    <div class="filter-bar">
+        <div class="filter-pills">
+            <button class="filter-btn active" onclick="setFilter('all', this)">All Sessions (<span id="countAll">0</span>)</button>
+            <button class="filter-btn" onclick="setFilter('running', this)">Running (<span id="countRunning">0</span>)</button>
+            <button class="filter-btn" onclick="setFilter('paused', this)">Paused (<span id="countPaused">0</span>)</button>
+            <button class="filter-btn" onclick="setFilter('ended', this)">Ended (<span id="countEnded">0</span>)</button>
+        </div>
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="sessionSearch" placeholder="Search by Lab, Teacher, Class, Subject..." oninput="renderSessions()">
+        </div>
+    </div>
+
+    <!-- Sessions Grid Container -->
+    <div class="sessions-grid" id="sessionsContainer">
+        <!-- Dynamically populated by JS -->
+    </div>
+
+    <!-- End Session Modal -->
+    <div class="modal-overlay" id="endModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="endModalTitle">End Session</h3>
+                <button class="modal-close" onclick="closeEndModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.85rem;color:var(--slate-600);margin-bottom:14px;">
+                    Ending this session will immediately submit all in-progress students in this lab/class. Other labs will remain unaffected.
+                </p>
+                <label for="endCustomMsg">Custom Message to Students (Optional)</label>
+                <textarea id="endCustomMsg" rows="3" placeholder="e.g. Exam concluded by supervisor. Well done!"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal btn-modal-cancel" onclick="closeEndModal()">Cancel</button>
+                <button class="btn-modal btn-modal-confirm" id="confirmEndBtn" onclick="confirmEndSession()">End Session Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Lab Label Modal -->
+    <div class="modal-overlay" id="labelModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Rename Lab / Session</h3>
+                <button class="modal-close" onclick="closeLabelModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label for="labLabelInput">Lab Name / Identifier</label>
+                <input type="text" id="labLabelInput" placeholder="e.g. Lab A - Physics Wing">
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal btn-modal-cancel" onclick="closeLabelModal()">Cancel</button>
+                <button class="btn-modal btn-modal-confirm" style="background:var(--primary);" onclick="confirmSaveLabel()">Save Label</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionsList = [];
+        let currentFilter = 'all';
+        let targetSessionId = null;
+
+        function setFilter(filter, btn) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            renderSessions();
+        }
+
+        function formatSeconds(secs) {
+            if (secs <= 0) return '00:00:00';
+            const h = Math.floor(secs / 3600);
+            const m = Math.floor((secs % 3600) / 60);
+            const s = secs % 60;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        async function fetchSessions() {
+            try {
+                const res = await fetch('/admin/exam_sessions/data');
+                const data = await res.json();
+                if (data.status === 'success') {
+                    sessionsList = data.sessions || [];
+                    updateKPIs();
+                    renderSessions();
+                }
+            } catch (err) {
+                console.error('Failed to load session data:', err);
+            }
+        }
+
+        function updateKPIs() {
+            const running = sessionsList.filter(s => s.status === 'running').length;
+            const paused = sessionsList.filter(s => s.status === 'paused').length;
+            const ended = sessionsList.filter(s => s.status === 'ended').length;
+
+            const activeLabs = new Set(sessionsList.filter(s => s.status === 'running' || s.status === 'paused').map(s => s.lab_ip)).size;
+            const inProgressStudents = sessionsList.filter(s => s.status === 'running' || s.status === 'paused')
+                                                  .reduce((acc, s) => acc + (s.in_progress_count || 0), 0);
+
+            document.getElementById('kpiRunning').textContent = running;
+            document.getElementById('kpiPaused').textContent = paused;
+            document.getElementById('kpiLabs').textContent = activeLabs;
+            document.getElementById('kpiStudents').textContent = inProgressStudents;
+
+            document.getElementById('countAll').textContent = sessionsList.length;
+            document.getElementById('countRunning').textContent = running;
+            document.getElementById('countPaused').textContent = paused;
+            document.getElementById('countEnded').textContent = ended;
+        }
+
+        function renderSessions() {
+            const container = document.getElementById('sessionsContainer');
+            const search = (document.getElementById('sessionSearch').value || '').toLowerCase().trim();
+
+            const filtered = sessionsList.filter(s => {
+                if (currentFilter !== 'all' && s.status !== currentFilter) return false;
+                if (search) {
+                    const text = `${s.lab_label || ''} ${s.lab_ip || ''} ${s.started_by_name || ''} ${s.class || ''} ${s.section || ''} ${s.subject || ''} ${s.test_no || ''}`.toLowerCase();
+                    return text.includes(search);
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-layer-group"></i></div>
+                        <h3>No Exam Sessions Found</h3>
+                        <p>${currentFilter === 'all' ? 'No active or recent exam sessions. When teachers or admins start an exam, individual session cards will appear here live.' : 'No sessions match the selected filter.'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(s => {
+                const isRunning = s.status === 'running';
+                const isPaused = s.status === 'paused';
+                const isEnded = s.status === 'ended';
+
+                const badgeClass = isRunning ? 'badge-running' : (isPaused ? 'badge-paused' : 'badge-ended');
+                const badgeIcon = isRunning ? 'fa-play' : (isPaused ? 'fa-pause' : 'fa-check');
+                const statusLabel = isRunning ? 'Running' : (isPaused ? 'Paused' : 'Ended');
+
+                const labName = s.lab_label || `Lab (${s.lab_ip})`;
+                const durationMins = s.allotted_duration || 60;
+                const remSecs = s.remaining_seconds || 0;
+
+                return `
+                    <div class="session-card status-${s.status}" id="card-${s.id}">
+                        <div class="card-header">
+                            <div>
+                                <div class="lab-title">
+                                    <i class="fas fa-chalkboard"></i>
+                                    <span>${escapeHtml(labName)}</span>
+                                    <button class="edit-label-btn" title="Rename Lab" onclick="openLabelModal(${s.id}, '${escapeAttr(s.lab_label || '')}')">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                </div>
+                                <div class="lab-ip-sub">
+                                    <i class="fas fa-network-wired"></i> IP: ${escapeHtml(s.lab_ip || 'Unknown')} &bull; By: <strong>${escapeHtml(s.started_by_name || 'Admin')}</strong>
+                                </div>
+                            </div>
+                            <span class="session-badge ${badgeClass}">
+                                <i class="fas ${badgeIcon}"></i> ${statusLabel}
+                            </span>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="exam-scope">
+                                <div class="scope-main">
+                                    <span>Class ${escapeHtml(s.class || 'All')}</span>
+                                    ${s.section ? `<span class="scope-tag">Sec ${escapeHtml(s.section)}</span>` : ''}
+                                    <span style="color:#6366f1;">&bull;</span>
+                                    <span>${escapeHtml(s.subject || 'All Subjects')}</span>
+                                </div>
+                                <div class="scope-sub">
+                                    ${s.test_no ? `<span><i class="fas fa-file-alt"></i> ${escapeHtml(s.test_no)}</span>` : ''}
+                                    <span><i class="far fa-clock"></i> Allotted: ${durationMins}m</span>
+                                    ${s.negative_marking ? `<span style="color:#ef4444;"><i class="fas fa-minus-circle"></i> Neg: -${s.negative_value}</span>` : '<span>Neg: None</span>'}
+                                </div>
+                            </div>
+
+                            <div class="timer-box">
+                                <div class="timer-left">
+                                    <span class="timer-label">${isEnded ? 'Session Completed' : (isPaused ? 'Session Paused' : 'Time Remaining')}</span>
+                                    <div class="timer-display ${isPaused ? 'paused' : ''}" id="timer-${s.id}" data-rem="${remSecs}" data-status="${s.status}">
+                                        ${formatSeconds(remSecs)}
+                                    </div>
+                                </div>
+                                <div class="timer-badge">
+                                    ${isEnded ? (s.end_reason || 'Ended') : (isPaused ? 'FREEZE' : 'ACTIVE')}
+                                </div>
+                            </div>
+
+                            <div class="metrics-row">
+                                <div class="metric-pill in-progress">
+                                    <span>In-Progress</span>
+                                    <strong>${s.in_progress_count || 0}</strong>
+                                </div>
+                                <div class="metric-pill submitted">
+                                    <span>Submitted</span>
+                                    <strong>${s.submitted_count || 0}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${!isEnded ? `
+                            <div class="card-actions">
+                                ${isRunning ? `
+                                    <button class="action-btn btn-pause" onclick="pauseSession(${s.id})">
+                                        <i class="fas fa-pause"></i> Pause
+                                    </button>
+                                ` : `
+                                    <button class="action-btn btn-resume" onclick="resumeSession(${s.id})">
+                                        <i class="fas fa-play"></i> Resume
+                                    </button>
+                                `}
+                                <button class="action-btn btn-time" title="Add 5 minutes" onclick="extendSession(${s.id}, 5)">
+                                    <i class="fas fa-plus"></i> 5m
+                                </button>
+                                <button class="action-btn btn-time" title="Reduce 5 minutes" onclick="extendSession(${s.id}, -5)">
+                                    <i class="fas fa-minus"></i> 5m
+                                </button>
+                                <button class="action-btn btn-end" onclick="openEndModal(${s.id}, '${escapeAttr(labName)}')">
+                                    <i class="fas fa-stop"></i> End
+                                </button>
+                            </div>
+                        ` : `
+                            <div class="card-actions" style="justify-content:center;color:#64748b;font-size:0.75rem;">
+                                <span><i class="fas fa-check-circle"></i> Session Ended at ${escapeHtml(s.end_time || '')}</span>
+                            </div>
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Local timer tick every second between server polls
+        setInterval(() => {
+            sessionsList.forEach(s => {
+                if (s.status === 'running' && s.remaining_seconds > 0) {
+                    s.remaining_seconds--;
+                    const timerEl = document.getElementById(`timer-${s.id}`);
+                    if (timerEl) {
+                        timerEl.textContent = formatSeconds(s.remaining_seconds);
+                    }
+                }
+            });
+        }, 1000);
+
+        // Server sync polling every 3 seconds
+        setInterval(fetchSessions, 3000);
+        fetchSessions();
+
+        // ── Actions ──
+        async function pauseSession(id) {
+            try {
+                const res = await fetch(`/admin/exam_sessions/${id}/pause`, { method: 'POST' });
+                const d = await res.json();
+                if (d.status === 'success') fetchSessions();
+            } catch (e) { alert('Failed to pause session: ' + e); }
+        }
+
+        async function resumeSession(id) {
+            try {
+                const res = await fetch(`/admin/exam_sessions/${id}/resume`, { method: 'POST' });
+                const d = await res.json();
+                if (d.status === 'success') fetchSessions();
+            } catch (e) { alert('Failed to resume session: ' + e); }
+        }
+
+        async function extendSession(id, mins) {
+            try {
+                const res = await fetch(`/admin/exam_sessions/${id}/extend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ minutes: mins })
+                });
+                const d = await res.json();
+                if (d.status === 'success') fetchSessions();
+            } catch (e) { alert('Failed to adjust duration: ' + e); }
+        }
+
+        function openEndModal(id, name) {
+            targetSessionId = id;
+            document.getElementById('endModalTitle').textContent = `End Session: ${name}`;
+            document.getElementById('endCustomMsg').value = '';
+            document.getElementById('endModal').classList.add('open');
+        }
+
+        function closeEndModal() {
+            targetSessionId = null;
+            document.getElementById('endModal').classList.remove('open');
+        }
+
+        async function confirmEndSession() {
+            if (!targetSessionId) return;
+            const msg = document.getElementById('endCustomMsg').value.trim();
+            try {
+                const res = await fetch(`/admin/exam_sessions/${targetSessionId}/end`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const d = await res.json();
+                closeEndModal();
+                fetchSessions();
+            } catch (e) { alert('Failed to end session: ' + e); }
+        }
+
+        function openLabelModal(id, currentLabel) {
+            targetSessionId = id;
+            document.getElementById('labLabelInput').value = currentLabel;
+            document.getElementById('labelModal').classList.add('open');
+        }
+
+        function closeLabelModal() {
+            targetSessionId = null;
+            document.getElementById('labelModal').classList.remove('open');
+        }
+
+        async function confirmSaveLabel() {
+            if (!targetSessionId) return;
+            const label = document.getElementById('labLabelInput').value.trim();
+            try {
+                const res = await fetch(`/admin/exam_sessions/${targetSessionId}/label`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ label: label })
+                });
+                const d = await res.json();
+                closeLabelModal();
+                fetchSessions();
+            } catch (e) { alert('Failed to save label: ' + e); }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function escapeAttr(str) {
+            if (!str) return '';
+            return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>
