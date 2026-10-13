@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ question['title'] }} — Coding Exam Environment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Monaco Editor Require.js CDN Loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --topbar-bg: #090d16;
+            --panel-bg: #1e293b;
+            --card-border: #334155;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── Topbar ─────────────────────────────────────────────────── */
+        .topbar {
+            background-color: var(--topbar-bg);
+            border-bottom: 1px solid var(--card-border);
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 56px;
+            flex-shrink: 0;
+        }
+
+        .btn-back {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            color: var(--text-main);
+            text-decoration: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            background-color: #334155;
+            color: #ffffff;
+        }
+
+        .q-header-title {
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .top-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .student-badge {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .student-badge strong {
+            color: var(--text-main);
+        }
+
+        .timer-box {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            padding: 5px 14px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ── Split Layout Container ──────────────────────────────────── */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: calc(100vh - 56px);
+            width: 100%;
+            overflow: hidden;
+        }
+
+        @media (max-width: 992px) {
+            .workspace {
+                grid-template-columns: 1fr;
+                overflow-y: auto;
+            }
+        }
+
+        /* ── Left Panel (Problem Details & Test Cases) ───────────────── */
+        .left-panel {
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--card-border);
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .badge-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .badge-pill {
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .badge-topic { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .badge-easy { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge-medium { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .badge-hard { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .badge-marks { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+
+        .problem-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1.3;
+        }
+
+        .section-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .content-box {
+            background: #0f172a;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 16px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+            white-space: pre-wrap;
+        }
+
+        /* Test Cases Cards */
+        .tc-card {
+            background: #0f172a;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .tc-header {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .code-snippet {
+            background: #090d16;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem;
+            color: #67e8f9;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* ── Right Panel (Monaco Editor & Output Console) ───────────── */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            background-color: #0f172a;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .editor-toolbar {
+            background-color: #1e293b;
+            border-bottom: 1px solid var(--card-border);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .lang-select-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lang-select-group label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .select-lang {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #ffffff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .select-lang:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .draft-status {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-reset-code {
+            background: transparent;
+            border: 1px solid #334155;
+            color: #cbd5e1;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-reset-code:hover {
+            background: #334155;
+            color: #ffffff;
+        }
+
+        /* Monaco Container */
+        #editorContainer {
+            flex: 1;
+            width: 100%;
+            min-height: 250px;
+        }
+
+        /* Console & Action Drawer */
+        .console-drawer {
+            background-color: #090d16;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            flex-direction: column;
+            height: 240px;
+            flex-shrink: 0;
+        }
+
+        .drawer-header {
+            background-color: #1e293b;
+            border-bottom: 1px solid var(--card-border);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .drawer-tabs {
+            display: flex;
+            gap: 12px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .tab-btn.active {
+            background-color: #0f172a;
+            color: var(--accent-blue);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-run {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 7px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-run:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            transform: scale(1.02);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 7px 20px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: scale(1.02);
+        }
+
+        .drawer-body {
+            padding: 12px 16px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .custom-input-box {
+            width: 100%;
+            height: 100%;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #67e8f9;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem;
+            padding: 10px;
+            outline: none;
+            resize: none;
+        }
+
+        .output-box {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem;
+            color: #f8fafc;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+
+        .status-success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .status-error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        /* Toast notification */
+        .toast-notif {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: #10b981;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            display: none;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <a href="/coding_exam_list" class="btn-back">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Back to Questions</span>
+        </a>
+
+        <div class="q-header-title">
+            <i class="fa-solid fa-code" style="color: var(--accent-blue);"></i>
+            <span>{{ question['title'] }}</span>
+        </div>
+
+        <div class="top-meta">
+            <div class="student-badge">
+                Student: <strong>{{ student['name'] }}</strong> ({{ student['student_id'] }})
+            </div>
+            <div class="timer-box">
+                <i class="fa-regular fa-clock"></i>
+                <span id="timerDisplay">--:--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workspace Split Screen -->
+    <div class="workspace">
+        
+        <!-- LEFT PANEL: Problem Details & Visible Samples -->
+        <div class="left-panel">
+            <div>
+                <div class="badge-row" style="margin-bottom: 10px;">
+                    <span class="badge-pill badge-topic">{{ question['topic'] or 'General Programming' }}</span>
+                    {% set diff = (question['difficulty'] or 'medium')|lower %}
+                    <span class="badge-pill {% if diff == 'easy' %}badge-easy{% elif diff == 'hard' %}badge-hard{% else %}badge-medium{% endif %}">
+                        {{ diff }}
+                    </span>
+                    <span class="badge-pill badge-marks">{{ question['total_marks'] or 10 }} Marks</span>
+                </div>
+                <h1 class="problem-title">{{ question['title'] }}</h1>
+            </div>
+
+            <div>
+                <div class="section-label">Problem Statement</div>
+                <div class="content-box">{{ question['problem_statement'] }}</div>
+            </div>
+
+            {% if question['input_format'] %}
+            <div>
+                <div class="section-label">Input Format</div>
+                <div class="content-box">{{ question['input_format'] }}</div>
+            </div>
+            {% endif %}
+
+            {% if question['output_format'] %}
+            <div>
+                <div class="section-label">Output Format</div>
+                <div class="content-box">{{ question['output_format'] }}</div>
+            </div>
+            {% endif %}
+
+            {% if question['constraints'] %}
+            <div>
+                <div class="section-label">Constraints</div>
+                <div class="content-box">{{ question['constraints'] }}</div>
+            </div>
+            {% endif %}
+
+            <!-- Visible Sample Test Cases ONLY -->
+            <div>
+                <div class="section-label" style="color: var(--accent-blue); display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-vial"></i> Sample Test Cases
+                </div>
+                {% if sample_cases %}
+                    {% for tc in sample_cases %}
+                    <div class="tc-card">
+                        <div class="tc-header">Sample Case #{{ loop.index }}</div>
+                        <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px;">Input:</div>
+                        <div class="code-snippet">{{ tc['input'] if tc['input'] != '' else '(empty input)' }}</div>
+                        <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 8px; margin-bottom: 4px;">Expected Output:</div>
+                        <div class="code-snippet" style="color: #34d399;">{{ tc['expected_output'] if tc['expected_output'] != '' else '(empty output)' }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="content-box" style="font-size: 0.88rem; color: #94a3b8;">No sample test cases provided. Use the Custom Input box to test your solution.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Monaco Code Editor & Execution Console -->
+        <div class="right-panel">
+            
+            <!-- Editor Toolbar -->
+            <div class="editor-toolbar">
+                <div class="lang-select-group">
+                    <label for="langSelect"><i class="fa-solid fa-code-branch"></i> Language:</label>
+                    <select id="langSelect" class="select-lang">
+                        {% for lang in (question['allowed_languages'] or 'python,java,c,cpp').split(',') %}
+                        {% set l_clean = lang|trim|lower %}
+                        <option value="{{ l_clean }}">{{ l_clean|upper }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="toolbar-actions">
+                    <button class="btn-reset-code" id="btnResetCode" title="Reset code to default template">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                    <div class="draft-status" id="draftStatus">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Draft Saved
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monaco Editor Container -->
+            <div id="editorContainer"></div>
+
+            <!-- Console Drawer (Input & Run/Submit Output) -->
+            <div class="console-drawer">
+                <div class="drawer-header">
+                    <div class="drawer-tabs">
+                        <button class="tab-btn active" id="tabOutputBtn" onclick="switchDrawerTab('output')">
+                            <i class="fa-solid fa-terminal"></i> Console Output
+                        </button>
+                        <button class="tab-btn" id="tabInputBtn" onclick="switchDrawerTab('input')">
+                            <i class="fa-solid fa-pen-to-square"></i> Custom Input
+                        </button>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn-run" id="btnRun">
+                            <i class="fa-solid fa-play"></i> Run Code
+                        </button>
+                        <button class="btn-submit" id="btnSubmit">
+                            <i class="fa-solid fa-paper-plane"></i> Submit Solution
+                        </button>
+                    </div>
+                </div>
+
+                <div class="drawer-body">
+                    <!-- Tab Content: Output -->
+                    <div id="tabOutputView" style="display: block; height: 100%;">
+                        <div id="consoleHeader" style="margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                            <span id="statusBadgeContainer"></span>
+                            <span id="execTimeContainer" style="font-size: 0.8rem; color: #94a3b8; font-family: 'JetBrains Mono', monospace;"></span>
+                        </div>
+                        <div class="output-box" id="outputContent">Click "Run Code" to test your solution with custom input.</div>
+                    </div>
+
+                    <!-- Tab Content: Input -->
+                    <div id="tabInputView" style="display: none; height: 100%;">
+                        <textarea id="customInput" class="custom-input-box" placeholder="Enter standard input (stdin) here...">{{ sample_cases[0]['input'] if sample_cases else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast-notif" id="toastNotif">
+        <i class="fa-solid fa-circle-check"></i> <span id="toastMsg">Submission Saved Successfully!</span>
+    </div>
+
+    <!-- Script: Monaco Editor & Interactive Execution -->
+    <script>
+        const questionId = {{ question['id'] }};
+        let editor = null;
+        let draftsMemory = {}; // Per-language draft cache
+
+        // Default Code Snippet Templates
+        const codeTemplates = {
+            python: `# Write your Python 3 solution here
+import sys
+
+def main():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+    # Read numbers or strings as needed
+    # Example: print("Hello World")
+    
+if __name__ == '__main__':
+    main()
+`,
+            java: `// Write your Java solution here
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        // Read input using scanner
+        // Example: System.out.println("Hello World");
+    }
+}
+`,
+            c: `// Write your C solution here
+#include <stdio.h>
+
+int main() {
+    // Read input and produce output
+    // Example: printf("Hello World\\n");
+    return 0;
+}
+`,
+            cpp: `// Write your C++ solution here
+#include <iostream>
+using namespace std;
+
+int main() {
+    // Read input and produce output
+    // Example: cout << "Hello World" << endl;
+    return 0;
+}
+`
+        };
+
+        // Map language key to Monaco mode name
+        function getMonacoLanguage(lang) {
+            if (lang === 'cpp' || lang === 'c++') return 'cpp';
+            if (lang === 'c') return 'c';
+            if (lang === 'java') return 'java';
+            return 'python';
+        }
+
+        // Initialize Monaco Editor
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            let currentLang = document.getElementById('langSelect').value;
+            
+            // Check if draft exists for this question
+            fetch('/api/coding_drafts/get/' + questionId + '?lang=' + currentLang)
+                .then(res => res.json())
+                .then(data => {
+                    let initialCode = (data.code && data.code.trim()) ? data.code : (codeTemplates[currentLang] || '');
+                    draftsMemory[currentLang] = initialCode;
+
+                    editor = monaco.editor.create(document.getElementById('editorContainer'), {
+                        value: initialCode,
+                        language: getMonacoLanguage(currentLang),
+                        theme: 'vs-dark',
+                        automaticLayout: true,
+                        fontSize: 14,
+                        fontFamily: 'JetBrains Mono',
+                        minimap: { enabled: false },
+                        scrollBeyondLastLine: false
+                    });
+                })
+                .catch(() => {
+                    let initialCode = codeTemplates[currentLang] || '';
+                    draftsMemory[currentLang] = initialCode;
+                    editor = monaco.editor.create(document.getElementById('editorContainer'), {
+                        value: initialCode,
+                        language: getMonacoLanguage(currentLang),
+                        theme: 'vs-dark',
+                        automaticLayout: true,
+                        fontSize: 14,
+                        fontFamily: 'JetBrains Mono',
+                        minimap: { enabled: false }
+                    });
+                });
+        });
+
+        // Handle Language Switch with per-language draft memory
+        document.getElementById('langSelect').addEventListener('change', function() {
+            let newLang = this.value;
+            if (editor) {
+                // Save current code to memory
+                let oldCode = editor.getValue();
+                let prevLang = Object.keys(draftsMemory).find(key => draftsMemory[key] === oldCode) || newLang;
+                draftsMemory[prevLang] = oldCode;
+
+                // Fetch draft for new language or fallback to default template
+                fetch('/api/coding_drafts/get/' + questionId + '?lang=' + newLang)
+                    .then(res => res.json())
+                    .then(data => {
+                        let codeToLoad = (data.code && data.code.trim()) ? data.code : (draftsMemory[newLang] || codeTemplates[newLang] || '');
+                        draftsMemory[newLang] = codeToLoad;
+                        monaco.editor.setModelLanguage(editor.getModel(), getMonacoLanguage(newLang));
+                        editor.setValue(codeToLoad);
+                    })
+                    .catch(() => {
+                        let codeToLoad = draftsMemory[newLang] || codeTemplates[newLang] || '';
+                        monaco.editor.setModelLanguage(editor.getModel(), getMonacoLanguage(newLang));
+                        editor.setValue(codeToLoad);
+                    });
+            }
+        });
+
+        // Reset Code Button
+        document.getElementById('btnResetCode').addEventListener('click', function() {
+            if (confirm("Reset current code to default template? Unsaved changes for this language will be reset.")) {
+                let lang = document.getElementById('langSelect').value;
+                let defaultCode = codeTemplates[lang] || '';
+                if (editor) editor.setValue(defaultCode);
+            }
+        });
+
+        // Drawer Tabs (Output vs Input)
+        function switchDrawerTab(tab) {
+            document.getElementById('tabOutputBtn').classList.toggle('active', tab === 'output');
+            document.getElementById('tabInputBtn').classList.toggle('active', tab === 'input');
+            document.getElementById('tabOutputView').style.display = (tab === 'output') ? 'block' : 'none';
+            document.getElementById('tabInputView').style.display = (tab === 'input') ? 'block' : 'none';
+        }
+
+        // Autosave Functionality
+        function saveDraftSilently() {
+            if (!editor) return;
+            let code = editor.getValue();
+            let lang = document.getElementById('langSelect').value;
+            
+            fetch('/api/coding_drafts/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question_id: questionId, language: lang, code: code })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    let now = new Date();
+                    document.getElementById('draftStatus').innerHTML = 
+                        '<i class="fa-solid fa-cloud-arrow-up" style="color:#10b981;"></i> Autosaved ' + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                }
+            })
+            .catch(() => {});
+        }
+
+        // Trigger Autosave every 15 seconds
+        setInterval(saveDraftSilently, 15000);
+
+        // Run Code Execution
+        document.getElementById('btnRun').addEventListener('click', function() {
+            if (!editor) return;
+            saveDraftSilently();
+
+            let code = editor.getValue();
+            let lang = document.getElementById('langSelect').value;
+            let stdinInput = document.getElementById('customInput').value;
+
+            switchDrawerTab('output');
+            document.getElementById('statusBadgeContainer').innerHTML = '<span class="status-pill" style="background:rgba(59,130,246,0.2); color:#60a5fa;"><i class="fa-solid fa-spinner fa-spin"></i> Running...</span>';
+            document.getElementById('outputContent').innerText = "Compiling and executing code...";
+
+            fetch('/api/coding_run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question_id: questionId,
+                    code: code,
+                    language: lang,
+                    stdin_input: stdinInput
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                let isOk = (data.status === 'SUCCESS');
+                let badgeClass = isOk ? 'status-success' : 'status-error';
+                let iconClass = isOk ? 'fa-circle-check' : 'fa-triangle-exclamation';
+
+                document.getElementById('statusBadgeContainer').innerHTML = 
+                    `<span class="status-pill ${badgeClass}"><i class="fa-solid ${iconClass}"></i> ${data.status}</span>`;
+                
+                document.getElementById('execTimeContainer').innerText = data.execution_time_ms ? `${data.execution_time_ms} ms` : '';
+
+                let outputText = '';
+                if (data.stdout) outputText += `--- STDOUT ---\n${data.stdout}\n`;
+                if (data.stderr) outputText += `--- STDERR ---\n${data.stderr}\n`;
+                if (data.error_message && data.error_message !== data.stderr) outputText += `--- DIAGNOSTIC ---\n${data.error_message}\n`;
+
+                if (!outputText) outputText = '(Program executed successfully with no output)';
+
+                document.getElementById('outputContent').innerText = outputText;
+            })
+            .catch(err => {
+                document.getElementById('statusBadgeContainer').innerHTML = '<span class="status-pill status-error"><i class="fa-solid fa-triangle-exclamation"></i> Execution Error</span>';
+                document.getElementById('outputContent').innerText = 'Server error running code: ' + err;
+            });
+        });
+
+        // Submit Solution
+        document.getElementById('btnSubmit').addEventListener('click', function() {
+            if (!editor) return;
+            if (!confirm("Are you sure you want to submit your solution for Problem #{{ question['id'] }}? You can re-submit before the exam ends.")) {
+                return;
+            }
+
+            saveDraftSilently();
+            let code = editor.getValue();
+            let lang = document.getElementById('langSelect').value;
+
+            // Show submitting status on button
+            let btnSub = document.getElementById('btnSubmit');
+            let origText = btnSub.innerHTML;
+            btnSub.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Evaluating...';
+            btnSub.disabled = true;
+
+            fetch('/api/coding_submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question_id: questionId,
+                    code: code,
+                    language: lang
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btnSub.innerHTML = origText;
+                btnSub.disabled = false;
+
+                if (data.status === 'success') {
+                    openEvalModal(data);
+                } else {
+                    alert("Submission error: " + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(err => {
+                btnSub.innerHTML = origText;
+                btnSub.disabled = false;
+                alert("Submission error: " + err);
+            });
+        });
+
+        function openEvalModal(data) {
+            let st = data.eval_status || 'Submitted';
+            let stPill = document.getElementById('evalStatusPill');
+            stPill.innerText = st;
+            
+            if (st === 'Passed') {
+                stPill.className = 'status-pill status-success';
+            } else if (st === 'Partially Passed') {
+                stPill.className = 'status-pill';
+                stPill.style.background = 'rgba(245, 158, 11, 0.2)';
+                stPill.style.color = '#fbbf24';
+            } else {
+                stPill.className = 'status-pill status-error';
+            }
+
+            document.getElementById('evalCasesText').innerText = `${data.passed_count} / ${data.total_test_cases}`;
+            document.getElementById('evalMarksText').innerText = `${data.marks_awarded} / ${data.question_marks}`;
+
+            let listHtml = '';
+            (data.case_results || []).forEach((c, idx) => {
+                let passIcon = c.passed ? '<i class="fa-solid fa-circle-check" style="color:#34d399;"></i>' : '<i class="fa-solid fa-circle-xmark" style="color:#f87171;"></i>';
+                let tagLabel = c.is_hidden ? `Test Case #${idx + 1} (Hidden)` : `Sample Case #${idx + 1}`;
+                let statusTxt = c.status || (c.passed ? 'Passed' : 'Failed');
+
+                listHtml += `
+                    <div class="eval-case-row">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            ${passIcon}
+                            <span style="font-weight:600; color:#e2e8f0;">${tagLabel}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <span style="font-size:0.8rem; color:#94a3b8; font-family:'JetBrains Mono';">${c.execution_time_ms ? c.execution_time_ms + 'ms' : ''}</span>
+                            <span style="font-weight:600; color:${c.passed ? '#34d399' : '#f87171'};">${statusTxt}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('evalCasesList').innerHTML = listHtml;
+            document.getElementById('evalModal').style.display = 'flex';
+        }
+
+        function closeEvalModal() {
+            document.getElementById('evalModal').style.display = 'none';
+        }
+
+        function showToast(msg) {
+            let toast = document.getElementById('toastNotif');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        // Timer Sync Loop
+        let remainingSeconds = 3600;
+        function updateTimerDisplay(sec) {
+            if (sec < 0) sec = 0;
+            let m = Math.floor(sec / 60);
+            let s = sec % 60;
+            document.getElementById('timerDisplay').innerText = 
+                (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        }
+
+        fetch('/api/session_status')
+            .then(res => res.json())
+            .then(data => {
+                if (data.remaining_time !== undefined) remainingSeconds = data.remaining_time;
+                updateTimerDisplay(remainingSeconds);
+            });
+
+        setInterval(() => {
+            if (remainingSeconds > 0) {
+                remainingSeconds--;
+                updateTimerDisplay(remainingSeconds);
+            }
+        }, 1000);
+    </script>
+
+    <!-- Evaluation Results Modal HTML -->
+    <div id="evalModal" class="eval-modal-backdrop" style="display:none;">
+        <div class="eval-modal-card">
+            <div class="eval-modal-header">
+                <div>
+                    <h2 style="font-size: 1.3rem; color: #ffffff;">Evaluation Results</h2>
+                    <div style="font-size: 0.85rem; color: #94a3b8;">Problem #{{ question['id'] }} — {{ question['title'] }}</div>
+                </div>
+                <button onclick="closeEvalModal()" class="eval-close-btn">&times;</button>
+            </div>
+            
+            <div class="eval-modal-body">
+                <div class="eval-summary-bar">
+                    <div class="eval-stat-item">
+                        <span class="eval-stat-label">Result Status</span>
+                        <span id="evalStatusPill" class="status-pill status-success">Passed</span>
+                    </div>
+                    <div class="eval-stat-item">
+                        <span class="eval-stat-label">Test Cases Passed</span>
+                        <span id="evalCasesText" class="eval-stat-val">0 / 0</span>
+                    </div>
+                    <div class="eval-stat-item">
+                        <span class="eval-stat-label">Marks Awarded</span>
+                        <span id="evalMarksText" class="eval-stat-val" style="color: #c084fc;">0.0 / 10</span>
+                    </div>
+                </div>
+
+                <div style="font-size: 0.82rem; font-weight: 600; color: #94a3b8; margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Test Case Breakdown
+                </div>
+                
+                <div id="evalCasesList" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                </div>
+            </div>
+
+            <div class="eval-modal-footer">
+                <button onclick="closeEvalModal()" class="btn-reset-code" style="padding: 8px 16px; font-size: 0.9rem;">
+                    <i class="fa-solid fa-code"></i> Continue Editing
+                </button>
+                <a href="/coding_exam_list" class="btn-run" style="text-decoration:none; padding: 8px 18px; font-size: 0.9rem;">
+                    <i class="fa-solid fa-list-check"></i> Return to Question List
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .eval-modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .eval-modal-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            width: 90%; max-width: 580px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            display: flex; flex-direction: column; gap: 16px;
+        }
+
+        .eval-modal-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 12px;
+        }
+
+        .eval-close-btn {
+            background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;
+        }
+        .eval-close-btn:hover { color: #ffffff; }
+
+        .eval-summary-bar {
+            display: flex; justify-content: space-between; gap: 12px;
+            background: #0f172a; border: 1px solid #334155; border-radius: 10px;
+            padding: 14px 18px;
+        }
+
+        .eval-stat-item {
+            display: flex; flex-direction: column; gap: 4px; align-items: center;
+        }
+
+        .eval-stat-label {
+            font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .eval-stat-val {
+            font-size: 1.1rem; font-weight: 700; color: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .eval-case-row {
+            background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+            padding: 10px 14px;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.88rem;
+        }
+
+        .eval-modal-footer {
+            display: flex; justify-content: flex-end; gap: 12px;
+            border-top: 1px solid #334155; padding-top: 14px;
+        }
+    </style>
+</body>
+</html>
