@@ -484,18 +484,18 @@
             cursor: pointer;
             text-align: center;
             transition: all .25s ease;
-            background: #f8fafc;
+            background: transparent;
         }
 
         .mode-btn:hover {
-            background: #eef2ff;
+            background: transparent;
             border-color: #a5b4fc;
         }
 
         .mode-btn.selected {
             border-color: var(--primary);
-            background: var(--primary-light);
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.12);
+            background: transparent;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08);
         }
 
         .mode-btn i {
@@ -519,8 +519,8 @@
 
         /* ─── REMARK BOX ────────────────────────────────────────────── */
         .remark-box {
-            background: var(--primary-light);
-            border: 1.5px dashed #c7d2fe;
+            background: transparent;
+            border: 1.5px dashed #cbd5e1;
             border-radius: 14px;
             padding: 16px;
             margin-top: 16px;
@@ -785,11 +785,97 @@
                 text-align: center;
             }
 
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
+        /* ─── MULTI-SECTION TEST BUILDER ───────────────────────────────── */
+        .ms-section-card {
+            background: #ffffff;
+            border: 1.5px solid #e0e7ff;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.04);
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .ms-section-card:hover {
+            border-color: #c7d2fe;
+            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.08);
+        }
+        .ms-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .ms-card-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eef2ff;
+            color: #4338ca;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .ms-card-remove-btn {
+            background: transparent;
+            color: #ef4444;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .ms-card-remove-btn:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .ms-fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        .ms-fg {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .ms-fg label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #475569;
+        }
+        .ms-fg input, .ms-fg select {
+            padding: 8px 12px;
+            border: 1.5px solid #c5cae9;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            color: #1e293b;
+            background: #fff;
+            transition: border-color 0.2s;
+        }
+        .ms-fg input:focus, .ms-fg select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        .ms-subpanel {
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px dashed #cbd5e1;
+            font-size: 0.82rem;
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 
 <body>
@@ -815,9 +901,12 @@
         </div>
     </div>
 
-    <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
     <div class="topbar">
-        <h1><i class="fas fa-magic"></i> Test Generator</h1>
+        {% if is_coding %}
+        <h1 id="pageTitleHeading"><i class="fas fa-code"></i> Coding Test Generator</h1>
+        {% else %}
+        <h1 id="pageTitleHeading"><i class="fas fa-magic"></i> Test Generator</h1>
+        {% endif %}
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <a href="javascript:void(0)" onclick="handleDashboardClick(event)"><i class="fas fa-arrow-left"></i>
                 Dashboard</a>
@@ -830,10 +919,15 @@
         <div class="teacher-banner">
             <i class="fas fa-user-shield"></i>
             <div>
-                <strong>Teacher Access — Assigned Classes &amp; Subjects Only</strong>
-                <p>Class &amp; Subject dropdowns are limited to your allotted classes and subjects assigned by the
+                {% if is_coding %}
+                <strong id="teacherBannerTitle">Teacher Access — Coding Test Generator (Assigned Classes &amp; Subjects)</strong>
+                <p id="teacherBannerSub">Generate programming &amp; coding questions with automated test cases via Gemini AI for your allotted classes and subjects.</p>
+                {% else %}
+                <strong id="teacherBannerTitle">Teacher Access — Assigned Classes &amp; Subjects Only</strong>
+                <p id="teacherBannerSub">Class &amp; Subject dropdowns are limited to your allotted classes and subjects assigned by the
                     Administrator. All test generation options, question types, output modes, and AI features match the
                     Admin generator.</p>
+                {% endif %}
             </div>
         </div>
 
@@ -844,21 +938,36 @@
         </div>
 
         <!-- ─── TABS ──────────────────────────────────────────────────────── -->
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('ai',this)"><i class="fas fa-robot"></i> Generate Test
-                Papers</button>
+        <div class="tabs" id="mainTabs" {% if is_coding %}style="display:none;"{% endif %}>
+            <button class="tab active" onclick="switchTab('ai',this)"><i class="fas fa-robot"></i> Generate Test Papers</button>
             <button class="tab" onclick="switchTab('upload',this)"><i class="fas fa-upload"></i> Upload CSV</button>
+            <button class="tab" onclick="switchTab('multi_section',this)"><i class="fas fa-layer-group"></i> Multi-Section Test</button>
         </div>
 
         <!-- ─── AI TAB ───────────────────────────────────────────────────── -->
         <div id="ai-tab" class="tab-content active">
             <div class="card">
-                <div class="card-header"><i class="fas fa-cog"></i> Test Configuration — Assigned Classes</div>
+                <div class="card-header" id="configCardHeader">
+                    {% if is_coding %}
+                    <i class="fas fa-code"></i> Coding Test Configuration — Assigned Classes
+                    {% else %}
+                    <i class="fas fa-cog"></i> Test Configuration — Assigned Classes
+                    {% endif %}
+                </div>
                 <form id="aiForm" onsubmit="generateAI(event)">
+                    <input type="hidden" name="test_category" id="testCategoryInput" value="{{ 'coding_test' if is_coding else 'mcq_cbt' }}">
                     <div class="form-grid">
                         <div class="fg">
+                            <label><i class="fas fa-university"></i> Education Board *</label>
+                            <select name="board" id="boardSelect" onchange="onTeacherBoardOrClassChange('ai')">
+                                <option value="CBSE" selected>CBSE (NCERT)</option>
+                                <option value="ICSE">ICSE / CISCE</option>
+                                <option value="State / Other Board">State / Other Board</option>
+                            </select>
+                        </div>
+                        <div class="fg">
                             <label><i class="fas fa-graduation-cap"></i> Class *</label>
-                            <select name="class" id="classSelect" required onchange="onTeacherClassChange('ai')">
+                            <select name="class" id="classSelect" required onchange="onTeacherClassChange('ai'); onTeacherBoardOrClassChange('ai')">
                                 <option value="">Select Assigned Class</option>
                                 {% if class_subject_map %}
                                 {% for cls in class_subject_map.keys() %}
@@ -884,22 +993,56 @@
                             </select>
                         </div>
                         <div class="fg">
-                            <label><i class="fas fa-bookmark"></i> Chapter / Topic *</label>
-                            <input type="text" name="chapter" id="chapterInput" required placeholder="e.g. Electrochemistry" list="chapterSuggestionsList">
-                            <datalist id="chapterSuggestionsList"></datalist>
-                        </div>
-                        <div class="fg">
                             <label><i class="fas fa-hashtag"></i> Test Number *</label>
                             <select name="test_no" id="testNoSelect" required>
                                 <option value="">Select Class &amp; Subject first</option>
                             </select>
-                            <div class="test-note"><i class="fas fa-info-circle"></i> Used Test Numbers are disabled
+                            <div class="test-note"><i class="fas fa-info-circle"></i> Used Test Numbers are disabled. If your test number is not listed, use the box below.</div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                                <span style="font-size:0.8rem;color:#64748b;white-space:nowrap;">Or enter:</span>
+                                <input type="text" id="testNoCustom" placeholder="e.g. Test25"
+                                    style="flex:1;padding:6px 10px;border:1.5px solid #c5cae9;border-radius:6px;font-family:inherit;font-size:0.85rem;"
+                                    oninput="syncCustomTestNo('testNoCustom','testNoSelect')">
+                                <span style="font-size:0.75rem;color:#94a3b8;">TestXX only</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Question Types -->
-                    <div style="margin-top:4px;">
+                    <!-- Multi-Chapter / Topics Selection -->
+                    <div class="fg" style="margin-top:14px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+                            <label style="margin:0;font-weight:600;"><i class="fas fa-bookmark"></i> Selected Chapters / Topics *</label>
+                            <span style="font-size:0.75rem;color:#64748b;">(Click chapters below to multi-select, or type manual topics)</span>
+                        </div>
+                        <textarea name="chapter" id="topicsInput" required rows="2"
+                            placeholder="e.g. Chapter 1: Chemical Reactions, Chapter 2: Acids and Bases&#10;Type topics or click on the syllabus chapters below to multi-select"></textarea>
+                    </div>
+
+                    <!-- Dynamic Curriculum Chapter & Topic Multi-Select Box -->
+                    <div id="curriculumBox"
+                      style="margin-top:10px;display:none;background:#f8fafc;border:1.5px solid #c7d2fe;border-radius:12px;padding:12px 14px;">
+                      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+                        <div style="font-size:0.84rem;font-weight:700;color:#312e81;display:flex;align-items:center;gap:6px;">
+                          <i class="fas fa-book-reader" style="color:#4f46e5;"></i> <span id="curriculumTitle">Curriculum Chapters</span>
+                        </div>
+                        <div style="display:flex;gap:6px;">
+                          <button type="button"
+                            style="background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;padding:4px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"
+                            onclick="selectAllCurriculumChapters()"><i class="fas fa-check-double"></i> Add All</button>
+                          <button type="button"
+                            style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;padding:4px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;"
+                            onclick="clearCurriculumTopics()"><i class="fas fa-times"></i> Clear</button>
+                        </div>
+                      </div>
+                      <input type="text" id="chapterFilterInput" placeholder="🔍 Filter chapters or topics..."
+                        style="width:100%;padding:6px 10px;font-size:0.8rem;border:1px solid #cbd5e1;border-radius:8px;margin-bottom:8px;background:#fff;"
+                        oninput="filterCurriculumChips(this.value)">
+                      <div id="curriculumChips" style="max-height:180px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:6px;">
+                      </div>
+                    </div>
+
+                    <!-- 1. Standard MCQ Question Types Box -->
+                    <div id="mcqTypesBox" style="margin-top:14px;{% if is_coding %}display:none;{% endif %}">
                         <label
                             style="font-weight:600;color:#333;font-size:.88rem;display:flex;align-items:center;gap:8px;margin-bottom:4px;">
                             <i class="fas fa-list-ol" style="color:#3949ab;"></i>
@@ -909,19 +1052,66 @@
                         <div class="qt-grid">
                             <div class="qt-card"><i class="fas fa-check-circle"></i>
                                 <div class="ql">MCQ</div>
-                                <input type="number" name="mcq_count" min="0" max="50" value="0"
+                                <input type="number" name="mcq_count" min="0" max="100" value="0"
                                     onchange="updateTotal()">
                             </div>
                             <div class="qt-card"><i class="fas fa-balance-scale"></i>
                                 <div class="ql">Assertion-Reason</div>
-                                <input type="number" name="assertion_count" min="0" max="20" value="0"
+                                <input type="number" name="assertion_count" min="0" max="50" value="0"
                                     onchange="updateTotal()">
                             </div>
                         </div>
                     </div>
 
+                    <!-- 2. Separate Coding Questions Configuration Box -->
+                    <div id="codingTypesBox" style="margin-top:14px;{% if is_coding %}display:block;{% else %}display:none;{% endif %}background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:16px;">
+                        <div style="font-weight:700;color:#166534;font-size:0.92rem;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+                            <i class="fas fa-code" style="color:#15803d;font-size:1.1rem;"></i> Programming &amp; Coding Questions Configuration
+                        </div>
+                        
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:14px;">
+                            <div class="fg">
+                                <label style="font-weight:600;color:#166534;font-size:0.82rem;"><i class="fas fa-list-ol"></i> No. of Coding Questions *</label>
+                                <input type="number" name="coding_count" id="codingCountInput" min="1" max="20" value="5" onchange="updateTotal()" style="padding:8px 12px;border:1px solid #a7f3d0;border-radius:8px;font-weight:700;">
+                            </div>
+
+                            <div class="fg">
+                                <label style="font-weight:600;color:#166534;font-size:0.82rem;"><i class="fas fa-chart-line"></i> Difficulty Level *</label>
+                                <select name="coding_difficulty" style="padding:8px 12px;border:1px solid #a7f3d0;border-radius:8px;font-weight:600;background:#fff;">
+                                    <option value="easy">Easy (Beginner)</option>
+                                    <option value="medium" selected>Medium (Intermediate)</option>
+                                    <option value="hard">Hard (Advanced)</option>
+                                    <option value="mixed">Mixed Difficulty</option>
+                                </select>
+                            </div>
+
+                            <div class="fg">
+                                <label style="font-weight:600;color:#166534;font-size:0.82rem;"><i class="fas fa-award"></i> Marks per Problem</label>
+                                <input type="number" name="coding_marks" min="1" max="100" value="10" style="padding:8px 12px;border:1px solid #a7f3d0;border-radius:8px;font-weight:700;">
+                            </div>
+                        </div>
+
+                        <div style="margin-top:12px;">
+                            <label style="font-weight:600;color:#166534;font-size:0.82rem;display:block;margin-bottom:6px;"><i class="fas fa-laptop-code"></i> Allowed Programming Languages:</label>
+                            <div style="display:flex;gap:14px;flex-wrap:wrap;">
+                                <label style="font-size:0.82rem;font-weight:600;color:#1e293b;display:flex;align-items:center;gap:5px;">
+                                    <input type="checkbox" name="allowed_languages" value="python" checked> Python 3
+                                </label>
+                                <label style="font-size:0.82rem;font-weight:600;color:#1e293b;display:flex;align-items:center;gap:5px;">
+                                    <input type="checkbox" name="allowed_languages" value="java" checked> Java
+                                </label>
+                                <label style="font-size:0.82rem;font-weight:600;color:#1e293b;display:flex;align-items:center;gap:5px;">
+                                    <input type="checkbox" name="allowed_languages" value="c" checked> C
+                                </label>
+                                <label style="font-size:0.82rem;font-weight:600;color:#1e293b;display:flex;align-items:center;gap:5px;">
+                                    <input type="checkbox" name="allowed_languages" value="cpp" checked> C++
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Output Mode -->
-                    <div>
+                    <div id="outputModeContainer" {% if is_coding %}style="display:none;"{% endif %}>
                         <label style="font-weight:600;color:#333;font-size:.88rem;margin-bottom:7px;display:block;">
                             <i class="fas fa-share-square" style="color:#3949ab;"></i> Output Mode
                         </label>
@@ -941,14 +1131,18 @@
                     </div>
 
                     <!-- Remark Box -->
-                    <div class="remark-box">
+                    <div class="remark-box" id="remarkBoxContainer" {% if is_coding %}style="display:none;"{% endif %}>
                         <div class="rl"><i class="fas fa-lightbulb"></i> Instructions / Remark</div>
                         <textarea name="remark"
                             placeholder="e.g. CBSE 2024 pattern, include PYQ-style, focus on Chapters 3-5, 40% HOTS…"></textarea>
                     </div>
 
                     <button type="submit" class="gen-btn" id="genBtn">
+                        {% if is_coding %}
+                        <i class="fas fa-code"></i> Generate Coding Test Paper
+                        {% else %}
                         <i class="fas fa-magic"></i> Generate with Gemini AI
+                        {% endif %}
                     </button>
                 </form>
             </div>
@@ -960,6 +1154,14 @@
                 <div class="card-header"><i class="fas fa-upload"></i> Upload CSV</div>
                 <form id="uploadForm" onsubmit="uploadCSV(event)">
                     <div class="form-grid">
+                        <div class="fg">
+                            <label><i class="fas fa-university"></i> Education Board</label>
+                            <select name="board" id="uploadBoardSelect">
+                                <option value="CBSE" selected>CBSE (NCERT)</option>
+                                <option value="ICSE">ICSE / CISCE</option>
+                                <option value="State / Other Board">State / Other Board</option>
+                            </select>
+                        </div>
                         <div class="fg">
                             <label><i class="fas fa-graduation-cap"></i> Class *</label>
                             <select name="class" id="uploadClassSelect" required
@@ -998,6 +1200,13 @@
                             <select name="test_no" id="uploadTestNoSelect">
                                 <option value="">Select Class &amp; Subject first</option>
                             </select>
+                            <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                                <span style="font-size:0.8rem;color:#64748b;white-space:nowrap;">Or enter:</span>
+                                <input type="text" id="uploadTestNoCustom" placeholder="e.g. Test25"
+                                    style="flex:1;padding:6px 10px;border:1.5px solid #c5cae9;border-radius:6px;font-family:inherit;font-size:0.85rem;"
+                                    oninput="syncCustomTestNo('uploadTestNoCustom','uploadTestNoSelect')">
+                                <span style="font-size:0.75rem;color:#94a3b8;">TestXX only</span>
+                            </div>
                         </div>
                     </div>
 
@@ -1036,6 +1245,114 @@
                     <div style="text-align:center; margin-top:18px;">
                         <button type="submit" class="gen-btn" style="min-width:220px;">
                             <i class="fas fa-upload"></i> Upload Questions
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ─── MULTI-SECTION TAB ─────────────────────────────────────────── -->
+        <div id="multi_section-tab" class="tab-content">
+            <div class="card">
+                <div class="card-header"><i class="fas fa-layer-group"></i> Multi-Section Test Configuration</div>
+                <form id="multiSectionForm" onsubmit="createMultiSectionTest(event)">
+                    <div class="form-grid">
+                        <div class="fg">
+                            <label><i class="fas fa-university"></i> Education Board</label>
+                            <select name="board" id="msBoardSelect">
+                                <option value="CBSE" selected>CBSE (NCERT)</option>
+                                <option value="ICSE">ICSE / CISCE</option>
+                                <option value="State / Other Board">State / Other Board</option>
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label><i class="fas fa-graduation-cap"></i> Class *</label>
+                            <select name="class" id="msClassSelect" required onchange="onMsClassChange()">
+                                <option value="">Select Assigned Class</option>
+                                {% if class_subject_map %}
+                                {% for cls in class_subject_map.keys() %}
+                                <option value="{{ cls }}">Class {{ cls }}</option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label><i class="fas fa-layer-group"></i> Section</label>
+                            <select name="section" id="msSectionSelect">
+                                <option value="">All Sections</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label><i class="fas fa-heading"></i> Test Title * <small style="color:#6366f1;font-weight:normal;">(Appears as Subject in Student Login)</small></label>
+                            <input type="text" name="title" id="msTitleInput" required placeholder="e.g. Term 1 Composite, Grand Test" style="font-weight:600;">
+                        </div>
+                        <div class="fg">
+                            <label><i class="fas fa-hashtag"></i> Test Identifier / Code *</label>
+                            <input type="text" name="test_no" id="msTestNoInput" required placeholder="e.g. TEST-01, MIDTERM-1">
+                        </div>
+                        <div class="fg">
+                            <label><i class="fas fa-stopwatch"></i> Sectional Timing Mode *</label>
+                            <select name="timing_mode" id="msTimingModeSelect" onchange="onTimingModeChange(this.value)">
+                                <option value="disabled" selected>Overall Test Timer (Free Section Navigation)</option>
+                                <option value="fixed">Strict Per-Section Timer (Auto-Lock on Expiry)</option>
+                                <option value="no_fixed_lock">Overall Timer + One-Way Section Lock (Confirm Modal)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center;margin:16px 0;padding:12px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:0.88rem;font-weight:600;color:#334155;cursor:pointer;">
+                            <input type="checkbox" name="shuffle_sections" id="msShuffleSections" style="width:18px;height:18px;accent-color:#4f46e5;">
+                            <span>Shuffle Section Order For Each Student</span>
+                        </label>
+                        <div style="flex:1;min-width:240px;">
+                            <input type="text" name="remark" id="msRemarkInput" placeholder="Optional remark / candidate instructions summary" style="width:100%;padding:6px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:0.84rem;">
+                        </div>
+                    </div>
+
+                    <!-- ── Section Builder Cards ── -->
+                    <div style="margin-top:24px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                            <h3 style="font-size:1.05rem;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:8px;">
+                                <i class="fas fa-puzzle-piece" style="color:#4f46e5;"></i> Test Sections Setup
+                            </h3>
+                            <button type="button" onclick="addSectionCard()" class="tab" style="padding:6px 16px;background:#eef2ff;color:#4338ca;border:1.5px solid #c7d2fe;display:inline-flex;align-items:center;gap:6px;font-size:0.82rem;">
+                                <i class="fas fa-plus-circle"></i> Add Section
+                            </button>
+                        </div>
+
+                        <div id="msSectionsContainer">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- ── Summary Bar ── -->
+                    <div id="msSummaryBar" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:24px 0 18px 0;padding:14px;background:#f1f5f9;border-radius:12px;border:1px solid #cbd5e1;">
+                        <div style="text-align:center;">
+                            <div style="font-size:0.75rem;font-weight:600;color:#64748b;text-transform:uppercase;">Sections</div>
+                            <div id="msTotalSectionsCount" style="font-size:1.3rem;font-weight:800;color:#334155;">0</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:0.75rem;font-weight:600;color:#64748b;text-transform:uppercase;">Total Questions</div>
+                            <div id="msTotalQuestionsCount" style="font-size:1.3rem;font-weight:800;color:#2563eb;">0</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:0.75rem;font-weight:600;color:#64748b;text-transform:uppercase;">Total Marks</div>
+                            <div id="msTotalMarksCount" style="font-size:1.3rem;font-weight:800;color:#16a34a;">0.0</div>
+                        </div>
+                        <div id="msTotalDurationBlock" style="text-align:center;display:none;">
+                            <div style="font-size:0.75rem;font-weight:600;color:#64748b;text-transform:uppercase;">Total Duration</div>
+                            <div id="msTotalDurationCount" style="font-size:1.3rem;font-weight:800;color:#7c3aed;">0 min</div>
+                        </div>
+                    </div>
+
+                    <div style="text-align:center;margin-top:16px;">
+                        <button type="submit" id="msCreateBtn" class="gen-btn" style="min-width:280px;background:linear-gradient(135deg,#4f46e5 0%,#3730a3 100%);">
+                            <i class="fas fa-layer-group"></i> Create Multi-Section Test
                         </button>
                     </div>
                 </form>
@@ -1101,7 +1418,7 @@
 
         <footer class="app-global-footer"
             style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-            Developed by Gaurav Shukla &amp; Team
+            {{ developer_credit }}
         </footer>
     </div>
 
@@ -1182,35 +1499,120 @@
             }
         }
 
-        function onTeacherSubjectChange(mode) {
+        let _currentChaptersList = [];
+
+        function onTeacherBoardOrClassChange(mode) {
+            if (mode === 'ai') {
+                const subj = document.getElementById('subjectSelect') ? document.getElementById('subjectSelect').value : '';
+                if (subj) {
+                    onTeacherSubjectChange('ai');
+                }
+            }
+        }
+
+        async function onTeacherSubjectChange(mode) {
             try {
                 const classVal = mode === 'ai' ? (document.getElementById('classSelect') ? document.getElementById('classSelect').value : '') : (document.getElementById('uploadClassSelect') ? document.getElementById('uploadClassSelect').value : '');
                 const subjectVal = mode === 'ai' ? (document.getElementById('subjectSelect') ? document.getElementById('subjectSelect').value : '') : (document.getElementById('uploadSubjectSelect') ? document.getElementById('uploadSubjectSelect').value : '');
                 const selectId = mode === 'ai' ? 'testNoSelect' : 'uploadTestNoSelect';
                 updateTestNumbers(classVal, subjectVal, selectId);
 
-                // Fetch curriculum topics for autocomplete in AI mode
-                if (mode === 'ai' && classVal && subjectVal) {
-                    fetch(`/api/curriculum/topics?class=${encodeURIComponent(classVal)}&subject=${encodeURIComponent(subjectVal)}`)
-                        .then(r => r.json())
-                        .then(d => {
-                            if (d.status === 'success' && d.chapters) {
-                                const dl = document.getElementById('chapterSuggestionsList');
-                                if (dl) {
-                                    dl.innerHTML = '';
-                                    d.chapters.forEach(ch => {
-                                        const opt = document.createElement('option');
-                                        opt.value = ch.chapter;
-                                        dl.appendChild(opt);
-                                    });
-                                }
-                            }
-                        })
-                        .catch(err => console.error('Error fetching curriculum chapters:', err));
+                // Fetch curriculum topics for multi-select chips in AI mode
+                if (mode === 'ai') {
+                    const boardVal = document.getElementById('boardSelect') ? document.getElementById('boardSelect').value : 'CBSE';
+                    if (!classVal || !subjectVal) {
+                        const box = document.getElementById('curriculumBox');
+                        if (box) box.style.display = 'none';
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`/api/curriculum/topics?class=${encodeURIComponent(classVal)}&subject=${encodeURIComponent(subjectVal)}&board=${encodeURIComponent(boardVal)}`);
+                        const data = await res.json();
+                        const box = document.getElementById('curriculumBox');
+                        const title = document.getElementById('curriculumTitle');
+
+                        if (data.status === 'success' && data.chapters && data.chapters.length) {
+                            _currentChaptersList = data.chapters;
+                            if (title) title.textContent = `${boardVal} Curriculum — Class ${classVal} ${subjectVal} (${data.chapters.length} Chapters)`;
+                            renderCurriculumChips(data.chapters);
+                            if (box) box.style.display = 'block';
+                        } else {
+                            _currentChaptersList = [];
+                            if (box) box.style.display = 'none';
+                        }
+                    } catch (err) {
+                        console.error('Error fetching curriculum chapters:', err);
+                    }
                 }
             } catch (err) {
                 console.error('Error in onTeacherSubjectChange:', err);
             }
+        }
+
+        function renderCurriculumChips(chapters) {
+            const container = document.getElementById('curriculumChips');
+            if (!container) return;
+            container.innerHTML = '';
+            const ta = document.getElementById('topicsInput');
+            const currentTopics = ta ? ta.value : '';
+
+            chapters.forEach(ch => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                const isSelected = currentTopics.includes(ch.chapter);
+                chip.style.cssText = `padding:5px 10px;border-radius:20px;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.2s;text-align:left;border:1px solid ${isSelected ? '#4f46e5' : '#cbd5e1'};background:${isSelected ? '#4f46e5' : '#ffffff'};color:${isSelected ? '#ffffff' : '#1e1b4b'};`;
+
+                const topicsPreview = ch.topics && ch.topics.length ? ` — ${ch.topics.slice(0, 3).join(', ')}` : '';
+                chip.title = `${ch.chapter}${topicsPreview}`;
+                chip.innerHTML = `<i class="fas fa-bookmark" style="margin-right:4px;font-size:0.7rem;"></i> ${ch.chapter}`;
+
+                chip.onclick = () => toggleChapterSelection(ch.chapter, chip);
+                container.appendChild(chip);
+            });
+        }
+
+        function toggleChapterSelection(chapterName, chipEl) {
+            const ta = document.getElementById('topicsInput');
+            if (!ta) return;
+            let lines = ta.value.split('\n').map(l => l.trim()).filter(Boolean);
+            const idx = lines.indexOf(chapterName);
+            if (idx > -1) {
+                lines.splice(idx, 1);
+                chipEl.style.background = '#ffffff';
+                chipEl.style.color = '#1e1b4b';
+                chipEl.style.borderColor = '#cbd5e1';
+            } else {
+                lines.push(chapterName);
+                chipEl.style.background = '#4f46e5';
+                chipEl.style.color = '#ffffff';
+                chipEl.style.borderColor = '#4f46e5';
+            }
+            ta.value = lines.join('\n');
+        }
+
+        function selectAllCurriculumChapters() {
+            const ta = document.getElementById('topicsInput');
+            if (ta && _currentChaptersList && _currentChaptersList.length) {
+                ta.value = _currentChaptersList.map(c => c.chapter).join('\n');
+                renderCurriculumChips(_currentChaptersList);
+            }
+        }
+
+        function clearCurriculumTopics() {
+            const ta = document.getElementById('topicsInput');
+            if (ta) ta.value = '';
+            if (_currentChaptersList && _currentChaptersList.length) {
+                renderCurriculumChips(_currentChaptersList);
+            }
+        }
+
+        function filterCurriculumChips(query) {
+            const q = (query || '').toLowerCase().trim();
+            const chips = document.querySelectorAll('#curriculumChips button');
+            chips.forEach(c => {
+                const text = (c.textContent + ' ' + (c.title || '')).toLowerCase();
+                c.style.display = text.includes(q) ? 'inline-flex' : 'none';
+            });
         }
 
         function triggerFileInput(id, e) {
@@ -1239,19 +1641,81 @@
             document.getElementById('mode-' + m).classList.add('selected');
         }
 
-        // ─── TOTAL QUESTIONS ──────────────────────────────────────────
-        function updateTotal() {
-            const inputs = document.querySelectorAll('.qt-card input[type=number]');
-            let total = 0;
-            inputs.forEach(inp => {
-                const v = parseInt(inp.value) || 0; total += v;
-                inp.closest('.qt-card').classList.toggle('active', v > 0);
-            });
-            document.getElementById('totalBadge').textContent = 'Total: ' + total;
+        // ─── TEST CATEGORY INIT & MANAGEMENT ───────────────────────────
+        function initCategoryMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isCodingParam = urlParams.get('category') === 'coding_test';
+            const hiddenCat = document.getElementById('testCategoryInput');
+            const isCoding = isCodingParam || (hiddenCat && hiddenCat.value === 'coding_test');
+
+            if (hiddenCat) {
+                hiddenCat.value = isCoding ? 'coding_test' : 'mcq_cbt';
+            }
+
+            const mcqBox = document.getElementById('mcqTypesBox');
+            const codingBox = document.getElementById('codingTypesBox');
+            const outMode = document.getElementById('outputModeContainer');
+            const remark = document.getElementById('remarkBoxContainer');
+            const mainTabs = document.getElementById('mainTabs');
+            const genBtn = document.getElementById('genBtn');
+            const configHeader = document.getElementById('configCardHeader');
+            const pageTitleHeading = document.getElementById('pageTitleHeading');
+            const teacherBannerTitle = document.getElementById('teacherBannerTitle');
+            const teacherBannerSub = document.getElementById('teacherBannerSub');
+
+            if (isCoding) {
+                if (mcqBox) mcqBox.style.display = 'none';
+                if (codingBox) codingBox.style.display = 'block';
+                if (outMode) outMode.style.display = 'none';
+                if (remark) remark.style.display = 'none';
+                if (mainTabs) mainTabs.style.display = 'none';
+                if (configHeader) configHeader.innerHTML = '<i class="fas fa-code"></i> Coding Test Configuration — Assigned Classes';
+                if (genBtn) genBtn.innerHTML = '<i class="fas fa-code"></i> Generate Coding Test Paper';
+                if (pageTitleHeading) pageTitleHeading.innerHTML = '<i class="fas fa-code"></i> Coding Test Generator';
+                if (teacherBannerTitle) teacherBannerTitle.textContent = 'Teacher Access — Coding Test Generator (Assigned Classes & Subjects)';
+                if (teacherBannerSub) teacherBannerSub.textContent = 'Generate programming & coding questions with automated test cases via Gemini AI for your allotted classes and subjects.';
+            } else {
+                if (mcqBox) mcqBox.style.display = 'block';
+                if (codingBox) codingBox.style.display = 'none';
+                if (outMode) outMode.style.display = 'block';
+                if (remark) remark.style.display = 'block';
+                if (mainTabs) mainTabs.style.display = 'flex';
+                if (configHeader) configHeader.innerHTML = '<i class="fas fa-cog"></i> Test Configuration — Assigned Classes';
+                if (genBtn) genBtn.innerHTML = '<i class="fas fa-magic"></i> Generate with Gemini AI';
+                if (pageTitleHeading) pageTitleHeading.innerHTML = '<i class="fas fa-magic"></i> Test Generator';
+                if (teacherBannerTitle) teacherBannerTitle.textContent = 'Teacher Access — Assigned Classes & Subjects Only';
+                if (teacherBannerSub) teacherBannerSub.textContent = 'Class & Subject dropdowns are limited to your allotted classes and subjects assigned by the Administrator. All test generation options, question types, output modes, and AI features match the Admin generator.';
+            }
+            updateTotal();
         }
 
-        // ─── ALERT ─────────────────────────────────────────────────────
-        function showAlert(msg, type) {
+        function toggleTestCategory(val) {
+            const hiddenCat = document.getElementById('testCategoryInput');
+            if (hiddenCat) hiddenCat.value = val;
+            initCategoryMode();
+        }
+
+        // ─── TOTAL QUESTIONS ──────────────────────────────────────────
+        function updateTotal() {
+            const catInput = document.getElementById('testCategoryInput') 
+                          || document.querySelector('input[name="test_category"]:checked') 
+                          || document.querySelector('input[name="test_category"]');
+            const category = catInput ? catInput.value : 'mcq_cbt';
+            let total = 0;
+            if (category === 'coding_test') {
+                total = parseInt(document.getElementById('codingCountInput')?.value || '0');
+            } else {
+                const inputs = document.querySelectorAll('.qt-card input[type=number]');
+                inputs.forEach(inp => {
+                    const v = parseInt(inp.value) || 0; total += v;
+                    inp.closest('.qt-card').classList.toggle('active', v > 0);
+                });
+            }
+            const badge = document.getElementById('totalBadge');
+            if (badge) badge.textContent = 'Total: ' + total;
+        }
+
+        // ─── ALERT ────────────────────────────────────────────────     function showAlert(msg, type) {
             const box = document.getElementById('alertBox');
             box.className = 'alert alert-' + type;
             box.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
@@ -1280,22 +1744,80 @@
             }
         }
 
-        // ─── POPULATE TEST NUMBER DROPDOWN ──────────────────────────
+        // ─── POPULATE TEST NUMBER DROPDOWN ───────────────────────────
+        // Dynamic: no hardcoded limit — shows all used TestXX slots (disabled)
+        // plus the next 10 free slots beyond the current max.
         function populateTestNoSelect(selectId, existingTests) {
             const select = document.getElementById(selectId);
             if (!select) return;
-            const maxTest = 20;
+
+            // Extract numeric parts from existing TestXX entries
+            const usedNums = existingTests
+                .filter(t => /^Test\d+$/i.test(t))
+                .map(t => parseInt(t.replace(/^Test/i, ''), 10))
+                .filter(n => !isNaN(n));
+
+            const maxUsed = usedNums.length > 0 ? Math.max(...usedNums) : 0;
+            // Show all slots from 1 to (maxUsed + 10), minimum 10 slots
+            const showUpTo = Math.max(maxUsed + 10, 10);
+
             let html = '<option value="">Select Test Number</option>';
-            for (let i = 1; i <= maxTest; i++) {
-                const num = String(i).padStart(2, '0');
-                const val = 'Test' + num;
-                const disabled = existingTests.includes(val) ? 'disabled' : '';
-                html += `<option value="${val}" ${disabled}>${val} ${disabled ? '✔ (Used)' : ''}</option>`;
+            for (let i = 1; i <= showUpTo; i++) {
+                const val = 'Test' + String(i).padStart(2, '0');
+                const isUsed = existingTests.includes(val);
+                const disabled = isUsed ? 'disabled' : '';
+                const label = isUsed ? `${val} ✔ (Used)` : val;
+                html += `<option value="${val}" ${disabled}>${label}</option>`;
             }
             select.innerHTML = html;
         }
 
+        // ─── SYNC CUSTOM TestXX INPUT → SELECT ───────────────────────
+        // Validates TestXX format, injects as a custom option, selects it.
+        function syncCustomTestNo(inputId, selectId) {
+            const input  = document.getElementById(inputId);
+            const select = document.getElementById(selectId);
+            if (!input || !select) return;
+            const raw = input.value.trim();
+            if (!raw) {
+                // Clear any previously injected custom option
+                const existing = select.querySelector('option[data-custom]');
+                if (existing) existing.remove();
+                select.value = '';
+                return;
+            }
+            // Enforce TestXX format: "Test" followed by 1+ digits
+            const match = raw.match(/^Test(\d+)$/i);
+            if (!match) {
+                input.style.borderColor = '#ef4444';
+                input.title = 'Format must be TestXX — e.g. Test25, Test03';
+                return;
+            }
+            input.style.borderColor = '#22c55e';
+            input.title = '';
+            // Normalise to zero-padded (minimum 2 digits)
+            const num = parseInt(match[1], 10);
+            const canonical = 'Test' + String(num).padStart(2, '0');
+            // If already in the dropdown, just select it
+            const existing_opt = select.querySelector(`option[value="${canonical}"]`);
+            if (existing_opt && !existing_opt.disabled) {
+                select.value = canonical;
+                return;
+            }
+            // Otherwise inject as a custom option at the end
+            let customOpt = select.querySelector('option[data-custom]');
+            if (!customOpt) {
+                customOpt = document.createElement('option');
+                customOpt.setAttribute('data-custom', '1');
+                select.appendChild(customOpt);
+            }
+            customOpt.value = canonical;
+            customOpt.textContent = canonical + ' (Custom)';
+            select.value = canonical;
+        }
+
         // ─── UPDATE DROPDOWNS ────────────────────────────────────────
+
         async function updateTestNumbers(classVal, subjectVal, selectId) {
             if (!classVal || !subjectVal) {
                 const select = document.getElementById(selectId);
@@ -1336,9 +1858,9 @@
 
             const stages = [
                 { p: 15, title: 'Initializing AI Engine...', sub: 'Establishing connection to Gemini AI...' },
-                { p: 35, title: 'Generating Test Questions...', sub: 'Formulating MCQs and Assertion-Reason questions...' },
-                { p: 65, title: 'Verifying Answer Keys...', sub: 'Validating options and solution keys...' },
-                { p: 88, title: 'Finalizing Test Paper...', sub: 'Saving to CBT database and test repository...' }
+                { p: 35, title: 'Generating Test Questions...', sub: 'Formulating coding problems and test cases...' },
+                { p: 65, title: 'Verifying Test Cases...', sub: 'Validating inputs and outputs...' },
+                { p: 88, title: 'Finalizing Test Paper...', sub: 'Saving to database and test repository...' }
             ];
 
             let currentP = 0;
@@ -1381,17 +1903,49 @@
         // ─── GENERATE AI ──────────────────────────────────────────────
         async function generateAI(e) {
             e.preventDefault();
-            const total = parseInt(document.getElementById('totalBadge').textContent.replace('Total: ', ''));
-            if (total === 0) { showAlert('Enter at least 1 question quantity', 'error'); return; }
+            const catInput = document.getElementById('testCategoryInput') 
+                          || document.querySelector('input[name="test_category"]:checked') 
+                          || document.querySelector('input[name="test_category"]');
+            const category = catInput ? catInput.value : 'mcq_cbt';
+            
+            let total = 0;
+            if (category === 'coding_test') {
+                total = parseInt(document.getElementById('codingCountInput')?.value || '5');
+                if (isNaN(total) || total <= 0) {
+                    showAlert('Enter at least 1 coding question quantity', 'error');
+                    return;
+                }
+            } else {
+                total = parseInt(document.getElementById('totalBadge').textContent.replace('Total: ', ''));
+                if (total === 0) {
+                    showAlert('Enter at least 1 question quantity', 'error');
+                    return;
+                }
+            }
+
             const formData = new FormData(e.target);
             formData.append('method', 'ai');
             document.getElementById('genBtn').disabled = true;
 
-            const progress = animateCircularProgress(25000);
+            const targetUrl = category === 'coding_test' ? '/api/generate_coding_questions' : '/teacher/create_test_v2';
+            const expectedDuration = Math.max(25000, total * 2000);
+            const progress = animateCircularProgress(expectedDuration);
 
             try {
-                const res = await fetch('/teacher/create_test_v2', { method: 'POST', body: formData });
-                const data = await res.json();
+                const res = await fetch(targetUrl, { method: 'POST', body: formData });
+                const resText = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(resText);
+                } catch (jsonErr) {
+                    console.error("Server HTML/Raw response:", resText);
+                    progress.error("Server Error");
+                    const cleanErr = resText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 150);
+                    showAlert("Server returned invalid response: " + (cleanErr || ("HTTP " + res.status)), "error");
+                    document.getElementById('genBtn').disabled = false;
+                    return;
+                }
+
                 if (res.status === 429 || data.rate_limit) {
                     progress.error();
                     let seconds = data.retry_after || 60;
@@ -1412,7 +1966,10 @@
                 }
                 if (data.status === 'success') {
                     progress.finish(() => {
-                        if (data.mode === 'print' && data.preview_url) {
+                        if (data.redirect_url) {
+                            showAlert(data.message + ' Opening Review & Approval screen…', 'success');
+                            setTimeout(() => window.location.href = data.redirect_url, 800);
+                        } else if (data.mode === 'print' && data.preview_url) {
                             showAlert(data.message + ' — Opening print preview…', 'success');
                             setTimeout(() => window.open(data.preview_url, '_blank'), 600);
                         } else {
@@ -1471,6 +2028,387 @@
             }
             window.location.href = '/teacher/dashboard';
         }
+
+        // ─── MULTI-SECTION TEST BUILDER LOGIC ────────────────────────
+        let msSectionIndex = 0;
+        let msCachedSubjects = [];
+
+        async function onMsClassChange() {
+            const classVal = (document.getElementById('msClassSelect')?.value || '').trim();
+            const boardVal = (document.getElementById('msBoardSelect')?.value || 'CBSE').trim();
+            if (!classVal) {
+                msCachedSubjects = [];
+                updateAllSectionSubjects();
+                return;
+            }
+            try {
+                const res = await fetch(`/api/get_subjects_for_class?class=${encodeURIComponent(classVal)}&board=${encodeURIComponent(boardVal)}`);
+                const data = await res.json();
+                msCachedSubjects = data.subjects || [];
+            } catch (e) {
+                console.error('Failed to fetch subjects for class:', e);
+                msCachedSubjects = [];
+            }
+            updateAllSectionSubjects();
+        }
+
+        function updateAllSectionSubjects() {
+            const optHtml = msCachedSubjects.map(s => `<option value="${s}">`).join('');
+            document.querySelectorAll('.ms-section-card').forEach(card => {
+                const dl = card.querySelector('datalist[id^="ms-subj-list-"]');
+                if (dl) dl.innerHTML = optHtml;
+            });
+        }
+
+        function onMsSectionSubjectInput(inp) {
+            const card = inp.closest('.ms-section-card');
+            if (!card) return;
+            const val = inp.value.trim();
+            if (val.length >= 2) {
+                loadMsSectionChapters(card);
+            }
+        }
+
+        function onMsSectionSubjectChange(inp) {
+            const card = inp.closest('.ms-section-card');
+            if (!card) return;
+            loadMsSectionChapters(card);
+        }
+
+        async function loadMsSectionChapters(card) {
+            const cls = (document.getElementById('msClassSelect')?.value || '').trim();
+            const board = (document.getElementById('msBoardSelect')?.value || 'CBSE').trim();
+            const subj = (card.querySelector('.ms-subj-input')?.value || card.querySelector('.ms-subj-select')?.value || '').trim();
+
+            const suggestionsBox = card.querySelector('.ms-chapter-suggestions');
+            const chipsContainer = card.querySelector('.ms-chapter-chips');
+            const chapterDatalist = card.querySelector('datalist[id^="ms-chapter-list-"]');
+
+            if (!cls || !subj) {
+                if (suggestionsBox) suggestionsBox.style.display = 'none';
+                if (chipsContainer) chipsContainer.innerHTML = '';
+                if (chapterDatalist) chapterDatalist.innerHTML = '';
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/curriculum/topics?class=${encodeURIComponent(cls)}&subject=${encodeURIComponent(subj)}&board=${encodeURIComponent(board)}`);
+                const data = await res.json();
+                if (data.status === 'success' && data.chapters && data.chapters.length) {
+                    if (chapterDatalist) {
+                        chapterDatalist.innerHTML = data.chapters.map(ch => `<option value="${ch.chapter}">`).join('');
+                    }
+                    if (chipsContainer && suggestionsBox) {
+                        chipsContainer.innerHTML = '';
+                        data.chapters.forEach(ch => {
+                            const chip = document.createElement('button');
+                            chip.type = 'button';
+                            const chName = ch.chapter;
+                            const inputEl = card.querySelector('.ms-chapter-input');
+                            const isSelected = inputEl && inputEl.value.includes(chName);
+                            chip.style.cssText = `padding:3px 9px;border-radius:14px;font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.2s;text-align:left;border:1px solid ${isSelected ? '#4f46e5' : '#cbd5e1'};background:${isSelected ? '#4f46e5' : '#ffffff'};color:${isSelected ? '#ffffff' : '#334155'};`;
+                            chip.innerHTML = `<i class="fas fa-bookmark" style="font-size:0.65rem;margin-right:3px;"></i> ${chName}`;
+                            chip.onclick = () => {
+                                if (!inputEl) return;
+                                let cur = inputEl.value.trim();
+                                if (!cur) {
+                                    inputEl.value = chName;
+                                    chip.style.background = '#4f46e5';
+                                    chip.style.color = '#fff';
+                                    chip.style.borderColor = '#4f46e5';
+                                } else if (cur.includes(chName)) {
+                                    const parts = cur.split(',').map(s => s.trim()).filter(s => s && s !== chName);
+                                    inputEl.value = parts.join(', ');
+                                    chip.style.background = '#ffffff';
+                                    chip.style.color = '#334155';
+                                    chip.style.borderColor = '#cbd5e1';
+                                } else {
+                                    inputEl.value = cur + ', ' + chName;
+                                    chip.style.background = '#4f46e5';
+                                    chip.style.color = '#fff';
+                                    chip.style.borderColor = '#4f46e5';
+                                }
+                            };
+                            chipsContainer.appendChild(chip);
+                        });
+                        suggestionsBox.style.display = 'block';
+                    }
+                } else {
+                    if (suggestionsBox) suggestionsBox.style.display = 'none';
+                    if (chipsContainer) chipsContainer.innerHTML = '';
+                    if (chapterDatalist) chapterDatalist.innerHTML = '';
+                }
+            } catch (err) {
+                console.error('Failed to load curriculum topics for section:', err);
+                if (suggestionsBox) suggestionsBox.style.display = 'none';
+            }
+        }
+
+        function onTimingModeChange(mode) {
+            const isFixed = (mode === 'fixed');
+            const durBlock = document.getElementById('msTotalDurationBlock');
+            if (durBlock) durBlock.style.display = isFixed ? 'block' : 'none';
+            document.querySelectorAll('.ms-duration-fg').forEach(el => {
+                el.style.display = isFixed ? 'flex' : 'none';
+                const inp = el.querySelector('input');
+                if (inp) inp.required = isFixed;
+            });
+            updateMsSummary();
+        }
+
+        function onSectionModeChange(selectEl) {
+            const card = selectEl.closest('.ms-section-card');
+            if (!card) return;
+            const mode = selectEl.value;
+            card.querySelectorAll('.ms-mode-panel').forEach(p => p.style.display = 'none');
+            const target = card.querySelector(`.ms-mode-panel-${mode}`);
+            if (target) target.style.display = 'block';
+        }
+
+        function addSectionCard(initialData = null) {
+            const container = document.getElementById('msSectionsContainer');
+            if (!container) return;
+
+            const idx = msSectionIndex++;
+            const letter = String.fromCharCode(65 + (container.children.length % 26));
+            const card = document.createElement('div');
+            card.className = 'ms-section-card';
+            card.dataset.index = idx;
+
+            const isFixed = document.getElementById('msTimingModeSelect').value === 'fixed';
+
+            let subjOptions = msCachedSubjects.map(s => `<option value="${s}">`).join('');
+
+            card.innerHTML = `
+                <div class="ms-card-top">
+                    <span class="ms-card-badge">
+                        <i class="fas fa-layer-group"></i> <span class="ms-section-label">Section ${letter}</span>
+                    </span>
+                    <button type="button" class="ms-card-remove-btn" onclick="removeSectionCard(this)">
+                        <i class="fas fa-trash-alt"></i> Remove
+                    </button>
+                </div>
+                <div class="ms-fields-grid">
+                    <div class="ms-fg">
+                        <label>Section Name *</label>
+                        <input type="text" class="ms-name-input" value="Section ${letter}" required placeholder="e.g. Section A, General Science">
+                    </div>
+                    <div class="ms-fg">
+                        <label>Subject * (select or type custom)</label>
+                        <input type="text" class="ms-subj-input" list="ms-subj-list-${idx}" placeholder="e.g. Science, Mathematics" required
+                               oninput="onMsSectionSubjectInput(this)" onchange="onMsSectionSubjectChange(this); updateMsSummary();" style="padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:0.85rem;">
+                        <datalist id="ms-subj-list-${idx}">
+                            ${subjOptions}
+                        </datalist>
+                    </div>
+                    <div class="ms-fg">
+                        <label>Question Count *</label>
+                        <input type="number" class="ms-count-input" value="5" min="1" max="100" required oninput="updateMsSummary()">
+                    </div>
+                    <div class="ms-fg">
+                        <label>Question Source *</label>
+                        <select class="ms-mode-select" onchange="onSectionModeChange(this)">
+                            <option value="ai" selected>AI Generate (Batch)</option>
+                            <option value="qb">Auto-Pick (Question Bank &amp; Repo)</option>
+                            <option value="upload">Upload CSV</option>
+                        </select>
+                    </div>
+                    <div class="ms-fg">
+                        <label>Positive Marks</label>
+                        <input type="number" step="0.25" class="ms-pos-input" value="1.0" min="0.1" max="50" oninput="updateMsSummary()">
+                    </div>
+                    <div class="ms-fg">
+                        <label>Negative Marks</label>
+                        <input type="number" step="0.25" class="ms-neg-input" value="0.0" min="0" max="50">
+                    </div>
+                    <div class="ms-fg ms-duration-fg" style="display:${isFixed ? 'flex' : 'none'};">
+                        <label>Section Duration (Mins) *</label>
+                        <input type="number" class="ms-dur-input" value="15" min="1" max="180" ${isFixed ? 'required' : ''} oninput="updateMsSummary()">
+                    </div>
+                </div>
+
+                <!-- Mode Panels -->
+                <div class="ms-subpanel ms-mode-panel ms-mode-panel-ai" style="display:block;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <i class="fas fa-robot" style="color:#4f46e5;"></i>
+                        <span style="font-weight:600;color:#334155;font-size:0.82rem;">AI Focus / Chapter:</span>
+                        <input type="text" class="ms-chapter-input" list="ms-chapter-list-${idx}" placeholder="Specific Chapter or Topic (optional, e.g. Light - Reflection)" style="flex:1;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:0.82rem;">
+                        <datalist id="ms-chapter-list-${idx}"></datalist>
+                    </div>
+                    <div class="ms-chapter-suggestions" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed #e2e8f0;">
+                        <div style="font-size:0.75rem;color:#475569;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:5px;">
+                            <i class="fas fa-lightbulb" style="color:#f59e0b;"></i> Suggested Curriculum Chapters (click to add):
+                        </div>
+                        <div class="ms-chapter-chips" style="display:flex;flex-wrap:wrap;gap:6px;max-height:100px;overflow-y:auto;"></div>
+                    </div>
+                </div>
+
+                <div class="ms-subpanel ms-mode-panel ms-mode-panel-qb" style="display:none;background:#f0fdf4;border-color:#bbf7d0;">
+                    <div style="color:#166534;display:flex;align-items:center;gap:8px;">
+                        <i class="fas fa-database"></i>
+                        <span>Approved questions from Question Bank &amp; Exam Repository will be automatically selected for this subject.</span>
+                    </div>
+                </div>
+
+                <div class="ms-subpanel ms-mode-panel ms-mode-panel-upload" style="display:none;background:#fefce8;border-color:#fef08a;">
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <div style="font-weight:600;color:#854d0e;"><i class="fas fa-file-csv"></i> Select CSV File:</div>
+                        <input type="file" class="ms-csv-input" accept=".csv" style="font-size:0.82rem;">
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(card);
+            updateMsSummary();
+        }
+
+        function removeSectionCard(btn) {
+            const container = document.getElementById('msSectionsContainer');
+            if (!container) return;
+            if (container.children.length <= 1) {
+                showAlert('A test must have at least one section.', 'error');
+                return;
+            }
+            const card = btn.closest('.ms-section-card');
+            if (card) {
+                card.remove();
+                Array.from(container.children).forEach((c, idx) => {
+                    const letter = String.fromCharCode(65 + (idx % 26));
+                    const lbl = c.querySelector('.ms-section-label');
+                    if (lbl) lbl.textContent = `Section ${letter}`;
+                });
+                updateMsSummary();
+            }
+        }
+
+        function updateMsSummary() {
+            const container = document.getElementById('msSectionsContainer');
+            if (!container) return;
+            const cards = container.querySelectorAll('.ms-section-card');
+            let totalQ = 0;
+            let totalM = 0.0;
+            let totalDur = 0;
+
+            cards.forEach(c => {
+                const count = parseInt(c.querySelector('.ms-count-input')?.value || 0, 10);
+                const pos = parseFloat(c.querySelector('.ms-pos-input')?.value || 1.0);
+                const dur = parseInt(c.querySelector('.ms-dur-input')?.value || 0, 10);
+                totalQ += isNaN(count) ? 0 : count;
+                totalM += (isNaN(count) ? 0 : count) * (isNaN(pos) ? 1.0 : pos);
+                totalDur += isNaN(dur) ? 0 : dur;
+            });
+
+            const secCountEl = document.getElementById('msTotalSectionsCount');
+            const qCountEl = document.getElementById('msTotalQuestionsCount');
+            const mCountEl = document.getElementById('msTotalMarksCount');
+            const durCountEl = document.getElementById('msTotalDurationCount');
+
+            if (secCountEl) secCountEl.textContent = cards.length;
+            if (qCountEl) qCountEl.textContent = totalQ;
+            if (mCountEl) mCountEl.textContent = totalM.toFixed(1);
+            if (durCountEl) durCountEl.textContent = totalDur + ' min';
+        }
+
+        async function createMultiSectionTest(e) {
+            e.preventDefault();
+            const container = document.getElementById('msSectionsContainer');
+            const cards = container ? container.querySelectorAll('.ms-section-card') : [];
+            if (!cards.length) {
+                showAlert('Please add at least one section.', 'error');
+                return;
+            }
+
+            const timingMode = document.getElementById('msTimingModeSelect').value;
+            const sections = [];
+            const formData = new FormData();
+
+            formData.append('board', document.getElementById('msBoardSelect').value);
+            formData.append('class', document.getElementById('msClassSelect').value);
+            formData.append('section', document.getElementById('msSectionSelect').value);
+            formData.append('title', document.getElementById('msTitleInput').value.trim());
+            formData.append('test_no', document.getElementById('msTestNoInput').value.trim());
+            formData.append('timing_mode', timingMode);
+            formData.append('shuffle_sections', document.getElementById('msShuffleSections').checked ? '1' : '0');
+            formData.append('remark', document.getElementById('msRemarkInput').value.trim());
+
+            for (let i = 0; i < cards.length; i++) {
+                const c = cards[i];
+                const secName = c.querySelector('.ms-name-input').value.trim();
+                const subj = (c.querySelector('.ms-subj-input')?.value || c.querySelector('.ms-subj-select')?.value || '').trim();
+                const count = parseInt(c.querySelector('.ms-count-input').value, 10);
+                const mode = c.querySelector('.ms-mode-select').value;
+                const pos = parseFloat(c.querySelector('.ms-pos-input').value);
+                const neg = parseFloat(c.querySelector('.ms-neg-input').value);
+                const dur = timingMode === 'fixed' ? parseInt(c.querySelector('.ms-dur-input').value, 10) : 0;
+                const chapter = c.querySelector('.ms-chapter-input')?.value.trim() || '';
+
+                if (!subj) {
+                    showAlert(`Please enter or select a subject for "${secName}".`, 'error');
+                    return;
+                }
+                if (isNaN(count) || count <= 0) {
+                    showAlert(`Please enter a valid question count for "${secName}".`, 'error');
+                    return;
+                }
+
+                if (mode === 'upload') {
+                    const fileInput = c.querySelector('.ms-csv-input');
+                    if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+                        showAlert(`Please upload a CSV file for section "${secName}".`, 'error');
+                        return;
+                    }
+                    formData.append(`csv_file_${i}`, fileInput.files[0]);
+                }
+
+                sections.push({
+                    section_name: secName,
+                    subject: subj,
+                    question_count: count,
+                    generation_mode: mode,
+                    positive_marks: pos,
+                    negative_marks: neg,
+                    duration_minutes: dur,
+                    chapter: chapter
+                });
+            }
+
+            formData.append('sections_json', JSON.stringify(sections));
+
+            const submitBtn = document.getElementById('msCreateBtn');
+            const origHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Multi-Section Test... Please wait...';
+
+            try {
+                const res = await fetch('/api/create_multi_section_test', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showAlert(data.message, 'success');
+                    document.getElementById('multiSectionForm').reset();
+                    container.innerHTML = '';
+                    msSectionIndex = 0;
+                    addSectionCard();
+                    addSectionCard();
+                } else {
+                    showAlert(data.message || 'Creation failed', 'error');
+                }
+            } catch (err) {
+                showAlert('Error: ' + err.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = origHtml;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initCategoryMode();
+            // Initialize 2 default section cards in Multi-Section builder
+            addSectionCard();
+            addSectionCard();
+        });
     </script>
 </body>
 
