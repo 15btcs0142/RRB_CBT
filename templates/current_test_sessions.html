@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -399,6 +399,7 @@
             th,td{padding:8px 10px;}
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -552,7 +553,7 @@
         </a>
 
         <footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-            Developed by Gaurav Shukla &amp; Team
+            {{ developer_credit }}
         </footer>
     </div>
 
