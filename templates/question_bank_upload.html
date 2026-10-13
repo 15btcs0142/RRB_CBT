@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload to Question Bank - RRB CBT</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--primary:#1a237e;--primary-light:#3949ab;--accent:#10b981;--danger:#dc2626;--warn:#f59e0b;--bg:#f0f4f8;--card:#fff;--border:#e2e8f0;--text:#1e293b;--muted:#64748b;--radius:16px;--shadow:0 4px 20px rgba(0,0,0,.06);}
+body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padding:32px 16px;color:var(--text);}
+.container{max-width:740px;margin:0 auto;}
+.page-header{text-align:center;margin-bottom:32px;}
+.page-header h1{font-size:2rem;font-weight:700;color:var(--primary);display:flex;align-items:center;justify-content:center;gap:12px;}
+.page-header h1 i{background:linear-gradient(135deg,var(--primary),var(--primary-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.page-header p{color:var(--muted);margin-top:6px;font-size:.95rem;}
+.breadcrumb{display:flex;align-items:center;gap:8px;margin-bottom:24px;font-size:.85rem;color:var(--muted);}
+.breadcrumb a{color:var(--primary-light);text-decoration:none;}
+.breadcrumb a:hover{text-decoration:underline;}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px;}
+.alert{padding:12px 16px;border-radius:10px;margin-bottom:20px;font-size:.9rem;display:flex;align-items:center;gap:10px;}
+.alert-danger{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;}
+.alert-success{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;}
+.form-group{margin-bottom:22px;}
+.form-group label{display:block;font-weight:600;font-size:.875rem;color:var(--text);margin-bottom:8px;}
+.form-group label span.required{color:var(--danger);}
+.form-group select,.form-group input[type=text],.form-group input[type=file]{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.9rem;color:var(--text);background:#fff;transition:border-color .2s,box-shadow .2s;outline:none;}
+.form-group select:focus,.form-group input:focus{border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(57,73,171,.1);}
+.form-group .hint{font-size:.78rem;color:var(--muted);margin-top:5px;}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.drop-zone{border:2px dashed var(--border);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .25s;background:#fafbfc;}
+.drop-zone.drag-over,.drop-zone:hover{border-color:var(--primary-light);background:#eef2ff;}
+.drop-zone i{font-size:2.5rem;color:var(--primary-light);margin-bottom:12px;}
+.drop-zone .dz-text{font-size:.95rem;color:var(--muted);}
+.drop-zone .dz-selected{font-size:.9rem;color:var(--accent);font-weight:600;margin-top:8px;}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:10px;font-family:inherit;font-size:.95rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;box-shadow:0 4px 12px rgba(26,35,126,.25);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,35,126,.35);}
+.btn-secondary{background:var(--bg);color:var(--text);border:1.5px solid var(--border);}
+.btn-secondary:hover{background:var(--border);}
+.btn-row{display:flex;gap:12px;justify-content:flex-end;margin-top:28px;}
+.chapter-combo{position:relative;}
+#chapter-suggestions{display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1.5px solid var(--primary-light);border-radius:0 0 10px 10px;max-height:180px;overflow-y:auto;z-index:100;box-shadow:0 8px 20px rgba(0,0,0,.1);}
+#chapter-suggestions li{padding:9px 14px;cursor:pointer;font-size:.9rem;list-style:none;border-bottom:1px solid var(--border);}
+#chapter-suggestions li:hover{background:var(--bg);}
+.info-box{background:linear-gradient(135deg,#eff6ff,#e0f2fe);border:1px solid #bae6fd;border-radius:12px;padding:16px 20px;margin-bottom:24px;font-size:.875rem;color:#0369a1;}
+.info-box h4{font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb">
+    <a href="/question-bank"><i class="fas fa-database"></i> Question Bank</a>
+    <i class="fas fa-chevron-right" style="font-size:.7rem;"></i>
+    <span>Upload PDF</span>
+  </div>
+  <div class="page-header">
+    <h1><i class="fas fa-cloud-upload-alt"></i> Upload PDF to Question Bank</h1>
+    <p>Upload any exam paper PDF — Gemini Vision will extract and structure every question automatically.</p>
+  </div>
+  {% if error %}
+  <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+  {% endif %}
+  <div class="info-box">
+    <h4><i class="fas fa-info-circle"></i> How it works</h4>
+    Select the hierarchy tags below (Board → Class → Subject → Chapter) — these become smart defaults for all extracted questions.
+    After extraction, you will see a per-question review screen where you can correct the chapter or type for any individual question before approving.
+  </div>
+  <div class="card">
+    <form method="POST" enctype="multipart/form-data" id="upload-form">
+      <div class="row-2">
+        <div class="form-group">
+          <label for="board">Board <span class="required">*</span></label>
+          <select name="board" id="board" required onchange="loadSubjects()">
+            <option value="">— Select Board —</option>
+            {% for b in all_boards %}<option value="{{ b }}">{{ b }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="class">Class <span class="required">*</span></label>
+          <select name="class" id="class_sel" required onchange="loadSubjects()">
+            <option value="">— Select Class —</option>
+            {% for n in range(1,13) %}<option value="{{ n }}">Class {{ n }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="subject">Subject <span class="required">*</span></label>
+        <select name="subject" id="subject" required onchange="loadChapters()">
+          <option value="">— Select Board &amp; Class first —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="chapter">Chapter / Topic <span class="required">*</span></label>
+        <div class="chapter-combo">
+          <input type="text" name="chapter" id="chapter" placeholder="Type or select a chapter..." required autocomplete="off" oninput="filterChapters(this.value)" onfocus="showAllChapters()" onclick="showAllChapters()" onblur="hideSuggestions()">
+          <ul id="chapter-suggestions"></ul>
+        </div>
+        <div class="hint">Suggestions come from the curriculum database. You may type any custom topic name for JEE/NEET papers.</div>
+      </div>
+      <div class="form-group">
+        <label for="question_type">Default Question Type <span class="required">*</span></label>
+        <select name="question_type" id="question_type" required>
+          <option value="MCQ">MCQ (Multiple Choice)</option>
+          <option value="Numerical">Numerical / Integer Type</option>
+          <option value="Descriptive">Descriptive / Long Answer</option>
+          <option value="Coding">Coding / Programming</option>
+        </select>
+        <div class="hint">This is the default type assigned to all extracted questions. You can change per-question on the review screen.</div>
+      </div>
+      <div class="form-group">
+        <label>PDF File <span class="required">*</span></label>
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('pdf_file').click()">
+          <i class="fas fa-file-pdf"></i>
+          <div class="dz-text">Click or drag &amp; drop a PDF here</div>
+          <div class="dz-selected" id="dz-selected"></div>
+        </div>
+        <input type="file" name="pdf_file" id="pdf_file" accept=".pdf" style="display:none;" required onchange="showFile(this)">
+      </div>
+      <div class="btn-row">
+        <a href="/question-bank" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+        <button type="submit" class="btn btn-primary" id="submit-btn"><i class="fas fa-upload"></i> Upload &amp; Extract</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+let allChapters=[];
+function loadSubjects(){
+  const b=document.getElementById('board').value;
+  const c=document.getElementById('class_sel').value;
+  if(!b||!c)return;
+  fetch(`/api/qb/subjects?board=${encodeURIComponent(b)}&class=${encodeURIComponent(c)}`)
+    .then(r=>r.json()).then(subs=>{
+      const sel=document.getElementById('subject');
+      sel.innerHTML='<option value="">— Select Subject —</option>';
+      subs.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+    });
+}
+function loadChapters(){
+  const b=document.getElementById('board').value;
+  const c=document.getElementById('class_sel').value;
+  const s=document.getElementById('subject').value;
+  if(!s)return;
+  fetch(`/api/qb/chapters?board=${encodeURIComponent(b)}&class=${encodeURIComponent(c)}&subject=${encodeURIComponent(s)}`)
+    .then(r=>r.json()).then(chs=>{
+      allChapters=chs;
+      showAllChapters();
+    });
+}
+function showAllChapters(){
+  const ul=document.getElementById('chapter-suggestions');
+  if(!allChapters || !allChapters.length){ul.style.display='none';return;}
+  const val=(document.getElementById('chapter').value||'').trim();
+  const filtered=val ? allChapters.filter(c=>c.toLowerCase().includes(val.toLowerCase())).slice(0,10) : allChapters.slice(0,12);
+  if(!filtered.length){ul.style.display='none';return;}
+  ul.innerHTML=filtered.map(c=>`<li onmousedown="selectChapter('${c.replace(/'/g,"\\'")}')">📚 ${c}</li>`).join('');
+  ul.style.display='block';
+}
+function filterChapters(val){
+  showAllChapters();
+}
+function selectChapter(name){
+  document.getElementById('chapter').value=name;
+  document.getElementById('chapter-suggestions').style.display='none';
+}
+function hideSuggestions(){setTimeout(()=>{document.getElementById('chapter-suggestions').style.display='none';},180);}
+function showFile(inp){
+  const fn=inp.files[0]?inp.files[0].name:'';
+  document.getElementById('dz-selected').textContent=fn?'✅ '+fn:'';
+}
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault();dz.classList.remove('drag-over');
+  const fi=document.getElementById('pdf_file');
+  fi.files=e.dataTransfer.files;
+  showFile(fi);
+});
+document.getElementById('upload-form').addEventListener('submit',function(){
+  document.getElementById('submit-btn').innerHTML='<i class="fas fa-spinner fa-spin"></i> Uploading &amp; Extracting...';
+  document.getElementById('submit-btn').disabled=true;
+});
+</script>
+</body>
+</html>
