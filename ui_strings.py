@@ -1,0 +1,116 @@
+"""
+ui_strings.py — Single source of truth for all translatable UI strings.
+
+Keys are used in templates as {{ t('key') }}.
+Only student-facing strings are included (v1 scope).
+Do NOT include academic content (questions, answers, subject names).
+"""
+
+UI_STRINGS = {
+    # ── index.html (Student Login) ─────────────────────────────────────
+    'login_title':             "Student Login",
+    'login_subtitle':          "Enter your credentials to access the examination",
+    'label_admission_no':      "Admission Number",
+    'placeholder_admission':   "Enter your admission number",
+    'label_name':              "Full Name",
+    'placeholder_name':        "Your full name",
+    'label_dob':               "Date of Birth",
+    'btn_login':               "Login to Exam Portal",
+    'login_help':              "Contact your teacher if you have trouble logging in.",
+    'notice_board_title':      "Notice Board",
+    'no_notices':              "No announcements at this time.",
+    'read_more':               "Read More",
+    'view_all_notices':        "View All Notices",
+
+    # ── waiting.html (Waiting Room) ────────────────────────────────────
+    'waiting_title':           "Waiting for Exam to Start",
+    'waiting_subtitle':        "Your exam will begin shortly. Please stay on this page.",
+    'exam_not_started':        "Exam has not started yet",
+    'your_info':               "Your Information",
+    'label_class':             "Class",
+    'label_section':           "Section",
+    'label_subject':           "Subject",
+    'label_test_no':           "Test No.",
+    'label_status':            "Status",
+    'status_waiting':          "Waiting",
+    'important_instructions':  "Important Instructions",
+    'instr_wait_1':            "Do not refresh or close this page.",
+    'instr_wait_2':            "Your exam will start automatically when the teacher begins.",
+    'instr_wait_3':            "Keep this window open and in focus.",
+    'instr_wait_4':            "Ensure stable internet connectivity.",
+    'btn_logout':              "Logout",
+
+    # ── guidelines.html (Exam Rules) ───────────────────────────────────
+    'guidelines_title':        "Exam Guidelines",
+    'guidelines_subtitle':     "Please read all instructions carefully before starting the exam.",
+    'general_instructions':    "General Instructions",
+    'gi_1':                    "This is a Computer Based Test (CBT).",
+    'gi_2':                    "Each question has four options. Select the most appropriate answer.",
+    'gi_3':                    "You can navigate between questions using the question palette.",
+    'gi_4':                    "Do not refresh or close the browser during the exam.",
+    'gi_5':                    "Once time is up, your exam will be auto-submitted.",
+    'gi_6':                    "Negative marking may apply. Read instructions carefully.",
+    'marking_scheme':          "Marking Scheme",
+    'marks_per_correct':       "Marks per correct answer",
+    'marks_per_wrong':         "Marks deducted per wrong answer",
+    'marks_unanswered':        "Marks for unanswered questions",
+    'btn_start_exam':          "Start Exam",
+    'btn_back':                "Go Back",
+    'palette_legend':          "Question Palette Legend",
+    'legend_answered':         "Answered",
+    'legend_not_answered':     "Not Answered",
+    'legend_marked':           "Marked for Review",
+    'legend_not_visited':      "Not Visited",
+    'legend_marked_answered':  "Answered and Marked for Review",
+
+    # ── exam.html (Live Exam) ──────────────────────────────────────────
+    'exam_title':              "Online Examination",
+    'time_remaining':          "Time Remaining",
+    'question_label':          "Question",
+    'of_label':                "of",
+    'btn_prev':                "Previous",
+    'btn_next':                "Next",
+    'btn_mark_review':         "Mark for Review and Next",
+    'btn_clear':               "Clear Response",
+    'btn_submit_exam':         "Submit Exam",
+    'confirm_submit':          "Are you sure you want to submit? You cannot change answers after submission.",
+    'confirm_submit_title':    "Submit Exam",
+    'btn_yes_submit':          "Yes, Submit",
+    'btn_cancel':              "Cancel",
+    'questions_palette':       "Questions",
+    'section_label':           "Section",
+    'instructions_panel':      "Instructions",
+    'exam_submitted_msg':      "Exam has been submitted successfully.",
+
+    # ── submitted.html (Submission Confirmation) ───────────────────────
+    'submitted_title':         "Exam Submitted",
+    'submitted_subtitle':      "Your exam has been submitted successfully.",
+    'submitted_msg':           "Thank you for completing the exam. Your responses have been recorded.",
+    'your_score':              "Your Score",
+    'total_questions':         "Total Questions",
+    'correct_answers':         "Correct Answers",
+    'wrong_answers':           "Wrong Answers",
+    'unattempted':             "Unattempted",
+    'percentage':              "Percentage",
+    'btn_view_responses':      "View My Responses",
+    'btn_home':                "Return to Home",
+    'exam_complete':           "Exam Complete",
+    'result_pending':          "Results will be published by your teacher.",
+
+    # ── Additional UI Chrome ──────────────────────────────────────────
+    'tag_cbt':                 "Computer Based Test",
+    'pill_guidelines':         "Guidelines",
+    'pill_waiting':            "Waiting",
+    'pill_submitted':          "Submitted",
+    'agree_rules':             "I have read and understood all the rules and agree to abide by them.",
+    'status_answered':         "Answered",
+    'status_not_answered':     "Not Answered",
+    'status_marked':           "Marked for Review",
+    'status_not_visited':      "Not Visited",
+    'hello_student':           "Hello",
+    'autochecking':            "Auto‑checking every 3 seconds",
+    'btn_request_reattempt':   "Request Reattempt",
+    'confirm_submit_sub':      "Please review your exam summary before final submission.",
+    'submitting_exam':         "Submitting Exam...",
+}
+
