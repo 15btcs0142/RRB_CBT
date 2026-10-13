@@ -205,6 +205,7 @@
             .btn-group{gap:8px;}
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -272,7 +273,18 @@
                     <td>{{ loop.index }}</td>
                     <td><span style="font-family:monospace; font-weight:600;">{{ res.admission_no or res.student_id or '—' }}</span></td>
                     <td><i class="fas fa-user-circle" style="color:#3949ab;margin-right:6px;"></i><strong>{{ res.name }}</strong></td>
-                    <td><span style="background:#e8eaf6;padding:3px 14px;border-radius:20px;font-weight:700;color:#1a237e;">{{ res.score }} / {{ max_total_marks }}</span></td>
+                    <td>
+                        <span style="background:#e8eaf6;padding:3px 14px;border-radius:20px;font-weight:700;color:#1a237e;">{{ res.score }} / {{ res.max_marks or max_total_marks }}</span>
+                        {% if res.parsed_breakdown %}
+                        <div style="margin-top:5px; display:flex; flex-wrap:wrap; gap:4px;">
+                            {% for sec in res.parsed_breakdown %}
+                            <span style="background:#f1f5f9; color:#1e293b; border:1px solid #cbd5e1; padding:2px 7px; border-radius:8px; font-size:0.7rem; font-weight:600;" title="{{ sec.subject or sec.section_name }}">
+                                {{ sec.section_name }}: {{ sec.marks_obtained }}/{{ sec.max_marks }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </td>
                     <td>
                         {% if res.percentage is not none %}
                             {% if res.percentage >= 40 %}
@@ -332,7 +344,7 @@
     </script>
 
 <footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
+    {{ developer_credit }}
 </footer>
 </div>
 
