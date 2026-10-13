@@ -249,11 +249,36 @@
             border: 1px solid #ef9a9a;
         }
 
+        .action-btn-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-action-edit {
+            background: linear-gradient(135deg, #4f46e5, #3730a3);
+            color: white;
+            border: none;
+            padding: 7px 13px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-action-edit:hover {
+            background: linear-gradient(135deg, #4338ca, #312e81);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+        }
         .assign-btn {
             background: linear-gradient(135deg, #0288d1, #01579b);
             color: white;
             border: none;
-            padding: 7px 16px;
+            padding: 7px 13px;
             border-radius: 8px;
             cursor: pointer;
             font-size: 0.82rem;
@@ -262,12 +287,32 @@
             box-shadow: 0 2px 8px rgba(2, 136, 209, 0.25);
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
         .assign-btn:hover {
             background: linear-gradient(135deg, #01579b, #0d47a1);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(2, 136, 209, 0.35);
+        }
+        .btn-action-delete {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            padding: 7px 11px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-action-delete:hover {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+            transform: translateY(-1px);
         }
 
         /* ─── ALERTS ───────────────────────────────────────────────────── */
@@ -381,6 +426,7 @@
             font-size: 0.95rem;
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -495,7 +541,7 @@
 
         <!-- ── FOOTER CREDIT ── -->
         <footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-            Developed by Gaurav Shukla &amp; Team
+            {{ developer_credit }}
         </footer>
 
     </div>
@@ -570,6 +616,132 @@
         </div>
     </div>
 
+    <!-- ── EDIT TEACHER MODAL DIALOG ── -->
+    <div id="editTeacherModal" class="modal">
+        <div class="modal-box" style="max-width: 680px; width: 94%;">
+            <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            <h3 style="color:#1a237e; display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-user-pen" style="color:#4f46e5;"></i> Edit Teacher Profile
+            </h3>
+            <p id="editTeacherSubheading" style="color:#64748b; margin-bottom:18px; font-size:0.86rem;"></p>
+
+            <form id="editTeacherForm" onsubmit="saveTeacherEdit(event)">
+                <input type="hidden" name="teacher_id" id="editTeacherId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fas fa-user"></i> Full Name *</label>
+                        <input type="text" name="name" id="editTeacherName" required placeholder="Full Name">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-mobile-alt"></i> Mobile Number (Login ID) *</label>
+                        <input type="text" name="mobile" id="editTeacherMobile" required placeholder="10-digit mobile number" pattern="[0-9]{10}">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-lock"></i> Change Password</label>
+                        <div style="position:relative;">
+                            <input type="password" name="password" id="editTeacherPassword" placeholder="Leave blank to keep unchanged" style="padding-right:40px;">
+                            <button type="button" onclick="toggleEditPasswordVisibility()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; font-size:0.95rem;" title="Show/Hide Password">
+                                <i class="fas fa-eye" id="editPasswordToggleIcon"></i>
+                            </button>
+                        </div>
+                        <small style="color:#94a3b8; font-size:0.75rem;">Only fill if you want to change/reset password</small>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-toggle-on"></i> Account Status</label>
+                        <select name="status" id="editTeacherStatus" style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-family:inherit;font-size:0.9rem;">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-envelope"></i> Email Address</label>
+                        <input type="email" name="email" id="editTeacherEmail" placeholder="email@example.com (optional)">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-map-marker-alt"></i> Address</label>
+                        <input type="text" name="address" id="editTeacherAddress" placeholder="Address (optional)">
+                    </div>
+                </div>
+
+                <!-- ── CLASS & SUBJECT ASSIGNMENTS SECTION ── -->
+                <div style="margin-top:14px; padding:16px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span style="font-weight:600; color:#1e293b; font-size:0.92rem; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-chalkboard" style="color:#4f46e5;"></i> Assigned Classes &amp; Subjects
+                        </span>
+                        <span style="font-size:0.75rem; color:#64748b;">Click <strong>&times;</strong> to remove any class</span>
+                    </div>
+                    
+                    <!-- Current assignments list -->
+                    <div id="editAssignmentsList" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
+                        <p style="color:#94a3b8; font-size:0.85rem; margin:0;">Loading assignments...</p>
+                    </div>
+
+                    <!-- Quick Add Class to Teacher -->
+                    <div style="background:#ffffff; border:1px dashed #cbd5e1; border-radius:10px; padding:12px;">
+                        <div style="font-size:0.82rem; font-weight:600; color:#475569; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-plus-circle" style="color:#22c55e;"></i> Add / Assign New Class:
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1.5fr auto; gap:8px; align-items:center;">
+                            <select id="editAssignClass" onchange="checkEditClassTeacherGuard()" style="padding:8px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.84rem; font-family:inherit;">
+                                <option value="">Class...</option>
+                                <option value="1">Class 1</option>
+                                <option value="2">Class 2</option>
+                                <option value="3">Class 3</option>
+                                <option value="4">Class 4</option>
+                                <option value="5">Class 5</option>
+                                <option value="6">Class 6</option>
+                                <option value="7">Class 7</option>
+                                <option value="8">Class 8</option>
+                                <option value="9">Class 9</option>
+                                <option value="10">Class 10</option>
+                                <option value="11">Class 11</option>
+                                <option value="12">Class 12</option>
+                                <option value="1st">1st</option>
+                                <option value="2nd">2nd</option>
+                                <option value="3rd">3rd</option>
+                                <option value="4th">4th</option>
+                                <option value="5th">5th</option>
+                                <option value="6th">6th</option>
+                                <option value="7th">7th</option>
+                                <option value="8th">8th</option>
+                                <option value="9th">9th</option>
+                                <option value="10th">10th</option>
+                                <option value="11th">11th</option>
+                                <option value="12th">12th</option>
+                            </select>
+                            <select id="editAssignSec" onchange="checkEditClassTeacherGuard()" style="padding:8px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.84rem; font-family:inherit;">
+                                <option value="A">Sec A</option>
+                                <option value="B">Sec B</option>
+                                <option value="C">Sec C</option>
+                                <option value="D">Sec D</option>
+                            </select>
+                            <input type="text" id="editAssignSubj" placeholder="Subject (e.g. Maths)" style="padding:8px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.84rem; font-family:inherit;">
+                            <button type="button" onclick="addAssignmentFromEdit()" class="btn-theme" style="padding:8px 14px; font-size:0.82rem; margin:0; border-radius:8px; white-space:nowrap;">
+                                <i class="fas fa-plus"></i> Add
+                            </button>
+                        </div>
+                        <div style="margin-top:8px; display:flex; align-items:center; gap:8px;">
+                            <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:0.82rem; color:#475569; margin:0;">
+                                <input type="checkbox" id="editAssignIsCt" style="width:auto;">
+                                <span><i class="fas fa-crown" style="color:#f59e0b;"></i> Set as Class Teacher</span>
+                            </label>
+                            <span id="editCtNote" style="font-size:0.75rem; color:#64748b;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:22px; padding-top:14px; border-top:1px solid #e2e8f0;">
+                    <button type="button" onclick="closeEditModal()" style="padding:10px 22px; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; border-radius:10px; font-weight:600; cursor:pointer; font-family:inherit;">Cancel</button>
+                    <button type="submit" id="editTeacherSaveBtn" class="btn-theme" style="margin:0; padding:10px 24px;">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ── JAVASCRIPT LOGIC ── -->
     <script>
         function showTab(tab, evt) {
@@ -606,15 +778,226 @@
                         <td>${t.email || '—'}</td>
                         <td style="font-size:0.84rem;">${t.assignments || '<span style="color:#cbd5e1;">None</span>'}</td>
                         <td><span class="badge badge-${t.status === 'active' ? 'active' : 'inactive'}">${t.status}</span></td>
-                        <td>
-                            <button class="assign-btn" onclick="openAssignModal(${t.id}, '${t.name.replace(/'/g, "\\'")}')">
-                                <i class="fas fa-plus"></i> Assign
-                            </button>
+                        <td style="white-space:nowrap;">
+                            <div class="action-btn-group">
+                                <button class="btn-action-edit" title="Edit Teacher Details & Classes" onclick="openEditTeacherModal(${t.id})">
+                                    <i class="fas fa-pen-to-square"></i> Edit
+                                </button>
+                                <button class="assign-btn" title="Assign Class / Subject" onclick="openAssignModal(${t.id}, '${t.name.replace(/'/g, "\\'")}')">
+                                    <i class="fas fa-plus"></i> Assign
+                                </button>
+                                <button class="btn-action-delete" title="Delete Teacher" onclick="deleteTeacher(${t.id}, '${t.name.replace(/'/g, "\\'")}')">
+                                    <i class="fas fa-trash-can"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `).join('');
             } catch (err) {
                 console.error("Failed to load teachers:", err);
+            }
+        }
+
+        let currentEditingTeacherId = null;
+
+        async function openEditTeacherModal(id) {
+            currentEditingTeacherId = id;
+            try {
+                const resp = await fetch(`/admin/teacher/${id}`);
+                const data = await resp.json();
+                if (!data.teacher) {
+                    showAlert('Teacher details not found', 'error');
+                    return;
+                }
+                const t = data.teacher;
+                document.getElementById('editTeacherId').value = t.id;
+                document.getElementById('editTeacherName').value = t.name || '';
+                document.getElementById('editTeacherMobile').value = t.mobile || '';
+                document.getElementById('editTeacherPassword').value = '';
+                document.getElementById('editTeacherEmail').value = t.email || '';
+                document.getElementById('editTeacherAddress').value = t.address || '';
+                document.getElementById('editTeacherStatus').value = t.status || 'active';
+                document.getElementById('editTeacherSubheading').innerHTML = `<i class="fas fa-id-badge"></i> Teacher ID: #${t.id} &nbsp;|&nbsp; <i class="fas fa-phone"></i> Mobile: ${t.mobile}`;
+                
+                renderEditModalAssignments(data.assignments || []);
+                
+                const pwInput = document.getElementById('editTeacherPassword');
+                pwInput.type = 'password';
+                const icon = document.getElementById('editPasswordToggleIcon');
+                if (icon) { icon.className = 'fas fa-eye'; }
+
+                // Clear inline add fields
+                document.getElementById('editAssignClass').value = '';
+                document.getElementById('editAssignSec').value = 'A';
+                document.getElementById('editAssignSubj').value = '';
+                document.getElementById('editAssignIsCt').checked = false;
+                document.getElementById('editCtNote').textContent = '';
+
+                document.getElementById('editTeacherModal').style.display = 'flex';
+            } catch(err) {
+                console.error('Error fetching teacher:', err);
+                showAlert('Failed to load teacher information', 'error');
+            }
+        }
+
+        function renderEditModalAssignments(assignments) {
+            const container = document.getElementById('editAssignmentsList');
+            if (!assignments || !assignments.length) {
+                container.innerHTML = '<p style="color:#94a3b8; font-size:0.85rem; margin:0;"><i class="fas fa-circle-info"></i> No classes assigned yet.</p>';
+                return;
+            }
+            container.innerHTML = assignments.map(a => `
+                <span style="background:#e0e7ff; border:1px solid #c7d2fe; color:#3730a3; padding:5px 12px; border-radius:20px; font-size:0.82rem; display:inline-flex; align-items:center; gap:6px;">
+                    <strong>Class ${a.class}${a.section ? ' ('+a.section+')' : ''}</strong> - ${a.subject} ${a.is_class_teacher ? '<span title="Class Teacher">👑 Class Teacher</span>' : ''}
+                    <button type="button" onclick="removeAssignFromEdit(${currentEditingTeacherId}, ${a.id})" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:1.1rem; padding:0; line-height:1; margin-left:4px;" title="Remove this assignment">&times;</button>
+                </span>
+            `).join('');
+        }
+
+        async function removeAssignFromEdit(teacherId, assignId) {
+            if (!confirm('Remove this class assignment?')) return;
+            try {
+                const res = await fetch(`/admin/teacher/${teacherId}/remove_assignment/${assignId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showAlert('Class assignment removed successfully', 'success');
+                    const refreshed = await fetch(`/admin/teacher/${teacherId}`);
+                    const refreshedData = await refreshed.json();
+                    renderEditModalAssignments(refreshedData.assignments || []);
+                    loadTeachers();
+                } else {
+                    showAlert(data.message || 'Failed to remove assignment', 'error');
+                }
+            } catch(e) {
+                showAlert('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function checkEditClassTeacherGuard() {
+            const cls = document.getElementById('editAssignClass').value;
+            const sec = document.getElementById('editAssignSec').value || 'A';
+            const ctCheckbox = document.getElementById('editAssignIsCt');
+            const ctNote = document.getElementById('editCtNote');
+            
+            if (!cls) {
+                ctCheckbox.disabled = false;
+                ctNote.textContent = '';
+                return;
+            }
+
+            try {
+                const res = await fetch(`/admin/check_class_teacher?class=${encodeURIComponent(cls)}&section=${encodeURIComponent(sec)}&teacher_id=${currentEditingTeacherId}`);
+                const data = await res.json();
+                if (data.has_ct) {
+                    ctCheckbox.checked = false;
+                    ctCheckbox.disabled = true;
+                    ctNote.style.color = '#dc2626';
+                    ctNote.textContent = `(Already assigned: ${data.ct_name})`;
+                } else {
+                    ctCheckbox.disabled = false;
+                    ctNote.style.color = '#16a34a';
+                    ctNote.textContent = '(Available)';
+                }
+            } catch(e) {
+                console.error('Guard check error:', e);
+            }
+        }
+
+        async function addAssignmentFromEdit() {
+            if (!currentEditingTeacherId) return;
+            const cls = document.getElementById('editAssignClass').value.trim();
+            const sec = document.getElementById('editAssignSec').value.trim();
+            const subj = document.getElementById('editAssignSubj').value.trim();
+            const isCt = document.getElementById('editAssignIsCt').checked;
+
+            if (!cls || !subj) {
+                showAlert('Please select a class and enter subject name to assign', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('teacher_id', currentEditingTeacherId);
+            formData.append('class', cls);
+            formData.append('section', sec);
+            formData.append('subject', subj);
+            formData.append('is_class_teacher', isCt ? 'true' : 'false');
+
+            try {
+                const resp = await fetch(`/admin/teacher/${currentEditingTeacherId}/assign`, { method: 'POST', body: formData });
+                const result = await resp.json();
+                showAlert(result.message, result.status);
+                if (result.status === 'success') {
+                    document.getElementById('editAssignSubj').value = '';
+                    document.getElementById('editAssignIsCt').checked = false;
+                    document.getElementById('editCtNote').textContent = '';
+                    const refreshed = await fetch(`/admin/teacher/${currentEditingTeacherId}`);
+                    const refreshedData = await refreshed.json();
+                    renderEditModalAssignments(refreshedData.assignments || []);
+                    loadTeachers();
+                }
+            } catch(err) {
+                showAlert('Network error: ' + err.message, 'error');
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('editTeacherModal').style.display = 'none';
+        }
+
+        function toggleEditPasswordVisibility() {
+            const pw = document.getElementById('editTeacherPassword');
+            const icon = document.getElementById('editPasswordToggleIcon');
+            if (pw.type === 'password') {
+                pw.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                pw.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        async function saveTeacherEdit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const teacherId = document.getElementById('editTeacherId').value;
+            const saveBtn = document.getElementById('editTeacherSaveBtn');
+            const originalText = saveBtn.innerHTML;
+
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            const formData = new FormData(form);
+
+            try {
+                const resp = await fetch(`/admin/teacher/${teacherId}/update`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await resp.json();
+                showAlert(result.message, result.status);
+                if (result.status === 'success') {
+                    closeEditModal();
+                    loadTeachers();
+                }
+            } catch(err) {
+                showAlert('Network error: ' + err.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+            }
+        }
+
+        async function deleteTeacher(id, name) {
+            if (!confirm(`Are you sure you want to delete teacher "${name}" and all their class assignments?`)) return;
+            try {
+                const res = await fetch(`/admin/teacher/${id}/delete`, { method: 'POST' });
+                const data = await res.json();
+                showAlert(data.message, data.status);
+                if (data.status === 'success') {
+                    loadTeachers();
+                }
+            } catch(err) {
+                showAlert('Network error: ' + err.message, 'error');
             }
         }
 
@@ -728,7 +1111,10 @@
             if (data.status === 'success') { openAssignModal(teacherId, ''); loadTeachers(); }
         }
 
-        window.onclick = e => { if (e.target.id === 'assignModal') closeModal(); };
+        window.onclick = e => {
+            if (e.target.id === 'assignModal') closeModal();
+            if (e.target.id === 'editTeacherModal') closeEditModal();
+        };
 
         loadTeachers();
     </script>
