@@ -554,6 +554,7 @@
             }
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 
 <body>
@@ -680,7 +681,7 @@
 
         <footer class="app-global-footer"
             style="width:100%; text-align:center; padding:24px 10px; font-size:0.82rem; color:#94a3b8; opacity:0.85; margin-top:28px; border-top:1px solid #e2e8f0; clear:both;">
-            Developed by Gaurav Shukla &amp; Team
+            {{ developer_credit }}
         </footer>
     </div>
 
@@ -701,8 +702,9 @@
             fetch('/admin/monitoring/data')
                 .then(res => res.json())
                 .then(data => {
-                    allStudents = data;
-                    populateFilterDropdowns(data);
+                    const students = data.students || data; // handle both new {students:[]} and legacy [] format
+                    allStudents = students;
+                    populateFilterDropdowns(students);
                     applyFilters();
                 })
                 .catch(err => console.error('Error fetching monitoring data:', err));
