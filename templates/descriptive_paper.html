@@ -765,6 +765,7 @@
       font-weight: 500;
     }
   </style>
+    {{ theme_style_tag|safe }}
 </head>
 
 <body>
@@ -838,8 +839,8 @@
         <div class="fg-row">
           <div class="fg">
             <label><i class="fas fa-layer-group"></i>Class</label>
-            <input type="text" id="classInput" placeholder="e.g. 1 to 12" list="classSuggestions"
-              onchange="onAdminClassChange(this.value)">
+            <input type="text" id="classInput" placeholder="e.g. 1 to 12" value="10" list="classSuggestions"
+              onchange="onAdminClassChange(this.value)" oninput="onAdminClassChange(this.value)">
             <datalist id="classSuggestions">
               <option value="1">Class 1</option>
               <option value="2">Class 2</option>
@@ -867,7 +868,7 @@
           <div class="fg">
             <label><i class="fas fa-book-open"></i>Subject</label>
             <input type="text" id="subjectInput" placeholder="e.g. Science, Physics, Mathematics"
-              list="subjectSuggestions" onchange="onSubjectChange(this.value)">
+              list="subjectSuggestions" onchange="onSubjectChange(this.value)" oninput="onSubjectInputChange(this.value)">
             <datalist id="subjectSuggestions">
             </datalist>
           </div>
@@ -963,10 +964,21 @@
           <div class="fg" id="maxMarksGroup">
             <label><i class="fas fa-award"></i>Total Marks</label>
             <select id="maxMarksSelect" onchange="onTotalMarksSelectChange(this.value)">
+              <option value="20">20 Marks</option>
               <option value="30">30 Marks</option>
+              <option value="40">40 Marks</option>
               <option value="50" selected>50 Marks</option>
+              <option value="60">60 Marks</option>
+              <option value="70">70 Marks</option>
+              <option value="80">80 Marks</option>
+              <option value="90">90 Marks</option>
+              <option value="100">100 Marks</option>
+              <option value="custom">Custom…</option>
             </select>
-            <input type="number" id="maxMarksInput" value="50" min="1" style="display:none;">
+            <input type="number" id="maxMarksInput" value="50" min="1" max="999"
+              placeholder="Enter marks (e.g. 75)"
+              style="display:none;margin-top:6px;width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:0.9rem;"
+              oninput="updateTotal()">
           </div>
         </div>
       </div>
@@ -1274,67 +1286,51 @@
     }
 
     async function onBoardOrClassChange() {
-      const cls = document.getElementById('classInput').value.trim();
-      const board = document.getElementById('boardSelect').value;
+      const clsEl = document.getElementById('classInput');
+      const cls = (clsEl ? clsEl.value.trim() : '') || '10';
+      const board = document.getElementById('boardSelect') ? document.getElementById('boardSelect').value : 'CBSE';
       if (cls) {
         await loadCurriculumSubjects(cls, board);
       }
       applyOfficialBlueprint();
-      onSubjectChange(document.getElementById('subjectInput').value);
+      const sInput = document.getElementById('subjectInput');
+      if (sInput && sInput.value) {
+        onSubjectChange(sInput.value);
+      }
     }
 
     async function onAdminClassChange(cls) {
-      const board = document.getElementById('boardSelect').value;
+      cls = (cls || '').trim() || '10';
+      const board = document.getElementById('boardSelect') ? document.getElementById('boardSelect').value : 'CBSE';
       if (cls) {
         await loadCurriculumSubjects(cls, board);
       }
       applyOfficialBlueprint();
-      onSubjectChange(document.getElementById('subjectInput').value);
+      const sInput = document.getElementById('subjectInput');
+      if (sInput && sInput.value) {
+        onSubjectChange(sInput.value);
+      }
     }
 
-    async function loadCurriculumSubjects(cls, board) {
-      try {
-        const res = await fetch(`/api/curriculum/subjects?class=${encodeURIComponent(cls)}&board=${encodeURIComponent(board)}`);
-        const data = await res.json();
-        if (data.status === 'success' && data.subjects && data.subjects.length) {
-          const datalist = document.getElementById('subjectSuggestions');
-          if (datalist) {
-            datalist.innerHTML = '';
-            data.subjects.forEach(s => {
-              const opt = document.createElement('option');
-              opt.value = s;
-              datalist.appendChild(opt);
-            });
-          }
-          if (!IS_ADMIN) {
-            const sel = document.getElementById('subjectInput');
-            if (sel && sel.tagName.toLowerCase() === 'select') {
-              const curVal = sel.value;
-              sel.innerHTML = '<option value="">Select Subject</option>';
-              data.subjects.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s;
-                opt.textContent = s;
-                sel.appendChild(opt);
-              });
-              if (curVal) sel.value = curVal;
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Error loading curriculum subjects:", e);
-      }
+    let _subjInputTimer = null;
+    function onSubjectInputChange(subj) {
+      clearTimeout(_subjInputTimer);
+      _subjInputTimer = setTimeout(() => {
+        onSubjectChange(subj);
+      }, 250);
     }
 
     async function onSubjectChange(subj) {
-      const cls = document.getElementById('classInput').value.trim();
-      const board = document.getElementById('boardSelect').value;
+      const clsEl = document.getElementById('classInput');
+      let cls = (clsEl ? clsEl.value.trim() : '') || '10';
+      const board = document.getElementById('boardSelect') ? document.getElementById('boardSelect').value : 'CBSE';
       applyOfficialBlueprint();
-      if (!cls || !subj) {
-        document.getElementById('curriculumBox').style.display = 'none';
+      if (!subj || !subj.trim()) {
+        const cbox = document.getElementById('curriculumBox');
+        if (cbox) cbox.style.display = 'none';
         return;
       }
-      await loadCurriculumTopics(cls, subj, board);
+      await loadCurriculumTopics(cls, subj.trim(), board);
     }
 
     async function loadCurriculumTopics(cls, subj, board) {
@@ -1546,9 +1542,32 @@
 
     function onTotalMarksSelectChange(marksVal) {
       const maxMarksInput = document.getElementById('maxMarksInput');
-      if (maxMarksInput) maxMarksInput.value = marksVal;
-      applyOfficialBlueprint();
-      updateTotal();
+      if (marksVal === 'custom') {
+        // Show the manual input, clear it so user types their own value
+        if (maxMarksInput) {
+          maxMarksInput.style.display = 'block';
+          maxMarksInput.focus();
+        }
+      } else {
+        // Hide the manual input and sync its value with the dropdown
+        if (maxMarksInput) {
+          maxMarksInput.style.display = 'none';
+          maxMarksInput.value = marksVal;
+        }
+        applyOfficialBlueprint();
+        updateTotal();
+      }
+    }
+
+    /** Returns the effective Total Marks value regardless of whether
+     *  the user picked a preset or typed a custom value. */
+    function getEffectiveMaxMarks() {
+      const sel = document.getElementById('maxMarksSelect');
+      const inp = document.getElementById('maxMarksInput');
+      if (sel && sel.value === 'custom') {
+        return (inp && inp.value) ? inp.value : '';
+      }
+      return sel ? sel.value : '';
     }
 
     function onAutoBlueprintToggle(isAuto) {
@@ -1606,7 +1625,7 @@
       }
 
       const board = document.getElementById('boardSelect') ? document.getElementById('boardSelect').value : 'CBSE';
-      const cls = document.getElementById('classInput') ? document.getElementById('classInput').value.trim() : '10';
+      const cls = (document.getElementById('classInput') ? document.getElementById('classInput').value.trim() : '') || '10';
       const subj = document.getElementById('subjectInput') ? document.getElementById('subjectInput').value.trim().toLowerCase() : '';
       const exam = document.getElementById('examType') ? document.getElementById('examType').value : 'Unit Test';
       const pType = document.getElementById('paperType') ? document.getElementById('paperType').value : 'Descriptive Paper';
@@ -1657,6 +1676,20 @@
           maxMarks: '',
           duration: 'Self-Paced'
         };
+      } else if (isGraded && selMarks === '20') {
+        // Graded 20 Marks Blueprint
+        blueprint = {
+          mcqCount: 5, mcqMarks: 1,
+          fibCount: 2, fibMarks: 1,
+          tfCount: 0, tfMarks: 1,
+          arCount: 1, arMarks: 1,
+          vsCount: 2, vsMarks: 2,
+          shCount: 2, shMarks: 3,
+          lgCount: 0, lgMarks: 5,
+          csCount: 0, csMarks: 4,
+          maxMarks: 20,
+          duration: '1 Hour'
+        };
       } else if (isGraded && selMarks === '30') {
         // Graded 30 Marks Blueprint
         blueprint = {
@@ -1669,6 +1702,20 @@
           lgCount: 1, lgMarks: 6,
           csCount: 0, csMarks: 4,
           maxMarks: 30,
+          duration: '1.5 Hours'
+        };
+      } else if (isGraded && selMarks === '40') {
+        // Graded 40 Marks Blueprint
+        blueprint = {
+          mcqCount: 8, mcqMarks: 1,
+          fibCount: 2, fibMarks: 1,
+          tfCount: 0, tfMarks: 1,
+          arCount: 2, arMarks: 1,
+          vsCount: 3, vsMarks: 2,
+          shCount: 3, shMarks: 3,
+          lgCount: 1, lgMarks: 5,
+          csCount: 1, csMarks: 4,
+          maxMarks: 40,
           duration: '1.5 Hours'
         };
       } else if (isGraded && selMarks === '50') {
@@ -1684,6 +1731,63 @@
           csCount: 1, csMarks: 4,
           maxMarks: 50,
           duration: '2 Hours'
+        };
+      } else if (isGraded && selMarks === '60') {
+        // Graded 60 Marks Blueprint
+        blueprint = {
+          mcqCount: 12, mcqMarks: 1,
+          fibCount: 4, fibMarks: 1,
+          tfCount: 0, tfMarks: 1,
+          arCount: 2, arMarks: 1,
+          vsCount: 5, vsMarks: 2,
+          shCount: 5, shMarks: 3,
+          lgCount: 2, lgMarks: 5,
+          csCount: 1, csMarks: 4,
+          maxMarks: 60,
+          duration: '2.5 Hours'
+        };
+      } else if (isGraded && selMarks === '70') {
+        // Graded 70 Marks Blueprint (standard board exam pattern)
+        blueprint = {
+          mcqCount: 14, mcqMarks: 1,
+          fibCount: 0, fibMarks: 1,
+          tfCount: 0, tfMarks: 1,
+          arCount: 4, arMarks: 1,
+          vsCount: 5, vsMarks: 2,
+          shCount: 6, shMarks: 3,
+          lgCount: 3, lgMarks: 5,
+          csCount: 2, csMarks: 4,
+          maxMarks: 70,
+          duration: '3 Hours'
+        };
+      } else if (isGraded && (selMarks === '80' || selMarks === '100')) {
+        // Graded 80 / 100 Marks Blueprint (standard board full paper)
+        const mm = parseInt(selMarks);
+        blueprint = {
+          mcqCount: mm >= 100 ? 20 : 16, mcqMarks: 1,
+          fibCount: 0, fibMarks: 1,
+          tfCount: 0, tfMarks: 1,
+          arCount: mm >= 100 ? 4 : 2, arMarks: 1,
+          vsCount: mm >= 100 ? 6 : 5, vsMarks: 2,
+          shCount: mm >= 100 ? 8 : 6, shMarks: 3,
+          lgCount: mm >= 100 ? 5 : 4, lgMarks: 5,
+          csCount: mm >= 100 ? 4 : 3, csMarks: 4,
+          maxMarks: mm,
+          duration: '3 Hours'
+        };
+      } else if (isGraded && selMarks === '90') {
+        // Graded 90 Marks Blueprint
+        blueprint = {
+          mcqCount: 18, mcqMarks: 1,
+          fibCount: 0, fibMarks: 1,
+          tfCount: 0, tfMarks: 1,
+          arCount: 4, arMarks: 1,
+          vsCount: 6, vsMarks: 2,
+          shCount: 7, shMarks: 3,
+          lgCount: 4, lgMarks: 5,
+          csCount: 3, csMarks: 4,
+          maxMarks: 90,
+          duration: '3 Hours'
         };
       } else if (isUnitTest) {
         // Standard Unit Test Pattern (25 Marks, 1 Hour)
@@ -1939,7 +2043,7 @@
         fd.append('topics', document.getElementById('topicsInput').value);
         fd.append('exam_type', document.getElementById('examType').value);
         fd.append('duration', document.getElementById('durationInput').value);
-        fd.append('max_marks', isGraded ? document.getElementById('maxMarksSelect').value : '');
+        fd.append('max_marks', isGraded ? getEffectiveMaxMarks() : '');
         fd.append('school_name', document.getElementById('schoolName').value);
         fd.append('school_address', document.getElementById('schoolAddress').value);
         fd.append('academic_session', document.getElementById('academicSession').value);
@@ -2090,22 +2194,26 @@
 
     /**
      * Formats question text with robust support for:
-     * 1. Programming code (Java, Python, C++, C, SQL, HTML, etc.): multi-line code blocks & inline backticks.
-     * 2. Physics formulas: intact LaTeX \( ... \) & \[ ... \] delimiters for MathJax typesetting.
-     * 3. Chemistry reactions: intact LaTeX \ce{...} for MathJax mhchem rendering.
+     * 1. Programming code (Java, Python, C++, etc.): multi-line code blocks & inline backticks.
+     * 2. Physics / Math: LaTeX \( ... \) & \[ ... \] for MathJax.
+     * 3. Chemistry: LaTeX \ce{...} for MathJax mhchem.
+     * 4. Accounts / Commerce: markdown tables -> styled HTML.
+     * 5. Bold markdown (**text**) and line breaks.
      */
     function formatQuestionContent(text) {
       if (!text) return '';
       let s = String(text).replace(/\{"?meta(data)?"?:?.*?\}/gi, '').trim();
 
       // 1. Extract and protect multi-line code blocks ```lang ... ```
-      const codeRegex = /```(?:([a-zA-Z0-9_+-]+))?\s*\n?([\s\S]*?)\n?```/g;
+      const codeRegex = /```(?:([a-zA-Z0-9_+\-]+))?\s*\n?([\s\S]*?)\n?```/g;
       const codeBlocks = [];
       s = s.replace(codeRegex, (_, lang, code) => {
         const langName = (lang || '').trim().toUpperCase();
+        // Special: if no language tag and the content looks like a ledger/table, render as plain pre
+        const isLedger = !lang && /\|/.test(code);
         const langBadge = langName ? `<div style="background:#1e1b4b;color:#a5b4fc;font-size:7.5pt;font-weight:800;padding:2px 10px;border-radius:4px 4px 0 0;text-transform:uppercase;letter-spacing:0.06em;display:inline-block;border:1px solid #4338ca;border-bottom:none;">${langName}</div>` : '';
         const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        const codeHtml = `<div style="margin:8px 0;text-align:left;">${langBadge}<pre style="background:#f8fafc;border:1.5px solid #cbd5e1;border-left:4px solid #4f46e5;border-radius:${langName ? '0 6px 6px 6px' : '6px'};padding:10px 14px;font-family:'Consolas','Courier New',monospace;font-size:9.5pt;line-height:1.45;white-space:pre-wrap;overflow-x:auto;margin:0;color:#0f172a;tab-size:4;"><code>${escaped}</code></pre></div>`;
+        const codeHtml = `<div style="margin:8px 0;text-align:left;">${langBadge}<pre style="background:${isLedger ? '#fefce8' : '#f8fafc'};border:1.5px solid #cbd5e1;border-left:4px solid ${isLedger ? '#ca8a04' : '#4f46e5'};border-radius:${langName ? '0 6px 6px 6px' : '6px'};padding:10px 14px;font-family:'Consolas','Courier New',monospace;font-size:9.5pt;line-height:1.55;white-space:pre-wrap;overflow-x:auto;margin:0;color:#0f172a;tab-size:4;"><code>${escaped}</code></pre></div>`;
         codeBlocks.push(codeHtml);
         return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
       });
@@ -2120,14 +2228,47 @@
         return `__INLINE_CODE_${inlineBlocks.length - 1}__`;
       });
 
-      // 3. Chemistry helper: ensure standalone \ce{...} is wrapped in \( \ce{...} \) for MathJax mhchem
+      // 3. Render markdown tables (pipe tables) → styled HTML table (for Accounts, Commerce, etc.)
+      const tableRegex = /^\|(.+)\|\s*\n\|[-| :]+\|\s*\n((?:\|.+\|\s*\n?)+)/gm;
+      s = s.replace(tableRegex, (_, headerRow, bodyRows) => {
+        const headers = headerRow.split('|').map(h => h.trim()).filter(Boolean);
+        const thHtml = headers.map(h => `<th style="background:#1e1b4b;color:#fff;padding:5px 8px;border:1px solid #4338ca;text-align:center;white-space:nowrap;">${h}</th>`).join('');
+        const rows = bodyRows.trim().split('\n').filter(r => r.trim() && !/^\|[-| :]+\|$/.test(r.trim()));
+        const trHtml = rows.map((row, ri) => {
+          const cells = row.split('|').map(c => c.trim()).filter(Boolean);
+          const tds = cells.map(c => `<td style="padding:4px 8px;border:1px solid #cbd5e1;background:${ri % 2 === 0 ? '#fff' : '#f8fafc'};">${c}</td>`).join('');
+          return `<tr>${tds}</tr>`;
+        }).join('');
+        return `<div style="overflow-x:auto;margin:8px 0;"><table style="border-collapse:collapse;width:100%;font-size:9pt;font-family:'Consolas','Courier New',monospace;"><thead><tr>${thHtml}</tr></thead><tbody>${trHtml}</tbody></table></div>`;
+      });
+
+      // 4. Chemistry helper: ensure standalone \ce{...} is wrapped in \( \ce{...} \) for MathJax mhchem
       s = s.replace(/(?<!\\\()\\ce\{((?:[^{}]|\{[^{}]*\})+)\}(?!\\\))/g, '\\(\\ce{$1}\\)');
 
-      // 3b. Math helper: ensure unwrapped LaTeX fractions, sqrts, and vectors are enclosed in \( ... \)
-      s = s.replace(/(?<![\\$])(\\frac\{[^{}]+\}\{[^{}]+\})/g, '\\($1\\)');
-      s = s.replace(/(?<![\\$])(\\sqrt\{[^{}]+\})/g, '\\($1\\)');
+      // 5. Math auto-wrapper: wrap common bare LaTeX math commands that escaped \( ... \) delimiters.
+      //    Protects already-wrapped ones using negative lookbehind.
+      const mathCmds = [
+        /(?<!\\\(|\\\[)(\\frac\{[^{}]+\}\{[^{}]+\})/g,
+        /(?<!\\\(|\\\[)(\\sqrt(?:\[[^\]]*\])?\{[^{}]+\})/g,
+        /(?<!\\\(|\\\[)(\\int(?:_\{[^{}]+\})?(?:\^\{[^{}]+\})?)/g,
+        /(?<!\\\(|\\\[)(\\sum(?:_\{[^{}]+\})?(?:\^\{[^{}]+\})?)/g,
+        /(?<!\\\(|\\\[)(\\lim_\{[^{}]+\})/g,
+        /(?<!\\\(|\\\[)(\\begin\{(?:pmatrix|bmatrix|vmatrix|matrix)\}[\s\S]*?\\end\{(?:pmatrix|bmatrix|vmatrix|matrix)\})/g,
+        /(?<!\\\(|\\\[)(\\vec\{[^{}]+\})/g,
+        /(?<!\\\(|\\\[)(\\hat\{[^{}]+\})/g,
+        /(?<!\\\(|\\\[)(\\overline\{[^{}]+\})/g,
+        /(?<!\\\(|\\\[)(\\binom\{[^{}]+\}\{[^{}]+\})/g,
+        /(?<!\\\(|\\\[)(\\left[([{|][\s\S]*?\\right[)\]}|])/g,
+      ];
+      mathCmds.forEach(re => { s = s.replace(re, '\\($1\\)'); });
 
-      // 4. Restore code blocks and inline code
+      // 6. Bold markdown **text** → <strong>
+      s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+      // 7. Newlines → line breaks (preserve multi-line question text)
+      s = s.replace(/\n/g, '<br>');
+
+      // 8. Restore code blocks and inline code
       codeBlocks.forEach((cb, i) => {
         s = s.replace(`__CODE_BLOCK_${i}__`, cb);
       });
@@ -2243,6 +2384,7 @@
   pre, code { font-family: 'Consolas', 'Courier New', monospace; }
   @media print{body{margin:10mm;}}
 </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
   <div class="p-hdr">
@@ -2259,7 +2401,7 @@
   </div>
   ${secHtml}
   <div style="margin-top:30px;text-align:center;font-size:9pt;font-style:italic;color:#666;border-top:1px solid #ccc;padding-top:8px;">
-    *** End of ${pType} ***<br>Generated by RRB CBT &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
+    *** End of ${pType} ***<br>Generated by RRB CBT &nbsp;·&nbsp; {{ developer_credit }}
   </div>
   <script>
     if (window.MathJax && window.MathJax.typesetPromise) {
@@ -2358,13 +2500,25 @@
       onPaperTypeChange(ptSelect ? ptSelect.value : 'Descriptive Paper');
 
       // 2. Initialize blueprint
-      applyOfficialBlueprint();
+      applyOfficialBlueprint(true);
       const isAuto = document.getElementById('autoBlueprintToggle') ? document.getElementById('autoBlueprintToggle').checked : true;
       setStepperInputsState(isAuto);
 
       const examSelect = document.getElementById('examType');
       if (examSelect) {
         examSelect.addEventListener('change', () => applyOfficialBlueprint());
+      }
+
+      // 3. Pre-load curriculum subjects for default class
+      const clsEl = document.getElementById('classInput');
+      const cls = (clsEl ? clsEl.value.trim() : '') || '10';
+      const board = document.getElementById('boardSelect') ? document.getElementById('boardSelect').value : 'CBSE';
+      loadCurriculumSubjects(cls, board);
+
+      // 4. If subject input has initial value, load its topics
+      const sInput = document.getElementById('subjectInput');
+      if (sInput && sInput.value) {
+        onSubjectChange(sInput.value);
       }
     });
   </script>
