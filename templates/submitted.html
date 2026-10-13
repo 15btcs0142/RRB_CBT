@@ -412,6 +412,7 @@
             }
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -425,7 +426,7 @@
     </div>
 
     <!-- ── Watermark ──────────────────────────────────────────────────── -->
-    <div class="watermark">RRB Group of Schools</div>
+    <div class="watermark">{{ school_name }}</div>
 
     <!-- ── FULL WIDTH RESPONSIVE HEADER BAR ──────────────────────────── -->
     <div class="brand-bar">
@@ -437,13 +438,13 @@
             {% endif %}
             <div>
                 <div class="name">{{ school_name|default('RRB Group of Schools') }}</div>
-                <div class="tag">Computer Based Test</div>
+                <div class="tag">{{ t('tag_cbt', 'Computer Based Test') }}</div>
             </div>
         </div>
         <div class="right-info">
             <div class="status-pill">
                 <i class="fas fa-check-circle"></i>
-                Submitted
+                {{ t('pill_submitted', 'Submitted') }}
             </div>
         </div>
     </div>
@@ -460,7 +461,7 @@
 
         <div class="exam-details" style="background:#fff1f2; border-color:#fecdd3; color:#9f1239;">
             <i class="fas fa-graduation-cap" style="color:#be123c;"></i>
-            <span>{{ session.get('class', '—') }}</span>
+            <span>{{ session.get('class', '—') }}{% if session.get('section') %}-{{ session.get('section') }}{% endif %}</span>
             <span style="opacity:0.3;">|</span>
             <i class="fas fa-book" style="color:#be123c;"></i>
             <span>{{ session.get('subject', '—') }}</span>
@@ -492,12 +493,12 @@
             <i class="fas fa-check-circle"></i>
         </div>
 
-        <h2>Exam Submitted</h2>
-        <p class="subtitle">You have successfully completed your test</p>
+        <h2>{{ t('submitted_title', 'Exam Submitted') }}</h2>
+        <p class="subtitle">{{ t('submitted_subtitle', 'You have successfully completed your test') }}</p>
 
         <div class="exam-details">
             <i class="fas fa-graduation-cap" style="color:#1a237e;"></i>
-            <span>{{ session.get('class', '—') }}</span>
+            <span>{{ session.get('class', '—') }}{% if session.get('section') %}-{{ session.get('section') }}{% endif %}</span>
             <span style="opacity:0.3;">|</span>
             <i class="fas fa-book" style="color:#1a237e;"></i>
             <span>{{ session.get('subject', '—') }}</span>
@@ -509,7 +510,7 @@
         </div>
 
         <p>
-            You have successfully submitted your exam answers. Thank you!
+            {{ t('submitted_msg', 'Thank you for completing the exam. Your responses have been recorded.') }}
         </p>
         {% endif %}
 
@@ -522,7 +523,7 @@
             </div>
         {% else %}
             <button class="btn btn-primary" id="requestBtn">
-                <i class="fas fa-redo-alt"></i> Request Reattempt
+                <i class="fas fa-redo-alt"></i> {{ t('btn_request_reattempt', 'Request Reattempt') }}
             </button>
             <div id="requestMessage"></div>
         {% endif %}
@@ -535,13 +536,13 @@
 
         <div>
             <a href="{{ url_for('index') }}" class="back-link">
-                <i class="fas fa-arrow-left"></i> Back to Login
+                <i class="fas fa-arrow-left"></i> {{ t('btn_home', 'Back to Login') }}
             </a>
         </div>
 
         <!-- Footer Credit -->
         <div class="footer-note">
-            <i class="fas fa-shield-alt" style="color:#1a237e;"></i> RRB CBT &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
+            <i class="fas fa-shield-alt" style="color:#1a237e;"></i> RRB CBT &nbsp;·&nbsp; {{ developer_credit }}
         </div>
     </div>
 
