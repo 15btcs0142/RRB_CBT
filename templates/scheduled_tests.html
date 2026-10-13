@@ -34,7 +34,67 @@
         .alert { padding:12px 16px; border-radius:8px; font-size:0.85rem; font-weight:600; margin-bottom:16px; display:none; align-items:center; gap:8px; }
         .alert-success { background:#dcfce7; color:#166534; border:1px solid #bbf7d0; }
         .alert-error { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+        .filter-bar {
+            display:flex;
+            flex-wrap:wrap;
+            gap:10px;
+            align-items:center;
+            background:#f8fafc;
+            border:1px solid #e2e8f0;
+            border-radius:10px;
+            padding:12px 14px;
+            margin-bottom:16px;
+        }
+        .filter-bar .filter-item {
+            display:flex;
+            align-items:center;
+            gap:6px;
+            font-size:0.82rem;
+            font-weight:600;
+            color:#475569;
+        }
+        .filter-bar select, .filter-bar input {
+            padding:7px 10px;
+            border:1px solid #cbd5e1;
+            border-radius:7px;
+            font-size:0.82rem;
+            font-family:inherit;
+            background:#fff;
+            color:#1e293b;
+        }
+        .filter-bar select:focus, .filter-bar input:focus {
+            outline:none;
+            border-color:#1a237e;
+        }
+        .filter-search-box {
+            flex:1;
+            min-width:200px;
+            position:relative;
+        }
+        .filter-search-box input {
+            width:100%;
+            padding-left:30px;
+        }
+        .filter-search-box i {
+            position:absolute;
+            left:10px;
+            top:50%;
+            transform:translateY(-50%);
+            color:#94a3b8;
+            font-size:0.82rem;
+            pointer-events:none;
+        }
+        .badge-count {
+            background:#e0e7ff;
+            color:#3730a3;
+            font-size:0.76rem;
+            padding:3px 10px;
+            border-radius:12px;
+            font-weight:700;
+            letter-spacing:0.2px;
+        }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -112,8 +172,64 @@
     <!-- ─── SCHEDULED TESTS LIST ──────────────────────────────────────── -->
     <div class="card">
         <div class="card-header">
-            <span><i class="fas fa-list-check"></i> Scheduled &amp; Active Test Windows</span>
-            <button class="btn btn-sm btn-primary" onclick="loadScheduledTests()"><i class="fas fa-rotate"></i> Refresh</button>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span><i class="fas fa-list-check"></i> Scheduled &amp; Active Test Windows</span>
+                <span id="schedCountBadge" class="badge-count">0 Windows</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button class="btn btn-sm" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;" onclick="resetFilters()" title="Reset all filters"><i class="fas fa-filter-circle-xmark"></i> Clear Filters</button>
+                <button class="btn btn-sm btn-primary" onclick="loadScheduledTests()" title="Reload from server"><i class="fas fa-rotate"></i> Refresh</button>
+            </div>
+        </div>
+
+        <!-- ── Filter Toolbar ── -->
+        <div class="filter-bar">
+            <div class="filter-search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="filterSearch" placeholder="Search subject, test no, created by..." oninput="filterAndRenderScheduledTests()">
+            </div>
+            <div class="filter-item">
+                <i class="fas fa-toggle-on" style="color:#6366f1;"></i>
+                <select id="filterStatus" onchange="filterAndRenderScheduledTests()">
+                    <option value="">All Statuses</option>
+                    <option value="active">🟢 Active Now</option>
+                    <option value="scheduled">🟡 Scheduled</option>
+                    <option value="expired">🔴 Expired</option>
+                    <option value="cancelled">⚪ Cancelled</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <i class="fas fa-graduation-cap" style="color:#6366f1;"></i>
+                <select id="filterClass" onchange="filterAndRenderScheduledTests()">
+                    <option value="">All Classes</option>
+                    <option value="1">Class 1</option>
+                    <option value="2">Class 2</option>
+                    <option value="3">Class 3</option>
+                    <option value="4">Class 4</option>
+                    <option value="5">Class 5</option>
+                    <option value="6">Class 6</option>
+                    <option value="7">Class 7</option>
+                    <option value="8">Class 8</option>
+                    <option value="9">Class 9</option>
+                    <option value="10">Class 10</option>
+                    <option value="11">Class 11</option>
+                    <option value="12">Class 12</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <i class="fas fa-layer-group" style="color:#6366f1;"></i>
+                <select id="filterSection" onchange="filterAndRenderScheduledTests()">
+                    <option value="">All Sections</option>
+                    <option value="A">Section A</option>
+                    <option value="B">Section B</option>
+                    <option value="C">Section C</option>
+                    <option value="D">Section D</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <i class="fas fa-calendar" style="color:#6366f1;"></i>
+                <input type="date" id="filterDate" onchange="filterAndRenderScheduledTests()" title="Filter by scheduled date">
+            </div>
         </div>
         <div style="overflow-x:auto;">
             <table>
@@ -204,45 +320,100 @@
             }
         }
 
+        let allScheduledTests = [];
+
         async function loadScheduledTests() {
             const tbody = document.getElementById('scheduleTableBody');
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:#64748b;"><i class="fas fa-spinner fa-spin"></i> Loading scheduled tests…</td></tr>';
             try {
                 const res = await fetch('/api/scheduled_tests');
                 const data = await res.json();
-                if (data.status !== 'success' || !data.scheduled_tests || data.scheduled_tests.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:#94a3b8;">No scheduled test windows found.</td></tr>';
+                if (data.status !== 'success' || !data.scheduled_tests) {
+                    allScheduledTests = [];
+                    renderFilteredScheduledTests([]);
                     return;
                 }
-                let html = '';
-                data.scheduled_tests.forEach((s, idx) => {
-                    let badgeCls = 'badge-scheduled';
-                    let statusLabel = 'Scheduled';
-                    if (s.status === 'active') { badgeCls = 'badge-active'; statusLabel = '🟢 Active Now'; }
-                    else if (s.status === 'expired') { badgeCls = 'badge-expired'; statusLabel = '🔴 Expired'; }
-                    else if (s.status === 'cancelled') { badgeCls = 'badge-cancelled'; statusLabel = '⚪ Cancelled'; }
-
-                    const stTime = s.start_time.split(' ')[1] || s.start_time;
-                    const endTime = s.end_time.split(' ')[1] || s.end_time;
-
-                    html += `<tr>
-                        <td>${idx + 1}</td>
-                        <td><strong>${s.class}${s.section ? ' (Sec ' + s.section + ')' : ''}</strong></td>
-                        <td>${s.subject} <br><span style="color:#4f46e5;font-weight:700;">${s.test_no}</span></td>
-                        <td>${s.scheduled_date}</td>
-                        <td>${stTime.slice(0,5)} — ${endTime.slice(0,5)}</td>
-                        <td>${s.duration_minutes} mins</td>
-                        <td><span class="badge ${badgeCls}">${statusLabel}</span></td>
-                        <td>${s.created_by || 'Admin'}</td>
-                        <td style="text-align:center; display:flex; gap:4px; justify-content:center;">
-                            <button onclick="openReopenModal(${s.id}, '${s.scheduled_date}', '${stTime.slice(0,5)}', '${endTime.slice(0,5)}', ${s.duration_minutes})" class="btn btn-sm btn-warning" title="Reschedule Test Window"><i class="fas fa-clock"></i> Reschedule</button>
-                            ${s.status === 'scheduled' || s.status === 'active' ? `<button onclick="cancelSchedule(${s.id})" class="btn btn-sm btn-danger" title="Cancel Window"><i class="fas fa-ban"></i> Cancel</button>` : ''}
-                        </td>
-                    </tr>`;
-                });
-                tbody.innerHTML = html;
+                allScheduledTests = data.scheduled_tests;
+                filterAndRenderScheduledTests();
             } catch(e) {
                 tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#ef4444;">Failed to load scheduled tests.</td></tr>';
             }
+        }
+
+        function filterAndRenderScheduledTests() {
+            const statusVal = (document.getElementById('filterStatus').value || '').trim();
+            const classVal = (document.getElementById('filterClass').value || '').trim();
+            const secVal = (document.getElementById('filterSection').value || '').trim();
+            const dateVal = (document.getElementById('filterDate').value || '').trim();
+            const searchVal = (document.getElementById('filterSearch').value || '').toLowerCase().trim();
+
+            const filtered = allScheduledTests.filter(s => {
+                if (statusVal && s.status !== statusVal) return false;
+                if (classVal && String(s.class) !== String(classVal)) return false;
+                if (secVal && String(s.section || '').toUpperCase() !== secVal.toUpperCase()) return false;
+                if (dateVal && s.scheduled_date !== dateVal) return false;
+                if (searchVal) {
+                    const combined = `${s.class || ''} ${s.section || ''} ${s.subject || ''} ${s.test_no || ''} ${s.created_by || ''} ${s.status || ''}`.toLowerCase();
+                    if (!combined.includes(searchVal)) return false;
+                }
+                return true;
+            });
+
+            renderFilteredScheduledTests(filtered);
+        }
+
+        function renderFilteredScheduledTests(tests) {
+            const tbody = document.getElementById('scheduleTableBody');
+            const badge = document.getElementById('schedCountBadge');
+            if (badge) {
+                badge.textContent = `${tests.length} of ${allScheduledTests.length} Windows`;
+            }
+
+            if (!tests || tests.length === 0) {
+                if (allScheduledTests.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:28px;color:#94a3b8;"><i class="fas fa-calendar-xmark" style="font-size:1.4rem;display:block;margin-bottom:8px;color:#cbd5e1;"></i>No scheduled test windows found in system.</td></tr>';
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:28px;color:#64748b;"><i class="fas fa-filter-circle-xmark" style="font-size:1.4rem;display:block;margin-bottom:8px;color:#94a3b8;"></i>No tests match your filter criteria. <br><button onclick="resetFilters()" class="btn btn-sm btn-primary" style="margin-top:10px;"><i class="fas fa-rotate-left"></i> Reset Filters</button></td></tr>';
+                }
+                return;
+            }
+
+            let html = '';
+            tests.forEach((s, idx) => {
+                let badgeCls = 'badge-scheduled';
+                let statusLabel = 'Scheduled';
+                if (s.status === 'active') { badgeCls = 'badge-active'; statusLabel = '🟢 Active Now'; }
+                else if (s.status === 'expired') { badgeCls = 'badge-expired'; statusLabel = '🔴 Expired'; }
+                else if (s.status === 'cancelled') { badgeCls = 'badge-cancelled'; statusLabel = '⚪ Cancelled'; }
+
+                const stTime = s.start_time.split(' ')[1] || s.start_time;
+                const endTime = s.end_time.split(' ')[1] || s.end_time;
+
+                html += `<tr>
+                    <td><strong>${idx + 1}</strong></td>
+                    <td><strong>Class ${s.class}</strong>${s.section ? ' <span style="color:#6366f1;font-weight:600;">(Sec ' + s.section + ')</span>' : ' <span style="color:#94a3b8;font-size:0.78rem;">(All)</span>'}</td>
+                    <td><strong>${s.subject}</strong><br><span style="color:#4f46e5;font-weight:700;font-size:0.82rem;">${s.test_no}</span></td>
+                    <td>${s.scheduled_date}</td>
+                    <td>${stTime.slice(0,5)} — ${endTime.slice(0,5)}</td>
+                    <td>${s.duration_minutes} mins</td>
+                    <td><span class="badge ${badgeCls}">${statusLabel}</span></td>
+                    <td><span style="color:#475569;font-size:0.84rem;">${s.created_by || 'Admin'}</span></td>
+                    <td style="text-align:center; display:flex; gap:6px; justify-content:center;">
+                        <button onclick="openReopenModal(${s.id}, '${s.scheduled_date}', '${stTime.slice(0,5)}', '${endTime.slice(0,5)}', ${s.duration_minutes})" class="btn btn-sm btn-warning" title="Reschedule Test Window"><i class="fas fa-clock"></i> Reschedule</button>
+                        ${s.status === 'scheduled' || s.status === 'active' ? `<button onclick="cancelSchedule(${s.id})" class="btn btn-sm btn-danger" title="Cancel Window"><i class="fas fa-ban"></i> Cancel</button>` : ''}
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function resetFilters() {
+            document.getElementById('filterSearch').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterClass').value = '';
+            document.getElementById('filterSection').value = '';
+            document.getElementById('filterDate').value = '';
+            filterAndRenderScheduledTests();
         }
 
         async function handleScheduleSubmit(e) {
