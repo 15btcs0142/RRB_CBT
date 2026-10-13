@@ -135,7 +135,8 @@
             outline:none;
             background:#fff;
         }
-        .fg input[type="date"]{min-width:150px;cursor:pointer;}
+        .fg input[type="date"]{min-width:140px;cursor:pointer;}
+        .fg input[type="text"]{min-width:190px;}
         
         .btn{
             padding:8px 20px;
@@ -189,7 +190,7 @@
             background:rgba(255,255,255,0.95);
             backdrop-filter:blur(10px);
             border-radius:16px;
-            overflow:hidden;
+            overflow-x:auto;
             border:1px solid rgba(26,35,126,0.08);
             box-shadow:0 4px 16px rgba(0,0,0,0.06);
         }
@@ -198,120 +199,312 @@
             background:linear-gradient(135deg,#1a237e,#3949ab);
             color:#fff;
             font-weight:600;
-            padding:14px 12px;
+            padding:14px 14px;
             text-align:left;
             white-space:nowrap;
             position:sticky;
             top:0;
             z-index:5;
         }
-        th i{margin-right:6px;opacity:0.7;}
-        td{padding:12px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
-        tr:hover td{background:#e8eaf6;}
+        th i{margin-right:6px;opacity:0.8;}
+        td{padding:12px 14px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+        tr:hover td{background:#f8f9ff;}
         
         .badge{
             background:#e8eaf6;
             color:#1a237e;
-            padding:2px 10px;
+            padding:3px 10px;
             border-radius:14px;
-            font-size:0.72rem;
-            font-weight:500;
+            font-size:0.75rem;
+            font-weight:600;
             display:inline-block;
+        }
+        .adm-chip{
+            background:#eef2ff;
+            color:#312e81;
+            padding:4px 10px;
+            border-radius:8px;
+            font-weight:700;
+            font-size:0.82rem;
+            font-family:monospace;
+            display:inline-block;
+            border:1px solid #c7d2fe;
         }
         .status-badge{
             padding:4px 14px;
             border-radius:30px;
-            font-weight:500;
+            font-weight:600;
             font-size:0.75rem;
-            display:inline-block;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
         }
-        .status-Not-Started{background:#eceff1;color:#78909c;}
-        .status-In-Progress{background:#fff3e0;color:#e65100;}
-        .status-Submitted{background:#e8f5e9;color:#1b5e20;}
+        .status-Not-Started{background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1;}
+        .status-In-Progress{background:#fff7ed;color:#c2410c;border:1px solid #fdba74;}
+        .status-Submitted{background:#f0fdf4;color:#15803d;border:1px solid #86efac;}
         
-        .delete-btn{
-            background:linear-gradient(135deg,#c62828,#e53935);
+        .action-cell{
+            display:flex;
+            align-items:center;
+            gap:6px;
+            white-space:nowrap;
+        }
+        .btn-edit{
+            background:linear-gradient(135deg,#2563eb,#1d4ed8);
             color:#fff;
             border:none;
-            padding:5px 14px;
-            border-radius:30px;
+            padding:6px 14px;
+            border-radius:20px;
             cursor:pointer;
-            font-weight:500;
-            transition:0.3s;
+            font-weight:600;
+            transition:0.25s;
             display:inline-flex;
             align-items:center;
             gap:5px;
-            font-size:0.72rem;
+            font-size:0.75rem;
             font-family:'Poppins',sans-serif;
+            box-shadow:0 2px 6px rgba(37,99,235,0.25);
         }
-        .delete-btn:hover{
-            transform:translateY(-2px);
-            box-shadow:0 4px 12px rgba(198,40,40,0.3);
+        .btn-edit:hover{
+            transform:translateY(-1px);
+            box-shadow:0 4px 12px rgba(37,99,235,0.35);
+        }
+        .btn-delete{
+            background:linear-gradient(135deg,#dc2626,#b91c1c);
+            color:#fff;
+            border:none;
+            padding:6px 14px;
+            border-radius:20px;
+            cursor:pointer;
+            font-weight:600;
+            transition:0.25s;
+            display:inline-flex;
+            align-items:center;
+            gap:5px;
+            font-size:0.75rem;
+            font-family:'Poppins',sans-serif;
+            box-shadow:0 2px 6px rgba(220,38,38,0.25);
+        }
+        .btn-delete:hover{
+            transform:translateY(-1px);
+            box-shadow:0 4px 12px rgba(220,38,38,0.35);
         }
         
         .empty-state{
             text-align:center;
-            padding:50px 20px;
-            color:#999;
+            padding:60px 20px;
+            color:#94a3b8;
         }
-        .empty-state i{font-size:3rem;color:#ddd;display:block;margin-bottom:12px;}
+        .empty-state i{font-size:3.5rem;color:#cbd5e1;display:block;margin-bottom:14px;}
         
+        /* ─── MODAL ──────────────────────────────────────────────────────── */
+        .modal-overlay{
+            display:none;
+            position:fixed;
+            top:0;left:0;width:100%;height:100%;
+            background:rgba(15,23,42,0.6);
+            backdrop-filter:blur(4px);
+            z-index:2000;
+            overflow-y:auto;
+            padding:20px;
+            align-items:center;
+            justify-content:center;
+        }
+        .modal-overlay.active{
+            display:flex;
+        }
+        .modal-card{
+            background:#fff;
+            width:100%;
+            max-width:680px;
+            border-radius:20px;
+            padding:28px;
+            box-shadow:0 20px 50px rgba(0,0,0,0.25);
+            position:relative;
+            animation:modalSlide 0.3s ease;
+        }
+        @keyframes modalSlide{
+            from{transform:translateY(30px);opacity:0;}
+            to{transform:translateY(0);opacity:1;}
+        }
+        .modal-header{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding-bottom:16px;
+            border-bottom:1px solid #e2e8f0;
+            margin-bottom:20px;
+        }
+        .modal-header h3{
+            color:#1a237e;
+            font-size:1.25rem;
+            font-weight:700;
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+        .modal-close-btn{
+            background:transparent;
+            border:none;
+            font-size:1.4rem;
+            color:#64748b;
+            cursor:pointer;
+            padding:4px 8px;
+            border-radius:8px;
+            transition:0.2s;
+        }
+        .modal-close-btn:hover{color:#0f172a;background:#f1f5f9;}
+        
+        .modal-grid{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:16px;
+        }
+        .form-group{
+            display:flex;
+            flex-direction:column;
+            gap:6px;
+        }
+        .form-group.full-width{
+            grid-column:1 / -1;
+        }
+        .form-group label{
+            font-size:0.8rem;
+            font-weight:600;
+            color:#1e293b;
+        }
+        .form-group input, .form-group select{
+            padding:10px 14px;
+            border:1.5px solid #cbd5e1;
+            border-radius:10px;
+            font-size:0.85rem;
+            font-family:'Poppins',sans-serif;
+            background:#fff;
+            transition:border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus{
+            outline:none;
+            border-color:#3949ab;
+            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
+        }
+        .modal-footer{
+            display:flex;
+            justify-content:flex-end;
+            gap:12px;
+            margin-top:24px;
+            padding-top:18px;
+            border-top:1px solid #e2e8f0;
+        }
+        
+        /* ─── TOAST ──────────────────────────────────────────────────────── */
+        .toast-msg{
+            position:fixed;
+            bottom:30px;
+            right:30px;
+            color:#fff;
+            padding:12px 24px;
+            border-radius:30px;
+            box-shadow:0 8px 24px rgba(0,0,0,0.2);
+            z-index:9999;
+            font-weight:500;
+            font-size:0.88rem;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            animation:slideUp 0.35s ease;
+        }
+        .toast-msg.success{background:linear-gradient(135deg,#1b5e20,#2e7d32);}
+        .toast-msg.error{background:linear-gradient(135deg,#b71c1c,#c62828);}
+        @keyframes slideUp{
+            from{transform:translateY(30px);opacity:0;}
+            to{transform:translateY(0);opacity:1;}
+        }
+
         /* ─── RESPONSIVE ────────────────────────────────────────────────── */
         @media(max-width:992px){
             .filters{flex-direction:column;align-items:stretch;}
             .filter-row{flex-direction:column;align-items:stretch;}
             .fg select,.fg input{width:100%;}
             .stats-badge{margin-left:0;justify-content:center;}
-            table{display:block;overflow-x:auto;white-space:nowrap;}
         }
         @media(max-width:768px){
+            .modal-grid{grid-template-columns:1fr;}
             .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
             .topbar a{font-size:0.75rem;padding:6px 14px;}
             .container{padding:0 12px;}
             .filters-card{padding:16px;}
-            .marquee-container{padding:8px 14px;margin:10px auto;}
-            .marquee-container marquee{font-size:0.75rem;}
             table{font-size:0.75rem;}
             th,td{padding:8px 10px;}
         }
-        @media(max-width:480px){
-            .fg label{font-size:0.72rem;}
-            .fg select,.fg input{font-size:0.72rem;padding:6px 10px;min-width:auto;}
-            .btn{font-size:0.72rem;padding:6px 14px;}
-            .stats-badge{font-size:0.75rem;padding:6px 14px;}
-        }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
     <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
     <div class="topbar">
-        <h1><i class="fas fa-user-graduate"></i> Student Management</h1>
-        <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
+        <h1><i class="fas fa-user-graduate"></i> Manage Students</h1>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <a href="/admin/students/bulk_upload_page" style="background:linear-gradient(135deg,rgba(46,125,50,0.9),rgba(56,142,60,0.9));">
+                <i class="fas fa-file-excel"></i> Bulk Upload
+            </a>
+            <a href="javascript:void(0)" onclick="handleDashboardClick(event)"><i class="fas fa-arrow-left"></i> Dashboard</a>
+        </div>
     </div>
 
     <!-- ─── MARQUEE ────────────────────────────────────────────────────── -->
     <div class="marquee-container">
         <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();">
-            <i class="fas fa-circle"></i> Manage student registrations · Filter by Class, Section, Subject, Test No, Date · See System Name
+            <i class="fas fa-users-cog"></i> Manage student registrations · Search by Name or Admission No · Edit details or remove students
             <i class="fas fa-info-circle"></i> Status: Not Started / In Progress / Submitted
+            <i class="fas fa-file-excel" style="color:#2e7d32;"></i> Use <strong>Bulk Upload</strong> to add students via Excel spreadsheet
         </marquee>
     </div>
 
     <div class="container">
 
-        <!-- ─── FILTERS CARD ───────────────────────────────────────────── -->
+        <!-- ─── BULK UPLOAD ACTION PANEL (PRESERVED AS IS) ──────────────── -->
+        <div style="background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:1.5px solid #a5d6a7;border-radius:12px;padding:16px 22px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;box-shadow:0 2px 10px rgba(46,125,50,0.08);">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#2e7d32,#388e3c);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(46,125,50,0.3);flex-shrink:0;">
+                    <i class="fas fa-file-excel" style="color:#fff;font-size:1.3rem;"></i>
+                </div>
+                <div>
+                    <div style="font-weight:600;color:#1b5e20;font-size:0.95rem;">Bulk Student Upload</div>
+                    <div style="font-size:0.8rem;color:#388e3c;margin-top:2px;">Upload an Excel file to add many students at once — with duplicate detection and inline fixing.</div>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <a href="/admin/students/bulk_upload_template" download
+                   style="display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:8px;background:#fff;color:#2e7d32;font-size:0.83rem;font-weight:600;text-decoration:none;border:1.5px solid #a5d6a7;transition:.2s;"
+                   onmouseover="this.style.background='#f1f8e9'" onmouseout="this.style.background='#fff'">
+                    <i class="fas fa-download"></i> Download Template
+                </a>
+                <a href="/admin/students/bulk_upload_page"
+                   style="display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:8px;background:linear-gradient(135deg,#2e7d32,#388e3c);color:#fff;font-size:0.83rem;font-weight:600;text-decoration:none;box-shadow:0 3px 10px rgba(46,125,50,0.3);transition:.2s;"
+                   onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
+                    <i class="fas fa-upload"></i> Upload Excel File
+                </a>
+            </div>
+        </div>
+
+        <!-- ─── FILTERS & SEARCH CARD ──────────────────────────────────── -->
         <div class="filters-card">
             <div class="filters">
                 <div class="filter-row">
+                    <!-- Quick Search Input -->
+                    <div class="fg" style="flex:1; min-width:220px;">
+                        <label><i class="fas fa-search"></i> Search</label>
+                        <input type="text" id="filterSearch" placeholder="Search by Name, Admission No, ID..." style="width:100%;">
+                    </div>
                     <div class="fg">
                         <label><i class="fas fa-layer-group"></i> Class</label>
-                        <select id="filterClass"><option value="">All</option></select>
+                        <select id="filterClass"><option value="">All Classes</option></select>
                     </div>
                     <div class="fg">
                         <label><i class="fas fa-columns"></i> Section</label>
                         <select id="filterSection">
-                            <option value="">All</option>
+                            <option value="">All Sections</option>
                             <option value="A">A</option>
                             <option value="B">B</option>
                             <option value="C">C</option>
@@ -319,18 +512,19 @@
                         </select>
                     </div>
                     <div class="fg">
-                        <label><i class="fas fa-book"></i> Subject</label>
-                        <select id="filterSubject"><option value="">All</option></select>
-                    </div>
-                    <div class="fg">
-                        <label><i class="fas fa-hashtag"></i> Test No</label>
-                        <input type="text" id="filterTestNo" placeholder="e.g. Test01" style="min-width:120px;">
+                        <label><i class="fas fa-circle-notch"></i> Status</label>
+                        <select id="filterStatus">
+                            <option value="">All Statuses</option>
+                            <option value="Not Started">Not Started</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Submitted">Submitted</option>
+                        </select>
                     </div>
                     <div class="fg">
                         <label><i class="fas fa-calendar-alt"></i> Date</label>
                         <input type="date" id="filterDate">
                     </div>
-                    <button class="btn btn-primary" id="applyFilter"><i class="fas fa-search"></i> Apply</button>
+                    <button class="btn btn-primary" id="applyFilter"><i class="fas fa-filter"></i> Apply</button>
                     <button class="btn btn-secondary" id="resetFilter"><i class="fas fa-undo-alt"></i> Reset</button>
                 </div>
                 <div class="stats-badge" id="studentCount">
@@ -339,152 +533,383 @@
             </div>
         </div>
 
-        <!-- ─── TABLE ────────────────────────────────────────────────────── -->
+        <!-- ─── NORMAL STUDENTS DATA TABLE ─────────────────────────────── -->
         <div class="table-wrap">
             <table id="studentTable">
                 <thead>
                     <tr>
-                        <th><i class="fas fa-user"></i> Name</th>
-                        <th><i class="fas fa-layer-group"></i> Class</th>
-                        <th><i class="fas fa-columns"></i> Section</th>
-                        <th><i class="fas fa-book"></i> Subject</th>
-                        <th><i class="fas fa-hashtag"></i> Test No</th>
-                        <th><i class="fas fa-calendar-day"></i> Exam Date</th>
-                        <th><i class="fas fa-desktop"></i> System</th>
-                        <th><i class="fas fa-circle"></i> Status</th>
-                        <th><i class="fas fa-cog"></i> Action</th>
+                        <th><i class="fas fa-id-card"></i> Admission No</th>
+                        <th><i class="fas fa-user"></i> Student Name</th>
+                        <th><i class="fas fa-layer-group"></i> Class &amp; Sec</th>
+                        <th><i class="fas fa-book"></i> Subject / Test</th>
+                        <th><i class="fas fa-info-circle"></i> Status</th>
+                        <th><i class="fas fa-desktop"></i> Exam / System</th>
+                        <th style="text-align:center;"><i class="fas fa-cogs"></i> Actions</th>
                     </tr>
                 </thead>
-                <tbody id="studentBody"></tbody>
+                <tbody id="studentBody">
+                    <tr><td colspan="7" class="empty-state"><i class="fas fa-spinner fa-spin"></i> Loading students...</td></tr>
+                </tbody>
             </table>
         </div>
 
-    
-<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
-</footer>
-</div>
+        <footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
+            {{ developer_credit }}
+        </footer>
+    </div>
 
+    <!-- ─── EDIT STUDENT MODAL ─────────────────────────────────────────── -->
+    <div class="modal-overlay" id="editStudentModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-edit"></i> Edit Student Details</h3>
+                <button type="button" class="modal-close-btn" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editStudentForm" onsubmit="saveStudentEdit(event)">
+                <input type="hidden" id="editOriginalId">
+                <div class="modal-grid">
+                    <div class="form-group">
+                        <label><i class="fas fa-id-badge"></i> Student ID</label>
+                        <input type="text" id="editStudentId" readonly style="background:#f1f5f9; cursor:not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-id-card"></i> Admission No</label>
+                        <input type="text" id="editAdmissionNo" placeholder="e.g. ADM101">
+                    </div>
+                    <div class="form-group full-width">
+                        <label><i class="fas fa-user"></i> Full Name *</label>
+                        <input type="text" id="editName" required placeholder="Student Full Name">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-layer-group"></i> Class *</label>
+                        <input type="text" id="editClass" required placeholder="e.g. 10">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-columns"></i> Section</label>
+                        <input type="text" id="editSection" placeholder="e.g. A">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-birthday-cake"></i> Date of Birth</label>
+                        <input type="text" id="editDob" placeholder="YYYY-MM-DD or DD/MM/YYYY">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-shield-alt"></i> House</label>
+                        <input type="text" id="editHouse" placeholder="e.g. Blue House">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-user-friends"></i> Parent / Guardian Name</label>
+                        <input type="text" id="editParentsName" placeholder="Father or Mother name">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-circle"></i> Exam Status</label>
+                        <select id="editStatus">
+                            <option value="Not Started">Not Started</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Submitted">Submitted</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label><i class="fas fa-map-marker-alt"></i> Address</label>
+                        <input type="text" id="editAddress" placeholder="Residential Address">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveEditBtn">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ─── SCRIPT ─────────────────────────────────────────────────────── -->
     <script>
-        // ─── LOAD STUDENTS WITH FILTERS ──────────────────────────────
-        function loadStudents() {
-            const classVal = document.getElementById('filterClass').value;
-            const sectionVal = document.getElementById('filterSection').value;
-            const subjectVal = document.getElementById('filterSubject').value;
-            const testNoVal = document.getElementById('filterTestNo').value.trim();
-            const dateVal = document.getElementById('filterDate').value;
+        let allStudentsCache = [];
+        let classesPopulated = false;
 
-            let url = '/admin/students/data?';
-            if(classVal) url += `class=${encodeURIComponent(classVal)}&`;
-            if(sectionVal) url += `section=${encodeURIComponent(sectionVal)}&`;
-            if(subjectVal) url += `subject=${encodeURIComponent(subjectVal)}&`;
-            if(testNoVal) url += `test_no=${encodeURIComponent(testNoVal)}&`;
-            if(dateVal) url += `date=${encodeURIComponent(dateVal)}&`;
-
-            fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    const tbody = document.getElementById('studentBody');
-                    const countSpan = document.querySelector('#studentCount span');
-
-                    if (!data || data.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="9" class="empty-state">
-                            <i class="fas fa-user-slash"></i>No students found matching filters.
-                        </td></tr>`;
-                        countSpan.textContent = '0';
-                        return;
-                    }
-
-                    countSpan.textContent = data.length;
-                    tbody.innerHTML = '';
-
-                    // Populate filter dropdowns (classes & subjects) from data
-                    populateFilterOptions(data);
-
-                    data.forEach(s => {
-                        const row = document.createElement('tr');
-                        let statusClass = '';
-                        const status = s.status || 'Not Started';
-                        if (status === 'Not Started') statusClass = 'status-Not-Started';
-                        else if (status === 'In Progress') statusClass = 'status-In-Progress';
-                        else if (status === 'Submitted') statusClass = 'status-Submitted';
-
-                        const systemName = s.system_name || s.ip || '—';
-                        const examDate = s.exam_started_at ? new Date(s.exam_started_at).toLocaleDateString() : '—';
-                        const testNo = s.test_no || s.chapter || '—';
-                        const section = s.section || '—';
-
-                        row.innerHTML = `
-                            <td><i class="fas fa-user-circle" style="margin-right:6px;color:#3949ab;"></i>${s.name}</td>
-                            <td><span class="badge">${s.class}</span></td>
-                            <td>${section}</td>
-                            <td><span class="badge">${s.subject}</span></td>
-                            <td>${testNo}</td>
-                            <td>${examDate}</td>
-                            <td><i class="fas fa-desktop" style="margin-right:4px;color:#78909c;"></i>${systemName}</td>
-                            <td><span class="status-badge ${statusClass}">${status}</span></td>
-                            <td>
-                                <button class="delete-btn" onclick="deleteStudent('${s.student_id}')">
-                                    <i class="fas fa-trash-alt"></i> Remove
-                                </button>
-                            </td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                })
-                .catch(err => {
-                    console.error('Error loading students:', err);
-                    document.getElementById('studentBody').innerHTML = `<tr><td colspan="9" class="empty-state">
-                        <i class="fas fa-exclamation-triangle"></i>Failed to load data.
-                    </td></tr>`;
-                });
+        function handleDashboardClick(e) {
+            if (e) e.preventDefault();
+            if (window.parent && window.parent !== window && typeof window.parent.loadTab === 'function') {
+                window.parent.loadTab('dashboard');
+                return;
+            }
+            window.location.href = '/admin/dashboard';
         }
 
-        // ─── POPULATE FILTER DROPDOWNS ──────────────────────────────
-        function populateFilterOptions(data) {
+        function showToast(message, type = 'success') {
+            const existing = document.querySelector('.toast-msg');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `toast-msg ${type}`;
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        // ─── LOAD STUDENTS ──────────────────────────────────────────
+        async function loadStudents() {
+            const qVal = document.getElementById('filterSearch').value.trim();
+            const classVal = document.getElementById('filterClass').value;
+            const sectionVal = document.getElementById('filterSection').value;
+            const statusVal = document.getElementById('filterStatus').value;
+            const dateVal = document.getElementById('filterDate').value;
+
+            const tbody = document.getElementById('studentBody');
+            tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><i class="fas fa-spinner fa-spin"></i> Fetching records...</td></tr>`;
+
+            let url = '/admin/students/data?';
+            if (qVal) url += `q=${encodeURIComponent(qVal)}&`;
+            if (classVal) url += `class=${encodeURIComponent(classVal)}&`;
+            if (sectionVal) url += `section=${encodeURIComponent(sectionVal)}&`;
+            if (statusVal) url += `status=${encodeURIComponent(statusVal)}&`;
+            if (dateVal) url += `date=${encodeURIComponent(dateVal)}&`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+
+                const list = Array.isArray(data) ? data : (data.students || []);
+                allStudentsCache = list;
+
+                // Populate filter classes and sections once from server list
+                if (!classesPopulated && data.classes) {
+                    populateFilters(data.classes, data.sections);
+                    classesPopulated = true;
+                }
+
+                renderTable(list);
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Failed to load student data.</td></tr>`;
+            }
+        }
+
+        function populateFilters(classes, sections) {
             const classSelect = document.getElementById('filterClass');
-            const subjectSelect = document.getElementById('filterSubject');
+            const sectionSelect = document.getElementById('filterSection');
 
-            const selectedClass = classSelect.value;
-            const selectedSubject = subjectSelect.value;
+            const curClass = classSelect.value;
+            const curSec = sectionSelect.value;
 
-            const classes = [...new Set(data.map(s => s.class).filter(Boolean))].sort();
-            const subjects = [...new Set(data.map(s => s.subject).filter(Boolean))].sort();
+            if (classes && classes.length) {
+                classSelect.innerHTML = '<option value="">All Classes</option>';
+                classes.forEach(c => {
+                    classSelect.innerHTML += `<option value="${c}">Class ${c}</option>`;
+                });
+                classSelect.value = curClass;
+            }
 
-            classSelect.innerHTML = '<option value="">All Classes</option>';
-            classes.forEach(c => classSelect.innerHTML += `<option value="${c}">${c}</option>`);
-            subjectSelect.innerHTML = '<option value="">All Subjects</option>';
-            subjects.forEach(s => subjectSelect.innerHTML += `<option value="${s}">${s}</option>`);
+            if (sections && sections.length) {
+                sectionSelect.innerHTML = '<option value="">All Sections</option>';
+                sections.forEach(s => {
+                    sectionSelect.innerHTML += `<option value="${s}">Section ${s}</option>`;
+                });
+                sectionSelect.value = curSec;
+            }
+        }
 
-            classSelect.value = selectedClass;
-            subjectSelect.value = selectedSubject;
+        // ─── RENDER TABLE ───────────────────────────────────────────
+        function renderTable(students) {
+            const tbody = document.getElementById('studentBody');
+            const countSpan = document.querySelector('#studentCount span');
+            countSpan.textContent = students.length;
+
+            if (!students || students.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-user-slash"></i>
+                            No students found matching your filters.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let html = '';
+            students.forEach(s => {
+                const adm = s.admission_no || s.student_id || '—';
+                const name = s.name || 'Unnamed';
+                const clsSec = `${s.class || '—'}${s.section ? ' (' + s.section + ')' : ''}`;
+                const subject = s.subject || s.test_no ? `${s.subject || '—'} / ${s.test_no || '—'}` : '—';
+                
+                const status = s.status || 'Not Started';
+                let statusClass = 'status-Not-Started';
+                let statusIcon = 'fa-clock';
+                if (status === 'In Progress') {
+                    statusClass = 'status-In-Progress';
+                    statusIcon = 'fa-spinner fa-spin';
+                } else if (status === 'Submitted') {
+                    statusClass = 'status-Submitted';
+                    statusIcon = 'fa-check-circle';
+                }
+
+                const examDate = s.exam_started_at ? new Date(s.exam_started_at).toLocaleDateString() : '—';
+                const system = s.system_name || s.ip || '—';
+                const sysInfo = system !== '—' || examDate !== '—' ? `${system} · ${examDate}` : '—';
+
+                // Serialized data for edit modal
+                const jsonStr = JSON.stringify(s).replace(/'/g, "&#39;");
+
+                html += `
+                    <tr id="row-${s.student_id}">
+                        <td><span class="adm-chip">${adm}</span></td>
+                        <td>
+                            <div style="font-weight:600; color:#1e293b; display:flex; align-items:center; gap:8px;">
+                                <i class="fas fa-user-circle" style="color:#4f46e5; font-size:1.15rem;"></i>
+                                <span>${name}</span>
+                            </div>
+                        </td>
+                        <td><span class="badge">Class ${clsSec}</span></td>
+                        <td style="color:#475569;">${subject}</td>
+                        <td>
+                            <span class="status-badge ${statusClass}">
+                                <i class="fas ${statusIcon}"></i> ${status}
+                            </span>
+                        </td>
+                        <td style="color:#64748b; font-size:0.8rem;">
+                            <i class="fas fa-desktop" style="opacity:0.6; margin-right:4px;"></i>${sysInfo}
+                        </td>
+                        <td style="text-align:center;">
+                            <div class="action-cell" style="justify-content:center;">
+                                <button type="button" class="btn-edit" onclick='openEditModal(${jsonStr})' title="Edit student details">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button type="button" class="btn-delete" onclick="deleteStudent('${s.student_id}', '${name.replace(/'/g, "\\'")}')" title="Delete student">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        // ─── EDIT MODAL LOGIC ───────────────────────────────────────
+        function openEditModal(student) {
+            document.getElementById('editOriginalId').value = student.student_id;
+            document.getElementById('editStudentId').value = student.student_id;
+            document.getElementById('editAdmissionNo').value = student.admission_no || '';
+            document.getElementById('editName').value = student.name || '';
+            document.getElementById('editClass').value = student.class || '';
+            document.getElementById('editSection').value = student.section || '';
+            document.getElementById('editDob').value = student.dob || '';
+            document.getElementById('editHouse').value = student.house || '';
+            document.getElementById('editParentsName').value = student.parents_name || '';
+            document.getElementById('editAddress').value = student.address || '';
+            document.getElementById('editStatus').value = student.status || 'Not Started';
+
+            document.getElementById('editStudentModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editStudentModal').classList.remove('active');
+        }
+
+        async function saveStudentEdit(e) {
+            e.preventDefault();
+            const studentId = document.getElementById('editOriginalId').value;
+            const payload = {
+                admission_no: document.getElementById('editAdmissionNo').value.trim(),
+                name: document.getElementById('editName').value.trim(),
+                class: document.getElementById('editClass').value.trim(),
+                section: document.getElementById('editSection').value.trim(),
+                dob: document.getElementById('editDob').value.trim(),
+                house: document.getElementById('editHouse').value.trim(),
+                parents_name: document.getElementById('editParentsName').value.trim(),
+                address: document.getElementById('editAddress').value.trim(),
+                status: document.getElementById('editStatus').value
+            };
+
+            const saveBtn = document.getElementById('saveEditBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            try {
+                const res = await fetch(`/admin/student/edit/${encodeURIComponent(studentId)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    showToast(data.message || 'Student updated successfully!', 'success');
+                    closeEditModal();
+                    loadStudents();
+                } else {
+                    showToast(data.message || 'Error updating student', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Network error while saving student details', 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+            }
         }
 
         // ─── DELETE STUDENT ──────────────────────────────────────────
-        function deleteStudent(id) {
-            if(confirm('Remove this student? All their responses and results will be permanently deleted.')) {
-                fetch(`/admin/student/delete/${id}`, {method:'DELETE'})
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status === 'deleted') loadStudents();
-                    })
-                    .catch(err => alert('Error deleting student.'));
+        async function deleteStudent(id, name) {
+            if (!confirm(`Are you sure you want to permanently delete student "${name}" (ID: ${id})?\n\nThis will remove their registrations, exam answers, results, and reattempt requests.`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/admin/student/delete/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.status === 'deleted') {
+                    showToast(`Student "${name}" deleted successfully.`, 'success');
+                    const row = document.getElementById(`row-${id}`);
+                    if (row) row.remove();
+                    // Update count
+                    const countSpan = document.querySelector('#studentCount span');
+                    if (countSpan) {
+                        const cur = parseInt(countSpan.textContent || '0');
+                        countSpan.textContent = Math.max(0, cur - 1);
+                    }
+                } else {
+                    showToast(data.message || 'Error deleting student', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Network error while deleting student', 'error');
             }
         }
 
         // ─── EVENT LISTENERS ─────────────────────────────────────────
         document.getElementById('applyFilter').addEventListener('click', loadStudents);
-        document.getElementById('resetFilter').addEventListener('click', function() {
+        document.getElementById('resetFilter').addEventListener('click', () => {
+            document.getElementById('filterSearch').value = '';
             document.getElementById('filterClass').value = '';
             document.getElementById('filterSection').value = '';
-            document.getElementById('filterSubject').value = '';
-            document.getElementById('filterTestNo').value = '';
+            document.getElementById('filterStatus').value = '';
             document.getElementById('filterDate').value = '';
             loadStudents();
         });
 
-        document.getElementById('filterTestNo').addEventListener('keydown', e => { if(e.key === 'Enter') loadStudents(); });
-        document.getElementById('filterDate').addEventListener('keydown', e => { if(e.key === 'Enter') loadStudents(); });
+        // Instant search debounce
+        let searchTimeout = null;
+        document.getElementById('filterSearch').addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(loadStudents, 350);
+        });
+        document.getElementById('filterSearch').addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                clearTimeout(searchTimeout);
+                loadStudents();
+            }
+        });
+
+        // Close modal when clicking outside card
+        document.getElementById('editStudentModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditModal();
+        });
 
         // Initial load
         loadStudents();
