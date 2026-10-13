@@ -42,12 +42,21 @@
             color: var(--text-main);
             min-height: 100vh;
             line-height: 1.5;
+            padding-bottom: 40px;
+        }
+
+        /* ─── IFRAME DETECTION FIX ────────────────────────────────────────── */
+        body.is-iframe .topbar {
+            display: none !important;
+        }
+        body.is-iframe .container {
+            margin-top: 16px;
         }
         
         /* ─── TOP BAR ────────────────────────────────────────────────────── */
         .topbar {
             background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
-            padding: 16px 32px;
+            padding: 14px 28px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -68,28 +77,28 @@
         }
 
         .topbar .icon-pill {
-            width: 44px;
-            height: 44px;
+            width: 42px;
+            height: 42px;
             background: rgba(255, 255, 255, 0.12);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             color: #818cf8;
             border: 1px solid rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(8px);
         }
 
         .topbar h1 {
-            font-size: 1.35rem;
+            font-size: 1.25rem;
             font-weight: 800;
             letter-spacing: -0.02em;
             color: #ffffff;
         }
 
         .topbar h1 span {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 600;
             color: #a5b4fc;
             display: block;
@@ -102,9 +111,9 @@
             color: #f8fafc;
             text-decoration: none;
             background: rgba(255, 255, 255, 0.08);
-            padding: 9px 20px;
+            padding: 8px 18px;
             border-radius: 30px;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 600;
             transition: all 0.25s ease;
             display: inline-flex;
@@ -121,9 +130,9 @@
         }
         
         .container {
-            max-width: 1300px;
-            margin: 24px auto;
-            padding: 0 24px;
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
         }
         
         /* ─── CARDS ────────────────────────────────────────────────────── */
@@ -162,7 +171,7 @@
         .convention-box {
             background: #eef2ff;
             border-left: 4px solid var(--primary);
-            padding: 16px 20px;
+            padding: 14px 18px;
             border-radius: var(--radius-md);
             margin: 14px 0 18px;
             border: 1px solid #c7d2fe;
@@ -170,7 +179,7 @@
 
         .convention-box strong {
             color: var(--primary-dark);
-            font-size: 0.92rem;
+            font-size: 0.9rem;
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -189,9 +198,9 @@
 
         .convention-box small {
             color: var(--text-muted);
-            margin-top: 6px;
+            margin-top: 4px;
             display: block;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 500;
         }
         
@@ -200,7 +209,7 @@
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             border-radius: var(--radius-md);
             padding: 14px 20px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -224,7 +233,7 @@
             font-weight: 500;
         }
 
-        .template-banner a {
+        .template-banner button, .template-banner a {
             background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
             color: #ffffff;
             padding: 9px 22px;
@@ -238,9 +247,11 @@
             white-space: nowrap;
             transition: all 0.25s ease;
             box-shadow: var(--shadow-sm);
+            border: none;
+            cursor: pointer;
         }
 
-        .template-banner a:hover {
+        .template-banner button:hover, .template-banner a:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 18px rgba(79, 70, 229, 0.25);
             color: #ffffff;
@@ -250,23 +261,24 @@
         .upload-zone {
             border: 2px dashed #818cf8;
             border-radius: var(--radius-lg);
-            padding: 36px 20px;
+            padding: 32px 20px;
             text-align: center;
             background: #f8fafc;
             cursor: pointer;
             transition: all 0.25s ease;
+            position: relative;
         }
 
-        .upload-zone:hover {
+        .upload-zone:hover, .upload-zone.dragover {
             background: #eef2ff;
             border-color: var(--primary);
-            transform: scale(1.005);
+            transform: scale(1.002);
         }
 
-        .upload-zone i {
-            font-size: 2.8rem;
+        .upload-zone i.upload-icon {
+            font-size: 2.6rem;
             color: var(--primary);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             display: block;
         }
 
@@ -274,18 +286,52 @@
             color: var(--dark);
             margin-bottom: 4px;
             font-weight: 700;
-            font-size: 1.05rem;
+            font-size: 1.02rem;
         }
 
         .upload-zone p {
             color: var(--text-muted);
-            font-size: 0.85rem;
+            font-size: 0.84rem;
             font-weight: 500;
         }
-        
+
+        .file-selected-box {
+            display: none;
+            background: #e0e7ff;
+            border: 1px solid #c7d2fe;
+            border-radius: var(--radius-md);
+            padding: 12px 18px;
+            margin-top: 14px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .file-selected-box .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: #3730a3;
+            font-size: 0.88rem;
+        }
+
+        .file-selected-box .btn-remove-file {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .file-selected-box .btn-remove-file:hover {
+            background: #fee2e2;
+        }
+
         /* ─── BUTTONS ──────────────────────────────────────────────────── */
         .btn {
-            padding: 10px 24px;
+            padding: 9px 22px;
             border: none;
             border-radius: 30px;
             font-weight: 700;
@@ -295,8 +341,9 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            font-size: 0.85rem;
+            font-size: 0.83rem;
             font-family: inherit;
+            white-space: nowrap;
         }
 
         .btn-primary {
@@ -344,8 +391,9 @@
         }
 
         .btn-sm {
-            padding: 6px 16px;
+            padding: 6px 14px;
             font-size: 0.78rem;
+            border-radius: 20px;
         }
         
         /* ─── ALERTS ────────────────────────────────────────────────────── */
@@ -372,13 +420,63 @@
             color: #991b1b;
         }
         
-        /* ─── TABLE STYLING ────────────────────────────────────────────────── */
+        /* ─── TABLE CONTROLS & WRAPPER ──────────────────────────────────── */
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-control {
+            padding: 7px 14px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.82rem;
+            font-weight: 600;
+            background: #ffffff;
+            color: var(--dark);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .filter-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+        }
+
+        .search-control {
+            min-width: 200px;
+        }
+
         .table-wrap {
+            width: 100%;
             overflow-x: auto;
             border-radius: var(--radius-md);
             border: 1px solid var(--border);
             background: #ffffff;
             box-shadow: var(--shadow-sm);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Custom Scrollbar for Table Wrap */
+        .table-wrap::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-wrap::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .table-wrap::-webkit-scrollbar-track {
+            background: #f1f5f9;
         }
 
         table {
@@ -386,6 +484,7 @@
             border-collapse: collapse;
             font-size: 0.83rem;
             text-align: left;
+            min-width: 900px;
         }
 
         thead tr {
@@ -394,7 +493,7 @@
         }
 
         th {
-            padding: 10px 14px;
+            padding: 12px 14px;
             font-weight: 700;
             text-transform: uppercase;
             font-size: 0.72rem;
@@ -409,7 +508,7 @@
         }
 
         td {
-            padding: 10px 14px;
+            padding: 11px 14px;
             border-bottom: 1px solid #f1f5f9;
             vertical-align: middle;
             color: var(--text-main);
@@ -423,7 +522,7 @@
         
         /* Document title cell text wrapping */
         .doc-cell {
-            max-width: 320px;
+            max-width: 340px;
             min-width: 220px;
             word-break: break-word;
             overflow-wrap: break-word;
@@ -480,7 +579,7 @@
 
         /* Action Pill Buttons */
         .btn-action-group {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             gap: 6px;
             justify-content: center;
@@ -529,40 +628,6 @@
             background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
         }
         
-        .btn-icon {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 7px 12px;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-            font-size: 1.1rem;
-        }
-
-        .btn-icon.pdf {
-            color: #ef4444;
-        }
-
-        .btn-icon.pdf:hover {
-            background: #fee2e2;
-        }
-
-        .btn-icon.toggle {
-            color: #64748b;
-        }
-
-        .btn-icon.toggle:hover {
-            background: #f1f5f9;
-        }
-
-        .btn-icon.toggle.active {
-            color: #10b981;
-        }
-
-        .btn-icon.toggle.active:hover {
-            background: #d1fae5;
-        }
-        
         .loading {
             text-align: center;
             padding: 40px;
@@ -577,7 +642,7 @@
 
         .empty {
             text-align: center;
-            padding: 50px 20px;
+            padding: 45px 20px;
             color: var(--text-muted);
             font-weight: 600;
         }
@@ -593,17 +658,21 @@
         @media(max-width:820px) {
             .topbar { flex-direction: column; text-align: center; padding: 14px 20px; }
             .topbar .title-group { justify-content: center; }
-            .container { padding: 0 16px; }
+            .container { padding: 0 14px; }
             .card { padding: 18px; }
             .template-banner { flex-direction: column; text-align: center; }
+            .table-toolbar { flex-direction: column; align-items: stretch; }
+            .filter-group { width: 100%; flex-wrap: wrap; }
+            .search-control { width: 100%; }
         }
 
         @media(max-width:600px) {
-            table { font-size: 0.78rem; }
-            th, td { padding: 8px 10px; }
-            .btn-icon { padding: 5px 8px; font-size: 0.95rem; }
+            table { font-size: 0.78rem; min-width: 750px; }
+            th, td { padding: 9px 10px; }
+            .btn-sm { padding: 5px 12px; font-size: 0.74rem; }
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -613,7 +682,7 @@
         <div class="icon-pill">
             <i class="fas fa-file-invoice"></i>
         </div>
-        <h1>Test Papers <span>Question Upload &amp; Repository</span></h1>
+        <h1>Test Papers <span>Paper Repository</span></h1>
     </div>
     <a href="javascript:void(0)" onclick="handleDashboardClick(event)"><i class="fas fa-arrow-left"></i> Dashboard</a>
 </div>
@@ -623,12 +692,13 @@
 
     <!-- ═══ SHARED CLASSWISE PAPER REPOSITORY ═══ -->
     <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+        <div class="table-toolbar">
             <div class="card-header" style="border:none;padding:0;margin:0;">
-                <i class="fas fa-folder-tree" style="color:var(--primary);"></i> Shared Paper Repository (Class &amp; Section Folders)
+                <i class="fas fa-folder-tree"></i> Shared Paper Repository (Class &amp; Section Folders)
             </div>
-            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                <select id="repoClassFilter" onchange="loadSharedRepository()" style="padding:6px 12px;border-radius:8px;border:1px solid #cbd5e1;font-size:0.82rem;font-weight:600;">
+            <div class="filter-group">
+                <input type="text" id="repoSearchInput" onkeyup="filterSharedRepository()" placeholder="Search paper filename..." class="filter-control search-control">
+                <select id="repoClassFilter" onchange="loadSharedRepository()" class="filter-control">
                     <option value="">All Classes</option>
                     <option value="1">Class 1</option>
                     <option value="2">Class 2</option>
@@ -655,7 +725,7 @@
                     <option value="11th">11th</option>
                     <option value="12th">12th</option>
                 </select>
-                <select id="repoSecFilter" onchange="loadSharedRepository()" style="padding:6px 12px;border-radius:8px;border:1px solid #cbd5e1;font-size:0.82rem;font-weight:600;">
+                <select id="repoSecFilter" onchange="loadSharedRepository()" class="filter-control">
                     <option value="">All Sections</option>
                     <option value="A">Section A</option>
                     <option value="B">Section B</option>
@@ -671,30 +741,63 @@
         </div>
     </div>
 
-    <!-- Shared Paper Repository -->
-
-    <!-- Papers List -->
+    <!-- ═══ CARD 3: UPLOADED TEST PAPERS REPOSITORY ═══ -->
     <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div class="table-toolbar">
             <div class="card-header" style="border:none;padding:0;margin:0;">
                 <i class="fas fa-folder-open"></i> Uploaded Test Papers Repository
             </div>
-            <button onclick="loadPapers()" class="btn btn-success btn-sm">
-                <i class="fas fa-rotate"></i> Refresh Repository
-            </button>
+            <div class="filter-group">
+                <input type="text" id="paperSearchInput" onkeyup="filterPapers()" placeholder="Search test name..." class="filter-control search-control">
+                <select id="paperClassFilter" onchange="filterPapers()" class="filter-control">
+                    <option value="">All Classes</option>
+                    <option value="1">Class 1</option>
+                    <option value="2">Class 2</option>
+                    <option value="3">Class 3</option>
+                    <option value="4">Class 4</option>
+                    <option value="5">Class 5</option>
+                    <option value="6">Class 6</option>
+                    <option value="7">Class 7</option>
+                    <option value="8">Class 8</option>
+                    <option value="9">Class 9</option>
+                    <option value="10">Class 10</option>
+                    <option value="11">Class 11</option>
+                    <option value="12">Class 12</option>
+                </select>
+                <select id="paperSecFilter" onchange="filterPapers()" class="filter-control">
+                    <option value="">All Sections</option>
+                    <option value="A">Section A</option>
+                    <option value="B">Section B</option>
+                    <option value="C">Section C</option>
+                    <option value="D">Section D</option>
+                </select>
+                <select id="paperSubjectFilter" onchange="filterPapers()" class="filter-control">
+                    <option value="">All Subjects</option>
+                </select>
+                <button onclick="loadPapers()" class="btn btn-success btn-sm">
+                    <i class="fas fa-rotate"></i> Refresh Repository
+                </button>
+            </div>
         </div>
         <div id="papersContainer">
             <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading test papers...</div>
         </div>
     </div>
 
-<footer style="width:100%; text-align:center; padding:20px 10px; font-size:0.8rem; color:var(--text-muted); opacity:0.85; margin-top:24px;">
-    Developed by Gaurav Shukla &amp; Team
-</footer>
+    <footer style="width:100%; text-align:center; padding:20px 10px; font-size:0.8rem; color:var(--text-muted); opacity:0.85; margin-top:24px;">
+        {{ developer_credit }}
+    </footer>
 </div>
 
 <script>
 const ROLE = '{{ role }}';
+let rawSharedFiles = [];
+let rawTestPapers = [];
+
+// Check iframe embedding to auto-adjust styling
+if (window.self !== window.top) {
+    document.body.classList.add('is-iframe');
+}
 
 async function loadSharedRepository() {
     const cls = document.getElementById('repoClassFilter').value;
@@ -707,55 +810,74 @@ async function loadSharedRepository() {
         const data = await res.json();
         if (data.status !== 'success' || !data.files || data.files.length === 0) {
             container.innerHTML = '<div class="empty"><i class="fas fa-folder-open"></i>No paper files found in repository</div>';
+            rawSharedFiles = [];
             return;
         }
-        
-        let html = `<div class="table-wrap"><table>
-            <thead>
-                <tr>
-                    <th style="width:45px;text-align:center;">#</th>
-                    <th><i class="fas fa-file-word"></i> Document Name</th>
-                    <th style="white-space:nowrap;"><i class="fas fa-graduation-cap"></i> Class</th>
-                    <th style="white-space:nowrap;"><i class="fas fa-layer-group"></i> Section</th>
-                    <th style="white-space:nowrap;"><i class="fas fa-weight-hanging"></i> Size</th>
-                    <th style="white-space:nowrap;"><i class="fas fa-calendar-days"></i> Generated Date</th>
-                    <th style="text-align:center;width:200px;"><i class="fas fa-gears"></i> Actions</th>
-                </tr>
-            </thead>
-            <tbody>`;
-            
-        data.files.forEach((f, i) => {
-            html += `<tr>
-                <td style="font-weight:700;color:#64748b;text-align:center;">${i+1}</td>
-                <td class="doc-cell">
-                    <div class="doc-title-flex">
-                        <i class="fas fa-file-word doc-icon"></i>
-                        <span class="doc-name">${f.filename}</span>
-                    </div>
-                </td>
-                <td style="white-space:nowrap;"><span class="badge" style="background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;">Class ${f.class}</span></td>
-                <td style="white-space:nowrap;"><span class="badge" style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;">Section ${f.section}</span></td>
-                <td style="white-space:nowrap;"><span class="q-count">${f.size_kb} KB</span></td>
-                <td style="font-size:0.78rem;color:#64748b;white-space:nowrap;">${f.modified_at}</td>
-                <td style="text-align:center;">
-                    <div class="btn-action-group">
-                        <a href="${f.download_url}" download class="btn-doc-download" title="Download Document">
-                            <i class="fas fa-download"></i> Download .doc
-                        </a>
-                        <button onclick="deleteSharedPaper('${f.rel_path}', '${f.filename}')" class="btn-paper-delete" title="Delete Paper File">
-                            <i class="fas fa-trash-can"></i> Delete
-                        </button>
-                    </div>
-                </td>
-            </tr>`;
-        });
-        html += `</tbody></table></div>`;
-        container.innerHTML = html;
+        rawSharedFiles = data.files;
+        renderSharedRepository(rawSharedFiles);
     } catch(e) {
         container.innerHTML = '<div class="empty"><i class="fas fa-triangle-exclamation"></i>Failed to load repository</div>';
     }
 }
-loadSharedRepository();
+
+function filterSharedRepository() {
+    const query = (document.getElementById('repoSearchInput').value || '').toLowerCase().trim();
+    if (!query) {
+        renderSharedRepository(rawSharedFiles);
+        return;
+    }
+    const filtered = rawSharedFiles.filter(f => (f.filename || '').toLowerCase().includes(query));
+    renderSharedRepository(filtered);
+}
+
+function renderSharedRepository(files) {
+    const container = document.getElementById('sharedRepoContainer');
+    if (!files || files.length === 0) {
+        container.innerHTML = '<div class="empty"><i class="fas fa-folder-open"></i>No matching paper files found</div>';
+        return;
+    }
+    let html = `<div class="table-wrap"><table>
+        <thead>
+            <tr>
+                <th style="width:45px;text-align:center;">#</th>
+                <th><i class="fas fa-file-word"></i> Document Name</th>
+                <th style="white-space:nowrap;"><i class="fas fa-graduation-cap"></i> Class</th>
+                <th style="white-space:nowrap;"><i class="fas fa-layer-group"></i> Section</th>
+                <th style="white-space:nowrap;"><i class="fas fa-weight-hanging"></i> Size</th>
+                <th style="white-space:nowrap;"><i class="fas fa-calendar-days"></i> Generated Date</th>
+                <th style="text-align:center;width:200px;"><i class="fas fa-gears"></i> Actions</th>
+            </tr>
+        </thead>
+        <tbody>`;
+        
+    files.forEach((f, i) => {
+        html += `<tr>
+            <td style="font-weight:700;color:#64748b;text-align:center;">${i+1}</td>
+            <td class="doc-cell">
+                <div class="doc-title-flex">
+                    <i class="fas fa-file-word doc-icon"></i>
+                    <span class="doc-name">${f.filename}</span>
+                </div>
+            </td>
+            <td style="white-space:nowrap;"><span class="badge" style="background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;">Class ${f.class}</span></td>
+            <td style="white-space:nowrap;"><span class="badge" style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;">Section ${f.section}</span></td>
+            <td style="white-space:nowrap;"><span class="q-count">${f.size_kb} KB</span></td>
+            <td style="font-size:0.78rem;color:#64748b;white-space:nowrap;">${f.modified_at}</td>
+            <td style="text-align:center;">
+                <div class="btn-action-group">
+                    <a href="${f.download_url}" download class="btn-doc-download" title="Download Document">
+                        <i class="fas fa-download"></i> Download .doc
+                    </a>
+                    <button onclick="deleteSharedPaper('${f.rel_path}', '${f.filename}')" class="btn-paper-delete" title="Delete Paper File">
+                        <i class="fas fa-trash-can"></i> Delete
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    });
+    html += `</tbody></table></div>`;
+    container.innerHTML = html;
+}
 
 async function deleteSharedPaper(relPath, filename) {
     if (!confirm(`Are you sure you want to delete "${filename}" from the repository?`)) return;
@@ -792,22 +914,54 @@ async function loadPapers() {
     try {
         const res = await fetch('/api/test_papers?role='+ROLE);
         const data = await res.json();
-        renderPapers(data.papers || []);
+        rawTestPapers = data.papers || [];
+        populateSubjectFilter(rawTestPapers);
+        filterPapers();
     } catch(err) { 
         document.getElementById('papersContainer').innerHTML = '<div class="empty"><i class="fas fa-triangle-exclamation"></i>Failed to load repository</div>'; 
     }
 }
 
+function populateSubjectFilter(papers) {
+    const select = document.getElementById('paperSubjectFilter');
+    const currVal = select.value;
+    const subjects = new Set();
+    papers.forEach(p => { if (p.subject) subjects.add(p.subject); });
+    let html = '<option value="">All Subjects</option>';
+    Array.from(subjects).sort().forEach(s => {
+        html += `<option value="${s}">${s}</option>`;
+    });
+    select.innerHTML = html;
+    select.value = currVal;
+}
+
+function filterPapers() {
+    const query = (document.getElementById('paperSearchInput').value || '').toLowerCase().trim();
+    const cls = document.getElementById('paperClassFilter').value;
+    const sec = document.getElementById('paperSecFilter').value;
+    const subj = document.getElementById('paperSubjectFilter').value;
+
+    const filtered = rawTestPapers.filter(p => {
+        if (query && !(p.filename || '').toLowerCase().includes(query) && !(p.subject || '').toLowerCase().includes(query)) return false;
+        if (cls && String(p.class) !== String(cls)) return false;
+        if (sec && String(p.section || '').toUpperCase() !== String(sec).toUpperCase()) return false;
+        if (subj && String(p.subject || '').toLowerCase() !== String(subj).toLowerCase()) return false;
+        return true;
+    });
+
+    renderPapers(filtered);
+}
+
 function renderPapers(papers) {
     const container = document.getElementById('papersContainer');
     if (!papers.length) {
-        container.innerHTML = '<div class="empty"><i class="fas fa-file-excel"></i>No test papers uploaded yet</div>';
+        container.innerHTML = '<div class="empty"><i class="fas fa-file-excel"></i>No test papers match your criteria</div>';
         return;
     }
     container.innerHTML = `<div class="table-wrap"><table>
         <thead>
             <tr>
-                <th>#</th>
+                <th style="width:45px;text-align:center;">#</th>
                 <th><i class="fas fa-file"></i> Test Name</th>
                 <th><i class="fas fa-graduation-cap"></i> Class</th>
                 <th><i class="fas fa-layer-group"></i> Section</th>
@@ -815,25 +969,28 @@ function renderPapers(papers) {
                 <th><i class="fas fa-circle-question"></i> Questions</th>
                 <th><i class="fas fa-flag"></i> Status</th>
                 <th><i class="fas fa-calendar-days"></i> Uploaded</th>
-                <th style="text-align:center;"><i class="fas fa-gears"></i> Actions</th>
+                <th style="text-align:center;width:240px;"><i class="fas fa-gears"></i> Actions</th>
             </tr>
         </thead>
         <tbody>${papers.map((p,i)=>`<tr>
-            <td style="font-weight:700;color:var(--dark);">${i+1}</td>
-            <td><strong style="color:var(--dark);">${p.filename}</strong></td>
-            <td><span class="badge" style="background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;">${p.class}</span></td>
-            <td>${p.section ? `<span class="badge" style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;">${p.section}</span>` : '<span style="color:#94a3b8;font-size:0.78rem;">—</span>'}</td>
+            <td style="font-weight:700;color:var(--dark);text-align:center;">${i+1}</td>
+            <td><strong style="color:var(--dark);font-size:0.85rem;">${p.filename}</strong></td>
+            <td><span class="badge" style="background:#e0e7ff;color:#3730a3;border:1px solid #c7d2fe;">Class ${p.class}</span></td>
+            <td>${p.section ? `<span class="badge" style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;">Sec ${p.section}</span>` : '<span style="color:#94a3b8;font-size:0.78rem;">—</span>'}</td>
             <td><span class="badge" style="background:#f3e8ff;color:#6b21a8;border:1px solid #e9d5ff;">${p.subject}</span></td>
             <td><span class="q-count">${p.question_count} Qs</span></td>
             <td><span class="badge ${p.is_active?'badge-active':'badge-inactive'}">${p.is_active?'Active':'Inactive'}</span></td>
-            <td style="font-size:0.8rem;color:var(--text-muted);">${(p.created_at||'').slice(0,10)}</td>
+            <td style="font-size:0.8rem;color:var(--text-muted);white-space:nowrap;">${(p.created_at||'').slice(0,10)}</td>
             <td style="text-align:center;">
-                <div style="display:inline-flex;gap:6px;justify-content:center;">
-                    <button class="btn btn-danger btn-sm" title="Download PDF Paper" onclick="downloadPDF(${p.id}, '${p.filename}')">
+                <div class="btn-action-group">
+                    <button class="btn btn-primary btn-sm" title="Download PDF Paper" onclick="downloadPDF(${p.id}, '${p.filename}')">
                         <i class="fas fa-file-pdf"></i> PDF
                     </button>
                     <button class="btn ${p.is_active?'btn-success':'btn-outline'} btn-sm" title="${p.is_active?'Deactivate Paper':'Activate Paper'}" onclick="togglePaper(${p.id})">
                         <i class="fas fa-${p.is_active?'toggle-on':'toggle-off'}"></i> ${p.is_active?'Active':'Inactive'}
+                    </button>
+                    <button class="btn btn-danger btn-sm" title="Permanently Delete CBT Paper & Questions" onclick="deletePaper(${p.id}, '${p.filename}')">
+                        <i class="fas fa-trash-can"></i> Delete
                     </button>
                 </div>
             </td>
@@ -860,6 +1017,24 @@ async function togglePaper(id) {
     }
 }
 
+async function deletePaper(id, name) {
+    if (!confirm(`Are you sure you want to permanently delete "${name}"?\n\nThis will remove the test paper and all its associated questions from the CBT exam database.`)) {
+        return;
+    }
+    try {
+        const res = await fetch('/api/test_papers/' + id + '/delete', { method: 'DELETE' });
+        const data = await res.json();
+        if (data.status === 'success') {
+            loadPapers();
+            showAlert(data.message, 'success');
+        } else {
+            showAlert(data.message || 'Failed to delete test paper', 'error');
+        }
+    } catch(err) {
+        showAlert('Network error: ' + err.message, 'error');
+    }
+}
+
 function handleDashboardClick(e) {
     if (e) e.preventDefault();
     if (window.parent && window.parent !== window && typeof window.parent.loadTab === 'function') {
@@ -873,6 +1048,7 @@ function handleDashboardClick(e) {
     }
 }
 
+loadSharedRepository();
 loadPapers();
 </script>
 </body>
