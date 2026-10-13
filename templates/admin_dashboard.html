@@ -946,6 +946,7 @@
             }
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -980,6 +981,10 @@
                     <i class="fas fa-play-circle"></i>
                     <span class="nav-label">Exam Control</span>
                 </button>
+                <button class="nav-item" data-panel="exam-sessions" data-type="iframe" data-url="/admin/exam_sessions">
+                    <i class="fas fa-network-wired"></i>
+                    <span class="nav-label">Live Lab Sessions</span>
+                </button>
                 <button class="nav-item" data-panel="questions" data-type="iframe" data-url="/admin/questions">
                     <i class="fas fa-database"></i>
                     <span class="nav-label">Questions</span>
@@ -1009,13 +1014,17 @@
                     <i class="fas fa-magic"></i>
                     <span class="nav-label">Test Generator</span>
                 </button>
+                <button class="nav-item" data-panel="coding-generator" data-type="iframe" data-url="/admin/create_test?category=coding_test">
+                    <i class="fas fa-code"></i>
+                    <span class="nav-label">Coding Test Generator</span>
+                </button>
                 <button class="nav-item" data-panel="test-scheduler" data-type="iframe" data-url="/admin/schedule_test">
                     <i class="fas fa-calendar-alt"></i>
                     <span class="nav-label">Test Scheduler</span>
                 </button>
                 <button class="nav-item" data-panel="students" data-type="iframe" data-url="/admin/students">
                     <i class="fas fa-user-graduate"></i>
-                    <span class="nav-label">Students</span>
+                    <span class="nav-label">Manage Students</span>
                 </button>
             </div>
 
@@ -1045,7 +1054,7 @@
                     <i class="fas fa-file-alt"></i>
                     <span class="nav-label">Descriptive Paper</span>
                 </button>
-                <button class="nav-item" data-panel="question-bank" data-type="iframe" data-url="/question_bank">
+                <button class="nav-item" data-panel="question-bank" data-type="iframe" data-url="/question-bank">
                     <i class="fas fa-layer-group"></i>
                     <span class="nav-label">Question Bank</span>
                 </button>
@@ -1280,6 +1289,12 @@
                                     <i class="fas fa-stop"></i> Stop Exam
                                 </a>
                             </div>
+
+                            <div style="margin-top:22px;padding-top:16px;border-top:1px dashed #cbd5e1;text-align:center;">
+                                <button type="button" onclick="document.querySelector('[data-panel=\'exam-sessions\']').click()" style="width:100%;padding:12px 20px;background:#e0e7ff;color:#3730a3;border:1.5px solid #c7d2fe;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit;font-size:0.9rem;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;">
+                                    <i class="fas fa-network-wired"></i> Open Live Lab Sessions &amp; Per-Session Controls
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -1289,7 +1304,7 @@
             <iframe class="iframe-panel" id="iframePanel" src=""></iframe>
 
         <footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
+    {{ developer_credit }}
 </footer>
 
         </div>
@@ -1327,9 +1342,10 @@
             'notice': 'Notice Board',
             'test-papers': 'Test Papers',
             'test-generator': 'Test Generator',
+            'coding-generator': 'Coding Test Generator',
             'class-report': 'Class Report',
             'current-test-sessions': 'Current Test Sessions',
-            'students': 'Students',
+            'students': 'Manage Students',
             'monitoring': 'Monitoring',
             'evaluation': 'Evaluation',
             'advanced-filter': 'Advanced Filter',
