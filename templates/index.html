@@ -723,6 +723,7 @@
             }
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -740,6 +741,19 @@
         <div style="margin-left:auto; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
             <a href="/teacher" style="background:rgba(255,255,255,0.2); color:#fff; padding:5px 14px; border-radius:20px; text-decoration:none; font-size:0.82rem; font-weight:600; display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(255,255,255,0.3); transition:all 0.2s;"><i class="fas fa-chalkboard-teacher"></i> Teacher Login</a>
             <a href="/admin" style="background:rgba(255,255,255,0.2); color:#fff; padding:5px 14px; border-radius:20px; text-decoration:none; font-size:0.82rem; font-weight:600; display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(255,255,255,0.3); transition:all 0.2s;"><i class="fas fa-user-shield"></i> Admin</a>
+            <div class="lang-selector-top" style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.22); padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.35);">
+                <i class="fas fa-globe" style="font-size:0.85rem; color:#fff;"></i>
+                <select id="studentLangSelect" onchange="switchStudentLang(this.value)" style="background:transparent; color:#fff; border:none; font-size:0.82rem; font-weight:600; cursor:pointer; outline:none; font-family:'Poppins',sans-serif;">
+                    <option value="en" style="color:#1e293b;" {% if active_language=='en' %}selected{% endif %}>English</option>
+                    <option value="hi" style="color:#1e293b;" {% if active_language=='hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+                    <option value="mr" style="color:#1e293b;" {% if active_language=='mr' %}selected{% endif %}>मराठी (Marathi)</option>
+                    <option value="ta" style="color:#1e293b;" {% if active_language=='ta' %}selected{% endif %}>தமிழ் (Tamil)</option>
+                    <option value="te" style="color:#1e293b;" {% if active_language=='te' %}selected{% endif %}>తెలుగు (Telugu)</option>
+                    <option value="bn" style="color:#1e293b;" {% if active_language=='bn' %}selected{% endif %}>বাংলা (Bengali)</option>
+                    <option value="gu" style="color:#1e293b;" {% if active_language=='gu' %}selected{% endif %}>ગુજરાતી (Gujarati)</option>
+                    <option value="kn" style="color:#1e293b;" {% if active_language=='kn' %}selected{% endif %}>ಕನ್ನಡ (Kannada)</option>
+                </select>
+            </div>
             <div class="clock"><i class="far fa-clock"></i> <span id="lc">--:--:--</span></div>
         </div>
     </div>
@@ -848,8 +862,8 @@
             <!-- ═══ RIGHT : LOGIN FORM ═══ -->
             <div class="auth-form">
                 <div class="lbox-top">
-                    <h2>Student Login</h2>
-                    <p class="sub">Enter your details to begin the exam</p>
+                    <h2>{{ t('login_title', 'Student Login') }}</h2>
+                    <p class="sub">{{ t('login_subtitle', 'Enter your details to begin the exam') }}</p>
                 </div>
 
                 <div class="dt-pill"><i class="far fa-calendar-alt"></i> <span id="ds">--</span></div>
@@ -858,18 +872,22 @@
                 <div class="err-box"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
                 {% endif %}
 
-                <form action="/student_login" method="POST">
+                <form action="/student_login" method="POST" id="studentLoginForm">
                     <div class="fg">
-                        <label><i class="fas fa-user"></i>Full Name</label>
-                        <input type="text" name="name" placeholder="Your full name" required autocomplete="name" />
+                        <label><i class="fas fa-id-card"></i>{{ t('label_admission_no', 'Admission Number') }}</label>
+                        <div style="position:relative;">
+                            <input type="text" name="student_id" id="studentIdInput" placeholder="{{ t('placeholder_admission', 'Enter Admission Number e.g. 4729') }}" required autocomplete="off" autofocus />
+                            <span id="admSpinner" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); display:none; color:#4f46e5; pointer-events:none; font-size:1rem;"><i class="fas fa-spinner fa-spin"></i></span>
+                        </div>
+                        <div id="admStatusNotice" style="display:none; font-size:0.8rem; margin-top:5px; transition:all 0.3s; line-height:1.4;"></div>
                     </div>
                     <div class="fg">
-                        <label><i class="fas fa-id-card"></i>Admission Number</label>
-                        <input type="text" name="student_id" placeholder="e.g. 2024001" required />
+                        <label><i class="fas fa-user"></i>{{ t('label_name', 'Full Name') }}</label>
+                        <input type="text" name="name" id="studentNameInput" placeholder="{{ t('placeholder_name', 'Your full name') }}" required autocomplete="name" />
                     </div>
                     <div class="fg-row">
                         <div class="fg">
-                            <label><i class="fas fa-graduation-cap"></i>Class</label>
+                            <label><i class="fas fa-graduation-cap"></i>{{ t('label_class', 'Class') }}</label>
                             <select name="class" id="classSelect" required>
                                 <option value="">Class</option>
                                 {% for cls in class_subject_map.keys() %}
@@ -878,8 +896,8 @@
                             </select>
                         </div>
                         <div class="fg">
-                            <label><i class="fas fa-layer-group"></i>Section</label>
-                            <select name="section" id="sectionSelect">
+                            <label><i class="fas fa-layer-group"></i>{{ t('label_section', 'Section') }}</label>
+                            <select name="section" id="sectionSelect" required>
                                 <option value="">Select Section</option>
                                 <option value="A">A</option>
                                 <option value="B">B</option>
@@ -889,25 +907,25 @@
                         </div>
                     </div>
                     <div class="fg">
-                        <label><i class="fas fa-book"></i>Subject</label>
+                        <label><i class="fas fa-book"></i>{{ t('label_subject', 'Subject') }}</label>
                         <select name="subject" id="subjectSelect" required>
                             <option value="">Select Subject</option>
                         </select>
                     </div>
                     <div class="fg">
-                        <label><i class="fas fa-file-alt"></i>Test Number <span style="font-size:.7rem;color:#aaa;">(optional)</span></label>
-                        <select name="test_no" id="testNoSelect">
-                            <option value="">All Tests / Latest</option>
+                        <label><i class="fas fa-file-alt"></i>{{ t('label_test_no', 'Test Number') }} <span style="font-size:.72rem;color:#4f46e5;font-weight:600;">({{ t('scheduled_only', 'Scheduled Tests Only') }})</span></label>
+                        <select name="test_no" id="testNoSelect" required>
+                            <option value="">Select Scheduled Test</option>
                         </select>
                     </div>
 
-                    <button type="submit" class="login-btn">
-                        <i class="fas fa-sign-in-alt"></i>&nbsp; Login &amp; Start
+                    <button type="submit" class="login-btn" id="loginSubmitBtn">
+                        <i class="fas fa-sign-in-alt"></i>&nbsp; {{ t('btn_login', 'Login & Start') }}
                     </button>
                 </form>
 
         <div class="footer-note" style="text-align:center; margin-top:20px; padding-top:15px; border-top:1px dashed rgba(0,0,0,0.1); font-size:0.85rem; color:#666;">
-    <i class="fas fa-shield-alt" style="color:#1a237e; margin-right:5px;"></i> RRB CBT &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
+    <i class="fas fa-shield-alt" style="color:#1a237e; margin-right:5px;"></i> RRB CBT &nbsp;·&nbsp; {{ developer_credit }}
 </div>
 
                 <div class="portal-links">
@@ -940,10 +958,13 @@
 
         async function loadTestNumbers(cls, subj) {
             const sec = sectionEl ? sectionEl.value : '';
-            testNoEl.innerHTML = '<option value="">All Tests / Latest</option>';
-            if (!cls || !subj) return;
+            testNoEl.innerHTML = '<option value="">Checking scheduled tests...</option>';
+            if (!cls || !subj) {
+                testNoEl.innerHTML = '<option value="">Select Scheduled Test</option>';
+                return;
+            }
             try {
-                const res = await fetch(`/api/test_numbers?class=${encodeURIComponent(cls)}&section=${encodeURIComponent(sec)}&subject=${encodeURIComponent(subj)}`);
+                const res = await fetch(`/api/test_numbers?class=${encodeURIComponent(cls)}&section=${encodeURIComponent(sec)}&subject=${encodeURIComponent(subj)}&for_student=1`);
                 const data = await res.json();
                 const details = data.test_details || [];
                 let firstSelectable = null;
@@ -976,9 +997,25 @@
                         testNoEl.insertBefore(defaultOpt, testNoEl.firstChild);
                     }
                 } else {
-                    testNoEl.innerHTML = '<option value="">No tests found</option>';
+                    testNoEl.innerHTML = '<option value="" disabled selected>No tests scheduled for this subject</option>';
                 }
-            } catch (e) { /* silent fail */ }
+            } catch (e) {
+                testNoEl.innerHTML = '<option value="" disabled selected>Error loading test schedule</option>';
+            }
+        }
+
+        // Prevent submission if no valid scheduled test is available
+        const loginForm = document.getElementById('studentLoginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', function(e) {
+                const selectedVal = (testNoEl ? testNoEl.value : '').trim();
+                const selectedOpt = testNoEl && testNoEl.selectedOptions ? testNoEl.selectedOptions[0] : null;
+                if (!selectedVal || (selectedOpt && selectedOpt.disabled)) {
+                    e.preventDefault();
+                    alert('No active scheduled test is available for the selected Class, Section, and Subject.\n\nOnly scheduled tests can be taken.');
+                    return false;
+                }
+            });
         }
 
         if (sectionEl) {
@@ -1015,6 +1052,141 @@
         if (classes.length === 1) {
             classEl.value = classes[0];
             classEl.dispatchEvent(new Event('change'));
+        }
+
+        // ─── ADMISSION NUMBER INSTANT AUTO-FILL ───────────────────────
+        const admInput    = document.getElementById('studentIdInput');
+        const nameInput   = document.getElementById('studentNameInput');
+        const admSpinner  = document.getElementById('admSpinner');
+        const admNotice   = document.getElementById('admStatusNotice');
+        let lookupTimer   = null;
+        let lastLookedUp  = '';
+
+        function highlightAutofill(el) {
+            if (!el) return;
+            el.style.borderColor = '#22c55e';
+            el.style.backgroundColor = '#f0fdf4';
+            setTimeout(() => {
+                el.style.borderColor = '';
+                el.style.backgroundColor = '';
+            }, 2500);
+        }
+
+        async function performStudentLookup(val) {
+            val = (val || '').trim();
+            if (!val) {
+                lastLookedUp = '';
+                if (admNotice) { admNotice.style.display = 'none'; admNotice.innerHTML = ''; }
+                return;
+            }
+            if (val === lastLookedUp) return;
+            lastLookedUp = val;
+
+            if (admSpinner) admSpinner.style.display = 'block';
+
+            try {
+                const res = await fetch(`/api/student_lookup?admission_no=${encodeURIComponent(val)}`);
+                const data = await res.json();
+
+                if (admSpinner) admSpinner.style.display = 'none';
+
+                if (data.status === 'success' && data.found && data.student) {
+                    const st = data.student;
+
+                    // 1. Auto-fill Name
+                    if (st.name) {
+                        nameInput.value = st.name;
+                        highlightAutofill(nameInput);
+                    }
+
+                    // 2. Auto-select Class
+                    if (st.class && classEl) {
+                        let opt = classEl.querySelector(`option[value="${st.class}"]`);
+                        if (!opt) {
+                            opt = document.createElement('option');
+                            opt.value = st.class;
+                            opt.textContent = st.class;
+                            classEl.appendChild(opt);
+                        }
+                        classEl.value = st.class;
+                        classEl.dispatchEvent(new Event('change'));
+                        highlightAutofill(classEl);
+                    }
+
+                    // 3. Auto-select Section
+                    if (st.section && sectionEl) {
+                        const sec = st.section.toUpperCase();
+                        let sOpt = sectionEl.querySelector(`option[value="${sec}"]`);
+                        if (!sOpt) {
+                            sOpt = document.createElement('option');
+                            sOpt.value = sec;
+                            sOpt.textContent = sec;
+                            sectionEl.appendChild(sOpt);
+                        }
+                        sectionEl.value = sec;
+                        sectionEl.dispatchEvent(new Event('change'));
+                        highlightAutofill(sectionEl);
+                    }
+
+                    // 4. Visual Verification Notice
+                    if (admNotice) {
+                        admNotice.style.display = 'block';
+                        admNotice.innerHTML = `<i class="fas fa-check-circle" style="color:#16a34a;"></i> <span style="color:#15803d; font-weight:600;">Verified: ${st.name}</span> <span style="color:#475569;">(Class ${st.class}-${st.section || 'A'}${st.house ? ' &bull; ' + st.house + ' House' : ''})</span>`;
+                    }
+
+                    // Focus on subject dropdown so student can proceed smoothly
+                    if (subjectEl) {
+                        setTimeout(() => subjectEl.focus(), 150);
+                    }
+                } else {
+                    // Not found in registry — allow manual entry
+                    if (admNotice) {
+                        admNotice.style.display = 'block';
+                        admNotice.innerHTML = `<i class="fas fa-info-circle" style="color:#64748b;"></i> <span style="color:#64748b;">Admission No not in pre-registered list &mdash; please fill details manually</span>`;
+                    }
+                }
+            } catch (err) {
+                if (admSpinner) admSpinner.style.display = 'none';
+                console.error('Student lookup error:', err);
+            }
+        }
+
+        if (admInput) {
+            admInput.addEventListener('input', function() {
+                clearTimeout(lookupTimer);
+                const v = this.value.trim();
+                if (!v) {
+                    lastLookedUp = '';
+                    if (admNotice) { admNotice.style.display = 'none'; admNotice.innerHTML = ''; }
+                    return;
+                }
+                lookupTimer = setTimeout(() => performStudentLookup(v), 250);
+            });
+
+            admInput.addEventListener('blur', function() {
+                clearTimeout(lookupTimer);
+                if (this.value.trim() && this.value.trim() !== lastLookedUp) {
+                    performStudentLookup(this.value.trim());
+                }
+            });
+
+            // If browser autofilled admission number on page load
+            if (admInput.value.trim()) {
+                setTimeout(() => performStudentLookup(admInput.value.trim()), 200);
+            }
+        }
+
+        async function switchStudentLang(lang) {
+            try {
+                await fetch('/api/set_language', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({lang_code: lang})
+                });
+                location.reload();
+            } catch(e) {
+                console.error('Lang switch error:', e);
+            }
         }
     </script>
 
