@@ -337,6 +337,7 @@
             .btn{font-size:0.7rem;padding:4px 12px;}
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -467,7 +468,7 @@
 
     
 <footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
+    {{ developer_credit }}
 </footer>
 </div>
 
@@ -569,7 +570,20 @@
             tbody.innerHTML = '';
             results.forEach(r => {
                 const key = `${r.class}_${r.subject}`;
-                const maxMarks = r.total_questions || totalQuestionsMap[key] || 0;
+                let maxMarks = r.total_questions || totalQuestionsMap[key] || 0;
+                let breakdownHtml = '';
+                if (r.section_breakdown) {
+                    try {
+                        const bd = typeof r.section_breakdown === 'string' ? JSON.parse(r.section_breakdown) : r.section_breakdown;
+                        if (Array.isArray(bd) && bd.length > 0) {
+                            const bdMax = bd.reduce((acc, s) => acc + (s.max_marks || 0), 0);
+                            if (bdMax > 0) maxMarks = bdMax;
+                            breakdownHtml = '<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:4px;">' +
+                                bd.map(s => `<span style="background:#e8eaf6;color:#1a237e;border:1px solid rgba(26,35,126,0.15);padding:1px 6px;border-radius:8px;font-size:0.68rem;font-weight:600;" title="${s.subject || s.section_name}">${s.section_name}: ${s.marks_obtained}/${s.max_marks}</span>`).join('') +
+                                '</div>';
+                        }
+                    } catch(e) {}
+                }
                 const pct = r.percentage !== undefined && r.percentage !== null ? Number(r.percentage).toFixed(1) : (maxMarks > 0 ? ((r.score / maxMarks) * 100).toFixed(1) : '0.0');
                 tbody.innerHTML += `<tr>
                     <td><code style="background:#f5f5f5;padding:2px 8px;border-radius:4px;font-size:0.78rem;">${r.student_id}</code></td>
@@ -578,7 +592,7 @@
                     <td>${r.section || '—'}</td>
                     <td><span class="badge">${r.subject}</span></td>
                     <td>${r.chapter || '—'}</td>
-                    <td><span class="score-badge">${r.score} / ${maxMarks}</span></td>
+                    <td><span class="score-badge">${r.score} / ${maxMarks}</span>${breakdownHtml}</td>
                     <td><span class="percentage-badge">${pct}%</span></td>
                     <td><a href="/admin/student/responses/${r.student_id}" class="view-btn" target="_blank"><i class="fas fa-external-link-alt"></i> View</a></td>
                 </tr>`;
