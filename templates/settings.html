@@ -2,470 +2,1688 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Branding Settings - RRB CBT</title>
+    <title>Branding &amp; Theme Settings - RRB CBT</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:'Poppins',sans-serif;background:#f0f4f8;min-height:100vh;}
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #f0f4f8; min-height: 100vh; color: #1e293b; }
+
         /* ─── TOP BAR ────────────────────────────────────────────────────── */
-        .topbar{
-            background:linear-gradient(90deg,#1a237e,#3949ab);
-            color:#fff;
-            padding:14px 28px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            flex-wrap:wrap;
-            gap:10px;
-            box-shadow:0 4px 20px rgba(0,0,0,0.15);
-            position:sticky;
-            top:0;
-            z-index:100;
+        .topbar {
+            background: linear-gradient(90deg, #1a237e, #3949ab);
+            color: #fff;
+            padding: 14px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .topbar h1{font-size:1.3rem;font-weight:600;display:flex;align-items:center;gap:10px;}
-        .topbar h1 i{color:#667eea;}
-        .topbar a{
-            color:#fff;
-            text-decoration:none;
-            background:rgba(255,255,255,0.15);
-            padding:8px 20px;
-            border-radius:25px;
-            font-size:0.85rem;
-            transition:0.3s;
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            border:1px solid rgba(255,255,255,0.1);
+        .topbar h1 { font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .topbar h1 i { color: #818cf8; }
+        .topbar a {
+            color: #fff;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
-        .topbar a:hover{
-            background:rgba(255,255,255,0.25);
-            transform:translateY(-2px);
+        .topbar a:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
         }
-        
+
         /* ─── MARQUEE ────────────────────────────────────────────────────── */
-        .marquee-container{
-            background:rgba(255,255,255,0.92);
-            backdrop-filter:blur(8px);
-            padding:10px 20px;
-            max-width:900px;
-            margin:16px auto 10px;
-            border-radius:50px;
-            box-shadow:0 4px 20px rgba(0,0,0,0.06);
-            border-left:4px solid #3949ab;
+        .marquee-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            padding: 9px 20px;
+            max-width: 960px;
+            margin: 16px auto 8px;
+            border-radius: 50px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            border-left: 4px solid #3949ab;
         }
-        .marquee-container marquee{font-size:0.9rem;color:#1a237e;font-weight:500;}
-        .marquee-container marquee i{margin:0 12px;color:#667eea;}
-        
-        .container{max-width:900px;margin:20px auto;padding:0 20px;}
-        
-        /* ─── CARDS ────────────────────────────────────────────────────── */
-        .card{
-            background:rgba(255,255,255,0.95);
-            backdrop-filter:blur(10px);
-            padding:28px 30px;
-            border-radius:16px;
-            box-shadow:0 4px 16px rgba(0,0,0,0.06);
-            border:1px solid rgba(26,35,126,0.08);
-            margin-bottom:24px;
-            transition:0.3s;
-            position:relative;
-            overflow:hidden;
+        .marquee-container marquee { font-size: 0.85rem; color: #1a237e; font-weight: 500; }
+        .marquee-container marquee i { margin: 0 10px; color: #6366f1; }
+
+        .container { max-width: 960px; margin: 16px auto 36px; padding: 0 16px; }
+
+        /* ─── CARDS ─────────────────────────────────────────────────────── */
+        .settings-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 22px;
+            overflow: hidden;
+            transition: box-shadow 0.25s ease;
         }
-        .card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);}
-        .card::before{
-            content:'';
-            position:absolute;
-            top:0;left:0;
-            width:100%;
-            height:4px;
-            background:linear-gradient(90deg,#1a237e,#667eea,#1a237e);
-            background-size:200% auto;
-            animation:shimmer 2.5s linear infinite;
+        .settings-card:hover { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08); }
+
+        .card-header-bar {
+            padding: 16px 24px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
         }
-        @keyframes shimmer{
-            0%{background-position:0% center;}
-            100%{background-position:200% center;}
+        .card-header-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #1a237e;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        
-        .card-header{
-            color:#1a237e;
-            font-size:1.2rem;
-            font-weight:600;
-            display:flex;
-            align-items:center;
-            gap:12px;
-            border-bottom:2px dashed #e8eaf6;
-            padding-bottom:14px;
-            margin-bottom:22px;
+        .card-header-title i { color: #3949ab; font-size: 1.15rem; }
+        .card-subtitle {
+            font-size: 0.82rem;
+            color: #64748b;
+            margin-top: 3px;
+            font-weight: 400;
         }
-        .card-header i{color:#3949ab;font-size:1.4rem;}
-        
-        /* ─── FORM ────────────────────────────────────────────────────── */
-        .form-group{margin-bottom:22px;}
-        label{
-            font-weight:600;
-            color:#1a237e;
-            display:block;
-            margin-bottom:6px;
-            font-size:0.9rem;
+        .card-body { padding: 22px 24px; }
+
+        /* ─── FORM CONTROLS ─────────────────────────────────────────────── */
+        .form-group { margin-bottom: 18px; }
+        label {
+            font-weight: 600;
+            color: #334155;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.88rem;
         }
-        label i{color:#3949ab;margin-right:8px;width:20px;}
-        input[type="text"], input[type="number"]{
-            width:100%;
-            padding:12px 18px;
-            border:2px solid #e0e0e0;
-            border-radius:10px;
-            font-size:0.95rem;
-            transition:all 0.3s;
-            font-family:'Poppins',sans-serif;
-            background:#fafafa;
+        label i { color: #4f46e5; margin-right: 6px; width: 16px; }
+        .field-hint {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 400;
+            margin-top: 4px;
+            display: block;
         }
-        input[type="text"]:focus, input[type="number"]:focus{
-            border-color:#3949ab;
-            box-shadow:0 0 0 3px rgba(57,73,171,0.12);
-            outline:none;
-            background:#fff;
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            transition: all 0.2s ease;
+            font-family: 'Poppins', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
         }
-        .form-row{
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:16px;
+        input[type="text"]:focus, input[type="number"]:focus, select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+            outline: none;
+            background: #ffffff;
         }
-        
-        /* ─── FILE UPLOAD ────────────────────────────────────────────── */
-        .file-upload-area{
-            border:2px dashed #c5cae9;
-            border-radius:12px;
-            padding:24px;
-            text-align:center;
-            background:#f5f7fa;
-            transition:all 0.3s;
-            cursor:pointer;
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
         }
-        .file-upload-area:hover{
-            border-color:#3949ab;
-            background:#e8eaf6;
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
         }
-        .file-upload-area i{
-            font-size:2.8rem;
-            color:#3949ab;
-            margin-bottom:10px;
-            display:block;
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 16px;
         }
-        .file-upload-area p{color:#666;font-size:0.9rem;margin-bottom:8px;}
-        .file-upload-area input[type="file"]{
-            display:block;
-            margin:8px auto;
-            padding:8px;
-            font-family:'Poppins',sans-serif;
-            font-size:0.85rem;
+
+        /* ─── THEME CATEGORY TABS ───────────────────────────────────────── */
+        .theme-tab-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 12px 18px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            overflow-x: auto;
         }
-        .file-upload-area small{
-            color:#999;
-            font-size:0.75rem;
-            display:block;
-            margin-top:6px;
+        .theme-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 15px;
+            border: 1.5px solid transparent;
+            border-radius: 30px;
+            background: transparent;
+            color: #64748b;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.22s ease;
+            white-space: nowrap;
         }
-        
-        /* ─── PREVIEW ────────────────────────────────────────────────── */
-        .preview-section{
-            background:#e8eaf6;
-            padding:20px 24px;
-            border-radius:12px;
-            border:1px solid #c5cae9;
-            margin-top:20px;
+        .theme-tab:hover {
+            background: #e0e7ff;
+            color: #4f46e5;
+            border-color: #c7d2fe;
         }
-        .preview-title{
-            font-size:0.85rem;
-            font-weight:600;
-            color:#1a237e;
-            margin-bottom:14px;
-            display:flex;
-            align-items:center;
-            gap:8px;
+        .theme-tab.active {
+            background: linear-gradient(135deg, #1a237e, #4f46e5);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 3px 10px rgba(79,70,229,0.3);
         }
-        .preview-title i{color:#3949ab;}
-        .preview-header{
-            display:flex;
-            align-items:center;
-            gap:24px;
-            justify-content:center;
-            flex-wrap:wrap;
+        .theme-tab i { font-size: 0.82rem; }
+
+        /* ─── THEME PANELS ──────────────────────────────────────────────── */
+        .theme-panel {
+            display: none;
+            animation: fadeSlideIn 0.28s ease;
         }
-        .preview-logo{
-            max-width:120px;
-            max-height:80px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
+        .theme-panel.active { display: block; }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-        .preview-logo img{
-            max-width:100%;
-            max-height:80px;
-            object-fit:contain;
-            border-radius:8px;
+
+        /* ─── THEME SECTION HEADER ──────────────────────────────────────── */
+        .theme-section-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+            padding: 14px 18px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
         }
-        .preview-logo .placeholder{
-            font-size:3.5rem;
-            color:#3949ab;
+        .theme-section-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #fff;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
-        .preview-name{
-            font-size:1.6rem;
-            font-weight:700;
-            color:#1a237e;
+        .theme-section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
         }
-        .preview-address{
-            font-size:0.85rem;
-            color:#666;
-            text-align:center;
-            width:100%;
-            margin-top:4px;
+        .theme-section-sub {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 2px;
         }
-        
-        /* ─── BUTTONS ────────────────────────────────────────────────── */
-        .btn-group{
-            display:flex;
-            gap:12px;
-            margin-top:24px;
-            flex-wrap:wrap;
+
+        /* ─── COLOR CARD V2 ─────────────────────────────────────────────── */
+        .color-group { margin-bottom: 16px; }
+        .color-card-v2 {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            overflow: hidden;
+            transition: all 0.22s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
-        .btn{
-            padding:12px 28px;
-            border:none;
-            border-radius:30px;
-            font-weight:600;
-            font-size:0.9rem;
-            cursor:pointer;
-            transition:all 0.3s;
-            display:inline-flex;
-            align-items:center;
-            gap:8px;
-            font-family:'Poppins',sans-serif;
+        .color-card-v2:hover {
+            border-color: #c7d2fe;
+            box-shadow: 0 4px 16px rgba(79,70,229,0.1);
+            transform: translateY(-2px);
         }
-        .btn-primary{
-            background:linear-gradient(135deg,#1a237e,#3949ab);
-            color:#fff;
+        .color-preview-bar {
+            height: 8px;
+            width: 100%;
+            transition: background 0.2s ease;
         }
-        .btn-primary:hover{
-            transform:translateY(-2px);
-            box-shadow:0 6px 16px rgba(26,35,126,0.3);
+        .color-card-inner {
+            padding: 14px 16px;
         }
-        .btn-secondary{
-            background:#e8eaf6;
-            color:#1a237e;
+        .color-card-v2 label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .btn-secondary:hover{
-            background:#c5cae9;
-            transform:translateY(-2px);
+        .color-input-row-v2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
         }
-        .btn-success{
-            background:linear-gradient(135deg,#1b5e20,#2e7d32);
-            color:#fff;
+        .color-input-row-v2 input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 52px;
+            height: 42px;
+            border-radius: 10px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+            flex-shrink: 0;
         }
-        .btn-success:hover{
-            transform:translateY(-2px);
-            box-shadow:0 6px 16px rgba(27,94,32,0.3);
+        .color-input-row-v2 input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-input-row-v2 input[type="color"]::-webkit-color-swatch {
+            border: 2.5px solid #e2e8f0;
+            border-radius: 10px;
         }
-        
-        /* ─── INFO CARD ────────────────────────────────────────────────── */
-        .info-card{
-            background:#e8eaf6;
-            border:1px solid #c5cae9;
-            border-radius:12px;
-            padding:20px 24px;
+        .color-hex-v2 {
+            font-family: 'Courier New', monospace;
+            font-size: 0.88rem;
+            color: #1e293b;
+            background: #f1f5f9;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            flex: 1;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: background 0.2s;
         }
-        .info-card h3{
-            color:#1a237e;
-            font-size:1rem;
-            margin-bottom:10px;
-            display:flex;
-            align-items:center;
-            gap:10px;
+
+        /* ─── MINI PALETTE IN HEADER ────────────────────────────────────── */
+        .theme-palette-preview {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #f1f5f9;
+            border-radius: 30px;
+            padding: 5px 10px;
+            border: 1px solid #e2e8f0;
         }
-        .info-card h3 i{color:#3949ab;}
-        .info-card p{
-            color:#555;
-            font-size:0.85rem;
-            margin-bottom:6px;
-            display:flex;
-            align-items:center;
-            gap:8px;
+        .mini-swatch {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.8);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+            display: inline-block;
+            transition: transform 0.2s, width 0.2s;
         }
-        .info-card p i{color:#3949ab;width:20px;}
-        
-        /* ─── RESPONSIVE ────────────────────────────────────────────────── */
-        @media(max-width:768px){
-            .topbar{flex-direction:column;text-align:center;padding:12px 16px;}
-            .topbar a{font-size:0.75rem;padding:6px 14px;}
-            .container{padding:0 12px;}
-            .card{padding:18px 16px;}
-            .form-row{grid-template-columns:1fr;}
-            .preview-header{flex-direction:column;text-align:center;}
-            .preview-name{font-size:1.2rem;}
-            .marquee-container{padding:8px 14px;margin:10px auto;}
-            .marquee-container marquee{font-size:0.75rem;}
+        .mini-swatch:hover { transform: scale(1.3); width: 24px; height: 24px; }
+
+        /* ─── LIVE PREVIEW BOX ──────────────────────────────────────────── */
+        .btn-live-preview-box {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 18px;
+            margin-top: 16px;
         }
-        @media(max-width:480px){
-            .btn-group{flex-direction:column;}
-            .btn{width:100%;justify-content:center;}
-            .card-header{font-size:1rem;}
-            .preview-logo{max-width:80px;max-height:60px;}
-            .preview-name{font-size:1rem;}
+
+
+        /* ─── COLOR PICKER ITEM ─────────────────────────────────────────── */
+        .color-card {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 14px;
+            transition: border-color 0.2s;
+        }
+        .color-card:hover { border-color: #cbd5e1; }
+        .color-card label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .color-input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 44px;
+            height: 38px;
+            border-radius: 8px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+            flex-shrink: 0;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch {
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+        }
+        .color-hex-label {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #475569;
+            background: #ffffff;
+            padding: 7px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            flex: 1;
+            text-align: center;
+        }
+
+        /* ─── LOGO UPLOAD CONTROL ───────────────────────────────────────── */
+        .logo-upload-container {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 18px;
+            align-items: center;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 18px;
+        }
+        .current-logo-box {
+            width: 130px;
+            height: 100px;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 6px;
+        }
+        .current-logo-box img {
+            max-width: 100%;
+            max-height: 72px;
+            object-fit: contain;
+        }
+        .current-logo-box .placeholder-logo {
+            font-size: 2.5rem;
+            color: #94a3b8;
+        }
+        .current-logo-badge {
+            position: absolute;
+            bottom: 2px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #475569;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .logo-dropzone {
+            border: 2px dashed #818cf8;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            background: #f5f7ff;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .logo-dropzone:hover {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+        .logo-dropzone i {
+            font-size: 2rem;
+            color: #4f46e5;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .logo-dropzone p {
+            font-size: 0.88rem;
+            color: #334155;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .logo-dropzone small {
+            font-size: 0.74rem;
+            color: #64748b;
+            display: block;
+        }
+
+        /* ─── LIVE PREVIEW BANNER ───────────────────────────────────────── */
+        .preview-box {
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .preview-box-logo {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+        }
+        .preview-box-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .preview-box-content { flex: 1; }
+        .preview-box-name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1a237e;
+            line-height: 1.2;
+        }
+        .preview-box-address {
+            font-size: 0.82rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .preview-box-tag {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #3949ab;
+            background: #e0e7ff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        /* ─── BUTTONS ───────────────────────────────────────────────────── */
+        .btn-action-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .btn {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Poppins', sans-serif;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #1a237e, #3949ab);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(26, 35, 126, 0.2);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(26, 35, 126, 0.3);
+        }
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+        .btn-secondary:hover {
+            background: #cbd5e1;
+            transform: translateY(-1px);
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(220, 38, 38, 0.3);
+        }
+        .status-msg {
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ── CIRCULAR PROGRESS OVERLAY ────────────────────────────────────── */
+        .c-modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .c-modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .c-modal-card {
+            background: #ffffff; border-radius: 24px; padding: 32px 40px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid #e2e8f0; width: 350px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .c-progress-wrapper { position: relative; width: 140px; height: 140px; margin-bottom: 16px; }
+        .c-progress-ring-fg { transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset 0.3s ease; stroke-linecap: round; }
+        .c-logo-center {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 76px; height: 76px; border-radius: 50%; background: #f8fafc;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 14px rgba(79,70,229,0.18); border: 1px solid #e0e7ff;
+        }
+        .rrb-pulse-logo {
+            max-width: 50px; max-height: 50px; object-fit: contain;
+            animation: rrbPulse 1.8s infinite ease-in-out;
+        }
+        @keyframes rrbPulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 3px rgba(79, 70, 229, 0.3)); }
+            50% { transform: scale(1.12); filter: drop-shadow(0 0 14px rgba(79, 70, 229, 0.6)); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 3px rgba(79, 70, 229, 0.3)); }
+        }
+        .c-percentage { font-size: 2.2rem; font-weight: 800; color: #4f46e5; margin-bottom: 2px; line-height: 1; }
+        .c-status-title { font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+        .c-status-sub { font-size: 0.78rem; color: #64748b; font-weight: 500; }
+
+        /* ─── RESPONSIVE BREAKPOINTS ────────────────────────────────────── */
+        @media(max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .grid-3 { grid-template-columns: 1fr 1fr; }
+            .grid-4 { grid-template-columns: 1fr 1fr; }
+            .logo-upload-container { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+            .topbar { padding: 12px 16px; flex-direction: column; text-align: center; }
+            .btn-action-row { flex-direction: column; align-items: stretch; }
+            .btn { width: 100%; justify-content: center; }
+            .theme-tab { font-size: 0.74rem; padding: 7px 12px; }
+            .card-header-bar { flex-direction: column; align-items: flex-start; }
+            .theme-section-header { flex-wrap: wrap; }
+        }
+        @media(max-width: 480px) {
+            .grid-3 { grid-template-columns: 1fr; }
+            .grid-4 { grid-template-columns: 1fr; }
+            .card-body { padding: 16px; }
+            .theme-tab { font-size: 0.7rem; padding: 6px 10px; }
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
     <!-- ─── TOP BAR ─────────────────────────────────────────────────────── -->
     <div class="topbar">
-        <h1><i class="fas fa-paint-brush"></i> Branding Settings</h1>
+        <h1><i class="fas fa-paint-brush"></i> Branding &amp; Theme Settings</h1>
         <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
     </div>
 
     <!-- ─── MARQUEE ────────────────────────────────────────────────────── -->
     <div class="marquee-container">
         <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();">
-            <i class="fas fa-circle"></i> Customize your school branding for question papers
-            <i class="fas fa-image"></i> Upload a logo (PNG/JPG)
-            <i class="fas fa-font"></i> Set your school name
-            <i class="fas fa-print"></i> These will appear on generated PDFs
+            <i class="fas fa-school"></i> Configure School Name, Address &amp; Official Logo
+            <i class="fas fa-palette"></i> Customize Theme Colors &amp; Web/Export Fonts
+            <i class="fas fa-language"></i> Instant AI Translation for Student Pages
+            <i class="fas fa-sync-alt"></i> One-Click Factory Reset Available
         </marquee>
     </div>
 
     <div class="container">
 
-        <!-- ─── MAIN BRANDING CARD ──────────────────────────────────────── -->
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-school"></i> School Branding
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- CARD 1: SCHOOL BRANDING                                         -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <div class="settings-card">
+            <div class="card-header-bar">
+                <div>
+                    <div class="card-header-title"><i class="fas fa-school"></i> School Branding &amp; Identity</div>
+                    <div class="card-subtitle">Define the official school name, address, academic session, and logo used across CBT &amp; exported papers.</div>
+                </div>
             </div>
             
-            <form method="POST" enctype="multipart/form-data">
-                
-                <!-- School Name -->
-                <div class="form-group">
-                    <label for="school_name"><i class="fas fa-heading"></i> School Name</label>
-                    <input type="text" id="school_name" name="school_name" value="{{ school_name }}" placeholder="e.g., RRB Group of Schools" required>
-                </div>
-
-                <div class="form-row">
-                    <!-- School Address -->
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" action="/admin/settings">
+                    <!-- School Name -->
                     <div class="form-group">
-                        <label for="school_address"><i class="fas fa-map-marker-alt"></i> School Address</label>
-                        <input type="text" id="school_address" name="school_address" value="{{ school_address }}" placeholder="Full address">
+                        <label for="school_name"><i class="fas fa-heading"></i> School Name</label>
+                        <input type="text" id="school_name" name="school_name" value="{{ school_name }}" placeholder="e.g., RRB Group of Schools" required>
+                        <span class="field-hint">Appears in page titles, student headers, and generated PDF/Word test paper letterheads.</span>
                     </div>
 
-                    <!-- Academic Session -->
+                    <div class="grid-2">
+                        <!-- School Address -->
+                        <div class="form-group">
+                            <label for="school_address"><i class="fas fa-map-marker-alt"></i> School Address</label>
+                            <input type="text" id="school_address" name="school_address" value="{{ school_address }}" placeholder="e.g., ADA Naini Prayagraj">
+                            <span class="field-hint">Printed under the school name on official question papers.</span>
+                        </div>
+
+                        <!-- Academic Session -->
+                        <div class="form-group">
+                            <label for="academic_session"><i class="fas fa-calendar-alt"></i> Academic Session</label>
+                            <input type="text" id="academic_session" name="academic_session" value="{{ academic_session }}" placeholder="e.g., 2026-27">
+                            <span class="field-hint">Displayed on exam headers and evaluation report covers.</span>
+                        </div>
+                    </div>
+
+                    <!-- Logo Upload Control -->
                     <div class="form-group">
-                        <label for="academic_session"><i class="fas fa-calendar-alt"></i> Academic Session</label>
-                        <input type="text" id="academic_session" name="academic_session" value="{{ academic_session }}" placeholder="e.g., 2024-25">
+                        <label><i class="fas fa-image"></i> Official School Logo</label>
+                        <div class="logo-upload-container">
+                            <div class="current-logo-box" id="previewLogo">
+                                {% if logo_path %}
+                                    <img src="{{ url_for('static', filename=logo_path) }}" alt="Current School Logo">
+                                {% else %}
+                                    <span class="placeholder-logo"><i class="fas fa-school"></i></span>
+                                {% endif %}
+                                <span class="current-logo-badge">Current Logo</span>
+                            </div>
+                            
+                            <div class="logo-dropzone" onclick="document.getElementById('logoInput').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Click to browse or drag and drop a new logo</p>
+                                <small>Supported: PNG, JPG, JPEG, WEBP, GIF &bull; Max file size: 16MB</small>
+                                <input type="file" name="logo" accept="image/*" id="logoInput" style="display:none;">
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Logo Upload -->
-                <div class="form-group">
-                    <label><i class="fas fa-image"></i> School Logo</label>
-                    <div class="file-upload-area" onclick="document.getElementById('logoInput').click()">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <p>Drag &amp; drop or click to upload a logo</p>
-                        <input type="file" name="logo" accept="image/*" id="logoInput" style="display:inline-block;margin:8px auto;">
-                        <small><i class="fas fa-info-circle" style="color:#3949ab;"></i> Supported: PNG, JPG, JPEG, GIF, WEBP &bull; Max 16MB</small>
-                    </div>
-                </div>
-
-                <!-- Live Preview -->
-                <div class="preview-section">
-                    <div class="preview-title">
-                        <i class="fas fa-eye"></i> Live Preview
-                    </div>
-                    <div class="preview-header">
-                        <div class="preview-logo" id="previewLogo">
+                    <!-- Live Header Preview -->
+                    <label style="font-size:0.82rem; color:#64748b;"><i class="fas fa-eye"></i> Live Header Preview (How it appears to students &amp; on printouts)</label>
+                    <div class="preview-box">
+                        <div class="preview-box-logo" id="previewLogoHeader">
                             {% if logo_path %}
-                                <img src="{{ url_for('static', filename=logo_path) }}" alt="School Logo">
+                                <img src="{{ url_for('static', filename=logo_path) }}" alt="Logo">
                             {% else %}
-                                <span class="placeholder"><i class="fas fa-school"></i></span>
+                                <i class="fas fa-graduation-cap" style="font-size:1.4rem;color:#3949ab;"></i>
                             {% endif %}
                         </div>
-                        <div>
-                            <div class="preview-name" id="previewName">{{ school_name }}</div>
-                            <div class="preview-address" id="previewAddress">{{ school_address }}</div>
-                            <div class="preview-address" id="previewSession" style="font-size:0.75rem;color:#999;">{{ academic_session }}</div>
+                        <div class="preview-box-content">
+                            <div class="preview-box-name" id="previewName">{{ school_name }}</div>
+                            <div class="preview-box-address" id="previewAddress">{{ school_address or 'School Address' }}</div>
+                            <span class="preview-box-tag" id="previewSessionTag">Session: <span id="previewSession">{{ academic_session or '2026-27' }}</span></span>
                         </div>
                     </div>
-                </div>
 
-                <!-- Buttons -->
-                <div class="btn-group">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Settings</button>
-                    <a href="/admin/dashboard" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
-                </div>
-
-            </form>
-        </div>
-
-        <!-- ─── INFO CARD ────────────────────────────────────────────────── -->
-        <div class="card" style="padding:20px 24px;">
-            <div class="info-card">
-                <h3><i class="fas fa-info-circle"></i> How it works</h3>
-                <p><i class="fas fa-check-circle"></i> The school name, address, and logo you set here will appear on generated question papers (PDF).</p>
-                <p><i class="fas fa-print"></i> When you generate a question paper from the Questions page, the header will include your branding.</p>
-                <p><i class="fas fa-magic"></i> Changes take effect immediately after saving.</p>
+                    <div class="btn-action-row">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Branding Settings
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
-    
-<footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
-</footer>
-</div>
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- CARD 2: THEME & APPEARANCE (Redesigned with Categories)         -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <div class="settings-card" id="themeCard">
+            <div class="card-header-bar">
+                <div>
+                    <div class="card-header-title"><i class="fas fa-palette"></i> Theme &amp; Visual Appearance</div>
+                    <div class="card-subtitle">Customize every color category — icons, fonts, backgrounds, buttons, links, and more. Changes apply site-wide instantly.</div>
+                </div>
+                <div id="themePreviewBadge" style="display:flex; align-items:center; gap:8px;">
+                    <div class="theme-palette-preview" id="miniPalette">
+                        <span class="mini-swatch" id="ms1" style="background:{{ theme_primary }};"></span>
+                        <span class="mini-swatch" id="ms2" style="background:{{ theme_secondary }};"></span>
+                        <span class="mini-swatch" id="ms3" style="background:{{ theme_accent }};"></span>
+                        <span class="mini-swatch" id="ms4" style="background:{{ theme_btn_bg }};"></span>
+                        <span class="mini-swatch" id="ms5" style="background:{{ theme_page_bg }};"></span>
+                    </div>
+                    <span style="font-size:0.75rem; color:#64748b; font-weight:500;">Live Palette</span>
+                </div>
+            </div>
 
+            <!-- ── CATEGORY TABS ─────────────────────────────────────────── -->
+            <div class="theme-tab-bar">
+                <button class="theme-tab active" data-panel="panel-brand" onclick="switchThemeTab(this, 'panel-brand')">
+                    <i class="fas fa-layer-group"></i> Brand Colors
+                </button>
+                <button class="theme-tab" data-panel="panel-icon" onclick="switchThemeTab(this, 'panel-icon')">
+                    <i class="fas fa-icons"></i> Icon &amp; Accent
+                </button>
+                <button class="theme-tab" data-panel="panel-button" onclick="switchThemeTab(this, 'panel-button')">
+                    <i class="fas fa-mouse-pointer"></i> Button Colors
+                </button>
+                <button class="theme-tab" data-panel="panel-text" onclick="switchThemeTab(this, 'panel-text')">
+                    <i class="fas fa-font"></i> Font &amp; Text
+                </button>
+                <button class="theme-tab" data-panel="panel-bg" onclick="switchThemeTab(this, 'panel-bg')">
+                    <i class="fas fa-fill-drip"></i> Backgrounds
+                </button>
+                <button class="theme-tab" data-panel="panel-link" onclick="switchThemeTab(this, 'panel-link')">
+                    <i class="fas fa-link"></i> Links &amp; Hover
+                </button>
+                <button class="theme-tab" data-panel="panel-status" onclick="switchThemeTab(this, 'panel-status')">
+                    <i class="fas fa-traffic-light"></i> Status Colors
+                </button>
+                <button class="theme-tab" data-panel="panel-typography" onclick="switchThemeTab(this, 'panel-typography')">
+                    <i class="fas fa-text-height"></i> Typography
+                </button>
+            </div>
+
+            <div class="card-body">
+                <form id="themeForm" onsubmit="saveTheme(event)">
+
+                    <!-- ── PANEL: BRAND COLORS ──────────────────────────── -->
+                    <div class="theme-panel active" id="panel-brand">
+                        <div class="theme-section-header">
+                            <div class="theme-section-icon" style="background:linear-gradient(135deg,#1a237e,#3949ab);">
+                                <i class="fas fa-layer-group"></i>
+                            </div>
+                            <div>
+                                <div class="theme-section-title">Brand Colors</div>
+                                <div class="theme-section-sub">Primary &amp; secondary brand palette — used in headers, sidebars, and navigation.</div>
+                            </div>
+                        </div>
+                        <div class="grid-2 color-group">
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_primary" style="background:{{ theme_primary }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-circle-dot"></i> Primary Color</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_primary" name="theme_primary" value="{{ theme_primary }}" oninput="updateHexV2('theme_primary','hex_primary','prev_primary','ms1')">
+                                        <span class="color-hex-v2" id="hex_primary">{{ theme_primary }}</span>
+                                    </div>
+                                    <span class="field-hint">Admin &amp; Teacher headers, topbar, nav items</span>
+                                </div>
+                            </div>
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_secondary" style="background:{{ theme_secondary }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-circle-half-stroke"></i> Secondary Color</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_secondary" name="theme_secondary" value="{{ theme_secondary }}" oninput="updateHexV2('theme_secondary','hex_secondary','prev_secondary','ms2')">
+                                        <span class="color-hex-v2" id="hex_secondary">{{ theme_secondary }}</span>
+                                    </div>
+                                    <span class="field-hint">Sidebar highlights, secondary UI elements, hover gradients</span>
+                                </div>
+                            </div>
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_accent" style="background:{{ theme_accent }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-star"></i> Accent / Highlight Color</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_accent" name="theme_accent" value="{{ theme_accent }}" oninput="updateHexV2('theme_accent','hex_accent','prev_accent','ms3')">
+                                        <span class="color-hex-v2" id="hex_accent">{{ theme_accent }}</span>
+                                    </div>
+                                    <span class="field-hint">Badges, pills, active selection highlights</span>
+                                </div>
+                            </div>
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_student" style="background:{{ theme_student }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-user-graduate"></i> Student Portal Theme</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_student" name="theme_student" value="{{ theme_student }}" oninput="updateHexV2('theme_student','hex_student','prev_student','')">
+                                        <span class="color-hex-v2" id="hex_student">{{ theme_student }}</span>
+                                    </div>
+                                    <span class="field-hint">Student login &amp; exam portal header color</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── PANEL: ICON & ACCENT COLORS ─────────────────── -->
+                    <div class="theme-panel" id="panel-icon">
+                        <div class="theme-section-header">
+                            <div class="theme-section-icon" style="background:linear-gradient(135deg,#4f46e5,#818cf8);">
+                                <i class="fas fa-icons"></i>
+                            </div>
+                            <div>
+                                <div class="theme-section-title">Icon &amp; Accent Colors</div>
+                                <div class="theme-section-sub">Controls the color of icons across the UI — in labels, menus, cards, and dashboard items.</div>
+                            </div>
+                        </div>
+                        <div class="grid-2 color-group">
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_icon_color" style="background:{{ theme_icon_color }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-palette" style="color:{{ theme_icon_color }};"></i> Icon Color</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_icon_color" name="theme_icon_color" value="{{ theme_icon_color }}" oninput="updateHexV2('theme_icon_color','hex_icon_color','prev_icon_color','')">
+                                        <span class="color-hex-v2" id="hex_icon_color">{{ theme_icon_color }}</span>
+                                    </div>
+                                    <span class="field-hint">All <code>label i</code>, menu icons, form field icons site-wide</span>
+                                </div>
+                            </div>
+                            <div class="color-card-v2" style="opacity:0.6; pointer-events:none;">
+                                <div class="color-preview-bar" style="background:linear-gradient(90deg,#4f46e5,#818cf8);"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-info-circle"></i> Icon Color Preview</label>
+                                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;" id="iconColorPreviewRow">
+                                        <i class="fas fa-home" id="prev_icon_demo1" style="font-size:1.4rem; color:{{ theme_icon_color }};"></i>
+                                        <i class="fas fa-cog" id="prev_icon_demo2" style="font-size:1.4rem; color:{{ theme_icon_color }};"></i>
+                                        <i class="fas fa-user" id="prev_icon_demo3" style="font-size:1.4rem; color:{{ theme_icon_color }};"></i>
+                                        <i class="fas fa-bell" id="prev_icon_demo4" style="font-size:1.4rem; color:{{ theme_icon_color }};"></i>
+                                        <i class="fas fa-chart-bar" id="prev_icon_demo5" style="font-size:1.4rem; color:{{ theme_icon_color }};"></i>
+                                        <i class="fas fa-file-alt" id="prev_icon_demo6" style="font-size:1.4rem; color:{{ theme_icon_color }};"></i>
+                                    </div>
+                                    <span class="field-hint" style="margin-top:8px;">Live icon preview — icons update as you change the color above</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── PANEL: BUTTON COLORS ─────────────────────────── -->
+                    <div class="theme-panel" id="panel-button">
+                        <div class="theme-section-header">
+                            <div class="theme-section-icon" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8);">
+                                <i class="fas fa-mouse-pointer"></i>
+                            </div>
+                            <div>
+                                <div class="theme-section-title">Button Colors</div>
+                                <div class="theme-section-sub">Controls primary action button background and text across all forms, dashboards, and modals.</div>
+                            </div>
+                        </div>
+                        <div class="grid-2 color-group">
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_btn_bg" style="background:{{ theme_btn_bg }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-fill-drip"></i> Button Background</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_btn_bg" name="theme_btn_bg" value="{{ theme_btn_bg }}" oninput="updateHexV2('theme_btn_bg','hex_btn_bg','prev_btn_bg','ms4'); updateBtnPreview();">
+                                        <span class="color-hex-v2" id="hex_btn_bg">{{ theme_btn_bg }}</span>
+                                    </div>
+                                    <span class="field-hint">Primary button fill color (Save, Submit, Generate, etc.)</span>
+                                </div>
+                            </div>
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_btn_text" style="background:{{ theme_btn_text }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-font"></i> Button Text Color</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_btn_text" name="theme_btn_text" value="{{ theme_btn_text }}" oninput="updateHexV2('theme_btn_text','hex_btn_text','prev_btn_text',''); updateBtnPreview();">
+                                        <span class="color-hex-v2" id="hex_btn_text">{{ theme_btn_text }}</span>
+                                    </div>
+                                    <span class="field-hint">Text color on primary buttons (use light for dark bg)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Button Live Preview -->
+                        <div class="btn-live-preview-box">
+                            <div style="font-size:0.78rem; font-weight:600; color:#64748b; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;"><i class="fas fa-eye"></i> Live Button Preview</div>
+                            <button type="button" id="btnPreview" style="background:{{ theme_btn_bg }}; color:{{ theme_btn_text }}; border:none; border-radius:10px; padding:10px 24px; font-size:0.9rem; font-weight:600; cursor:default; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                            &nbsp;
+                            <button type="button" id="btnPreview2" style="background:{{ theme_btn_bg }}; color:{{ theme_btn_text }}; border:none; border-radius:10px; padding:10px 24px; font-size:0.9rem; font-weight:600; cursor:default; display:inline-flex; align-items:center; gap:8px; opacity:0.85; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                                <i class="fas fa-plus"></i> Add Question
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ── PANEL: FONT & TEXT COLORS ────────────────────── -->
+                    <div class="theme-panel" id="panel-text">
+                        <div class="theme-section-header">
+                            <div class="theme-section-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);">
+                                <i class="fas fa-font"></i>
+                            </div>
+                            <div>
+                                <div class="theme-section-title">Font &amp; Text Colors</div>
+                                <div class="theme-section-sub">Control heading, body, and muted text colors to match your brand or improve readability.</div>
+                            </div>
+                        </div>
+                        <div class="grid-3 color-group">
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_heading_color" style="background:{{ theme_heading_color }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-heading"></i> Heading Color</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_heading_color" name="theme_heading_color" value="{{ theme_heading_color }}" oninput="updateHexV2('theme_heading_color','hex_heading_color','prev_heading_color','')">
+                                        <span class="color-hex-v2" id="hex_heading_color">{{ theme_heading_color }}</span>
+                                    </div>
+                                    <span class="field-hint">H1, H2, H3 headings, section titles, card headers</span>
+                                </div>
+                            </div>
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_body_text" style="background:{{ theme_body_text }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-align-left"></i> Body Text Color</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_body_text" name="theme_body_text" value="{{ theme_body_text }}" oninput="updateHexV2('theme_body_text','hex_body_text','prev_body_text','')">
+                                        <span class="color-hex-v2" id="hex_body_text">{{ theme_body_text }}</span>
+                                    </div>
+                                    <span class="field-hint">General paragraph, label, and content text color</span>
+                                </div>
+                            </div>
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_muted_text" style="background:{{ theme_muted_text }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-comment-slash"></i> Muted / Hint Text</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_muted_text" name="theme_muted_text" value="{{ theme_muted_text }}" oninput="updateHexV2('theme_muted_text','hex_muted_text','prev_muted_text','')">
+                                        <span class="color-hex-v2" id="hex_muted_text">{{ theme_muted_text }}</span>
+                                    </div>
+                                    <span class="field-hint">Helper hints, timestamps, secondary labels, captions</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Text Live Preview -->
+                        <div class="btn-live-preview-box" id="textLivePreview">
+                            <div style="font-size:0.78rem; font-weight:600; color:#64748b; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;"><i class="fas fa-eye"></i> Live Text Preview</div>
+                            <div id="text_prev_heading" style="font-size:1.3rem; font-weight:700; color:{{ theme_heading_color }}; margin-bottom:4px;">Sample Dashboard Heading</div>
+                            <div id="text_prev_body" style="font-size:0.92rem; color:{{ theme_body_text }}; margin-bottom:4px;">This is how regular body text appears on the page. It is used for descriptions and general content.</div>
+                            <div id="text_prev_muted" style="font-size:0.78rem; color:{{ theme_muted_text }};">Muted helper text · Hint · Caption · Timestamp</div>
+                        </div>
+                    </div>
+
+                    <!-- ── PANEL: BACKGROUND COLORS ──────────────────────── -->
+                    <div class="theme-panel" id="panel-bg">
+                        <div class="theme-section-header">
+                            <div class="theme-section-icon" style="background:linear-gradient(135deg,#f59e0b,#fcd34d);">
+                                <i class="fas fa-fill-drip"></i>
+                            </div>
+                            <div>
+                                <div class="theme-section-title">Background Colors</div>
+                                <div class="theme-section-sub">Set the main page background, card surfaces, and sidebar panel colors.</div>
+                            </div>
+                        </div>
+                        <div class="grid-3 color-group">
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_page_bg" style="background:{{ theme_page_bg }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-desktop"></i> Page Background</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_page_bg" name="theme_page_bg" value="{{ theme_page_bg }}" oninput="updateHexV2('theme_page_bg','hex_page_bg','prev_page_bg','ms5')">
+                                        <span class="color-hex-v2" id="hex_page_bg">{{ theme_page_bg }}</span>
+                                    </div>
+                                    <span class="field-hint">The main body/canvas background of all pages</span>
+                                </div>
+                            </div>
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_card_bg" style="background:{{ theme_card_bg }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-square"></i> Card / Panel Background</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_card_bg" name="theme_card_bg" value="{{ theme_card_bg }}" oninput="updateHexV2('theme_card_bg','hex_card_bg','prev_card_bg','')">
+                                        <span class="color-hex-v2" id="hex_card_bg">{{ theme_card_bg }}</span>
+                                    </div>
+                                    <span class="field-hint">Settings cards, dashboard panels, modals, form boxes</span>
+                                </div>
+                            </div>
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_sidebar_bg" style="background:{{ theme_sidebar_bg }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-columns"></i> Sidebar / Nav Background</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_sidebar_bg" name="theme_sidebar_bg" value="{{ theme_sidebar_bg }}" oninput="updateHexV2('theme_sidebar_bg','hex_sidebar_bg','prev_sidebar_bg','')">
+                                        <span class="color-hex-v2" id="hex_sidebar_bg">{{ theme_sidebar_bg }}</span>
+                                    </div>
+                                    <span class="field-hint">Left navigation sidebar panel background color</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Border Color -->
+                        <div class="grid-2 color-group" style="margin-top:0;">
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_border_color" style="background:{{ theme_border_color }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-border-all"></i> Border / Divider Color</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_border_color" name="theme_border_color" value="{{ theme_border_color }}" oninput="updateHexV2('theme_border_color','hex_border_color','prev_border_color','')">
+                                        <span class="color-hex-v2" id="hex_border_color">{{ theme_border_color }}</span>
+                                    </div>
+                                    <span class="field-hint">Card borders, table dividers, separator lines</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── PANEL: LINKS & HOVER COLORS ───────────────────── -->
+                    <div class="theme-panel" id="panel-link">
+                        <div class="theme-section-header">
+                            <div class="theme-section-icon" style="background:linear-gradient(135deg,#0891b2,#67e8f9);">
+                                <i class="fas fa-link"></i>
+                            </div>
+                            <div>
+                                <div class="theme-section-title">Links &amp; Interactive Colors</div>
+                                <div class="theme-section-sub">Customize hyperlink color and hover states for interactive elements and navigation items.</div>
+                            </div>
+                        </div>
+                        <div class="grid-2 color-group">
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_link_color" style="background:{{ theme_link_color }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-external-link-alt"></i> Link Color</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_link_color" name="theme_link_color" value="{{ theme_link_color }}" oninput="updateHexV2('theme_link_color','hex_link_color','prev_link_color','')">
+                                        <span class="color-hex-v2" id="hex_link_color">{{ theme_link_color }}</span>
+                                    </div>
+                                    <span class="field-hint">Default hyperlink and navigation anchor color</span>
+                                </div>
+                            </div>
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_hover_color" style="background:{{ theme_hover_color }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-hand-pointer"></i> Hover Highlight Color</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_hover_color" name="theme_hover_color" value="{{ theme_hover_color }}" oninput="updateHexV2('theme_hover_color','hex_hover_color','prev_hover_color','')">
+                                        <span class="color-hex-v2" id="hex_hover_color">{{ theme_hover_color }}</span>
+                                    </div>
+                                    <span class="field-hint">Color when hovering over links, buttons, and menu items</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── PANEL: STATUS COLORS ────────────────────────── -->
+                    <div class="theme-panel" id="panel-status">
+                        <div class="theme-section-header">
+                            <div class="theme-section-icon" style="background:linear-gradient(135deg,#16a34a,#4ade80);">
+                                <i class="fas fa-traffic-light"></i>
+                            </div>
+                            <div>
+                                <div class="theme-section-title">Status &amp; Feedback Colors</div>
+                                <div class="theme-section-sub">Success, warning, and danger/error colors used in alerts, badges, and status messages.</div>
+                            </div>
+                        </div>
+                        <div class="grid-3 color-group">
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_success_color" style="background:{{ theme_success_color }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-check-circle" style="color:#16a34a;"></i> Success Color</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_success_color" name="theme_success_color" value="{{ theme_success_color }}" oninput="updateHexV2('theme_success_color','hex_success_color','prev_success_color','')">
+                                        <span class="color-hex-v2" id="hex_success_color">{{ theme_success_color }}</span>
+                                    </div>
+                                    <span class="field-hint">Success notifications, green status badges, confirmations</span>
+                                </div>
+                            </div>
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_warning_color" style="background:{{ theme_warning_color }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i> Warning Color</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_warning_color" name="theme_warning_color" value="{{ theme_warning_color }}" oninput="updateHexV2('theme_warning_color','hex_warning_color','prev_warning_color','')">
+                                        <span class="color-hex-v2" id="hex_warning_color">{{ theme_warning_color }}</span>
+                                    </div>
+                                    <span class="field-hint">Caution alerts, pending status, yellow attention flags</span>
+                                </div>
+                            </div>
+                            <div class="color-card-v2">
+                                <div class="color-preview-bar" id="prev_danger_color" style="background:{{ theme_danger_color }};"></div>
+                                <div class="color-card-inner">
+                                    <label><i class="fas fa-times-circle" style="color:#dc2626;"></i> Danger / Error Color</label>
+                                    <div class="color-input-row-v2">
+                                        <input type="color" id="theme_danger_color" name="theme_danger_color" value="{{ theme_danger_color }}" oninput="updateHexV2('theme_danger_color','hex_danger_color','prev_danger_color','')">
+                                        <span class="color-hex-v2" id="hex_danger_color">{{ theme_danger_color }}</span>
+                                    </div>
+                                    <span class="field-hint">Delete buttons, error alerts, critical action indicators</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Status Color Preview Badges -->
+                        <div class="btn-live-preview-box">
+                            <div style="font-size:0.78rem; font-weight:600; color:#64748b; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;"><i class="fas fa-eye"></i> Live Badge Preview</div>
+                            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                                <span id="badge_success" style="background:{{ theme_success_color }}20; color:{{ theme_success_color }}; border:1.5px solid {{ theme_success_color }}40; padding:5px 14px; border-radius:20px; font-size:0.82rem; font-weight:600;"><i class="fas fa-check-circle"></i> Completed</span>
+                                <span id="badge_warning" style="background:{{ theme_warning_color }}20; color:{{ theme_warning_color }}; border:1.5px solid {{ theme_warning_color }}40; padding:5px 14px; border-radius:20px; font-size:0.82rem; font-weight:600;"><i class="fas fa-clock"></i> Pending</span>
+                                <span id="badge_danger" style="background:{{ theme_danger_color }}20; color:{{ theme_danger_color }}; border:1.5px solid {{ theme_danger_color }}40; padding:5px 14px; border-radius:20px; font-size:0.82rem; font-weight:600;"><i class="fas fa-times-circle"></i> Failed</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── PANEL: TYPOGRAPHY ────────────────────────────── -->
+                    <div class="theme-panel" id="panel-typography">
+                        <div class="theme-section-header">
+                            <div class="theme-section-icon" style="background:linear-gradient(135deg,#9333ea,#c084fc);">
+                                <i class="fas fa-text-height"></i>
+                            </div>
+                            <div>
+                                <div class="theme-section-title">Typography &amp; Fonts</div>
+                                <div class="theme-section-sub">Choose fonts for the web interface and exported documents. Also manage developer credit.</div>
+                            </div>
+                        </div>
+                        <div class="grid-2 color-group">
+                            <div>
+                                <label for="theme_font_web"><i class="fas fa-globe"></i> Web UI Font</label>
+                                <select id="theme_font_web" name="theme_font_web">
+                                    {% for f in ['Poppins','Plus Jakarta Sans','Inter','Roboto','Nunito','Arial','Georgia'] %}
+                                    <option value="{{ f }}" {% if theme_font_web == f %}selected{% endif %}>{{ f }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="field-hint">Applied across all dashboards &amp; exam interfaces (Google Fonts CDN).</span>
+                            </div>
+                            <div>
+                                <label for="theme_font_export"><i class="fas fa-file-pdf"></i> Document Export Font</label>
+                                <select id="theme_font_export" name="theme_font_export">
+                                    {% for f in ['Arial','Calibri','Times New Roman','Georgia','Verdana'] %}
+                                    <option value="{{ f }}" {% if theme_font_export == f %}selected{% endif %}>{{ f }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="field-hint">Applied to generated PDF and Word test papers (System safe).</span>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top:8px;">
+                            <label for="developer_credit"><i class="fas fa-code"></i> Developer Credit Line</label>
+                            <input type="text" id="developer_credit" name="developer_credit" value="{{ developer_credit }}" placeholder="e.g., Developed by Your Name &amp; Team">
+                            <span class="field-hint">Displayed in all page footers and generated test paper footers.</span>
+                        </div>
+                    </div>
+
+                    <!-- ── SAVE BUTTON (always visible) ─────────────────── -->
+                    <div class="btn-action-row" style="margin-top:24px; border-top:2px solid #f1f5f9; padding-top:20px;">
+                        <button type="submit" class="btn btn-primary" id="themeSubmitBtn">
+                            <i class="fas fa-save"></i> Save All Theme Settings
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="resetThemeToDefault()">
+                            <i class="fas fa-undo-alt"></i> Reset Theme Only
+                        </button>
+                        <span id="themeMsg" class="status-msg" style="display:none;"></span>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- CARD 3: LANGUAGE & LOCALIZATION                                 -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <div class="settings-card">
+            <div class="card-header-bar">
+                <div>
+                    <div class="card-header-title"><i class="fas fa-language"></i> Language &amp; Localization / भाषा</div>
+                    <div class="card-subtitle">AI-translates all student-facing UI strings (login, waiting room, guidelines, exam, and submission). Caches translations locally in SQLite.</div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- Active Language Status Banner -->
+                <div style="background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:12px; padding:14px 18px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                    <div>
+                        <div style="font-size:0.75rem; font-weight:700; color:#15803d; text-transform:uppercase; letter-spacing:0.5px;">Active Student Exam Portal Language</div>
+                        <div style="font-size:1.15rem; font-weight:700; color:#166534; display:flex; align-items:center; gap:8px; margin-top:2px;">
+                            <i class="fas fa-check-circle" style="color:#22c55e;"></i>
+                            {% if active_language == 'hi' %}हिन्दी (Hindi &bull; hi)
+                            {% elif active_language == 'mr' %}मराठी (Marathi &bull; mr)
+                            {% elif active_language == 'ta' %}தமிழ் (Tamil &bull; ta)
+                            {% elif active_language == 'te' %}తెలుగు (Telugu &bull; te)
+                            {% elif active_language == 'bn' %}বাংলা (Bengali &bull; bn)
+                            {% elif active_language == 'gu' %}ગુજરાતી (Gujarati &bull; gu)
+                            {% elif active_language == 'kn' %}ಕನ್ನಡ (Kannada &bull; kn)
+                            {% elif active_language == 'en' %}English (Default &bull; en)
+                            {% else %}{{ active_language.upper() }}
+                            {% endif %}
+                            <span style="font-size:0.72rem; background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:10px; font-weight:600;">ACTIVE NOW</span>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="/" target="_blank" class="btn btn-primary" style="background:#16a34a; font-size:0.82rem; padding:8px 16px; border-radius:8px;">
+                            <i class="fas fa-external-link-alt"></i> Preview Student Portal
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Scope Explanation Note -->
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:0.82rem; color:#475569; display:flex; align-items:flex-start; gap:8px;">
+                    <i class="fas fa-info-circle" style="color:#3949ab; font-size:1rem; margin-top:2px;"></i>
+                    <div>
+                        <strong>How Translation Works:</strong> The AI translation dynamically localizes all <strong>student-facing pages</strong> (Student Login, Waiting Lobby, Guidelines, Live Exam Question Palette, and Submission screens). Administrative &amp; Teacher dashboards remain in English for institutional consistency.
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:18px;">
+                    <div style="flex:1; min-width:220px;">
+                        <label for="langSelect"><i class="fas fa-globe"></i> Change Portal Language</label>
+                        <select id="langSelect">
+                            <option value="en" {% if active_language=='en' %}selected{% endif %}>English (Default)</option>
+                            <option value="hi" {% if active_language=='hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+                            <option value="mr" {% if active_language=='mr' %}selected{% endif %}>मराठी (Marathi)</option>
+                            <option value="ta" {% if active_language=='ta' %}selected{% endif %}>தமிழ் (Tamil)</option>
+                            <option value="te" {% if active_language=='te' %}selected{% endif %}>తెలుగు (Telugu)</option>
+                            <option value="bn" {% if active_language=='bn' %}selected{% endif %}>বাংলা (Bengali)</option>
+                            <option value="gu" {% if active_language=='gu' %}selected{% endif %}>ગુજરાતી (Gujarati)</option>
+                            <option value="kn" {% if active_language=='kn' %}selected{% endif %}>ಕನ್ನಡ (Kannada)</option>
+                            <option value="other">Other (Custom ISO Code)</option>
+                        </select>
+                    </div>
+
+                    <div id="langCustomBox" style="display:none; width:130px;">
+                        <label for="langCustomCode"><i class="fas fa-terminal"></i> Code</label>
+                        <input type="text" id="langCustomCode" maxlength="10" placeholder="e.g. ml, pa">
+                    </div>
+
+                    <button onclick="startTranslation()" class="btn btn-primary" id="translateBtn">
+                        <i class="fas fa-robot"></i> Translate &amp; Activate
+                    </button>
+
+                    <button onclick="setLanguage('en')" class="btn btn-secondary" id="resetLangBtn" style="{% if active_language=='en' %}display:none{% endif %}">
+                        <i class="fas fa-undo"></i> Switch to English
+                    </button>
+                </div>
+
+                <!-- Live Translation Preview Grid -->
+                {% if active_language != 'en' %}
+                <label style="font-size:0.82rem; color:#64748b; margin-bottom:6px; display:block;">
+                    <i class="fas fa-eye"></i> Live Translation Preview for Students (Samples from Cache):
+                </label>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px; background:#f1f5f9; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
+                    <div style="background:#fff; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+                        <span style="font-size:0.7rem; color:#64748b; font-weight:600;">PORTAL TITLE</span>
+                        <div style="font-size:0.88rem; font-weight:700; color:#1e293b; margin-top:2px;">{{ t('login_title') }}</div>
+                    </div>
+                    <div style="background:#fff; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+                        <span style="font-size:0.7rem; color:#64748b; font-weight:600;">GUIDELINES HEADING</span>
+                        <div style="font-size:0.88rem; font-weight:700; color:#1e293b; margin-top:2px;">{{ t('guidelines_title') }}</div>
+                    </div>
+                    <div style="background:#fff; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+                        <span style="font-size:0.7rem; color:#64748b; font-weight:600;">START EXAM BUTTON</span>
+                        <div style="font-size:0.88rem; font-weight:700; color:#16a34a; margin-top:2px;">{{ t('btn_start_exam') }}</div>
+                    </div>
+                    <div style="background:#fff; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+                        <span style="font-size:0.7rem; color:#64748b; font-weight:600;">PALETTE TITLE</span>
+                        <div style="font-size:0.88rem; font-weight:700; color:#7c3aed; margin-top:2px;">{{ t('questions_palette') }}</div>
+                    </div>
+                    <div style="background:#fff; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+                        <span style="font-size:0.7rem; color:#64748b; font-weight:600;">SUBMIT BUTTON</span>
+                        <div style="font-size:0.88rem; font-weight:700; color:#dc2626; margin-top:2px;">{{ t('btn_submit_exam') }}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div id="langStatus" style="margin-top:14px; font-size:0.86rem; color:#334155; display:none;"></div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- CARD 4: DANGER ZONE / FACTORY RESET                             -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <div class="settings-card" style="border-left: 4px solid #dc2626;">
+            <div class="card-header-bar" style="background:#fff5f5;">
+                <div>
+                    <div class="card-header-title" style="color:#dc2626;"><i class="fas fa-exclamation-triangle" style="color:#dc2626;"></i> Danger Zone: Factory Reset</div>
+                    <div class="card-subtitle" style="color:#991b1b;">Reverts all white-label branding, colors, fonts, developer credits, and language settings back to default.</div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <p style="font-size:0.85rem; color:#64748b; margin-bottom:16px;">
+                    This action will reset the school name, address, colors, typography, and active language back to factory defaults. Your questions, students, and test history will remain completely untouched.
+                </p>
+
+                <div class="btn-action-row" style="margin-top:0; padding-top:0; border-top:none;">
+                    <button onclick="resetAllSettings()" id="resetBtn" class="btn btn-danger">
+                        <i class="fas fa-undo-alt"></i> Reset All Settings to Default
+                    </button>
+                    <span id="resetMsg" class="status-msg" style="display:none;"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Footer -->
+        <footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#64748b; margin-top:30px; border-top:1px solid #e2e8f0;">
+            {{ developer_credit }}
+        </footer>
+    </div>
+
+    <!-- ── CIRCULAR PROCESSING OVERLAY WITH RRB LOGO ───────────────────── -->
+    <div id="circularLoadingOverlay" class="c-modal-overlay">
+        <div class="c-modal-card">
+            <div class="c-progress-wrapper">
+                <svg class="c-progress-ring" width="140" height="140">
+                    <circle class="c-progress-ring-bg" cx="70" cy="70" r="60" stroke="#e0e7ff" stroke-width="8" fill="transparent"/>
+                    <circle id="cProgressRing" class="c-progress-ring-fg" cx="70" cy="70" r="60" stroke="#4f46e5" stroke-width="8" fill="transparent" stroke-dasharray="376.99" stroke-dashoffset="376.99"/>
+                </svg>
+                <div class="c-logo-center">
+                    {% if logo_path %}
+                        <img src="{{ url_for('static', filename=logo_path) }}" id="cModalLogo" alt="Logo" class="rrb-pulse-logo">
+                    {% else %}
+                        <i class="fas fa-graduation-cap" style="font-size:1.8rem; color:#4f46e5;"></i>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="c-percentage" id="cProgressPercent">0%</div>
+            <div class="c-status-title" id="cProgressStatus">Initializing Translation...</div>
+            <div class="c-status-sub" id="cProgressSub">Translating UI strings via Gemini AI...</div>
+        </div>
+    </div>
+
+    <!-- ─── JAVASCRIPT LOGIC ────────────────────────────────────────────── -->
     <script>
-        // ─── Live preview update ──────────────────────────────────────────
-        const logoInput = document.getElementById('logoInput');
-        const previewLogo = document.getElementById('previewLogo');
+        // ── Color Picker Hex Sync (Legacy) ──
+        function updateHex(pickerId, labelId) {
+            const picker = document.getElementById(pickerId);
+            const label = document.getElementById(labelId);
+            if (picker && label) label.textContent = picker.value.toUpperCase();
+        }
+
+        // ── Color Picker Hex + Preview Bar + Mini Swatch Sync (V2) ──
+        function updateHexV2(pickerId, hexLabelId, previewBarId, miniSwatchId) {
+            const picker = document.getElementById(pickerId);
+            if (!picker) return;
+            const val = picker.value.toUpperCase();
+            const hexLabel = document.getElementById(hexLabelId);
+            const previewBar = document.getElementById(previewBarId);
+            const miniSwatch = miniSwatchId ? document.getElementById(miniSwatchId) : null;
+            if (hexLabel)  hexLabel.textContent = val;
+            if (previewBar) previewBar.style.background = val;
+            if (miniSwatch) miniSwatch.style.background = val;
+
+            // Live icon color update
+            if (pickerId === 'theme_icon_color') {
+                ['prev_icon_demo1','prev_icon_demo2','prev_icon_demo3','prev_icon_demo4','prev_icon_demo5','prev_icon_demo6'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.color = val;
+                });
+            }
+            // Live text preview update
+            if (pickerId === 'theme_heading_color') { const e = document.getElementById('text_prev_heading'); if(e) e.style.color=val; }
+            if (pickerId === 'theme_body_text')     { const e = document.getElementById('text_prev_body');    if(e) e.style.color=val; }
+            if (pickerId === 'theme_muted_text')    { const e = document.getElementById('text_prev_muted');   if(e) e.style.color=val; }
+            // Live status badge update
+            if (pickerId === 'theme_success_color') {
+                const b = document.getElementById('badge_success');
+                if (b) { b.style.color=val; b.style.background=val+'20'; b.style.borderColor=val+'40'; }
+            }
+            if (pickerId === 'theme_warning_color') {
+                const b = document.getElementById('badge_warning');
+                if (b) { b.style.color=val; b.style.background=val+'20'; b.style.borderColor=val+'40'; }
+            }
+            if (pickerId === 'theme_danger_color') {
+                const b = document.getElementById('badge_danger');
+                if (b) { b.style.color=val; b.style.background=val+'20'; b.style.borderColor=val+'40'; }
+            }
+        }
+
+        // ── Live Button Preview Update ──
+        function updateBtnPreview() {
+            const bg  = document.getElementById('theme_btn_bg')  ? document.getElementById('theme_btn_bg').value  : '';
+            const txt = document.getElementById('theme_btn_text') ? document.getElementById('theme_btn_text').value : '';
+            ['btnPreview','btnPreview2'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) { btn.style.background = bg; btn.style.color = txt; }
+            });
+        }
+
+        // ── Theme Tab Switching ──
+        function switchThemeTab(clickedTab, panelId) {
+            // Deactivate all tabs
+            document.querySelectorAll('.theme-tab').forEach(t => t.classList.remove('active'));
+            // Hide all panels
+            document.querySelectorAll('.theme-panel').forEach(p => p.classList.remove('active'));
+            // Activate clicked tab + target panel
+            clickedTab.classList.add('active');
+            const panel = document.getElementById(panelId);
+            if (panel) panel.classList.add('active');
+        }
+
+        // ── Reset Theme to Factory Defaults ──
+        async function resetThemeToDefault() {
+            if (!confirm('Reset all THEME colors and fonts to factory defaults? Branding (school name, logo, address) will not be affected.')) return;
+            const btn = document.getElementById('themeSubmitBtn');
+            const msg = document.getElementById('themeMsg');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+            try {
+                const resp = await fetch('/admin/reset_theme', { method: 'POST' });
+                const result = await resp.json();
+                if (resp.status === 401 || resp.status === 403 || result.status !== 'success') {
+                    msg.textContent = result.message || 'Session expired or not authorized. Please log in as Admin.';
+                    msg.style.color = '#dc2626';
+                    msg.style.display = 'inline-flex';
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save All Theme Settings';
+                    return;
+                }
+                msg.textContent = result.message || 'Theme reset!';
+                msg.style.color = '#16a34a';
+                msg.style.display = 'inline-flex';
+                setTimeout(() => location.reload(), 1000);
+            } catch(e) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save All Theme Settings';
+                msg.textContent = 'Error: ' + e.message;
+                msg.style.color = '#dc2626';
+                msg.style.display = 'inline-flex';
+            }
+        }
+
+        // ── Live Preview Sync ──
         const schoolNameInput = document.getElementById('school_name');
         const previewName = document.getElementById('previewName');
         const addressInput = document.getElementById('school_address');
         const previewAddress = document.getElementById('previewAddress');
         const sessionInput = document.getElementById('academic_session');
         const previewSession = document.getElementById('previewSession');
+        const logoInput = document.getElementById('logoInput');
+        const previewLogo = document.getElementById('previewLogo');
+        const previewLogoHeader = document.getElementById('previewLogoHeader');
 
-        // Update preview name as user types
-        schoolNameInput.addEventListener('input', function() {
-            previewName.textContent = this.value || 'School Name';
-        });
+        if (schoolNameInput && previewName) {
+            schoolNameInput.addEventListener('input', function() {
+                previewName.textContent = this.value.trim() || 'School Name';
+            });
+        }
+        if (addressInput && previewAddress) {
+            addressInput.addEventListener('input', function() {
+                previewAddress.textContent = this.value.trim() || 'School Address';
+            });
+        }
+        if (sessionInput && previewSession) {
+            sessionInput.addEventListener('input', function() {
+                previewSession.textContent = this.value.trim() || '2026-27';
+            });
+        }
 
-        // Update preview address as user types
-        addressInput.addEventListener('input', function() {
-            previewAddress.textContent = this.value || '';
-        });
+        // Instant Logo Preview
+        if (logoInput) {
+            logoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const imgHtml = `<img src="${event.target.result}" alt="Preview">`;
+                        if (previewLogo) previewLogo.innerHTML = imgHtml + '<span class="current-logo-badge">New Selection</span>';
+                        if (previewLogoHeader) previewLogoHeader.innerHTML = imgHtml;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
 
-        // Update preview session as user types
-        sessionInput.addEventListener('input', function() {
-            previewSession.textContent = this.value || '';
-        });
+        // ── Save Theme ──
+        async function saveTheme(e) {
+            e.preventDefault();
+            const btn = document.getElementById('themeSubmitBtn');
+            const msg = document.getElementById('themeMsg');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-        // Preview selected logo
-        logoInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    previewLogo.innerHTML = `<img src="${event.target.result}" alt="Preview">`;
-                };
-                reader.readAsDataURL(file);
-            } else {
-                {% if logo_path %}
-                    previewLogo.innerHTML = `<img src="{{ url_for('static', filename=logo_path) }}" alt="School Logo">`;
-                {% else %}
-                    previewLogo.innerHTML = `<span class="placeholder"><i class="fas fa-school"></i></span>`;
-                {% endif %}
+            const data = new FormData(document.getElementById('themeForm'));
+            const payload = {};
+            for (const [k, v] of data.entries()) payload[k] = v;
+
+            try {
+                const resp = await fetch('/admin/save_theme', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const result = await resp.json();
+                if (resp.status === 401 || resp.status === 403 || result.status !== 'success') {
+                    msg.textContent = result.message || 'Session expired or not authorized. Please log in as Admin.';
+                    msg.style.color = '#dc2626';
+                    msg.style.display = 'inline-flex';
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save All Theme Settings';
+                    return;
+                }
+                msg.textContent = result.message || 'Theme saved successfully!';
+                msg.style.color = '#16a34a';
+                msg.style.display = 'inline-flex';
+                setTimeout(() => location.reload(), 1000);
+            } catch(err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save All Theme Settings';
+                alert('Error saving theme: ' + err.message);
             }
-        });
-    </script>
+        }
 
+        // ── Language Selector ──
+        const langSelect = document.getElementById('langSelect');
+        const langCustomBox = document.getElementById('langCustomBox');
+        if (langSelect && langCustomBox) {
+            langSelect.addEventListener('change', function() {
+                langCustomBox.style.display = this.value === 'other' ? 'block' : 'none';
+            });
+        }
+
+        let _pollInterval = null;
+
+        async function startTranslation() {
+            const sel = document.getElementById('langSelect');
+            const lang = sel.value === 'other'
+                ? document.getElementById('langCustomCode').value.trim().toLowerCase()
+                : sel.value;
+
+            if (!lang || lang === 'other') {
+                alert('Please specify a valid language code.');
+                return;
+            }
+
+            if (lang === 'en') {
+                await setLanguage('en');
+                return;
+            }
+
+            const overlay = document.getElementById('circularLoadingOverlay');
+            const ring    = document.getElementById('cProgressRing');
+            const pct     = document.getElementById('cProgressPercent');
+            const title   = document.getElementById('cProgressStatus');
+            const sub     = document.getElementById('cProgressSub');
+            const btn     = document.getElementById('translateBtn');
+
+            if (overlay) {
+                pct.textContent   = '0%';
+                title.textContent = 'Translating UI Strings...';
+                sub.textContent   = `Preparing ${lang.toUpperCase()} translation via Gemini AI...`;
+                overlay.classList.add('active');
+            }
+            if (btn) btn.disabled = true;
+
+            try {
+                const resp = await fetch('/admin/translate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({lang_code: lang})
+                });
+                const result = await resp.json();
+
+                if (result.status === 'cached') {
+                    if (overlay) overlay.classList.remove('active');
+                    if (btn) btn.disabled = false;
+                    await setLanguage(lang);
+                    return;
+                }
+                if (result.status === 'error') {
+                    if (overlay) overlay.classList.remove('active');
+                    if (btn) btn.disabled = false;
+                    alert('Translation error: ' + (result.message || 'Unknown error'));
+                    return;
+                }
+
+                // Poll Progress
+                const circumference = 376.99;
+                _pollInterval = setInterval(async () => {
+                    try {
+                        const pr = await fetch(`/admin/translation_progress?lang=${lang}`);
+                        const info = await pr.json();
+                        const progress = info.progress || 0;
+
+                        if (ring) ring.style.strokeDashoffset = circumference - (progress / 100 * circumference);
+                        if (pct) pct.textContent = progress + '%';
+                        if (title) title.textContent = `Translating... (${info.done || 0} / ${info.total || '?'} strings)`;
+                        if (sub) sub.textContent = `Language: ${lang.toUpperCase()} · Powered by Gemini AI`;
+
+                        if (info.status === 'done' || info.status === 'error') {
+                            clearInterval(_pollInterval);
+                            if (info.status === 'done') {
+                                if (ring) ring.style.strokeDashoffset = 0;
+                                if (pct) pct.textContent = '100%';
+                                if (title) title.textContent = 'Translation Complete!';
+                                if (sub) sub.textContent = 'Activating language...';
+                                setTimeout(async () => {
+                                    if (overlay) overlay.classList.remove('active');
+                                    await setLanguage(lang);
+                                }, 1000);
+                            } else {
+                                if (overlay) overlay.classList.remove('active');
+                                if (btn) btn.disabled = false;
+                                alert('Translation encountered an error. Please try again.');
+                            }
+                        }
+                    } catch(pollErr) {
+                        clearInterval(_pollInterval);
+                        if (overlay) overlay.classList.remove('active');
+                        if (btn) btn.disabled = false;
+                    }
+                }, 1800);
+
+            } catch(e) {
+                if (overlay) overlay.classList.remove('active');
+                if (btn) btn.disabled = false;
+                alert('Connection error: ' + e.message);
+            }
+        }
+
+        async function setLanguage(lang) {
+            try {
+                await fetch('/admin/save_theme', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({active_language: lang})
+                });
+                location.reload();
+            } catch(e) {
+                alert('Failed to set language: ' + e.message);
+            }
+        }
+
+        // ── Reset to Defaults ──
+        async function resetAllSettings() {
+            if (!confirm('Are you sure you want to reset ALL settings (branding, colors, fonts, developer credit, language) to factory defaults? This cannot be undone.')) return;
+            const btn = document.getElementById('resetBtn');
+            const msg = document.getElementById('resetMsg');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+
+            try {
+                const resp = await fetch('/admin/reset_settings', { method: 'POST' });
+                const result = await resp.json();
+                msg.textContent = result.message || 'Done!';
+                msg.style.color = result.status === 'success' ? '#16a34a' : '#dc2626';
+                msg.style.display = 'inline-flex';
+                if (result.status === 'success') {
+                    setTimeout(() => location.reload(), 1200);
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-undo-alt"></i> Reset All Settings to Default';
+                }
+            } catch(err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-undo-alt"></i> Reset All Settings to Default';
+                alert('Error resetting settings: ' + err.message);
+            }
+        }
+    </script>
 </body>
 </html>
