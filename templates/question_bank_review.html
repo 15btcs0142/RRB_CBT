@@ -1,0 +1,278 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Review Extracted Questions - RRB CBT</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--primary:#1a237e;--primary-light:#3949ab;--accent:#10b981;--danger:#dc2626;--warn:#f59e0b;--bg:#f0f4f8;--card:#fff;--border:#e2e8f0;--text:#1e293b;--muted:#64748b;--radius:16px;--shadow:0 4px 20px rgba(0,0,0,.06);}
+body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;padding:24px 16px;color:var(--text);}
+.container{max-width:1100px;margin:0 auto;}
+.breadcrumb{display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:.85rem;color:var(--muted);}
+.breadcrumb a{color:var(--primary-light);text-decoration:none;}
+.page-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;}
+.page-header h1{font-size:1.6rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:10px;}
+.badge-row{display:flex;gap:8px;flex-wrap:wrap;}
+.badge{padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:600;}
+.badge-blue{background:#dbeafe;color:#1d4ed8;}
+.badge-green{background:#dcfce7;color:#15803d;}
+.badge-orange{background:#fff7ed;color:#c2410c;}
+.status-bar{background:var(--card);border-radius:var(--radius);padding:18px 24px;margin-bottom:20px;box-shadow:var(--shadow);display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.status-bar .status-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+.status-icon.processing{background:#fff7ed;color:var(--warn);}
+.status-icon.processed{background:#dcfce7;color:var(--accent);}
+.status-icon.failed{background:#fef2f2;color:var(--danger);}
+.status-bar .status-text{flex:1;}
+.status-bar .status-text h3{font-size:1rem;font-weight:600;}
+.status-bar .status-text p{font-size:.85rem;color:var(--muted);}
+.actions-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center;}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:10px;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;box-shadow:0 4px 12px rgba(26,35,126,.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,35,126,.3);}
+.btn-success{background:linear-gradient(135deg,#059669,#10b981);color:#fff;box-shadow:0 4px 12px rgba(5,150,105,.2);}
+.btn-success:hover{transform:translateY(-1px);}
+.btn-danger{background:#fef2f2;color:var(--danger);border:1.5px solid #fecaca;}
+.btn-danger:hover{background:#fee2e2;}
+.btn-secondary{background:var(--bg);color:var(--text);border:1.5px solid var(--border);}
+.btn-sm{padding:6px 12px;font-size:.8rem;}
+.select-all-bar{background:linear-gradient(135deg,#eff6ff,#e0f2fe);border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:.875rem;}
+.q-card{background:var(--card);border-radius:12px;border:1.5px solid var(--border);margin-bottom:12px;overflow:hidden;transition:box-shadow .2s;}
+.q-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);}
+.q-card.approved{border-color:#86efac;}
+.q-card.approved .q-card-head{background:#f0fdf4;}
+.q-card-head{background:#f8fafc;padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
+.q-num{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0;}
+.q-meta{flex:1;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.q-meta select,.q-meta input{padding:5px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.8rem;color:var(--text);background:#fff;outline:none;}
+.q-meta select:focus,.q-meta input:focus{border-color:var(--primary-light);}
+.approve-toggle{display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;cursor:pointer;}
+.approve-toggle input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);}
+.q-body{padding:14px 16px 14px 60px;font-size:.9rem;line-height:1.7;color:var(--text);}
+.q-body .q-text{white-space:pre-wrap;word-break:break-word;}
+.q-body .q-options{margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.q-body .q-options span{background:#f8fafc;padding:4px 8px;border-radius:6px;font-size:.82rem;border:1px solid var(--border);}
+.q-footer{padding:8px 16px 10px 60px;display:flex;gap:10px;}
+.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;transition:color .2s;}
+.del-btn:hover{color:var(--danger);}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-state i{font-size:3rem;margin-bottom:16px;color:#cbd5e1;}
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;font-size:.875rem;font-weight:500;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.2);transform:translateY(80px);opacity:0;transition:all .3s;}
+.toast.show{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb">
+    <a href="/question-bank"><i class="fas fa-database"></i> Question Bank</a>
+    <i class="fas fa-chevron-right" style="font-size:.7rem;"></i>
+    <a href="/question-bank/upload">Upload</a>
+    <i class="fas fa-chevron-right" style="font-size:.7rem;"></i>
+    <span>Review #{{ paper.id }}</span>
+  </div>
+
+  <div class="page-header">
+    <h1><i class="fas fa-tasks" style="color:var(--primary-light);"></i> Review Extracted Questions</h1>
+    <div class="badge-row">
+      <span class="badge badge-blue">{{ paper.board }} · Class {{ paper.class }}</span>
+      <span class="badge badge-blue">{{ paper.subject }}</span>
+      <span class="badge badge-orange">{{ paper.chapter }}</span>
+    </div>
+  </div>
+
+  <div class="status-bar" id="status-bar">
+    {% if status == 'processing' %}
+    <div class="status-icon processing"><i class="fas fa-spinner fa-spin"></i></div>
+    <div class="status-text">
+      <h3>Extraction in progress...</h3>
+      <p>Gemini Vision is analysing your PDF. This page will update automatically. Found <span id="q-count">{{ items|length }}</span> questions so far.</p>
+    </div>
+    {% elif status == 'processed' %}
+    <div class="status-icon processed"><i class="fas fa-check-circle"></i></div>
+    <div class="status-text">
+      <h3>Extraction complete — {{ items|length }} questions extracted</h3>
+      <p>Review and correct chapter/type for each question, then approve to add to the Question Bank.</p>
+    </div>
+    {% else %}
+    <div class="status-icon failed"><i class="fas fa-times-circle"></i></div>
+    <div class="status-text">
+      <h3>Extraction failed — {{ items|length }} questions (regex fallback)</h3>
+      <p>Gemini Vision encountered an error. Questions below were extracted using the offline text parser and may need more corrections.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if items %}
+  <div class="select-all-bar">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;">
+      <input type="checkbox" id="check-all" onchange="toggleAll(this)"> Select All Questions
+    </label>
+    <span id="selected-count" style="color:var(--muted);">0 selected</span>
+  </div>
+
+  <div class="actions-bar">
+    <button class="btn btn-success" onclick="approveSelected()"><i class="fas fa-check-double"></i> Approve Selected</button>
+    <button class="btn btn-primary" onclick="approveAll()"><i class="fas fa-check"></i> Approve All ({{ items|length }})</button>
+    <a href="/question-bank" class="btn btn-secondary"><i class="fas fa-database"></i> Go to Question Bank</a>
+  </div>
+
+  <div id="questions-list">
+  {% for item in items %}
+  <div class="q-card {% if item.approved %}approved{% endif %}" id="qcard-{{ item.id }}" data-id="{{ item.id }}">
+    <div class="q-card-head">
+      <div class="q-num">{{ loop.index }}</div>
+      <div class="q-meta">
+        <input type="text" class="chapter-inp" value="{{ item.chapter }}" placeholder="Chapter" style="min-width:160px;">
+        <select class="type-sel">
+          {% for t in ['MCQ','Numerical','Descriptive','Coding'] %}
+          <option value="{{ t }}" {% if item.question_type == t %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+        <span style="font-size:.75rem;color:var(--muted);">pg.{{ item.source_page }}</span>
+        {% if item.ai_generated %}<span class="badge badge-blue">AI</span>{% endif %}
+      </div>
+      <label class="approve-toggle">
+        <input type="checkbox" class="approve-chk" {% if item.approved %}checked{% endif %} onchange="updateCard(this)"> Approve
+      </label>
+    </div>
+    <div class="q-body">
+      <div class="q-text">{{ item.raw_question_text }}</div>
+      {% if item.raw_options and item.raw_options != '[]' %}
+      {% set opts = item.raw_options | tojson | safe %}
+      <div class="q-options" id="opts-{{ item.id }}">
+        <!-- Options rendered by JS -->
+      </div>
+      <script>
+      (function(){
+        try{
+          var opts=JSON.parse({{ item.raw_options | tojson }});
+          var c=document.getElementById('opts-{{ item.id }}');
+          if(c&&opts.length)opts.forEach(function(o){var s=document.createElement('span');s.textContent=o;c.appendChild(s);});
+        }catch(e){}
+      })();
+      </script>
+      {% endif %}
+    </div>
+    <div class="q-footer">
+      <button class="del-btn" onclick="deleteItem({{ item.id }}, this)"><i class="fas fa-trash"></i> Remove</button>
+    </div>
+  </div>
+  {% endfor %}
+  </div>
+
+  <div class="actions-bar" style="margin-top:20px;">
+    <button class="btn btn-success" onclick="approveSelected()"><i class="fas fa-check-double"></i> Approve Selected</button>
+    <button class="btn btn-primary" onclick="approveAll()"><i class="fas fa-check"></i> Approve All</button>
+    <a href="/question-bank" class="btn btn-secondary"><i class="fas fa-arrow-right"></i> View Question Bank</a>
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-hourglass-half"></i>
+    <h3>Waiting for extraction...</h3>
+    <p>This page will refresh automatically once questions are extracted from your PDF.</p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PAPER_ID = {{ paper.id }};
+let pollInterval = null;
+
+{% if status == 'processing' %}
+pollInterval = setInterval(function(){
+  fetch('/question-bank/review/'+PAPER_ID+'/status')
+    .then(r=>r.json()).then(d=>{
+      if(d.status==='processed'||d.status==='failed'){
+        clearInterval(pollInterval);
+        location.reload();
+      } else {
+        document.getElementById('q-count').textContent=d.count;
+      }
+    });
+}, 3000);
+{% endif %}
+
+function updateCard(chk){
+  const card=chk.closest('.q-card');
+  if(chk.checked) card.classList.add('approved');
+  else card.classList.remove('approved');
+  updateSelectedCount();
+}
+
+function toggleAll(master){
+  document.querySelectorAll('.approve-chk').forEach(c=>{
+    c.checked=master.checked;
+    c.closest('.q-card').classList.toggle('approved',master.checked);
+  });
+  updateSelectedCount();
+}
+
+function updateSelectedCount(){
+  const n=document.querySelectorAll('.approve-chk:checked').length;
+  document.getElementById('selected-count').textContent=n+' selected';
+}
+
+function collectEdits(){
+  const edits=[];
+  document.querySelectorAll('.q-card').forEach(card=>{
+    const id=parseInt(card.dataset.id);
+    const chapter=card.querySelector('.chapter-inp').value.trim();
+    const qtype=card.querySelector('.type-sel').value;
+    const approved=card.querySelector('.approve-chk').checked;
+    edits.push({id,chapter,question_type:qtype,approved});
+  });
+  return edits;
+}
+
+function approveSelected(){
+  const edits=collectEdits();
+  const hasApproved=edits.some(e=>e.approved);
+  if(!hasApproved){showToast('No questions selected — tick the Approve checkbox first.');return;}
+  save({paper_id:PAPER_ID,edits:edits,approve_all:false});
+}
+
+function approveAll(){
+  if(!confirm('Approve ALL questions with their current chapter/type tags?'))return;
+  save({paper_id:PAPER_ID,edits:collectEdits(),approve_all:true});
+}
+
+function save(payload){
+  fetch('/question-bank/review/save',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  }).then(r=>r.json()).then(d=>{
+    if(d.status==='ok'){
+      showToast('✅ Saved — '+d.approved_count+' question(s) approved');
+      setTimeout(()=>location.href='/question-bank',1800);
+    } else {
+      showToast('Error saving: '+(d.message||'unknown'));
+    }
+  }).catch(e=>showToast('Network error: '+e));
+}
+
+function deleteItem(id, btn){
+  if(!confirm('Remove this question from the bank?'))return;
+  fetch('/question-bank/item/delete',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({id:id})
+  }).then(r=>r.json()).then(d=>{
+    if(d.status==='ok'){
+      document.getElementById('qcard-'+id).remove();
+      showToast('Question removed');
+    }
+  });
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>
