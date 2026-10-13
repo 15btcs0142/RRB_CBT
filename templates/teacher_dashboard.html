@@ -717,6 +717,7 @@
             .content-area { padding: 16px; }
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -728,7 +729,7 @@
         <div class="sidebar-header">
             <div class="logo-ph"><i class="fas fa-chalkboard-teacher"></i></div>
             <div class="brand-text">
-                <div class="name">RRB CBT Portal</div>
+                <div class="name">{{ school_name }}</div>
                 <div class="tag">Faculty Dashboard</div>
             </div>
             <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
@@ -751,11 +752,15 @@
                     <i class="fas fa-robot"></i>
                     <span class="nav-label">AI Test Generator</span>
                 </a>
+                <a href="javascript:void(0)" onclick="loadTab('/teacher/create_test_v2?category=coding_test')" class="nav-item" id="nav-coding-test">
+                    <i class="fas fa-code"></i>
+                    <span class="nav-label">Coding Test Generator</span>
+                </a>
                 <a href="javascript:void(0)" onclick="loadTab('/descriptive_paper')" class="nav-item" id="nav-descriptive">
                     <i class="fas fa-file-alt"></i>
                     <span class="nav-label">Descriptive Paper</span>
                 </a>
-                <a href="javascript:void(0)" onclick="loadTab('/question_bank')" class="nav-item" id="nav-qb-generator">
+                <a href="javascript:void(0)" onclick="loadTab('/question-bank')" class="nav-item" id="nav-qb-generator">
                     <i class="fas fa-layer-group"></i>
                     <span class="nav-label">Question Bank</span>
                 </a>
@@ -865,10 +870,10 @@
 
         <!-- EXAM CONTROL VIEW (Teacher Panel) -->
         <main class="content-area" id="examControlView" style="display:none;padding:28px;">
-            <div style="background:#ffffff;border-radius:18px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,0.08);border:1px solid #e2e8f0;max-width:680px;margin:0 auto;">
+            <div style="background:#ffffff;border-radius:18px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,0.08);border:1px solid #e2e8f0;max-width:720px;margin:0 auto;">
                 <h2 style="font-size:1.35rem;font-weight:800;color:#0f172a;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
                     <span style="display:flex;align-items:center;gap:10px;">
-                        <i class="fas fa-play-circle" style="color:#4f46e5;font-size:1.4rem;"></i> Exam Control &amp; Portal Status
+                        <i class="fas fa-play-circle" style="color:#4f46e5;font-size:1.4rem;"></i> Lab Exam Control &amp; Portal Status
                     </span>
                     <span id="tExamStatusText" style="padding:6px 18px;border-radius:20px;font-size:0.8rem;font-weight:700;background:#fee2e2;color:#991b1b;border:1px solid rgba(0,0,0,0.05);letter-spacing:0.03em;">
                         STOPPED / INACTIVE
@@ -876,6 +881,34 @@
                 </h2>
 
                 <form class="exam-form" action="/teacher/start_exam" method="POST" id="teacherStartExamForm">
+                    <!-- Target Class & Subject -->
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;font-size:0.85rem;font-weight:700;color:#1e293b;margin-bottom:8px;">
+                            <i class="fas fa-graduation-cap" style="color:#4f46e5;margin-right:4px;"></i> Select Target Class &amp; Subject *
+                        </label>
+                        <select name="assignment" id="tAssignmentSelect" required
+                                style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-family:inherit;font-size:0.92rem;font-weight:600;background:#f8fafc;">
+                            {% if assignments %}
+                                {% for a in assignments %}
+                                    <option value="{{ a.class }}|{{ a.section or '' }}|{{ a.subject }}">
+                                        Class {{ a.class }}{% if a.section %} - Sec {{ a.section }}{% endif %} &bull; {{ a.subject }}
+                                    </option>
+                                {% endfor %}
+                            {% else %}
+                                <option value="General||General">All Assigned Classes &bull; General</option>
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <!-- Lab Name / Identifier (Optional) -->
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;font-size:0.85rem;font-weight:700;color:#1e293b;margin-bottom:8px;">
+                            <i class="fas fa-desktop" style="color:#4f46e5;margin-right:4px;"></i> Lab Room / Identifier (Optional)
+                        </label>
+                        <input type="text" name="lab_label" id="tLabLabel" placeholder="e.g. Computer Lab 1 / Room 101"
+                               style="width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-family:inherit;font-size:0.92rem;font-weight:600;background:#f8fafc;">
+                    </div>
+
                     <!-- Duration Field with Presets -->
                     <div style="margin-bottom:20px;">
                         <label style="display:block;font-size:0.85rem;font-weight:700;color:#1e293b;margin-bottom:8px;">
@@ -924,13 +957,28 @@
                     <!-- Command Buttons -->
                     <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;">
                         <button type="submit" class="btn-submit" id="tStartExamBtn" style="flex:1;padding:12px 20px;background:linear-gradient(135deg,#15803d,#166534);color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit;font-size:0.92rem;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 12px rgba(21,128,61,0.25);transition:all 0.2s ease;">
-                            <i class="fas fa-play"></i> Start Exam
+                            <i class="fas fa-play"></i> Start Exam for Selected Class
                         </button>
-                        <a href="/teacher/stop_exam" id="tStopExamBtn" onclick="return confirm('Stop exam for all students?')" style="flex:1;padding:12px 20px;background:linear-gradient(135deg,#b91c1c,#991b1b);color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit;font-size:0.92rem;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 12px rgba(185,28,28,0.25);transition:all 0.2s ease;">
-                            <i class="fas fa-stop"></i> Stop Exam
+                        <a href="/teacher/stop_exam" id="tStopExamBtn" onclick="return confirm('Stop your active exam session(s)? Other teachers will not be affected.')" style="flex:1;padding:12px 20px;background:linear-gradient(135deg,#b91c1c,#991b1b);color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit;font-size:0.92rem;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 12px rgba(185,28,28,0.25);transition:all 0.2s ease;">
+                            <i class="fas fa-stop"></i> Stop My Exam(s)
                         </a>
                     </div>
                 </form>
+
+                <!-- ACTIVE SESSIONS IN YOUR LAB -->
+                <div style="margin-top:32px;padding-top:22px;border-top:1.5px dashed #cbd5e1;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                        <h3 style="font-size:1.05rem;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:8px;">
+                            <i class="fas fa-satellite-dish" style="color:#10b981;"></i> Your Active Exam Sessions
+                        </h3>
+                        <button type="button" onclick="loadTeacherSessions()" style="padding:4px 12px;font-size:0.75rem;font-weight:700;background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;cursor:pointer;color:#475569;">
+                            <i class="fas fa-rotate"></i> Refresh
+                        </button>
+                    </div>
+                    <div id="teacherSessionsContainer">
+                        <div style="text-align:center;padding:20px;color:#94a3b8;font-size:0.85rem;">Checking for active lab sessions...</div>
+                    </div>
+                </div>
             </div>
         </main>
 
@@ -1166,7 +1214,7 @@
             <!-- Footer -->
             <footer class="app-footer">
                 <i class="fas fa-shield-alt" style="color: var(--primary-light); margin-right: 5px;"></i>
-                RRB CBT Portal &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
+                {{ school_name }} &nbsp;·&nbsp; {{ developer_credit }}
             </footer>
 
         </main>
@@ -1232,12 +1280,14 @@
                 frameView.style.display = 'block';
                 frameView.src = url;
                 
-                // Highlight matching nav item
-                if (url.includes('create_test_v2')) {
+                if (url.includes('category=coding_test')) {
+                    headerTitle.textContent = 'Coding Test Generator';
+                    if (document.getElementById('nav-coding-test')) document.getElementById('nav-coding-test').classList.add('active');
+                } else if (url.includes('create_test_v2')) {
                     headerTitle.textContent = 'AI Test Generator';
-                    document.getElementById('nav-ai-test').classList.add('active');
-                } else if (url.includes('question_bank')) {
-                    headerTitle.textContent = 'Question Bank Generator';
+                    if (document.getElementById('nav-ai-test')) document.getElementById('nav-ai-test').classList.add('active');
+                } else if (url.includes('question_bank') || url.includes('question-bank')) {
+                    headerTitle.textContent = 'Question Bank';
                     if (document.getElementById('nav-qb-generator')) document.getElementById('nav-qb-generator').classList.add('active');
                 } else if (url.includes('descriptive_paper')) {
                     headerTitle.textContent = 'Descriptive Paper Generator';
@@ -1392,6 +1442,103 @@
                 }
             } catch (e) {}
         }
+        async function loadTeacherSessions() {
+            const container = document.getElementById('teacherSessionsContainer');
+            const statusText = document.getElementById('tExamStatusText');
+            if (!container) return;
+            try {
+                const res = await fetch('/teacher/exam_sessions/data');
+                const data = await res.json();
+                if (data.status === 'success') {
+                    const sessions = data.sessions || [];
+                    const active = sessions.filter(s => s.status === 'running' || s.status === 'paused');
+
+                    if (statusText) {
+                        if (active.some(s => s.status === 'running')) {
+                            statusText.textContent = `${active.length} SESSION(S) RUNNING`;
+                            statusText.style.background = '#dcfce7';
+                            statusText.style.color = '#15803d';
+                        } else if (active.some(s => s.status === 'paused')) {
+                            statusText.textContent = `${active.length} SESSION(S) PAUSED`;
+                            statusText.style.background = '#fef3c7';
+                            statusText.style.color = '#92400e';
+                        } else {
+                            statusText.textContent = 'NO ACTIVE SESSION';
+                            statusText.style.background = '#fee2e2';
+                            statusText.style.color = '#991b1b';
+                        }
+                    }
+
+                    if (sessions.length === 0) {
+                        container.innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:0.85rem;"><i class="fas fa-folder-open" style="font-size:1.8rem;display:block;margin-bottom:6px;"></i>No exam session started yet. Use the form above to start an exam for your assigned class.</div>';
+                        return;
+                    }
+
+                    let html = '<div style="display:flex;flex-direction:column;gap:12px;">';
+                    sessions.forEach(s => {
+                        const isRunning = s.status === 'running';
+                        const isPaused = s.status === 'paused';
+                        const isEnded = s.status === 'ended';
+                        const badgeBg = isRunning ? '#dcfce7' : (isPaused ? '#fef3c7' : '#f1f5f9');
+                        const badgeColor = isRunning ? '#166534' : (isPaused ? '#92400e' : '#64748b');
+                        const remMin = Math.floor((s.remaining_seconds || 0) / 60);
+                        const remSec = (s.remaining_seconds || 0) % 60;
+                        const timeStr = `${remMin}m ${remSec}s`;
+
+                        html += `
+                            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                                <div>
+                                    <div style="font-size:0.92rem;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
+                                        <span>${s.lab_label || 'Lab (' + s.lab_ip + ')'}</span>
+                                        <span style="font-size:0.72rem;padding:2px 8px;border-radius:10px;background:${badgeBg};color:${badgeColor};font-weight:700;text-transform:uppercase;">
+                                            ${s.status}
+                                        </span>
+                                    </div>
+                                    <div style="font-size:0.78rem;color:#64748b;margin-top:3px;">
+                                        Class ${s.class}${s.section ? ' (' + s.section + ')' : ''} &bull; ${s.subject}
+                                        ${s.test_no ? ' &bull; ' + s.test_no : ''}
+                                    </div>
+                                    <div style="font-size:0.74rem;color:#475569;margin-top:2px;">
+                                        Students: <strong style="color:#0284c7;">${s.in_progress_count || 0} In-Progress</strong>, <strong style="color:#16a34a;">${s.submitted_count || 0} Submitted</strong>
+                                    </div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:12px;">
+                                    ${!isEnded ? `
+                                        <div style="text-align:right;">
+                                            <div style="font-size:0.7rem;color:#94a3b8;font-weight:700;">TIME LEFT</div>
+                                            <div style="font-size:1.1rem;font-weight:800;color:${isPaused ? '#f59e0b' : '#4f46e5'};font-family:monospace;">
+                                                ${timeStr}
+                                            </div>
+                                        </div>
+                                        <button type="button" onclick="endTeacherSession(${s.id})" style="padding:6px 14px;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;">
+                                            <i class="fas fa-stop"></i> End
+                                        </button>
+                                    ` : `
+                                        <span style="font-size:0.76rem;color:#94a3b8;"><i class="fas fa-check"></i> Concluded</span>
+                                    `}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    container.innerHTML = html;
+                }
+            } catch (e) {
+                console.error('Failed to load teacher sessions:', e);
+            }
+        }
+
+        async function endTeacherSession(id) {
+            if (!confirm('Are you sure you want to end this exam session? All active students in this lab/class will be submitted.')) return;
+            try {
+                const res = await fetch(`/teacher/exam_sessions/${id}/end`, { method: 'POST' });
+                const d = await res.json();
+                loadTeacherSessions();
+            } catch (e) { alert('Error: ' + e); }
+        }
+
+        loadTeacherSessions();
+        setInterval(loadTeacherSessions, 4000);
         updateTeacherReattemptBadge();
         setInterval(updateTeacherReattemptBadge, 30000);
     </script>
