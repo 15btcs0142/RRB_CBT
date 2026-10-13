@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI Question Generator - Question Bank</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--primary:#1a237e;--primary-light:#3949ab;--accent:#10b981;--danger:#dc2626;--warn:#f59e0b;--bg:#f0f4f8;--card:#fff;--border:#e2e8f0;--text:#1e293b;--muted:#64748b;--radius:16px;--shadow:0 4px 20px rgba(0,0,0,.06);}
+body{font-family:'Poppins',sans-serif;background:var(--bg);min-height:100vh;color:var(--text);padding:24px 16px;}
+.container{max-width:960px;margin:0 auto;}
+.breadcrumb{display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:.85rem;color:var(--muted);}
+.breadcrumb a{color:var(--primary-light);text-decoration:none;}
+.page-header{text-align:center;margin-bottom:28px;}
+.page-header h1{font-size:1.8rem;font-weight:700;color:var(--primary);display:flex;align-items:center;justify-content:center;gap:12px;}
+.page-header p{color:var(--muted);font-size:.9rem;margin-top:6px;}
+.layout{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;}
+@media(max-width:720px){.layout{grid-template-columns:1fr;}}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;}
+.card h3{font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-weight:600;font-size:.82rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+.form-group select,.form-group input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.875rem;color:var(--text);background:#fff;outline:none;transition:border-color .2s;}
+.form-group select:focus,.form-group input:focus{border-color:var(--primary-light);}
+.form-group .combo{position:relative;}
+#gen-chapter-suggestions{display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1.5px solid var(--primary-light);border-radius:0 0 10px 10px;max-height:160px;overflow-y:auto;z-index:100;box-shadow:0 8px 20px rgba(0,0,0,.1);}
+#gen-chapter-suggestions li{padding:8px 12px;cursor:pointer;font-size:.85rem;list-style:none;border-bottom:1px solid var(--border);}
+#gen-chapter-suggestions li:hover{background:var(--bg);}
+.count-row{display:flex;align-items:center;gap:10px;}
+.count-row input[type=range]{flex:1;accent-color:var(--primary);}
+.count-row span{font-weight:700;min-width:30px;text-align:center;color:var(--primary);}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:10px;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;width:100%;justify-content:center;box-shadow:0 4px 12px rgba(26,35,126,.2);}
+.btn-primary:hover{transform:translateY(-1px);}
+.btn-success{background:linear-gradient(135deg,#059669,#10b981);color:#fff;box-shadow:0 4px 12px rgba(5,150,105,.2);}
+.btn-success:hover{transform:translateY(-1px);}
+.btn-secondary{background:var(--bg);color:var(--text);border:1.5px solid var(--border);}
+.btn-sm{padding:6px 12px;font-size:.8rem;}
+.alert{padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:.88rem;display:flex;align-items:flex-start;gap:10px;}
+.alert-danger{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;}
+.provider-badge{display:inline-flex;align-items:center;gap:6px;background:#eff6ff;color:#1d4ed8;padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:600;margin-bottom:16px;}
+.q-result{background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:12px;position:relative;}
+.q-result-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.q-result-head input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent);}
+.q-result-num{font-weight:700;color:var(--primary);}
+.q-result-type{font-size:.75rem;background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:12px;font-weight:600;}
+.q-text{font-size:.9rem;line-height:1.7;white-space:pre-wrap;word-break:break-word;}
+.q-options{margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.q-options span{background:#fff;border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:.82rem;}
+.empty-results{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-results i{font-size:3rem;margin-bottom:14px;color:#cbd5e1;}
+.actions-bottom{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap;}
+.save-bar{background:linear-gradient(135deg,#eff6ff,#e0f2fe);border:1px solid #bae6fd;border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:.875rem;color:#0369a1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;font-size:.875rem;font-weight:500;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.2);transform:translateY(80px);opacity:0;transition:all .3s;}
+.toast.show{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb">
+    <a href="/question-bank"><i class="fas fa-database"></i> Question Bank</a>
+    <i class="fas fa-chevron-right" style="font-size:.7rem;"></i>
+    <span>AI Generate</span>
+  </div>
+
+  <div class="page-header">
+    <h1><i class="fas fa-robot" style="color:var(--primary-light);"></i> AI Question Generator</h1>
+    <p>Generates new original questions inspired by your Question Bank — never copies them verbatim.</p>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT: form -->
+    <div>
+      <div class="card">
+        <h3><i class="fas fa-sliders-h"></i> Generation Settings</h3>
+        <form method="POST" id="gen-form">
+          <div class="form-group">
+            <label>Board</label>
+            <select name="board" id="gen-board" required onchange="genLoadSubjects()">
+              <option value="">— Select —</option>
+              {% for b in all_boards %}<option value="{{ b }}" {% if form_data.get('board')==b %}selected{% endif %}>{{ b }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Class</label>
+            <select name="class" id="gen-class" required onchange="genLoadSubjects()">
+              <option value="">— Select —</option>
+              {% for n in range(1,13) %}<option value="{{ n }}" {% if form_data.get('class')==n|string %}selected{% endif %}>Class {{ n }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Subject</label>
+            <select name="subject" id="gen-subject" required onchange="genLoadChapters()">
+              <option value="">— Select Board &amp; Class first —</option>
+              {% if form_data.get('subject') %}<option value="{{ form_data.subject }}" selected>{{ form_data.subject }}</option>{% endif %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Chapter / Topic</label>
+            <div class="combo">
+              <input type="text" name="chapter" id="gen-chapter" value="{{ form_data.get('chapter','') }}" placeholder="Type or pick a chapter..." required autocomplete="off" oninput="genFilterChapters(this.value)" onfocus="genShowAllChapters()" onclick="genShowAllChapters()" onblur="genHide()">
+              <ul id="gen-chapter-suggestions"></ul>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Question Type</label>
+            <select name="question_type" id="gen-qtype" required>
+              {% for t in ['MCQ','Numerical','Descriptive','Coding'] %}
+              <option value="{{ t }}" {% if form_data.get('question_type')==t %}selected{% endif %}>{{ t }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>How many to generate: <span id="count-label">{{ form_data.get('count', 5) }}</span></label>
+            <div class="count-row">
+              <input type="range" name="count" id="gen-count" min="1" max="20" value="{{ form_data.get('count', 5) }}" oninput="document.getElementById('count-label').textContent=this.value">
+              <span id="count-display">{{ form_data.get('count', 5) }}</span>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="gen-btn"><i class="fas fa-magic"></i> Generate Questions</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- RIGHT: results -->
+    <div>
+      {% if error %}
+      <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <span>{{ error }}</span></div>
+      {% endif %}
+
+      {% if provider_used %}
+      <div class="provider-badge"><i class="fas fa-microchip"></i> Served by: {{ provider_used }}</div>
+      {% endif %}
+
+      {% if result_items %}
+      <div class="save-bar">
+        <span><strong>{{ result_items|length }}</strong> questions generated — select the ones you want to save</span>
+        <button class="btn btn-success btn-sm" onclick="saveSelected()"><i class="fas fa-save"></i> Save Selected to Bank</button>
+      </div>
+
+      <div id="results-list">
+      {% for item in result_items %}
+      <div class="q-result" id="qr-{{ loop.index0 }}" data-q="{{ item | tojson | e }}">
+        <div class="q-result-head">
+          <input type="checkbox" class="save-chk" checked>
+          <span class="q-result-num">Q{{ loop.index }}</span>
+          <span class="q-result-type">{{ item.question_type }}</span>
+        </div>
+        <div class="q-text">{{ item.raw_question_text }}</div>
+        {% if item.raw_options and item.raw_options != '[]' %}
+        <div class="q-options" id="qopts-{{ loop.index0 }}">
+          <script>
+          (function(){
+            try{
+              var opts=JSON.parse({{ item.raw_options | tojson }});
+              document.addEventListener('DOMContentLoaded',function(){
+                var c=document.getElementById('qopts-{{ loop.index0 }}');
+                if(c)opts.forEach(function(o){var s=document.createElement('span');s.textContent=o;c.appendChild(s);});
+              });
+            }catch(e){}
+          })();
+          </script>
+        </div>
+        {% endif %}
+        {% if item.raw_answer %}
+        <div style="margin-top:8px;font-size:.8rem;color:var(--accent);font-weight:600;">✓ Answer: {{ item.raw_answer }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      </div>
+
+      <div class="actions-bottom">
+        <a href="/question-bank/generate" class="btn btn-secondary"><i class="fas fa-redo"></i> Generate Again</a>
+        <button class="btn btn-success" onclick="saveSelected()"><i class="fas fa-save"></i> Save Selected to Bank</button>
+      </div>
+      {% else %}
+      <div class="empty-results">
+        <i class="fas fa-magic"></i>
+        <h3>Ready to Generate</h3>
+        <p>Fill in the form and click <strong>Generate Questions</strong>.<br>The AI will use your Question Bank as a style reference to create original questions.</p>
+        {% if not form_data %}
+        <div style="margin-top:20px;background:#eff6ff;border-radius:10px;padding:14px;font-size:.85rem;color:#1d4ed8;">
+          <strong>Tip:</strong> For best results, make sure you have approved questions in the Question Bank for the chapter you select — they serve as reference context for the AI.
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let genChapters=[];
+function genLoadSubjects(){
+  const b=document.getElementById('gen-board').value;
+  const c=document.getElementById('gen-class').value;
+  if(!b||!c)return;
+  fetch(`/api/qb/subjects?board=${encodeURIComponent(b)}&class=${encodeURIComponent(c)}`)
+    .then(r=>r.json()).then(subs=>{
+      const sel=document.getElementById('gen-subject');
+      sel.innerHTML='<option value="">— Select Subject —</option>';
+      subs.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+    });
+}
+function genLoadChapters(){
+  const b=document.getElementById('gen-board').value;
+  const c=document.getElementById('gen-class').value;
+  const s=document.getElementById('gen-subject').value;
+  if(!s)return;
+  fetch(`/api/qb/chapters?board=${encodeURIComponent(b)}&class=${encodeURIComponent(c)}&subject=${encodeURIComponent(s)}`)
+    .then(r=>r.json()).then(chs=>{
+      genChapters=chs;
+      genShowAllChapters();
+    });
+}
+function genShowAllChapters(){
+  const ul=document.getElementById('gen-chapter-suggestions');
+  if(!genChapters || !genChapters.length){ul.style.display='none';return;}
+  const val=(document.getElementById('gen-chapter').value||'').trim();
+  const filtered=val ? genChapters.filter(c=>c.toLowerCase().includes(val.toLowerCase())).slice(0,10) : genChapters.slice(0,12);
+  if(!filtered.length){ul.style.display='none';return;}
+  ul.innerHTML=filtered.map(c=>`<li onmousedown="genSelectChapter('${c.replace(/'/g,"\\'")}')">📚 ${c}</li>`).join('');
+  ul.style.display='block';
+}
+function genFilterChapters(val){
+  genShowAllChapters();
+}
+function genSelectChapter(name){
+  document.getElementById('gen-chapter').value=name;
+  document.getElementById('gen-chapter-suggestions').style.display='none';
+}
+function genHide(){setTimeout(()=>{document.getElementById('gen-chapter-suggestions').style.display='none';},180);}
+
+document.getElementById('gen-count').addEventListener('input',function(){
+  document.getElementById('count-display').textContent=this.value;
+  document.getElementById('count-label').textContent=this.value;
+});
+
+document.getElementById('gen-form').addEventListener('submit',function(){
+  const btn=document.getElementById('gen-btn');
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Generating...';
+  btn.disabled=true;
+});
+
+function saveSelected(){
+  const cards=document.querySelectorAll('.q-result');
+  const selected=[];
+  cards.forEach(card=>{
+    const chk=card.querySelector('.save-chk');
+    if(chk&&chk.checked){
+      try{
+        const q=JSON.parse(card.dataset.q||'{}');
+        selected.push(q);
+      }catch(e){}
+    }
+  });
+  if(!selected.length){showToast('No questions selected.');return;}
+  fetch('/question-bank/generate/save',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({questions:selected})
+  }).then(r=>r.json()).then(d=>{
+    if(d.status==='ok'){
+      showToast('✅ '+d.message);
+      setTimeout(()=>location.href='/question-bank',2000);
+    } else {
+      showToast('Error: '+(d.message||'save failed'));
+    }
+  }).catch(e=>showToast('Network error: '+e));
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// Auto-populate subjects if form was previously submitted
+window.addEventListener('DOMContentLoaded',function(){
+  {% if form_data.get('board') and form_data.get('class') %}
+  genLoadSubjects();
+  {% endif %}
+  {% if form_data.get('subject') %}
+  setTimeout(genLoadChapters, 500);
+  {% endif %}
+});
+</script>
+</body>
+</html>
