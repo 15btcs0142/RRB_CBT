@@ -424,7 +424,63 @@
                 padding: 4px 12px;
             }
         }
+
+        /* ─── Resume Banner ────────────────────────────────────────── */
+        .resume-banner {
+            background: linear-gradient(135deg, #b45309, #d97706);
+            color: #ffffff;
+            padding: 18px 24px;
+            border-radius: 18px;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: 0 8px 28px rgba(180, 83, 9, 0.35);
+            margin-bottom: 20px;
+            z-index: 1;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+        .resume-banner .resume-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .resume-banner .resume-body h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .resume-banner .resume-body p {
+            font-size: 0.83rem;
+            opacity: 0.92;
+            margin: 2px 0;
+            line-height: 1.5;
+        }
+        .resume-banner .resume-body .resume-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .resume-banner .resume-body .resume-chip {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 0.77rem;
+            font-weight: 600;
+        }
+        /* Pulse animation on the resume banner */
+        .resume-banner {
+            animation: resumePulse 2s ease-in-out infinite;
+        }
+        @keyframes resumePulse {
+            0%, 100% { box-shadow: 0 8px 28px rgba(180,83,9,0.35); }
+            50%       { box-shadow: 0 8px 36px rgba(180,83,9,0.55); }
+        }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -443,7 +499,7 @@
     </div>
 
     <!-- ─── Watermark ──────────────────────────────────────────────────── -->
-    <div class="watermark">RRB Group of Schools</div>
+    <div class="watermark">{{ school_name }}</div>
 
     <!-- ─── Brand Bar ──────────────────────────────────────────────────── -->
     <div class="brand-bar">
@@ -455,12 +511,12 @@
             {% endif %}
             <div>
                 <div class="name">{{ school_name|default('RRB Group of Schools') }}</div>
-                <div class="tag">Computer Based Test</div>
+                <div class="tag">{{ t('tag_cbt', 'Computer Based Test') }}</div>
             </div>
         </div>
         <div class="status-pill">
             <i class="fas fa-circle"></i>
-            Waiting
+            {{ t('pill_waiting', 'Waiting') }}
         </div>
     </div>
 
@@ -475,7 +531,29 @@
         </marquee>
     </div>
 
+    <!-- ─── Resume Banner (shown when student reconnects to an In Progress exam) ── -->
+    {% if session.get('resume_mode') %}
+    <div class="resume-banner" id="resumeBanner">
+        <div class="resume-icon"><i class="fas fa-redo-alt"></i></div>
+        <div class="resume-body">
+            <h3>&#9888; Resuming Your Exam</h3>
+            <p>Your session was interrupted. <strong>All your saved answers are intact.</strong></p>
+            <p>The timer will resume from where you left off — please wait for the exam to load.</p>
+            <div class="resume-chips">
+                {% if session.get('subject') %}
+                <span class="resume-chip"><i class="fas fa-book"></i> {{ session.get('subject') }}</span>
+                {% endif %}
+                {% if session.get('test_no') %}
+                <span class="resume-chip"><i class="fas fa-file-alt"></i> {{ session.get('test_no') }}</span>
+                {% endif %}
+                <span class="resume-chip"><i class="fas fa-shield-alt"></i> Answers Preserved</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- ─── Main Waiting Card ──────────────────────────────────────────── -->
+
     <div class="waiting-card">
         {% if lock_info %}
             <div class="icon-circle" style="background: linear-gradient(135deg, {{ lock_info.color }}, #1a237e);">
@@ -531,8 +609,8 @@
                 <i class="fas fa-user-graduate"></i>
             </div>
 
-            <h2>Hello, {{ session.get('student_name', 'Student') }}</h2>
-            <p class="subtitle">Your exam is being set up</p>
+            <h2>{{ t('hello_student', 'Hello') }}, {{ session.get('student_name', 'Student') }}</h2>
+            <p class="subtitle">{{ t('waiting_subtitle', 'Your exam will begin shortly. Please stay on this page.') }}</p>
 
             <div class="student-badge">
                 <i class="fas fa-id-card"></i>
@@ -547,7 +625,7 @@
                 {% endif %}
             </div>
 
-            <p style="color: #555; font-size: 0.92rem; margin-bottom: 6px;">The exam has not started yet.</p>
+            <p style="color: #555; font-size: 0.92rem; margin-bottom: 6px;">{{ t('exam_not_started', 'The exam has not started yet.') }}</p>
 
             <div class="loader-container">
                 <div class="loader-dot"></div>
@@ -557,17 +635,17 @@
 
             <p class="status-message">
                 <i class="fas fa-sync-alt fa-spin"></i>
-                Waiting for the administrator to begin the exam
+                {{ t('waiting_title', 'Waiting for the administrator to begin the exam') }}
             </p>
 
             <div class="refresh-note">
                 <i class="fas fa-sync-alt"></i>
-                Auto‑checking every 3 seconds
+                {{ t('autochecking', 'Auto‑checking every 3 seconds') }}
             </div>
         {% endif %}
 
         <div class="footer-note" style="text-align:center; margin-top:20px; padding-top:15px; border-top:1px dashed rgba(0,0,0,0.1); font-size:0.85rem; color:#666;">
-    <i class="fas fa-shield-alt" style="color:#1a237e; margin-right:5px;"></i> RRB CBT &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
+    <i class="fas fa-shield-alt" style="color:#1a237e; margin-right:5px;"></i> RRB CBT &nbsp;·&nbsp; {{ developer_credit }}
 </div>
 </div>
 
