@@ -560,9 +560,10 @@
             }
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body class="exam-body">
-    <div class="watermark">RRB Group of Schools</div>
+    <div class="watermark">{{ school_name }}</div>
 
     <!-- ── COMPACT HEADER SECTION ── -->
     <div class="exam-header">
@@ -585,6 +586,19 @@
 
         <!-- Timer & Question Counter Badges -->
         <div class="header-right">
+            <div class="lang-selector-top" style="display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.18); padding:4px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.3);">
+                <i class="fas fa-globe" style="font-size:0.8rem; color:#fff;"></i>
+                <select id="examLangSelect" onchange="switchExamLang(this.value)" style="background:transparent; color:#fff; border:none; font-size:0.78rem; font-weight:600; cursor:pointer; outline:none; font-family:'Poppins',sans-serif;">
+                    <option value="en" style="color:#1e293b;" {% if active_language=='en' %}selected{% endif %}>English</option>
+                    <option value="hi" style="color:#1e293b;" {% if active_language=='hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+                    <option value="mr" style="color:#1e293b;" {% if active_language=='mr' %}selected{% endif %}>मराठी (Marathi)</option>
+                    <option value="ta" style="color:#1e293b;" {% if active_language=='ta' %}selected{% endif %}>தமிழ் (Tamil)</option>
+                    <option value="te" style="color:#1e293b;" {% if active_language=='te' %}selected{% endif %}>తెలుగు (Telugu)</option>
+                    <option value="bn" style="color:#1e293b;" {% if active_language=='bn' %}selected{% endif %}>বাংলা (Bengali)</option>
+                    <option value="gu" style="color:#1e293b;" {% if active_language=='gu' %}selected{% endif %}>ગુજરાતી (Gujarati)</option>
+                    <option value="kn" style="color:#1e293b;" {% if active_language=='kn' %}selected{% endif %}>ಕನ್ನಡ (Kannada)</option>
+                </select>
+            </div>
             <div class="timer-box" id="timer">
                 <i class="far fa-clock" style="color:#ffd54f;"></i>
                 <span class="timer-time">00:00</span>
@@ -623,9 +637,28 @@
                 <span id="subjectProgress" style="margin-left:auto;font-size:.76rem;color:#475569;align-self:center;"></span>
             </div>
             {% endif %}
+
+            {% if is_multi_section %}
+            <!-- Section Tab Bar for Multi-Section Tests -->
+            <div id="sectionTabBar" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px;
+                 padding:8px 14px;background:#f8fafc;border-radius:12px;border:1.5px solid #e2e8f0;">
+                <span style="font-size:.78rem;font-weight:700;color:#334155;align-self:center;margin-right:4px;">
+                    <i class="fas fa-layer-group" style="color:#4f46e5"></i> Section:
+                </span>
+                <div id="sectionTabsContainer" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"></div>
+                
+                <div id="sectionTimerBadge" style="margin-left:auto;display:none;align-items:center;gap:6px;
+                     background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:4px 12px;border-radius:20px;
+                     font-size:.78rem;font-weight:700;">
+                    <i class="fas fa-stopwatch"></i>
+                    <span>Section: </span>
+                    <span id="sectionTimeDisplay">--:--</span>
+                </div>
+            </div>
+            {% endif %}
             
             <div class="question-header">
-                <div class="question-count">Question Number <strong><span id="questionNumberPanel">1</span>/<span id="questionTotalPanel">0</span></strong></div>
+                <div class="question-count">{{ t('question_label', 'Question Number') }} <strong><span id="questionNumberPanel">1</span>/<span id="questionTotalPanel">0</span></strong></div>
                 <div class="question-status"><span class="status-pill" id="currentStatus">Not Answered</span></div>
             </div>
             <div id="questionText" class="question-text"></div>
@@ -634,13 +667,13 @@
 
         <!-- Desktop Palette Panel -->
         <div class="palette-panel" id="desktopPalette">
-            <h4><i class="fas fa-th-large"></i> Question Palette</h4>
+            <h4><i class="fas fa-th-large"></i> {{ t('questions_palette', 'Question Palette') }}</h4>
             <div id="paletteGrid" class="palette-grid"></div>
             <div class="legend">
-                <div class="legend-item"><span class="legend-box" style="background:#94a3b8"></span> Not Visited</div>
-                <div class="legend-item"><span class="legend-box" style="background:#ef4444"></span> Not Answered</div>
-                <div class="legend-item"><span class="legend-box" style="background:#22c55e"></span> Answered</div>
-                <div class="legend-item"><span class="legend-box" style="background:#7c3aed"></span> Marked</div>
+                <div class="legend-item"><span class="legend-box" style="background:#94a3b8"></span> {{ t('legend_not_visited', 'Not Visited') }}</div>
+                <div class="legend-item"><span class="legend-box" style="background:#ef4444"></span> {{ t('legend_not_answered', 'Not Answered') }}</div>
+                <div class="legend-item"><span class="legend-box" style="background:#22c55e"></span> {{ t('legend_answered', 'Answered') }}</div>
+                <div class="legend-item"><span class="legend-box" style="background:#7c3aed"></span> {{ t('legend_marked', 'Marked') }}</div>
             </div>
         </div>
     </div>
@@ -649,16 +682,16 @@
     <div class="exam-footer">
         <div class="footer-row">
             <button id="saveNextBtn" class="btn-green btn-exam">
-                <i class="fas fa-save"></i> Save &amp; Next
+                <i class="fas fa-save"></i> {{ t('btn_next', 'Save & Next') }}
             </button>
             <button id="markReviewBtn" class="btn-purple btn-exam">
-                <i class="fas fa-bookmark"></i> Mark &amp; Next
+                <i class="fas fa-bookmark"></i> {{ t('btn_mark_review', 'Mark & Next') }}
             </button>
             <button id="clearBtn" class="btn-orange btn-exam">
-                <i class="fas fa-undo-alt"></i> Clear Response
+                <i class="fas fa-undo-alt"></i> {{ t('btn_clear', 'Clear Response') }}
             </button>
             <button id="submitBtn" class="btn-red btn-exam">
-                <i class="fas fa-check-circle"></i> Submit
+                <i class="fas fa-check-circle"></i> {{ t('btn_submit_exam', 'Submit') }}
             </button>
         </div>
     </div>
@@ -672,19 +705,32 @@
     <div class="palette-overlay" id="paletteOverlay"></div>
     <div class="mobile-palette" id="mobilePalette">
         <button class="close-btn" id="closePaletteBtn">&times;</button>
-        <h4 style="margin-top:10px; margin-bottom:12px;"><i class="fas fa-th-large"></i> Question Palette</h4>
+        <h4 style="margin-top:10px; margin-bottom:12px;"><i class="fas fa-th-large"></i> {{ t('questions_palette', 'Question Palette') }}</h4>
         <div id="mobilePaletteGrid" class="palette-grid"></div>
         <div class="legend">
-            <div class="legend-item"><span class="legend-box" style="background:#94a3b8"></span> Not Visited</div>
-            <div class="legend-item"><span class="legend-box" style="background:#ef4444"></span> Not Answered</div>
-            <div class="legend-item"><span class="legend-box" style="background:#22c55e"></span> Answered</div>
-            <div class="legend-item"><span class="legend-box" style="background:#7c3aed"></span> Marked</div>
+            <div class="legend-item"><span class="legend-box" style="background:#94a3b8"></span> {{ t('legend_not_visited', 'Not Visited') }}</div>
+            <div class="legend-item"><span class="legend-box" style="background:#ef4444"></span> {{ t('legend_not_answered', 'Not Answered') }}</div>
+            <div class="legend-item"><span class="legend-box" style="background:#22c55e"></span> {{ t('legend_answered', 'Answered') }}</div>
+            <div class="legend-item"><span class="legend-box" style="background:#7c3aed"></span> {{ t('legend_marked', 'Marked') }}</div>
         </div>
     </div>
 
     <script>
         sessionStorage.removeItem('examSubmitted');
         sessionStorage.removeItem('submitted');
+        window.studentSubject = {{ student_subject|tojson|safe }};
+        window.activeLanguage = {{ active_language|tojson|safe }};
+        window.I18N = {
+            answered: {{ t('status_answered', 'Answered')|tojson }},
+            notAnswered: {{ t('status_not_answered', 'Not Answered')|tojson }},
+            marked: {{ t('status_marked', 'Marked for Review')|tojson }},
+            notVisited: {{ t('status_not_visited', 'Not Visited')|tojson }},
+            confirmSubmitTitle: {{ t('confirm_submit_title', 'Are you sure you want to submit your exam?')|tojson }},
+            confirmSubmitSubtitle: {{ t('confirm_submit_sub', 'Please review your exam summary before final submission.')|tojson }},
+            btnCancel: {{ t('btn_cancel', 'Cancel')|tojson }},
+            btnYesSubmit: {{ t('btn_yes_submit', 'Yes, Submit')|tojson }},
+            submittingExam: {{ t('submitting_exam', 'Submitting Exam...')|tojson }}
+        };
     </script>
     <script src="{{ url_for('static', filename='js/multimodal.js') }}"></script>
     <script src="{{ url_for('static', filename='js/exam.js') }}"></script>
@@ -751,15 +797,417 @@
 
     const _origLoad = window.loadQuestion;
     window.loadQuestion = function(index) {
+        if (IS_MULTI_SECTION && window.questions && typeof currentIndex !== 'undefined') {
+            const curQ = window.questions[currentIndex];
+            const targetQ = window.questions[index];
+            if (curQ && targetQ && curQ.section_id !== targetQ.section_id) {
+                // Crossing section boundary
+                if (msLockedSections.has(targetQ.section_id)) {
+                    if (typeof showToastNotification === 'function') {
+                        showToastNotification('🔒 Cannot navigate to a locked section.', 'warning');
+                    }
+                    return;
+                }
+                if (TIMING_MODE === 'fixed' && msCurrentSecId === curQ.section_id && msSectionTimeLeft > 0) {
+                    if (typeof showToastNotification === 'function') {
+                        showToastNotification('⏱️ Please wait for the current section timer to complete.', 'info');
+                    }
+                    return;
+                }
+                if (TIMING_MODE === 'no_fixed_lock' && msCurrentSecId === curQ.section_id) {
+                    // Trigger confirmation modal before switching
+                    msPendingTargetSecId = targetQ.section_id;
+                    msPendingTargetQIndex = index;
+                    const curSec = msSectionMap[msCurrentSecId];
+                    const curName = curSec ? curSec.name : 'the current section';
+                    const modalMsg = document.getElementById('sectionLockModalMsg');
+                    if (modalMsg) {
+                        modalMsg.innerHTML = `Are you sure you want to leave <strong>${curName}</strong>?<br>Once you leave, this section will be <strong>permanently locked</strong> and you cannot return to or change answers in it.`;
+                    }
+                    const modal = document.getElementById('sectionLockModal');
+                    if (modal) modal.style.display = 'flex';
+                    return;
+                }
+            }
+        }
+
         _origLoad(index);
         if (IS_COMBINED) updateSubjectProgress();
+        if (IS_MULTI_SECTION && typeof updateMultiSectionQuestion === 'function') {
+            updateMultiSectionQuestion(index);
+        }
     };
 
     const _origInit = window.initExam || function(){};
     window.initExam = function() {
         _origInit();
-        initCombinedTabs();
+        if (IS_COMBINED) initCombinedTabs();
+        if (IS_MULTI_SECTION) initMultiSection();
     };
+
+    // ── MULTI-SECTION TEST LOGIC ─────────────────────────────────────────────
+    const IS_MULTI_SECTION = {{ 'true' if is_multi_section else 'false' }};
+    const TIMING_MODE      = {{ timing_mode | tojson | safe if timing_mode else '"disabled"' }};
+    const TEST_PAPER_ID    = {{ test_paper_id | tojson | safe if test_paper_id else 'null' }};
+
+    let msSections = [];
+    let msSectionMap = {}; // sec_id -> { name, subject, indices: [] }
+    let msCurrentSecId = null;
+    let msLockedSections = new Set();
+    let msSectionTimerInterval = null;
+    let msSectionTimeLeft = 0;
+    let msPendingTargetSecId = null;
+    let msPendingTargetQIndex = null;
+
+    async function initMultiSection() {
+        if (!IS_MULTI_SECTION || !window.questions || !window.questions.length) return;
+
+        msSectionMap = {};
+        window.msSectionMap = msSectionMap;
+        window.questions.forEach((q, idx) => {
+            const sid = q.section_id || 0;
+            if (!msSectionMap[sid]) {
+                const sName = q.section_name || ('Section ' + (Object.keys(msSectionMap).length + 1));
+                const sSubj = q.subject || '';
+                const displayName = (sSubj && !sName.toLowerCase().includes(sSubj.toLowerCase()))
+                    ? `${sName} - ${sSubj}`
+                    : sName;
+
+                msSectionMap[sid] = {
+                    id: sid,
+                    name: displayName,
+                    subject: sSubj,
+                    duration_minutes: q.duration_minutes || 0,
+                    indices: []
+                };
+            }
+            msSectionMap[sid].indices.push(idx);
+        });
+
+        msSections = Object.values(msSectionMap);
+
+        // Fetch section progress from server
+        try {
+            const res = await fetch('/api/section_progress');
+            const data = await res.json();
+            if (data.status === 'ok') {
+                if (data.locked_sections && Array.isArray(data.locked_sections)) {
+                    data.locked_sections.forEach(id => msLockedSections.add(id));
+                }
+                if (data.current_section_id && msSectionMap[data.current_section_id]) {
+                    msCurrentSecId = data.current_section_id;
+                }
+                if (data.section_time_left !== undefined && data.section_time_left > 0) {
+                    msSectionTimeLeft = data.section_time_left;
+                }
+            }
+        } catch (e) {
+            console.error('Failed to sync section progress:', e);
+        }
+
+        // Default to first unlocked section
+        if (!msCurrentSecId || msLockedSections.has(msCurrentSecId)) {
+            const firstUnlocked = msSections.find(s => !msLockedSections.has(s.id));
+            if (firstUnlocked) {
+                msCurrentSecId = firstUnlocked.id;
+            } else if (msSections.length > 0) {
+                msCurrentSecId = msSections[0].id;
+            }
+        }
+
+        renderSectionTabs();
+
+        // If current question does not belong to active section, load its first question
+        if (msCurrentSecId && msSectionMap[msCurrentSecId]) {
+            const indices = msSectionMap[msCurrentSecId].indices;
+            if (indices.length > 0 && !indices.includes(currentIndex)) {
+                _origLoad(indices[0]);
+            }
+        }
+
+        if (TIMING_MODE === 'fixed') {
+            startSectionTimer();
+        }
+    }
+
+    function renderSectionTabs() {
+        const container = document.getElementById('sectionTabsContainer');
+        if (!container) return;
+        container.innerHTML = '';
+
+        msSections.forEach(sec => {
+            const btn = document.createElement('button');
+            btn.className = 'ms-exam-tab';
+            const isLocked = msLockedSections.has(sec.id);
+            const isActive = (sec.id === msCurrentSecId);
+
+            let bg = '#fff';
+            let color = '#4f46e5';
+            let border = '1.5px solid #c7d2fe';
+            let icon = '';
+
+            if (isLocked) {
+                bg = '#f1f5f9';
+                color = '#94a3b8';
+                border = '1.5px solid #e2e8f0';
+                icon = '<i class="fas fa-lock" style="margin-right:4px;"></i>';
+                btn.disabled = true;
+                btn.style.cursor = 'not-allowed';
+            } else if (isActive) {
+                bg = '#4f46e5';
+                color = '#fff';
+                border = '1.5px solid #4f46e5';
+            }
+
+            btn.style.cssText = `
+                padding: 5px 14px;
+                border-radius: 20px;
+                background: ${bg};
+                color: ${color};
+                border: ${border};
+                font-family: 'Poppins', sans-serif;
+                font-size: .78rem;
+                font-weight: 600;
+                cursor: ${isLocked ? 'not-allowed' : 'pointer'};
+                transition: all .2s;
+                display: inline-flex;
+                align-items: center;
+            `;
+
+            btn.innerHTML = `${icon}<span>${sec.name}</span><span style="font-size:.7rem;opacity:.85;margin-left:5px;">(${sec.indices.length}Q)</span>`;
+
+            if (!isLocked) {
+                btn.onclick = () => requestSwitchSection(sec.id);
+            }
+
+            container.appendChild(btn);
+        });
+    }
+
+    function requestSwitchSection(targetSecId) {
+        if (targetSecId === msCurrentSecId) return;
+        if (msLockedSections.has(targetSecId)) {
+            if (typeof showToastNotification === 'function') {
+                showToastNotification('🔒 This section has already been locked.', 'warning');
+            }
+            return;
+        }
+
+        const targetSec = msSectionMap[targetSecId];
+        if (!targetSec || !targetSec.indices.length) return;
+        const targetQIndex = targetSec.indices[0];
+
+        if (TIMING_MODE === 'no_fixed_lock') {
+            const currentSec = msSectionMap[msCurrentSecId];
+            const currentName = currentSec ? currentSec.name : 'the current section';
+            msPendingTargetSecId = targetSecId;
+            msPendingTargetQIndex = targetQIndex;
+            const modalMsg = document.getElementById('sectionLockModalMsg');
+            if (modalMsg) {
+                modalMsg.innerHTML = `Are you sure you want to leave <strong>${currentName}</strong>?<br>Once you leave, this section will be <strong>permanently locked</strong> and you cannot return to or change answers in it.`;
+            }
+            const modal = document.getElementById('sectionLockModal');
+            if (modal) modal.style.display = 'flex';
+        } else if (TIMING_MODE === 'disabled') {
+            msCurrentSecId = targetSecId;
+            renderSectionTabs();
+            _origLoad(targetQIndex);
+            syncSectionProgressToServer();
+        } else if (TIMING_MODE === 'fixed') {
+            if (typeof showToastNotification === 'function') {
+                showToastNotification('⏱️ Section timing is strict. You will automatically advance when the section timer expires.', 'info');
+            }
+        }
+    }
+
+    async function closeSectionLockModal(confirmed) {
+        const modal = document.getElementById('sectionLockModal');
+        if (modal) modal.style.display = 'none';
+
+        if (confirmed && msPendingTargetSecId) {
+            const leavingSecId = msCurrentSecId;
+            msLockedSections.add(leavingSecId);
+            msCurrentSecId = msPendingTargetSecId;
+
+            renderSectionTabs();
+            if (msPendingTargetQIndex !== null) {
+                _origLoad(msPendingTargetQIndex);
+            }
+
+            try {
+                await fetch('/api/section_progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lock_section_id: leavingSecId,
+                        current_section_id: msCurrentSecId
+                    })
+                });
+            } catch (e) {
+                console.error('Failed to sync section lock:', e);
+            }
+
+            if (typeof showToastNotification === 'function') {
+                showToastNotification(`🔒 Previous section locked. Now in ${msSectionMap[msCurrentSecId]?.name}.`, 'info');
+            }
+        }
+
+        msPendingTargetSecId = null;
+        msPendingTargetQIndex = null;
+    }
+
+    function startSectionTimer() {
+        const badge = document.getElementById('sectionTimerBadge');
+        const display = document.getElementById('sectionTimeDisplay');
+        if (!badge || !display) return;
+        badge.style.display = 'inline-flex';
+
+        if (!msSectionTimeLeft || msSectionTimeLeft <= 0) {
+            const cur = msSectionMap[msCurrentSecId];
+            msSectionTimeLeft = (cur ? cur.duration_minutes : 15) * 60;
+        }
+
+        updateSectionTimerDisplay();
+
+        if (msSectionTimerInterval) clearInterval(msSectionTimerInterval);
+        msSectionTimerInterval = setInterval(() => {
+            if (typeof isExamPaused !== 'undefined' && isExamPaused) return;
+
+            msSectionTimeLeft--;
+            updateSectionTimerDisplay();
+
+            if (msSectionTimeLeft <= 0) {
+                clearInterval(msSectionTimerInterval);
+                onSectionTimeExpired();
+            }
+        }, 1000);
+    }
+
+    function updateSectionTimerDisplay() {
+        const display = document.getElementById('sectionTimeDisplay');
+        if (!display) return;
+        const mins = Math.floor(Math.max(0, msSectionTimeLeft) / 60);
+        const secs = Math.max(0, msSectionTimeLeft) % 60;
+        display.textContent = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+    }
+
+    async function onSectionTimeExpired() {
+        const expiredSecId = msCurrentSecId;
+        const curName = msSectionMap[expiredSecId]?.name || 'Current section';
+        msLockedSections.add(expiredSecId);
+
+        const nextSec = msSections.find(s => !msLockedSections.has(s.id));
+        if (nextSec) {
+            msCurrentSecId = nextSec.id;
+            msSectionTimeLeft = nextSec.duration_minutes * 60;
+            renderSectionTabs();
+            _origLoad(nextSec.indices[0]);
+
+            try {
+                await fetch('/api/section_progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lock_section_id: expiredSecId,
+                        current_section_id: msCurrentSecId,
+                        section_time_left: msSectionTimeLeft
+                    })
+                });
+            } catch (e) {
+                console.error('Failed to sync section timeout:', e);
+            }
+
+            alert(`⏱️ Time expired for ${curName}! Automatically proceeding to ${nextSec.name}.`);
+            startSectionTimer();
+        } else {
+            alert('⏱️ Time expired for all sections. Your exam will now be submitted.');
+            if (typeof silentSubmit === 'function') {
+                silentSubmit();
+            } else if (typeof submitExam === 'function') {
+                submitExam();
+            }
+        }
+    }
+
+    async function syncSectionProgressToServer() {
+        if (!IS_MULTI_SECTION || !msCurrentSecId) return;
+        try {
+            await fetch('/api/section_progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    current_section_id: msCurrentSecId,
+                    section_time_left: msSectionTimeLeft
+                })
+            });
+        } catch (e) {
+            console.error('Failed to sync progress:', e);
+        }
+    }
+
+    function updateMultiSectionQuestion(index) {
+        if (!IS_MULTI_SECTION || !window.questions) return;
+        const q = window.questions[index];
+        if (!q) return;
+
+        const secId = q.section_id || 0;
+        const isLocked = msLockedSections.has(secId);
+
+        const opts = document.querySelectorAll('.option-item');
+        opts.forEach(el => {
+            el.style.pointerEvents = isLocked ? 'none' : 'auto';
+            el.style.opacity = isLocked ? '0.6' : '1';
+        });
+
+        ['saveNextBtn', 'markReviewBtn', 'clearBtn'].forEach(id => {
+            const b = document.getElementById(id);
+            if (b) b.disabled = isLocked;
+        });
+
+        if (isLocked) {
+            const st = document.getElementById('currentStatus');
+            if (st) st.textContent = 'Locked Section';
+        }
+
+        if (!isLocked && msCurrentSecId !== secId && TIMING_MODE === 'disabled') {
+            msCurrentSecId = secId;
+            renderSectionTabs();
+        }
+    }
+
+    async function switchExamLang(lang) {
+        try {
+            await fetch('/api/set_language', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({lang_code: lang})
+            });
+            location.reload();
+        } catch(e) {
+            console.error('Lang switch error:', e);
+        }
+    }
     </script>
+
+    <!-- Modal for One-Way Section Lock Confirmation -->
+    <div id="sectionLockModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:99999;align-items:center;justify-content:center;padding:20px;">
+        <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:26px 28px;box-shadow:0 20px 40px rgba(0,0,0,0.3);text-align:center;">
+            <div style="width:54px;height:54px;background:#fee2e2;color:#dc2626;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px auto;font-size:1.5rem;">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h3 style="font-size:1.15rem;font-weight:700;color:#1e293b;margin-bottom:8px;">Leave &amp; Lock Section?</h3>
+            <p id="sectionLockModalMsg" style="font-size:0.88rem;color:#64748b;line-height:1.5;margin-bottom:22px;">
+                Are you sure you want to leave this section? Once locked, you <strong>cannot return</strong> or make any changes to your answers in this section.
+            </p>
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <button type="button" onclick="closeSectionLockModal(false)" style="padding:10px 22px;border-radius:10px;border:1.5px solid #cbd5e1;background:#fff;color:#475569;font-weight:600;font-size:0.88rem;cursor:pointer;">
+                    Cancel
+                </button>
+                <button type="button" onclick="closeSectionLockModal(true)" style="padding:10px 22px;border-radius:10px;border:none;background:#dc2626;color:#fff;font-weight:700;font-size:0.88rem;cursor:pointer;">
+                    Yes, Lock &amp; Proceed
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
