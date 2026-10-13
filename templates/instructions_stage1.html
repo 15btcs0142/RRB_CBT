@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Instructions - CBT Examination</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --primary: #1a237e;
+            --primary-light: #283593;
+            --primary-dark: #0d1457;
+            --accent: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --purple: #7c3aed;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --muted: #64748b;
+            --radius: 12px;
+            --shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Header ────────────────────────────────────────────── */
+        .cbt-header {
+            background: var(--primary);
+            color: #fff;
+            padding: 12px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .cbt-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .cbt-brand-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #93c5fd;
+        }
+        .cbt-brand h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        .cbt-brand p {
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.7);
+        }
+        .cbt-candidate {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.08);
+            padding: 6px 14px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .cand-info { text-align: right; }
+        .cand-name { font-size: 0.85rem; font-weight: 600; }
+        .cand-id { font-size: 0.72rem; color: #93c5fd; }
+        .cand-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #e0e7ff;
+            color: #1e3a8a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        /* ── Main Container ────────────────────────────────────── */
+        .container {
+            max-width: 1360px;
+            margin: 20px auto 30px;
+            padding: 0 24px;
+            flex: 1;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .instructions-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .stage-banner {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: #fff;
+            padding: 18px 26px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .stage-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .stage-indicator {
+            background: rgba(255,255,255,0.15);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .content-body {
+            padding: 26px 30px;
+            line-height: 1.7;
+            font-size: 0.92rem;
+            color: #334155;
+        }
+
+        .section-header {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 22px 0 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-header:first-of-type { margin-top: 0; }
+
+        /* ── Palette Legend ────────────────────────────────────── */
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+            margin: 16px 0 22px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 14px;
+        }
+        .palette-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .palette-white {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1.5px solid #cbd5e1;
+        }
+        .palette-red {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1.5px solid #f87171;
+        }
+        .palette-green {
+            background: #dcfce7;
+            color: #16a34a;
+            border: 1.5px solid #4ade80;
+        }
+        .palette-purple {
+            background: #ede9fe;
+            color: #7c3aed;
+            border: 1.5px solid #a78bfa;
+        }
+        .palette-purple-green {
+            background: #ede9fe;
+            color: #7c3aed;
+            border: 1.5px solid #a78bfa;
+        }
+        .green-dot {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 9px;
+            height: 9px;
+            background: #16a34a;
+            border-radius: 50%;
+            border: 1.5px solid #fff;
+        }
+        .legend-desc {
+            font-size: 0.84rem;
+            font-weight: 500;
+            color: #475569;
+        }
+        .legend-desc strong { color: var(--text); }
+
+        /* ── Rules List ────────────────────────────────────────── */
+        .rules-list {
+            padding-left: 20px;
+            margin: 10px 0 18px;
+        }
+        .rules-list li {
+            margin-bottom: 8px;
+        }
+
+        .alert-box {
+            background: #eff6ff;
+            border-left: 4px solid var(--accent);
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+            font-size: 0.88rem;
+            color: #1e40af;
+        }
+
+        /* ── Footer Actions ────────────────────────────────────── */
+        .card-footer {
+            background: #f8fafc;
+            border-top: 1px solid var(--border);
+            padding: 16px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 26px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-next {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            margin-left: auto;
+        }
+        .btn-next:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CBT Header -->
+    <header class="cbt-header">
+        <div class="cbt-brand">
+            <div class="cbt-brand-icon"><i class="fas fa-laptop-code"></i></div>
+            <div>
+                <h1>Computer Based Examination Portal</h1>
+                <p>Stage 1 of 2 — General Candidate Instructions</p>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+            <div class="lang-selector-top" style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.18); padding:5px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.3);">
+                <i class="fas fa-globe" style="font-size:0.85rem; color:#fff;"></i>
+                <select id="studentLangSelect" onchange="switchStudentLang(this.value)" style="background:transparent; color:#fff; border:none; font-size:0.82rem; font-weight:600; cursor:pointer; outline:none; font-family:'Poppins',sans-serif;">
+                    <option value="en" style="color:#1e293b;" {% if active_language=='en' %}selected{% endif %}>English</option>
+                    <option value="hi" style="color:#1e293b;" {% if active_language=='hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+                    <option value="mr" style="color:#1e293b;" {% if active_language=='mr' %}selected{% endif %}>मराठी (Marathi)</option>
+                    <option value="ta" style="color:#1e293b;" {% if active_language=='ta' %}selected{% endif %}>தமிழ் (Tamil)</option>
+                    <option value="te" style="color:#1e293b;" {% if active_language=='te' %}selected{% endif %}>తెలుగు (Telugu)</option>
+                    <option value="bn" style="color:#1e293b;" {% if active_language=='bn' %}selected{% endif %}>বাংলা (Bengali)</option>
+                    <option value="gu" style="color:#1e293b;" {% if active_language=='gu' %}selected{% endif %}>ગુજરાતી (Gujarati)</option>
+                    <option value="kn" style="color:#1e293b;" {% if active_language=='kn' %}selected{% endif %}>ಕನ್ನಡ (Kannada)</option>
+                </select>
+            </div>
+            <div class="cbt-candidate">
+                <div class="cand-info">
+                    <div class="cand-name">{{ session.get('student_name', 'Student Candidate') }}</div>
+                    <div class="cand-id">Class {{ session.get('class', '') }} &bull; ID: {{ session.get('student_id', '') }}</div>
+                </div>
+                <div class="cand-avatar">
+                    {{ session.get('student_name', 'S')[:1].upper() }}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="instructions-card">
+            <!-- Stage Banner -->
+            <div class="stage-banner">
+                <div class="stage-title">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Please read the instructions carefully</span>
+                </div>
+                <div class="stage-indicator">STAGE 1: GENERAL INSTRUCTIONS</div>
+            </div>
+
+            <div class="content-body">
+                <h3 class="section-header"><i class="fas fa-palette"></i> 1. Question Palette Color Legend</h3>
+                <p>The Question Palette displayed on the right side of the screen will show the status of each question using the following official symbols:</p>
+
+                <div class="legend-grid">
+                    <div class="legend-item">
+                        <div class="palette-badge palette-white">1</div>
+                        <div class="legend-desc">You have <strong>not visited</strong> the question yet.</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="palette-badge palette-red">2</div>
+                        <div class="legend-desc">You have <strong>not answered</strong> the question.</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="palette-badge palette-green">3</div>
+                        <div class="legend-desc">You have <strong>answered</strong> the question.</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="palette-badge palette-purple">4</div>
+                        <div class="legend-desc">You have <strong>marked for review</strong> (not answered).</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="palette-badge palette-purple-green">
+                            5
+                            <span class="green-dot"></span>
+                        </div>
+                        <div class="legend-desc">The question is <strong>answered &amp; marked for review</strong> (will be evaluated).</div>
+                    </div>
+                </div>
+
+                <div class="alert-box">
+                    <i class="fas fa-check-double"></i>
+                    <strong>Important Note on Evaluation:</strong> Questions that are <em>Answered and Marked for Review</em> will be considered in the final score calculation. If an option is selected and marked for review, it will count as your submission for that question.
+                </div>
+
+                <h3 class="section-header"><i class="fas fa-mouse-pointer"></i> 2. Navigating to a Question</h3>
+                <ul class="rules-list">
+                    <li>Click on the question number in the <strong>Question Palette</strong> to jump directly to that question.</li>
+                    <li>Note that using this option does <strong>NOT</strong> automatically save your answer to the current question.</li>
+                    <li>Click on <strong>Save &amp; Next</strong> to save your answer for the current question and then proceed to the next question.</li>
+                    <li>Click on <strong>Mark for Review &amp; Next</strong> to mark the question for later review and move to the next question.</li>
+                </ul>
+
+                <h3 class="section-header"><i class="fas fa-edit"></i> 3. Answering Procedure for Multiple Choice Questions</h3>
+                <ul class="rules-list">
+                    <li>To select your answer, click on the button corresponding to one of the options (A, B, C, or D).</li>
+                    <li>To deselect your chosen answer, click on the chosen option again or click the <strong>Clear Response</strong> button.</li>
+                    <li>To change your chosen answer, simply click on the button for another option.</li>
+                    <li>To save your answer, you <strong>MUST</strong> click the <strong>Save &amp; Next</strong> button.</li>
+                </ul>
+
+                <h3 class="section-header"><i class="fas fa-layer-group"></i> 4. Navigating Between Sections</h3>
+                <ul class="rules-list">
+                    <li>Sections in this examination are displayed across the top bar. Questions in a section can be viewed by clicking on that section name.</li>
+                    <li>Depending on the test configuration, sections may have dedicated timers or one-way locks. Please read the test-specific instructions on the next page for your test's exact sectional rules.</li>
+                </ul>
+
+                <h3 class="section-header"><i class="fas fa-language"></i> 5. Language of Question Paper</h3>
+                <ul class="rules-list">
+                    <li>Questions in non-language subjects can be viewed in your chosen language where translation is available.</li>
+                    <li><strong>Language Subject Rule:</strong> Questions on Language subjects (e.g., English, Hindi, Sanskrit, etc.) will be presented strictly in that language and cannot be translated.</li>
+                </ul>
+            </div>
+
+            <!-- Footer Action -->
+            <div class="card-footer">
+                <span style="font-size:0.82rem; color:var(--muted);"><i class="fas fa-lock"></i> Secured Examination Environment</span>
+                <a href="{{ url_for('instructions_stage2') }}" class="btn btn-next">
+                    <span>Next: Test-Specific Instructions</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function switchStudentLang(lang) {
+            try {
+                await fetch('/api/set_language', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({lang_code: lang})
+                });
+                location.reload();
+            } catch(e) {
+                console.error('Lang switch error:', e);
+            }
+        }
+    </script>
+</body>
+</html>
