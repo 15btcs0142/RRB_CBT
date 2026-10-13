@@ -358,6 +358,7 @@
             }
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -369,7 +370,7 @@
 
     <div class="container">
 
-        <!-- ─── FILTER BAR ───────────────────────────────────────────────── -->
+        <!-- ─── FILTER BAR & BULK ACTIONS ─────────────────────────────────── -->
         <div class="filter-bar">
             <label><i class="fas fa-filter"></i> Status:</label>
             <select id="statusFilter">
@@ -380,8 +381,18 @@
             </select>
             <button class="btn btn-primary" id="applyFilterBtn"><i class="fas fa-check"></i> Apply</button>
             <button class="btn btn-outline" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
-            <div class="exam-status" id="examStatusDisplay">
-                <i class="fas fa-circle"></i> Checking...
+
+            <!-- Bulk Accept All & Reject All Options -->
+            <div class="bulk-actions" style="display:flex; align-items:center; gap:10px; margin-left:auto; flex-wrap:wrap;">
+                <button type="button" class="btn btn-approve" id="acceptAllBtn" style="padding:8px 18px; border-radius:30px; font-weight:600; font-size:0.85rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow: 0 4px 12px rgba(27,94,32,0.25); transition:all 0.3s;">
+                    <i class="fas fa-check-double"></i> Accept All (<span id="pendingCountAccept">0</span>)
+                </button>
+                <button type="button" class="btn btn-reject" id="rejectAllBtn" style="padding:8px 18px; border-radius:30px; font-weight:600; font-size:0.85rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow: 0 4px 12px rgba(198,40,40,0.25); transition:all 0.3s;">
+                    <i class="fas fa-ban"></i> Reject All (<span id="pendingCountReject">0</span>)
+                </button>
+                <div class="exam-status" id="examStatusDisplay">
+                    <i class="fas fa-circle"></i> Checking...
+                </div>
             </div>
         </div>
 
@@ -405,7 +416,7 @@
 
     
 <footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
+    {{ developer_credit }}
 </footer>
 </div>
 
@@ -469,7 +480,34 @@
         }
 
         // ─── RENDER TABLE ────────────────────────────────────────────────
+        let currentPendingRequests = [];
+
+        function updateBulkButtonStates() {
+            const pendingCount = currentPendingRequests.length;
+            const acceptBtn = document.getElementById('acceptAllBtn');
+            const rejectBtn = document.getElementById('rejectAllBtn');
+            const countAccept = document.getElementById('pendingCountAccept');
+            const countReject = document.getElementById('pendingCountReject');
+
+            if (countAccept) countAccept.textContent = pendingCount;
+            if (countReject) countReject.textContent = pendingCount;
+
+            if (acceptBtn) {
+                acceptBtn.disabled = (pendingCount === 0);
+                acceptBtn.style.opacity = (pendingCount === 0) ? '0.45' : '1';
+                acceptBtn.style.cursor = (pendingCount === 0) ? 'not-allowed' : 'pointer';
+            }
+            if (rejectBtn) {
+                rejectBtn.disabled = (pendingCount === 0);
+                rejectBtn.style.opacity = (pendingCount === 0) ? '0.45' : '1';
+                rejectBtn.style.cursor = (pendingCount === 0) ? 'not-allowed' : 'pointer';
+            }
+        }
+
         function renderTable(requests) {
+            currentPendingRequests = (requests || []).filter(r => r.status === 'pending');
+            updateBulkButtonStates();
+
             const tbody = document.getElementById('requestsBody');
             if (!requests || requests.length === 0) {
                 tbody.innerHTML = `
@@ -577,9 +615,57 @@
             }
         }
 
+        // ─── HANDLE BULK ACTION ─────────────────────────────────────────
+        async function handleBulkAction(action) {
+            if (!currentPendingRequests || currentPendingRequests.length === 0) {
+                showToast('No pending requests to process.', 'error');
+                return;
+            }
+
+            if (!examActive && action === 'approve') {
+                showToast('Cannot approve while exam is inactive. Start the exam first.', 'error');
+                return;
+            }
+
+            const count = currentPendingRequests.length;
+            const actionLabel = action === 'approve' ? 'ACCEPT (Approve)' : 'REJECT';
+            if (!confirm(`Are you sure you want to ${actionLabel} all ${count} pending reattempt request(s)?`)) {
+                return;
+            }
+
+            const note = prompt(`Add a note for all requests (optional):`);
+            const reqIds = currentPendingRequests.map(r => r.id);
+
+            const acceptBtn = document.getElementById('acceptAllBtn');
+            const rejectBtn = document.getElementById('rejectAllBtn');
+            if (acceptBtn) acceptBtn.disabled = true;
+            if (rejectBtn) rejectBtn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_BASE}/reattempt_requests/bulk_action`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action, note: note || '', request_ids: reqIds })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showToast(data.message || `Successfully ${action}ed ${count} requests`, 'success');
+                    fetchRequests();
+                } else {
+                    showToast(data.message || 'Bulk action failed', 'error');
+                    updateBulkButtonStates();
+                }
+            } catch (e) {
+                showToast('Network error during bulk action. Please try again.', 'error');
+                updateBulkButtonStates();
+            }
+        }
+
         // ─── EVENT LISTENERS ─────────────────────────────────────────────
         document.getElementById('applyFilterBtn').addEventListener('click', fetchRequests);
         document.getElementById('refreshBtn').addEventListener('click', fetchRequests);
+        document.getElementById('acceptAllBtn').addEventListener('click', () => handleBulkAction('approve'));
+        document.getElementById('rejectAllBtn').addEventListener('click', () => handleBulkAction('reject'));
 
         // Auto-refresh every 30 seconds
         setInterval(fetchRequests, 30000);
