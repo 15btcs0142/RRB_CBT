@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -285,6 +285,7 @@
             .fg input{padding:10px 12px;font-size:0.85rem;}
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -303,14 +304,14 @@
     </div>
 
     <!-- ─── Watermark ──────────────────────────────────────────────────── -->
-    <div class="watermark">RRB Group of Schools</div>
+    <div class="watermark">{{ school_name }}</div>
 
     <!-- ─── Login Box ──────────────────────────────────────────────────── -->
     <div class="login-box">
         <div class="logo-wrap">
             <div class="logo-icon"><i class="fas fa-chalkboard-teacher"></i></div>
         </div>
-        <div class="school-name">RRB Group of Schools</div>
+        <div class="school-name">{{ school_name }}</div>
         <div class="portal-label">Faculty &amp; Teacher Portal</div>
 
         <!-- Error Message -->
@@ -347,7 +348,7 @@
         </div>
 
         <div class="footer-note">
-            <i class="fas fa-shield-alt"></i> RRB CBT &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
+            <i class="fas fa-shield-alt"></i> RRB CBT &nbsp;·&nbsp; {{ developer_credit }}
         </div>
     </div>
 
