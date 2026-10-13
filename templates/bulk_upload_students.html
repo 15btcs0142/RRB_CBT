@@ -1,0 +1,483 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Student Upload — RRB CBT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --primary:   #1a237e;
+            --accent:    #3949ab;
+            --green:     #2e7d32;
+            --green-bg:  #e8f5e9;
+            --red:       #c62828;
+            --red-bg:    #ffebee;
+            --orange:    #e65100;
+            --orange-bg: #fff3e0;
+            --radius:    12px;
+            --shadow:    0 4px 20px rgba(0,0,0,0.09);
+        }
+        body { font-family:'Poppins',sans-serif; background:#f0f4f8; min-height:100vh; color:#263238; }
+        .topbar {
+            background: linear-gradient(90deg,#1a237e,#3949ab);
+            color:#fff; padding:14px 28px;
+            display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.15); position:sticky; top:0; z-index:200;
+        }
+        .topbar h1 { font-size:1.2rem; font-weight:600; display:flex; align-items:center; gap:10px; }
+        .topbar h1 i { color:#90caf9; }
+        .topbar-links { display:flex; gap:10px; flex-wrap:wrap; }
+        .topbar a {
+            color:#fff; text-decoration:none; background:rgba(255,255,255,0.15);
+            padding:7px 18px; border-radius:25px; font-size:0.82rem;
+            transition:.25s; display:inline-flex; align-items:center; gap:6px;
+            border:1px solid rgba(255,255,255,0.15);
+        }
+        .topbar a:hover { background:rgba(255,255,255,0.28); transform:translateY(-1px); }
+        .container { max-width:1300px; margin:24px auto; padding:0 20px; }
+        .upload-card {
+            background:#fff; border-radius:var(--radius); box-shadow:var(--shadow);
+            padding:28px 32px; margin-bottom:24px; position:relative; overflow:hidden;
+        }
+        .upload-card::before {
+            content:''; position:absolute; top:0; left:0; width:100%; height:4px;
+            background:linear-gradient(90deg,#1a237e,#667eea,#1a237e);
+            background-size:200% auto; animation:shimmer 2.5s linear infinite;
+        }
+        @keyframes shimmer { 100%{background-position:200% center} }
+        .upload-card h2 { font-size:1.05rem; font-weight:600; color:var(--primary); margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+        .upload-zone {
+            border:2px dashed #bbc6e0; border-radius:10px; background:#f7f9ff;
+            padding:32px 20px; text-align:center; cursor:pointer; transition:.25s; position:relative;
+        }
+        .upload-zone:hover, .upload-zone.drag-over { border-color:var(--accent); background:#eef0fb; }
+        .upload-zone i { font-size:2.4rem; color:#7986cb; margin-bottom:10px; display:block; }
+        .upload-zone p { font-size:0.88rem; color:#546e7a; }
+        .upload-zone span { color:var(--accent); font-weight:600; }
+        #excelFileInput { display:none; }
+        .btn-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:18px; }
+        .btn {
+            display:inline-flex; align-items:center; gap:7px;
+            padding:9px 22px; border-radius:8px; font-family:inherit;
+            font-size:0.85rem; font-weight:600; cursor:pointer; border:none; transition:.2s;
+        }
+        .btn:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+        .btn-primary   { background:linear-gradient(135deg,#1a237e,#3949ab); color:#fff; }
+        .btn-template  { background:linear-gradient(135deg,#00695c,#00897b); color:#fff; text-decoration:none; }
+        .btn-save      { background:linear-gradient(135deg,#1b5e20,#2e7d32); color:#fff; }
+        .btn-secondary { background:#e8eaf6; color:var(--primary); }
+        .btn:disabled  { opacity:.5; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+        .file-chosen { font-size:0.82rem; color:#546e7a; margin-top:8px; }
+        .file-chosen strong { color:var(--accent); }
+        .summary-bar {
+            display:flex; gap:14px; flex-wrap:wrap; align-items:center;
+            background:#fff; border-radius:var(--radius); box-shadow:var(--shadow);
+            padding:16px 24px; margin-bottom:18px;
+        }
+        .s-pill { display:inline-flex; align-items:center; gap:7px; padding:6px 16px; border-radius:20px; font-size:0.82rem; font-weight:600; }
+        .s-pill.total   { background:#e8eaf6; color:#1a237e; }
+        .s-pill.ready   { background:var(--green-bg); color:var(--green); }
+        .s-pill.errors  { background:var(--red-bg);   color:var(--red);   }
+        .s-pill.saved-c { background:#e0f2f1; color:#00695c; }
+        .save-info      { margin-left:auto; font-size:0.82rem; color:#607d8b; }
+        .review-wrap { background:#fff; border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+        .review-wrap table { width:100%; border-collapse:collapse; }
+        .review-wrap thead tr { background:linear-gradient(135deg,#1a237e,#3949ab); color:#fff; }
+        .review-wrap th { padding:13px 10px; text-align:left; font-size:0.78rem; font-weight:600; white-space:nowrap; }
+        .review-wrap td { padding:9px 10px; font-size:0.82rem; border-bottom:1px solid #f0f0f0; vertical-align:middle; }
+        tr.row-ok   { background:#fff; }
+        tr.row-ok:hover { background:#f9fff9; }
+        tr.row-err  { background:var(--red-bg); }
+        tr.row-saved { background:#e0f2f1; opacity:.7; }
+        .row-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:600; white-space:nowrap; }
+        .row-badge.ok   { background:var(--green-bg); color:var(--green); }
+        .row-badge.err  { background:var(--red-bg);   color:var(--red);   }
+        .row-badge.saved { background:#b2dfdb; color:#00695c; }
+        .issue-list { margin-top:3px; }
+        .issue-tag { display:inline-block; font-size:0.68rem; margin:2px 2px 0 0; padding:1px 7px; border-radius:10px; background:var(--orange-bg); color:var(--orange); font-weight:600; }
+        .cell-input { width:100%; padding:5px 8px; border-radius:6px; border:1.5px solid #c5cae9; font-family:inherit; font-size:0.82rem; color:#263238; background:#fff; transition:.18s; }
+        .cell-input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(57,73,171,.15); }
+        .cell-input.field-err { border-color:var(--red); background:var(--red-bg); }
+        select.cell-input { cursor:pointer; }
+        .cell-ro  { color:#37474f; }
+        .cell-dim { color:#90a4ae; font-style:italic; font-size:0.75rem; }
+        .row-no   { color:#b0bec5; font-size:0.75rem; text-align:center; }
+        .spinner-wrap { text-align:center; padding:40px; color:#7986cb; font-size:0.95rem; }
+        .spinner { display:inline-block; width:32px; height:32px; border:3px solid #c5cae9; border-top-color:var(--accent); border-radius:50%; animation:spin .75s linear infinite; margin-bottom:10px; }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        #toast-container { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:10px; }
+        .toast { padding:12px 20px; border-radius:10px; font-size:0.85rem; font-weight:500; box-shadow:0 4px 16px rgba(0,0,0,0.18); color:#fff; max-width:360px; animation:slideIn .3s ease; display:flex; align-items:center; gap:10px; }
+        .toast.success { background:linear-gradient(135deg,#1b5e20,#2e7d32); }
+        .toast.error   { background:linear-gradient(135deg,#b71c1c,#c62828); }
+        .toast.info    { background:linear-gradient(135deg,#0d47a1,#1565c0); }
+        @keyframes slideIn { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:none} }
+        @media(max-width:700px){ .container{padding:0 10px;} .upload-card{padding:18px;} .btn-row{flex-direction:column;align-items:stretch;} }
+    </style>
+    {{ theme_style_tag|safe }}
+</head>
+<body>
+
+<div class="topbar">
+    <h1><i class="fas fa-file-excel"></i> Bulk Student Upload</h1>
+    <div class="topbar-links">
+        <a href="/admin/students"><i class="fas fa-users"></i> Manage Students</a>
+        <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="upload-card">
+        <h2><i class="fas fa-upload"></i> Upload Excel File</h2>
+        <div class="upload-zone" id="dropZone" onclick="document.getElementById('excelFileInput').click()">
+            <i class="fas fa-file-excel"></i>
+            <p>Drag &amp; drop your <span>.xlsx</span> file here, or <span>click to browse</span></p>
+            <p style="margin-top:6px;font-size:0.78rem;color:#9e9e9e;">Use the downloaded template for correct column order</p>
+        </div>
+        <input type="file" id="excelFileInput" accept=".xlsx,.xls">
+        <div class="file-chosen" id="fileChosen" style="display:none">
+            <i class="fas fa-file-alt"></i> Selected: <strong id="fileChosenName"></strong>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-primary" id="btnParse" disabled>
+                <i class="fas fa-search"></i> Parse &amp; Validate File
+            </button>
+            <a href="/admin/students/bulk_upload_template" class="btn btn-template" download>
+                <i class="fas fa-download"></i> Download Template
+            </a>
+            <button class="btn btn-secondary" id="btnReset" style="display:none">
+                <i class="fas fa-redo"></i> Upload Different File
+            </button>
+        </div>
+    </div>
+
+    <div class="summary-bar" id="summaryBar" style="display:none">
+        <div class="s-pill total"><i class="fas fa-list"></i> <span id="sumTotal">0</span> Rows</div>
+        <div class="s-pill ready"><i class="fas fa-check-circle"></i> <span id="sumReady">0</span> Ready</div>
+        <div class="s-pill errors"><i class="fas fa-exclamation-circle"></i> <span id="sumErrors">0</span> Need Fixing</div>
+        <div class="s-pill saved-c" id="sumSavedPill" style="display:none">
+            <i class="fas fa-database"></i> <span id="sumSaved">0</span> Saved
+        </div>
+        <div class="save-info" id="saveInfo"></div>
+        <button class="btn btn-save" id="btnSave" disabled>
+            <i class="fas fa-save"></i> <span id="btnSaveLabel">Save Valid Rows</span>
+        </button>
+    </div>
+
+    <div class="review-wrap" id="reviewWrap" style="display:none">
+        <div id="spinnerArea" style="display:none" class="spinner-wrap">
+            <div class="spinner"></div><br>Parsing &amp; validating...
+        </div>
+        <div style="overflow-x:auto">
+        <table id="reviewTable">
+            <thead>
+                <tr>
+                    <th style="width:36px">#</th>
+                    <th style="width:80px">Status</th>
+                    <th>Admission No <span style="color:#ff8a65">*</span></th>
+                    <th>Name <span style="color:#ff8a65">*</span></th>
+                    <th style="width:90px">Class <span style="color:#ff8a65">*</span></th>
+                    <th style="width:90px">Section <span style="color:#ff8a65">*</span></th>
+                    <th>Date of Birth</th>
+                    <th>House</th>
+                    <th>Parent Name</th>
+                    <th>Address</th>
+                    <th style="width:50px"></th>
+                </tr>
+            </thead>
+            <tbody id="reviewBody"></tbody>
+        </table>
+        </div>
+    </div>
+
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+const VALID_CLASSES  = new Set(['1','2','3','4','5','6','7','8','9','10','11','12']);
+const VALID_SECTIONS = new Set(['A','B','C','D']);
+
+let state = { rows: [], existingIds: new Set(), savedCount: 0 };
+
+const fileInput      = document.getElementById('excelFileInput');
+const dropZone       = document.getElementById('dropZone');
+const btnParse       = document.getElementById('btnParse');
+const btnReset       = document.getElementById('btnReset');
+const fileChosen     = document.getElementById('fileChosen');
+const fileChosenName = document.getElementById('fileChosenName');
+
+fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFileSelected(fileInput.files[0]); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) { fileInput.files = e.dataTransfer.files; handleFileSelected(f); }
+});
+
+function handleFileSelected(f) {
+    fileChosen.style.display = '';
+    fileChosenName.textContent = f.name;
+    btnParse.disabled = false;
+}
+
+btnReset.addEventListener('click', () => {
+    fileInput.value = '';
+    fileChosen.style.display = 'none';
+    fileChosenName.textContent = '';
+    btnParse.disabled = true;
+    btnReset.style.display = 'none';
+    document.getElementById('summaryBar').style.display = 'none';
+    document.getElementById('reviewWrap').style.display = 'none';
+    state = { rows: [], existingIds: new Set(), savedCount: 0 };
+});
+
+btnParse.addEventListener('click', async () => {
+    if (!fileInput.files.length) { showToast('No file selected.', 'error'); return; }
+    btnParse.disabled = true;
+    document.getElementById('reviewWrap').style.display = '';
+    document.getElementById('spinnerArea').style.display = '';
+    document.getElementById('summaryBar').style.display = 'none';
+    document.getElementById('reviewBody').innerHTML = '';
+
+    const fd = new FormData();
+    fd.append('excel_file', fileInput.files[0]);
+
+    try {
+        const res  = await fetch('/admin/students/bulk_upload', { method:'POST', body: fd });
+        const data = await res.json();
+
+        if (data.status === 'error') {
+            showToast(data.message, 'error');
+            document.getElementById('spinnerArea').style.display = 'none';
+            document.getElementById('reviewWrap').style.display = 'none';
+            btnParse.disabled = false;
+            return;
+        }
+
+        state.rows        = data.rows.map(r => ({ ...r, _saved: false }));
+        state.existingIds = new Set(data.existing_ids || []);
+        state.savedCount  = 0;
+
+        document.getElementById('spinnerArea').style.display = 'none';
+        document.getElementById('summaryBar').style.display = '';
+        btnReset.style.display = '';
+        btnParse.disabled = false;
+
+        renderTable();
+        updateSummary();
+        showToast('Parsed ' + data.total + ' rows — ' + data.total_ok + ' ready, ' + data.total_error + ' need fixing.', data.total_error ? 'info' : 'success');
+
+    } catch(e) {
+        showToast('Network error while parsing. Please try again.', 'error');
+        document.getElementById('spinnerArea').style.display = 'none';
+        btnParse.disabled = false;
+    }
+});
+
+function renderTable() {
+    const tbody = document.getElementById('reviewBody');
+    tbody.innerHTML = '';
+    state.rows.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        tr.id = 'row-' + idx;
+        tbody.appendChild(tr);
+        renderRow(idx);
+    });
+}
+
+function renderRow(idx) {
+    const row = state.rows[idx];
+    const tr  = document.getElementById('row-' + idx);
+    if (!tr) return;
+
+    // Remove old issue sub-row
+    const oldSub = document.getElementById('row-' + idx + '-issues');
+    if (oldSub) oldSub.remove();
+
+    tr.className = row._saved ? 'row-saved' : (row.status === 'ok' ? 'row-ok' : 'row-err');
+
+    const issuesByField = {};
+    (row.issues || []).forEach(iss => { if (!issuesByField[iss.field]) issuesByField[iss.field] = []; issuesByField[iss.field].push(iss); });
+    const fe = f => !!issuesByField[f];
+
+    if (row._saved) {
+        tr.innerHTML = '<td class="row-no">' + (idx+1) + '</td>' +
+            '<td><span class="row-badge saved"><i class="fas fa-check"></i> Saved</span></td>' +
+            '<td class="cell-ro">' + esc(row.admission_no) + '</td>' +
+            '<td class="cell-ro">' + esc(row.name) + '</td>' +
+            '<td class="cell-ro">' + esc(row.class) + '</td>' +
+            '<td class="cell-ro">' + esc(row.section) + '</td>' +
+            '<td class="cell-dim">' + (esc(row.dob)||'—') + '</td>' +
+            '<td class="cell-dim">' + (esc(row.house)||'—') + '</td>' +
+            '<td class="cell-dim">' + (esc(row.parents_name)||'—') + '</td>' +
+            '<td class="cell-dim">' + (esc(row.address)||'—') + '</td>' +
+            '<td></td>';
+        return;
+    }
+
+    const badge = row.status === 'ok'
+        ? '<span class="row-badge ok"><i class="fas fa-check-circle"></i> Ready</span>'
+        : '<span class="row-badge err"><i class="fas fa-exclamation-circle"></i> Fix</span>';
+
+    const clsOpts = [1,2,3,4,5,6,7,8,9,10,11,12].map(n =>
+        '<option value="' + n + '"' + (row.class == String(n) ? ' selected' : '') + '>' + n + '</option>').join('');
+    const secOpts = ['A','B','C','D'].map(s =>
+        '<option value="' + s + '"' + (row.section === s ? ' selected' : '') + '>' + s + '</option>').join('');
+
+    tr.innerHTML =
+        '<td class="row-no">' + (idx+1) + '</td>' +
+        '<td>' + badge + '</td>' +
+        '<td><input class="cell-input ' + (fe('admission_no')?'field-err':'') + '" value="' + esc(row.admission_no) + '" placeholder="e.g. 2024001" oninput="onFieldChange(' + idx + ',\'admission_no\',this.value)"></td>' +
+        '<td><input class="cell-input ' + (fe('name')?'field-err':'') + '" value="' + esc(row.name) + '" placeholder="Full Name" oninput="onFieldChange(' + idx + ',\'name\',this.value)"></td>' +
+        '<td><select class="cell-input ' + (fe('class')?'field-err':'') + '" onchange="onFieldChange(' + idx + ',\'class\',this.value)"><option value="">-- Class --</option>' + clsOpts + '</select></td>' +
+        '<td><select class="cell-input ' + (fe('section')?'field-err':'') + '" onchange="onFieldChange(' + idx + ',\'section\',this.value)"><option value="">-- Sec --</option>' + secOpts + '</select></td>' +
+        '<td><input class="cell-input" value="' + esc(row.dob) + '" placeholder="YYYY-MM-DD" oninput="onFieldChange(' + idx + ',\'dob\',this.value)"></td>' +
+        '<td><input class="cell-input" value="' + esc(row.house) + '" placeholder="e.g. Red" oninput="onFieldChange(' + idx + ',\'house\',this.value)"></td>' +
+        '<td><input class="cell-input" value="' + esc(row.parents_name) + '" placeholder="Parent name" oninput="onFieldChange(' + idx + ',\'parents_name\',this.value)"></td>' +
+        '<td><input class="cell-input" value="' + esc(row.address) + '" placeholder="Address" oninput="onFieldChange(' + idx + ',\'address\',this.value)"></td>' +
+        '<td style="text-align:center">' + (row.status !== 'ok' ? '<span title="' + (row.issues||[]).map(i=>i.message).join('; ') + '" style="cursor:help;color:#c62828;font-size:1.1rem"><i class="fas fa-info-circle"></i></span>' : '') + '</td>';
+
+    if (row.status !== 'ok' && row.issues && row.issues.length) {
+        const tags = row.issues.map(iss => '<span class="issue-tag"><i class="fas fa-times-circle"></i> ' + esc(iss.message) + '</span>').join('');
+        const subTr = document.createElement('tr');
+        subTr.id = 'row-' + idx + '-issues';
+        subTr.className = 'row-err';
+        subTr.innerHTML = '<td></td><td colspan="10" style="padding:2px 10px 8px;border-bottom:2px solid #ffcdd2"><div class="issue-list">' + tags + '</div></td>';
+        tr.insertAdjacentElement('afterend', subTr);
+    }
+}
+
+function onFieldChange(idx, field, value) {
+    state.rows[idx][field] = (field === 'section') ? value.toUpperCase().trim() : value.trim();
+    revalidateAll();
+    renderRow(idx);
+    updateSummary();
+}
+
+function revalidateAll() {
+    const admMap = {};
+    state.rows.forEach((r, i) => {
+        if (r._saved) return;
+        const adm = (r.admission_no || '').trim();
+        if (!adm) return;
+        if (!admMap[adm]) admMap[adm] = [];
+        admMap[adm].push(i);
+    });
+    const batchDupSet = new Set();
+    Object.entries(admMap).forEach(([adm, indices]) => { if (indices.length > 1) indices.forEach(i => batchDupSet.add(i)); });
+
+    state.rows.forEach((r, i) => {
+        if (r._saved) return;
+        const issues = [];
+        const adm = (r.admission_no || '').trim();
+        const name = (r.name || '').trim();
+        const cls  = (r.class || '').trim();
+        const sec  = (r.section || '').trim().toUpperCase();
+
+        if (!adm) {
+            issues.push({ field:'admission_no', type:'missing', message:'Admission No is required' });
+        } else {
+            if (state.existingIds.has(adm))
+                issues.push({ field:'admission_no', type:'db_duplicate', message:'Already exists in database' });
+            if (batchDupSet.has(i))
+                issues.push({ field:'admission_no', type:'batch_duplicate', message:'Duplicate within this file' });
+        }
+        if (!name)  issues.push({ field:'name',    type:'missing', message:'Name is required' });
+        if (!cls)   issues.push({ field:'class',   type:'missing', message:'Class is required' });
+        else if (!VALID_CLASSES.has(cls))  issues.push({ field:'class',   type:'invalid', message:'Invalid class "' + cls + '" — must be 1 to 12' });
+        if (!sec)   issues.push({ field:'section', type:'missing', message:'Section is required' });
+        else if (!VALID_SECTIONS.has(sec)) issues.push({ field:'section', type:'invalid', message:'Invalid section "' + sec + '" — must be A, B, C or D' });
+
+        r.issues = issues;
+        r.status = issues.length ? 'error' : 'ok';
+    });
+}
+
+function updateSummary() {
+    const total  = state.rows.length;
+    const saved  = state.rows.filter(r => r._saved).length;
+    const ready  = state.rows.filter(r => !r._saved && r.status === 'ok').length;
+    const errors = state.rows.filter(r => !r._saved && r.status === 'error').length;
+
+    document.getElementById('sumTotal').textContent  = total;
+    document.getElementById('sumReady').textContent  = ready;
+    document.getElementById('sumErrors').textContent = errors;
+    document.getElementById('sumSaved').textContent  = saved;
+    document.getElementById('sumSavedPill').style.display = saved > 0 ? '' : 'none';
+
+    const btnSave = document.getElementById('btnSave');
+    const lbl     = document.getElementById('btnSaveLabel');
+    btnSave.disabled = (ready === 0);
+    lbl.textContent = ready > 0 ? ('Save ' + ready + ' Valid Row' + (ready===1?'':'s')) : 'Save Valid Rows';
+
+    const saveInfo = document.getElementById('saveInfo');
+    if (errors > 0 && ready > 0) saveInfo.textContent = errors + ' row' + (errors===1?'':'s') + ' still need fixing — they won\'t be saved.';
+    else if (errors > 0) saveInfo.textContent = 'Fix all flagged rows before saving.';
+    else saveInfo.textContent = '';
+}
+
+document.getElementById('btnSave').addEventListener('click', async () => {
+    const toSave = state.rows.filter(r => !r._saved && r.status === 'ok');
+    if (!toSave.length) { showToast('No valid rows to save.', 'error'); return; }
+
+    const btnSave = document.getElementById('btnSave');
+    btnSave.disabled = true;
+    btnSave.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        const res  = await fetch('/admin/students/bulk_save', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ rows: toSave }) });
+        const data = await res.json();
+
+        if (data.status === 'error') {
+            showToast(data.message || 'Server error during save.', 'error');
+            btnSave.disabled = false;
+            btnSave.innerHTML = '<i class="fas fa-save"></i> <span id="btnSaveLabel">Save Valid Rows</span>';
+            return;
+        }
+
+        const savedAdms = new Set(toSave.map(r => r.admission_no));
+        (data.skipped || []).forEach(sk => savedAdms.delete(sk.admission_no));
+
+        state.rows.forEach((r, i) => {
+            if (savedAdms.has(r.admission_no)) { r._saved = true; state.existingIds.add(r.admission_no); }
+        });
+
+        revalidateAll();
+        state.rows.forEach((r, i) => { renderRow(i); });
+        btnSave.innerHTML = '<i class="fas fa-save"></i> <span id="btnSaveLabel">Save Valid Rows</span>';
+        updateSummary();
+
+        if (data.skipped && data.skipped.length)
+            showToast('Saved ' + data.saved + ' students. ' + data.skipped.length + ' skipped (see console).', 'info');
+        else
+            showToast(data.saved + ' student' + (data.saved===1?'':'s') + ' saved successfully!', 'success');
+
+    } catch(e) {
+        showToast('Network error during save. Please try again.', 'error');
+        btnSave.disabled = false;
+        btnSave.innerHTML = '<i class="fas fa-save"></i> <span id="btnSaveLabel">Save Valid Rows</span>';
+    }
+});
+
+function esc(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function showToast(msg, type) {
+    type = type || 'info';
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = 'toast ' + type;
+    const icon = type==='success'?'check-circle':type==='error'?'times-circle':'info-circle';
+    t.innerHTML = '<i class="fas fa-' + icon + '"></i> ' + msg;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(40px)'; t.style.transition='.3s'; setTimeout(()=>t.remove(),300); }, 4500);
+}
+</script>
+</body>
+</html>
