@@ -295,6 +295,7 @@
             }
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -305,11 +306,11 @@
         <div>
             <h1><i class="fas fa-file-alt"></i> Test Responses</h1>
             <div class="sub-info">
-                <i class="fas fa-graduation-cap"></i> {{ result.class }}
+                <i class="fas fa-graduation-cap"></i> {{ result.class }}{% if result.section %}-{{ result.section }}{% endif %}
                 &nbsp;&nbsp;|&nbsp;&nbsp;
                 <i class="fas fa-book"></i> {{ result.subject }}
                 &nbsp;&nbsp;|&nbsp;&nbsp;
-                <i class="fas fa-tag"></i> {{ result.chapter or 'N/A' }}
+                <i class="fas fa-hashtag"></i> {{ result.chapter or result.test_no or 'N/A' }}
                 &nbsp;&nbsp;|&nbsp;&nbsp;
                 <i class="fas fa-calendar-alt"></i> {{ result.test_date[:10] if result.test_date else '' }}
             </div>
@@ -364,6 +365,30 @@
         </div>
     </div>
 
+    {% if result.parsed_breakdown %}
+    <div style="background: white; border-radius: 14px; padding: 18px 22px; margin-bottom: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid rgba(26,35,126,0.08);">
+        <div style="font-size: 0.95rem; font-weight: 700; color: #1a237e; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-layer-group"></i> Section-Wise Score Breakdown
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+            {% for sec in result.parsed_breakdown %}
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px;">
+                <div style="font-weight: 700; color: #1e293b; font-size: 0.88rem;">{{ sec.section_name }}</div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 1px;">Subject: {{ sec.subject }}</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #2e7d32; margin-top: 6px;">
+                    {{ sec.marks_obtained }} / {{ sec.max_marks }} <span style="font-size: 0.72rem; color: #64748b; font-weight: normal;">marks</span>
+                </div>
+                <div style="font-size: 0.75rem; color: #475569; display: flex; gap: 8px; margin-top: 4px;">
+                    <span style="color:#2e7d32;">✓ {{ sec.correct }}</span>
+                    <span style="color:#c62828;">✗ {{ sec.incorrect }}</span>
+                    <span style="color:#e65100;">⊘ {{ sec.total - sec.attempted }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- ─── QUESTIONS ──────────────────────────────────────────────────── -->
     {% for q in questions %}
         {% if q.selected == q.correct %}
@@ -385,7 +410,12 @@
         
         <div class="question-card {{ card_class }}">
             <div class="q-header">
-                <span class="q-num"><i class="fas fa-hashtag" style="color:#999;"></i> Question {{ loop.index }}</span>
+                <div>
+                    <span class="q-num"><i class="fas fa-hashtag" style="color:#999;"></i> Question {{ loop.index }}</span>
+                    {% if q.section_name %}
+                    <span style="margin-left:8px; font-size:0.72rem; font-weight:700; background:#e8eaf6; color:#1a237e; padding:2px 8px; border-radius:10px;">{{ q.section_name }}</span>
+                    {% endif %}
+                </div>
                 <span class="status-badge {{ badge_class }}">
                     <i class="fas {{ badge_icon }}"></i> {{ badge_text }}
                 </span>
@@ -429,7 +459,7 @@
 
 
 <footer class="app-global-footer" style="width:100%; text-align:center; padding:20px 10px; font-size:0.85rem; color:#666; opacity:0.85; margin-top:30px; border-top:1px solid rgba(0,0,0,0.08); box-sizing:border-box; clear:both;">
-    Developed by Gaurav Shukla &amp; Team
+    {{ developer_credit }}
 </footer>
 </div>
 
