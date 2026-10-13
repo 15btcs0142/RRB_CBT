@@ -318,11 +318,65 @@ fetch('/get_questions')
         if (typeof window.initExam === 'function') window.initExam();
     });
 
+let isExamPaused = false;
+let pauseBanner = null;
+
+function setExamPaused(paused, message) {
+    isExamPaused = paused;
+    const submitBtn = document.getElementById('submitBtn');
+    if (paused) {
+        if (!pauseBanner) {
+            pauseBanner = document.createElement('div');
+            pauseBanner.id = 'examPausedBanner';
+            pauseBanner.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(90deg, #b45309, #d97706);
+                color: #ffffff;
+                text-align: center;
+                padding: 12px 20px;
+                font-size: 0.95rem;
+                font-weight: 700;
+                z-index: 9999999;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                letter-spacing: 0.02em;
+            `;
+            pauseBanner.innerHTML = `<i class="fas fa-pause-circle" style="font-size:1.3rem;"></i> <span>${message || 'EXAM PAUSED BY SUPERVISOR — Countdown timer is temporarily frozen. Please wait.'}</span>`;
+            document.body.appendChild(pauseBanner);
+        } else {
+            pauseBanner.style.display = 'flex';
+        }
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+            submitBtn.style.cursor = 'not-allowed';
+        }
+        const timerSpan = document.querySelector('#timer .timer-time');
+        if (timerSpan) timerSpan.style.color = '#f59e0b';
+    } else {
+        if (pauseBanner) {
+            pauseBanner.style.display = 'none';
+        }
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+        }
+        const timerSpan = document.querySelector('#timer .timer-time');
+        if (timerSpan) timerSpan.style.color = '';
+    }
+}
+
 function startTimer() {
     fetch('/get_exam_time')
         .then(res => res.json())
         .then(data => {
-            // BUG-002 FIX: if server says remaining=0 AND student is 'Submitted', auto-submit
             if (data.force_submitted) {
                 sessionStorage.setItem('examSubmitted', 'true');
                 clearInterval(timerInterval);
@@ -331,25 +385,33 @@ function startTimer() {
                 return;
             }
             examDuration = data.remaining;
-            if (examDuration <= 0) {
+            if (data.paused) {
+                setExamPaused(true, data.message);
+            } else {
+                setExamPaused(false);
+            }
+            if (examDuration <= 0 && !data.paused) {
                 alert('Time is up! Your exam will be submitted now.');
                 silentSubmit();
                 return;
             }
             updateTimerDisplay();
+            if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
-                examDuration--;
-                updateTimerDisplay();
-                if (examDuration <= 0) {
-                    clearInterval(timerInterval);
-                    alert('Time is up! Your exam will be submitted now.');
-                    silentSubmit();
+                if (!isExamPaused) {
+                    examDuration--;
+                    updateTimerDisplay();
+                    if (examDuration <= 0) {
+                        clearInterval(timerInterval);
+                        alert('Time is up! Your exam will be submitted now.');
+                        silentSubmit();
+                    }
                 }
             }, 1000);
         });
 }
 
-// BUG-002 FIX: Poll every 5s to detect admin-forced submission
+// Poll status every 4s to detect admin/teacher forced submission or pause
 let statusPollInterval = setInterval(() => {
     if (sessionStorage.getItem('examSubmitted')) {
         clearInterval(statusPollInterval);
@@ -362,11 +424,27 @@ let statusPollInterval = setInterval(() => {
                 clearInterval(timerInterval);
                 clearInterval(statusPollInterval);
                 sessionStorage.setItem('examSubmitted', 'true');
+                if (data.end_message) {
+                    alert(data.end_message);
+                }
                 window.location.href = '/submitted';
+            } else if (data.paused) {
+                setExamPaused(true, data.message || 'Exam is paused by proctor.');
+            } else if (isExamPaused && !data.paused) {
+                setExamPaused(false);
+                fetch('/get_exam_time')
+                    .then(res => res.json())
+                    .then(tData => {
+                        if (tData.remaining !== undefined) {
+                            examDuration = tData.remaining;
+                            updateTimerDisplay();
+                        }
+                    })
+                    .catch(() => {});
             }
         })
         .catch(() => {});
-}, 5000);
+}, 4000);
 
 function updateTimerDisplay() {
     const mins = Math.floor(examDuration / 60);
@@ -445,11 +523,13 @@ function refreshQuestionStatus(index) {
     const isMarked = markedForReview.has(index);
     let status = 'Not Answered';
     if (isMarked && hasAns) {
-        status = 'Answered & Marked for Review';
+        status = (window.I18N && window.I18N.marked) ? (window.I18N.answered + ' & ' + window.I18N.marked) : 'Answered & Marked for Review';
     } else if (isMarked) {
-        status = 'Marked for Review';
+        status = (window.I18N && window.I18N.marked) || 'Marked for Review';
     } else if (hasAns) {
-        status = 'Answered';
+        status = (window.I18N && window.I18N.answered) || 'Answered';
+    } else {
+        status = (window.I18N && window.I18N.notAnswered) || 'Not Answered';
     }
     const statusEl = document.getElementById('currentStatus');
     if (statusEl) statusEl.textContent = status;
@@ -460,6 +540,56 @@ function refreshQuestionCounters(index) {
     const panelNumber = document.getElementById('questionNumberPanel');
     if (headerNumber) headerNumber.textContent = (index + 1).toString();
     if (panelNumber) panelNumber.textContent = (index + 1).toString();
+}
+
+// ── Language Subject Non-Translation Helpers ─────────────────────────────────
+// English, Hindi, and any other language subjects MUST NEVER be translated.
+function isLanguageSubject(subj) {
+    if (!subj) return false;
+    const s = subj.toString().trim().toLowerCase();
+    const languageKeywords = [
+        'english', 'अंग्रेजी', 'अंग्रेज़ी',
+        'hindi', 'हिन्दी', 'हिंदी',
+        'sanskrit', 'संस्कृत',
+        'urdu', 'उर्दू',
+        'french', 'français',
+        'german', 'deutsch',
+        'spanish', 'español',
+        'bengali', 'bangla', 'বাংলা',
+        'marathi', 'मराठी',
+        'gujarati', 'ગુજરાતી',
+        'tamil', 'தமிழ்',
+        'telugu', 'తెలుగు',
+        'kannada', 'ಕನ್ನಡ',
+        'malayalam', 'മലയാളം',
+        'punjabi', 'ਪੰਜਾਬੀ',
+        'odia', 'oriya', 'ଓଡ଼ିଆ',
+        'assamese', 'অসমীয়া',
+        'maithili', 'मैथिली',
+        'kashmiri', 'कॉशुर',
+        'nepali', 'नेपाली',
+        'konkani', 'कोंकणी',
+        'sindhi', 'سنڌي',
+        'manipuri', 'meitei',
+        'arabic', 'عربي',
+        'persian', 'فارسی',
+        'russian', 'русский',
+        'japanese', '日本語',
+        'chinese', 'mandarin', '中文',
+        'korean', '한국어',
+        'latin',
+        'language', 'literature', 'vyakaran', 'sahitya', 'grammar', 'bhasha'
+    ];
+    return languageKeywords.some(kw => s.includes(kw));
+}
+
+function getQuestionSubject(q) {
+    if (!q) return window.studentSubject || '';
+    if (q.subject && q.subject.trim()) return q.subject.trim();
+    if (window.msSectionMap && q.section_id && window.msSectionMap[q.section_id] && window.msSectionMap[q.section_id].subject) {
+        return window.msSectionMap[q.section_id].subject.trim();
+    }
+    return window.studentSubject || '';
 }
 
 function loadQuestion(index) {
@@ -476,6 +606,15 @@ function loadQuestion(index) {
         showToastNotification('📌 Note: You are on the last question of the exam.', 'info');
     } else if (index < questions.length - 1) {
         window._lastQNotified = false;
+    }
+
+    // Language subjects (English, Hindi, Sanskrit, etc.) must NEVER translate
+    const qSubj = getQuestionSubject(q);
+    const isLang = isLanguageSubject(qSubj);
+
+    const translateBtn = document.getElementById('translateBtn');
+    if (translateBtn) {
+        translateBtn.style.display = isLang ? 'none' : 'flex';
     }
 
     // ── Question text ─────────────────────────────────────────────────────────
@@ -564,7 +703,8 @@ function loadQuestion(index) {
         }
     }
 
-    if (translationState === 'hi') {
+    // Language subjects must NEVER be translated.
+    if (!isLang && translationState === 'hi') {
         if (q.question_hi && q.question_hi.trim() !== '') {
             applyTranslation(index, {
                 question: q.question_hi,
@@ -761,27 +901,27 @@ function showSubmitConfirmationModal() {
                 📝
             </div>
             <h3 style="color: #1e1b4b; font-size: 1.3rem; font-weight: 700; margin-bottom: 8px;">
-                Are you sure you want to submit your exam?
+                ${(window.I18N && window.I18N.confirmSubmitTitle) || 'Are you sure you want to submit your exam?'}
             </h3>
             <p style="color: #64748b; font-size: 0.88rem; margin-bottom: 20px;">
-                Please review your exam summary before final submission.
+                ${(window.I18N && window.I18N.confirmSubmitSubtitle) || 'Please review your exam summary before final submission.'}
             </p>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; text-align: left;">
                 <div style="background: #f8fafc; padding: 10px 14px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">ANSWERED</div>
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">${((window.I18N && window.I18N.answered) || 'ANSWERED').toUpperCase()}</div>
                     <div style="font-size: 1.1rem; color: #16a34a; font-weight: 700;">${answered} / ${total}</div>
                 </div>
                 <div style="background: #f8fafc; padding: 10px 14px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">MARKED FOR REVIEW</div>
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">${((window.I18N && window.I18N.marked) || 'MARKED FOR REVIEW').toUpperCase()}</div>
                     <div style="font-size: 1.1rem; color: #7c3aed; font-weight: 700;">${marked}</div>
                 </div>
                 <div style="background: #f8fafc; padding: 10px 14px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">NOT ANSWERED</div>
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">${((window.I18N && window.I18N.notAnswered) || 'NOT ANSWERED').toUpperCase()}</div>
                     <div style="font-size: 1.1rem; color: #dc2626; font-weight: 700;">${notAnswered}</div>
                 </div>
                 <div style="background: #f8fafc; padding: 10px 14px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">UNVISITED</div>
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">${((window.I18N && window.I18N.notVisited) || 'UNVISITED').toUpperCase()}</div>
                     <div style="font-size: 1.1rem; color: #64748b; font-weight: 700;">${notVisited}</div>
                 </div>
             </div>
@@ -790,13 +930,13 @@ function showSubmitConfirmationModal() {
                 <button id="cancelSubmitBtn" style="flex: 1; padding: 12px; border: 1.5px solid #cbd5e1;
                         background: #ffffff; color: #475569; border-radius: 12px; font-weight: 600;
                         font-size: 0.92rem; cursor: pointer; transition: all 0.2s;">
-                    Cancel
+                    ${(window.I18N && window.I18N.btnCancel) || 'Cancel'}
                 </button>
                 <button id="confirmSubmitBtn" style="flex: 1; padding: 12px; border: none;
                         background: linear-gradient(135deg, #16a34a, #15803d); color: #ffffff;
                         border-radius: 12px; font-weight: 600; font-size: 0.92rem; cursor: pointer;
                         box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); transition: all 0.2s;">
-                    Yes, Submit
+                    ${(window.I18N && window.I18N.btnYesSubmit) || 'Yes, Submit'}
                 </button>
             </div>
         </div>
@@ -842,6 +982,14 @@ function injectTranslateButton() {
     btn.innerHTML = '<span id="translateLabel">हिंदी</span>';
     btn.onclick = toggleTranslation;
 
+    // Check if the current question is a language subject and hide accordingly
+    if (typeof questions !== 'undefined' && questions[currentIndex]) {
+        const qSubj = getQuestionSubject(questions[currentIndex]);
+        if (isLanguageSubject(qSubj)) {
+            btn.style.display = 'none';
+        }
+    }
+
     // Insert into exam header area
     const header = document.querySelector('.exam-header');
     if (header) header.appendChild(btn);
@@ -886,6 +1034,12 @@ async function toggleTranslation() {
     if (translationInProgress) return;
     const q = questions[currentIndex];
     if (!q) return;
+
+    // Language subjects (English, Hindi, Sanskrit, etc.) must NEVER translate
+    const qSubj = getQuestionSubject(q);
+    if (isLanguageSubject(qSubj)) {
+        return;
+    }
 
     // If currently in Hindi → switch back to English (from cache, instant)
     if (translationState === 'hi') {
