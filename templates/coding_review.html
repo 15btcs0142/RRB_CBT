@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Coding Questions Review &amp; Approval Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --primary-light: #e0e7ff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: #1e293b;
+            min-height: 100vh;
+            line-height: 1.5;
+            padding-bottom: 50px;
+        }
+
+        .topbar {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #fff;
+            flex-wrap: wrap;
+            gap: 12px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.25);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topbar .title-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .topbar .icon-pill {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: #818cf8;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .topbar h1 { font-size: 1.3rem; font-weight: 800; color: #fff; }
+        .topbar h1 span { font-size: 0.8rem; font-weight: 600; color: #a5b4fc; display: block; }
+
+        .topbar a {
+            color: #fff;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.2s;
+        }
+        .topbar a:hover { background: rgba(255, 255, 255, 0.2); }
+
+        .container {
+            max-width: 1300px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
+
+        .alert {
+            padding: 14px 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+        .alert-success { background: #d1fae5; border-left: 4px solid #059669; color: #065f46; }
+        .alert-error { background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; }
+
+        .summary-bar {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 18px 24px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .btn {
+            padding: 9px 20px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            font-family: inherit;
+        }
+        .btn-primary { background: linear-gradient(135deg, #4f46e5, #3730a3); color: #fff; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+        .btn-success:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+        .btn-danger:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+        .btn-outline { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .btn-outline:hover { background: #e2e8f0; color: #0f172a; }
+
+        .q-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 24px 28px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .q-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .q-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .q-num {
+            background: #e0e7ff;
+            color: #3730a3;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        .input-title {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .badge-approved { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+
+        .form-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .lbl {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .txt-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+        textarea.txt-input { min-height: 80px; resize: vertical; }
+
+        /* Test Case Table */
+        .tc-table-wrap {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin: 14px 0;
+        }
+
+        table.tc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        table.tc-table th {
+            background: #f1f5f9;
+            padding: 8px 12px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            text-align: left;
+        }
+
+        table.tc-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: top;
+        }
+
+        .btn-vis-toggle {
+            padding: 3px 10px;
+            border-radius: 14px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-vis-toggle.sample { background: #e0e7ff; color: #3730a3; }
+        .btn-vis-toggle.hidden { background: #fee2e2; color: #991b1b; }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: #fff;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+        .empty-state i { font-size: 3rem; color: #cbd5e1; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="title-group">
+        <div class="icon-pill">
+            <i class="fas fa-code"></i>
+        </div>
+        <h1>AI Draft Coding Questions <span>Teacher Review &amp; Approval Portal</span></h1>
+    </div>
+    <a href="/admin/test_papers"><i class="fas fa-arrow-left"></i> Test Papers Portal</a>
+</div>
+
+<div class="container">
+    <div id="alertBox" class="alert"></div>
+
+    <div class="summary-bar">
+        <div>
+            <strong style="font-size:1.05rem;color:var(--dark);"><i class="fas fa-list-check" style="color:var(--primary);"></i> AI Draft Coding Questions</strong>
+            <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">
+                Review each question statement and test case input/output pairs before approving for live tests.
+                {% if test_no %} Filtered by Test: <strong>{{ test_no }}</strong> {% endif %}
+            </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn btn-success" onclick="approveAllQuestions('{{ test_no }}')">
+                <i class="fas fa-circle-check"></i> Approve All Questions
+            </button>
+            <a href="{% if is_admin %}/admin/create_test?category=coding_test{% else %}/teacher/create_test_v2?category=coding_test{% endif %}" class="btn btn-outline">
+                <i class="fas fa-plus"></i> Generate More
+            </a>
+        </div>
+    </div>
+
+    <div id="questionsList">
+        {% if not questions %}
+        <div class="empty-state">
+            <i class="fas fa-check-double"></i>
+            <h3 style="color:var(--dark);margin-bottom:6px;">No Pending Draft Coding Questions</h3>
+            <p style="color:#64748b;font-size:0.9rem;">All coding questions have been approved or no drafts found.</p>
+            <div style="margin-top:16px;">
+                <a href="{% if is_admin %}/admin/create_test?category=coding_test{% else %}/teacher/create_test_v2?category=coding_test{% endif %}" class="btn btn-primary"><i class="fas fa-magic"></i> Generate AI Coding Questions</a>
+            </div>
+        </div>
+        {% else %}
+        {% for q in questions %}
+        <div class="q-card" id="qcard-{{ q.id }}">
+            <div class="q-header">
+                <div class="q-title-group">
+                    <div class="q-num">#{{ loop.index }}</div>
+                    <input type="text" class="input-title" id="title-{{ q.id }}" value="{{ q.title }}" placeholder="Question Title">
+                </div>
+                <div>
+                    <span class="badge {{ 'badge-approved' if q.approved else 'badge-pending' }}" id="status-badge-{{ q.id }}">
+                        {{ 'Approved' if q.approved else 'Pending Review' }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="form-grid-3">
+                <div>
+                    <label class="lbl"><i class="fas fa-bookmark"></i> Topic / Chapter</label>
+                    <input type="text" class="txt-input" id="topic-{{ q.id }}" value="{{ q.topic or 'Coding' }}">
+                </div>
+                <div>
+                    <label class="lbl"><i class="fas fa-chart-line"></i> Difficulty</label>
+                    <select class="txt-input" id="difficulty-{{ q.id }}">
+                        <option value="easy" {{ 'selected' if q.difficulty == 'easy' }}>Easy</option>
+                        <option value="medium" {{ 'selected' if q.difficulty == 'medium' }}>Medium</option>
+                        <option value="hard" {{ 'selected' if q.difficulty == 'hard' }}>Hard</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="lbl"><i class="fas fa-award"></i> Total Marks</label>
+                    <input type="number" class="txt-input" id="marks-{{ q.id }}" value="{{ q.total_marks or 10 }}" step="0.5">
+                </div>
+            </div>
+
+            <div style="margin-bottom:14px;">
+                <label class="lbl"><i class="fas fa-align-left"></i> Problem Statement &amp; Requirements *</label>
+                <textarea class="txt-input" id="statement-{{ q.id }}" style="min-height:100px;">{{ q.problem_statement }}</textarea>
+            </div>
+
+            <div class="form-grid-3">
+                <div>
+                    <label class="lbl"><i class="fas fa-sign-in-alt"></i> Input Format</label>
+                    <textarea class="txt-input" id="inpfmt-{{ q.id }}">{{ q.input_format }}</textarea>
+                </div>
+                <div>
+                    <label class="lbl"><i class="fas fa-sign-out-alt"></i> Output Format</label>
+                    <textarea class="txt-input" id="outfmt-{{ q.id }}">{{ q.output_format }}</textarea>
+                </div>
+                <div>
+                    <label class="lbl"><i class="fas fa-shield-halved"></i> Constraints</label>
+                    <textarea class="txt-input" id="constraints-{{ q.id }}">{{ q.constraints }}</textarea>
+                </div>
+            </div>
+
+            <!-- Test Cases Editor -->
+            <div style="margin-top:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <label class="lbl" style="margin:0;"><i class="fas fa-vials"></i> Evaluation Test Cases (Visible &amp; Hidden)</label>
+                    <button type="button" class="btn btn-outline" style="padding:4px 12px;font-size:0.75rem;" onclick="addTestCaseRow({{ q.id }})">
+                        <i class="fas fa-plus"></i> Add Test Case
+                    </button>
+                </div>
+                <div class="tc-table-wrap">
+                    <table class="tc-table" id="tctable-{{ q.id }}">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Input (stdin)</th>
+                                <th>Expected Output (stdout)</th>
+                                <th>Visibility</th>
+                                <th style="width:60px;text-align:center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tcbody-{{ q.id }}">
+                            {% for tc in q.test_cases %}
+                            <tr class="tc-row">
+                                <td style="font-weight:700;color:#64748b;text-align:center;">{{ loop.index }}</td>
+                                <td><textarea class="txt-input tc-input" style="min-height:45px;font-family:monospace;">{{ tc.input }}</textarea></td>
+                                <td><textarea class="txt-input tc-output" style="min-height:45px;font-family:monospace;">{{ tc.expected_output }}</textarea></td>
+                                <td>
+                                    <button type="button" class="btn-vis-toggle {{ 'hidden' if tc.is_hidden else 'sample' }}" onclick="toggleTcVis(this)">
+                                        {{ 'Hidden' if tc.is_hidden else 'Sample (Visible)' }}
+                                    </button>
+                                </td>
+                                <td style="text-align:center;">
+                                    <button type="button" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:1.05rem;" onclick="this.closest('tr').remove()" title="Remove Test Case">
+                                        <i class="fas fa-trash-can"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Card Action Footer -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding-top:14px;border-top:1px solid #f1f5f9;flex-wrap:wrap;gap:10px;">
+                <button type="button" class="btn btn-danger" onclick="deleteQuestion({{ q.id }})">
+                    <i class="fas fa-trash-can"></i> Discard Draft
+                </button>
+                <div style="display:flex;gap:10px;">
+                    <button type="button" class="btn btn-outline" onclick="saveQuestionChanges({{ q.id }})">
+                        <i class="fas fa-floppy-disk"></i> Save Draft
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="approveQuestion({{ q.id }})">
+                        <i class="fas fa-circle-check"></i> Approve &amp; Publish Question
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function showAlert(msg, type) {
+    const box = document.getElementById('alertBox');
+    box.className = 'alert alert-' + type;
+    box.innerHTML = `<i class="fas fa-${type==='success'?'circle-check':'triangle-exclamation'}"></i> ${msg}`;
+    box.style.display = 'flex';
+    window.scrollTo(0,0);
+    setTimeout(()=>box.style.display='none', 6000);
+}
+
+function toggleTcVis(btn) {
+    if (btn.classList.contains('sample')) {
+        btn.classList.remove('sample');
+        btn.classList.add('hidden');
+        btn.textContent = 'Hidden';
+    } else {
+        btn.classList.remove('hidden');
+        btn.classList.add('sample');
+        btn.textContent = 'Sample (Visible)';
+    }
+}
+
+function addTestCaseRow(qid) {
+    const tbody = document.getElementById('tcbody-' + qid);
+    const rowCount = tbody.querySelectorAll('tr').length + 1;
+    const tr = document.createElement('tr');
+    tr.className = 'tc-row';
+    tr.innerHTML = `
+        <td style="font-weight:700;color:#64748b;text-align:center;">${rowCount}</td>
+        <td><textarea class="txt-input tc-input" style="min-height:45px;font-family:monospace;" placeholder="Standard input..."></textarea></td>
+        <td><textarea class="txt-input tc-output" style="min-height:45px;font-family:monospace;" placeholder="Expected stdout..."></textarea></td>
+        <td>
+            <button type="button" class="btn-vis-toggle sample" onclick="toggleTcVis(this)">Sample (Visible)</button>
+        </td>
+        <td style="text-align:center;">
+            <button type="button" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:1.05rem;" onclick="this.closest('tr').remove()" title="Remove Test Case">
+                <i class="fas fa-trash-can"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+
+function collectQuestionData(qid) {
+    const tcRows = document.querySelectorAll(`#tcbody-${qid} tr.tc-row`);
+    const test_cases = [];
+    tcRows.forEach(row => {
+        const input = row.querySelector('.tc-input').value;
+        const expected_output = row.querySelector('.tc-output').value;
+        const is_hidden = row.querySelector('.btn-vis-toggle').classList.contains('hidden') ? 1 : 0;
+        test_cases.push({ input, expected_output, is_hidden, marks_weight: 1.0 });
+    });
+
+    return {
+        title: document.getElementById('title-' + qid).value,
+        topic: document.getElementById('topic-' + qid).value,
+        difficulty: document.getElementById('difficulty-' + qid).value,
+        total_marks: document.getElementById('marks-' + qid).value,
+        problem_statement: document.getElementById('statement-' + qid).value,
+        input_format: document.getElementById('inpfmt-' + qid).value,
+        output_format: document.getElementById('outfmt-' + qid).value,
+        constraints: document.getElementById('constraints-' + qid).value,
+        test_cases: test_cases
+    };
+}
+
+async function saveQuestionChanges(qid) {
+    const data = collectQuestionData(qid);
+    try {
+        const res = await fetch(`/api/coding_questions/${qid}/update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const resData = await res.json();
+        if (resData.status === 'success') {
+            showAlert(resData.message, 'success');
+        } else {
+            showAlert(resData.message || 'Failed to save changes', 'error');
+        }
+    } catch(err) {
+        showAlert('Network error: ' + err.message, 'error');
+    }
+}
+
+async function approveQuestion(qid) {
+    await saveQuestionChanges(qid);
+    try {
+        const res = await fetch(`/api/coding_questions/${qid}/approve`, { method: 'POST' });
+        const resData = await res.json();
+        if (resData.status === 'success') {
+            showAlert(resData.message, 'success');
+            const badge = document.getElementById('status-badge-' + qid);
+            if (badge) {
+                badge.className = 'badge badge-approved';
+                badge.textContent = 'Approved';
+            }
+        } else {
+            showAlert(resData.message || 'Failed to approve question', 'error');
+        }
+    } catch(err) {
+        showAlert('Network error: ' + err.message, 'error');
+    }
+}
+
+async function approveAllQuestions(testNo) {
+    if (!confirm('Are you sure you want to approve all draft coding questions?')) return;
+    try {
+        const res = await fetch('/api/coding_questions/approve_all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ test_no: testNo })
+        });
+        const resData = await res.json();
+        if (resData.status === 'success') {
+            showAlert(resData.message, 'success');
+            setTimeout(() => window.location.reload(), 1200);
+        } else {
+            showAlert(resData.message || 'Failed to approve questions', 'error');
+        }
+    } catch(err) {
+        showAlert('Network error: ' + err.message, 'error');
+    }
+}
+
+async function deleteQuestion(qid) {
+    if (!confirm('Are you sure you want to discard this draft question?')) return;
+    try {
+        const res = await fetch(`/api/coding_questions/${qid}/delete`, { method: 'DELETE' });
+        const resData = await res.json();
+        if (resData.status === 'success') {
+            showAlert(resData.message, 'success');
+            const card = document.getElementById('qcard-' + qid);
+            if (card) card.remove();
+        } else {
+            showAlert(resData.message || 'Failed to delete draft', 'error');
+        }
+    } catch(err) {
+        showAlert('Network error: ' + err.message, 'error');
+    }
+}
+</script>
+</body>
+</html>
