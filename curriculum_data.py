@@ -35644,36 +35644,142 @@ def get_classes_for_board(board="CBSE"):
     return sorted(list(b_data.keys()), key=lambda x: int(x) if x.isdigit() else 99)
 
 
+SUBJECT_ALIASES = {
+    'math': 'mathematics',
+    'maths': 'mathematics',
+    'mathematics': 'mathematics',
+    'applied mathematics': 'mathematics',
+    'sci': 'science',
+    'gen science': 'science',
+    'general science': 'science',
+    'science': 'science',
+    'physics': 'physics',
+    'phy': 'physics',
+    'chemistry': 'chemistry',
+    'chem': 'chemistry',
+    'biology': 'biology',
+    'bio': 'biology',
+    'social science': 'social science',
+    'social studies': 'social science',
+    'sst': 'social science',
+    'history': 'social science',
+    'geography': 'social science',
+    'civics': 'social science',
+    'comp': 'computer science',
+    'computer': 'computer science',
+    'computers': 'computer science',
+    'computer science': 'computer science',
+    'computer application': 'computer applications',
+    'computer applications': 'computer applications',
+    'information technology': 'information technology',
+    'it': 'information technology',
+    'ai': 'artificial intelligence',
+    'artificial intelligence': 'artificial intelligence',
+    'eng': 'english',
+    'english': 'english',
+    'english literature': 'english',
+    'english language': 'english',
+    'hindi': 'hindi',
+    'hindi course a': 'hindi',
+    'hindi course b': 'hindi',
+    'accountancy': 'accountancy',
+    'accounts': 'accountancy',
+    'business studies': 'business studies',
+    'business': 'business studies',
+    'bst': 'business studies',
+    'economics': 'economics',
+    'eco': 'economics',
+    'physical education': 'physical education',
+    'pe': 'physical education',
+    'sports': 'physical education',
+    'evs': 'environmental studies',
+    'gk': 'general knowledge',
+}
+
+def normalize_curriculum_board(board="CBSE"):
+    b = str(board or 'CBSE').strip().upper()
+    if 'CBSE' in b or 'NCERT' in b:
+        return 'CBSE'
+    if 'ICSE' in b or 'ISC' in b or 'CISCE' in b:
+        return 'ICSE' if 'ICSE' in CURRICULUM else 'ICSE / ISC'
+    if 'STATE' in b or 'OTHER' in b:
+        return 'State / Other Board'
+    return 'CBSE'
+
+
 def get_subjects_for_class(cls="10", board="CBSE"):
     """Return available subjects for a specific class and board."""
-    b_data = CURRICULUM.get(board) or CURRICULUM.get("CBSE", {})
+    norm_board = normalize_curriculum_board(board)
+    b_data = CURRICULUM.get(norm_board) or CURRICULUM.get("CBSE", {})
     cls_data = b_data.get(str(cls), {})
     return list(cls_data.keys())
 
 
 def get_chapters_and_topics(cls="10", subj="Science", board="CBSE"):
-    """Return chapters and their topic breakdowns for class, subject and board."""
-    b_data = CURRICULUM.get(board) or CURRICULUM.get("CBSE", {})
+    """Return chapters and their topic breakdowns for class, subject and board with alias matching."""
+    norm_board = normalize_curriculum_board(board)
+    b_data = CURRICULUM.get(norm_board) or CURRICULUM.get("CBSE", {})
     cls_data = b_data.get(str(cls), {})
-    
+
+    subj_raw = str(subj or '').strip()
+    s_lower = subj_raw.lower()
+    canonical_alias = SUBJECT_ALIASES.get(s_lower, s_lower)
+
     # 1. Exact match
-    if subj in cls_data:
-        return cls_data[subj]
-        
-    # 2. Case-insensitive or partial match
-    s_lower = subj.strip().lower()
+    if subj_raw in cls_data:
+        return cls_data[subj_raw]
+
+    # 2. Case-insensitive or substring in current board
     for s, chapters in cls_data.items():
-        if s.lower() == s_lower or s_lower in s.lower() or s.lower() in s_lower:
+        sl = s.lower()
+        if sl == s_lower or s_lower in sl or sl in s_lower:
             return chapters
-            
-    # 3. Fallback to CBSE if board was different
-    if board != "CBSE":
+
+    # 3. Alias match in current board
+    for s, chapters in cls_data.items():
+        sl = s.lower()
+        alias_target = SUBJECT_ALIASES.get(sl, sl)
+        if alias_target == canonical_alias or canonical_alias in sl or sl in canonical_alias:
+            return chapters
+
+    # 4. Fallback to CBSE if board was different
+    if norm_board != "CBSE":
         cbse_data = CURRICULUM.get("CBSE", {}).get(str(cls), {})
-        if subj in cbse_data:
-            return cbse_data[subj]
+        if subj_raw in cbse_data:
+            return cbse_data[subj_raw]
         for s, chapters in cbse_data.items():
-            if s.lower() == s_lower or s_lower in s.lower() or s.lower() in s_lower:
+            sl = s.lower()
+            if sl == s_lower or s_lower in sl or sl in s_lower:
                 return chapters
+        for s, chapters in cbse_data.items():
+            sl = s.lower()
+            alias_target = SUBJECT_ALIASES.get(sl, sl)
+            if alias_target == canonical_alias or canonical_alias in sl or sl in canonical_alias:
+                return chapters
+
+    # 5. Check if sub-science (Physics/Chemistry/Biology) in Classes 6-10
+    cls_num = int(cls) if str(cls).isdigit() else 0
+    if canonical_alias in ('physics', 'chemistry', 'biology') and cls_num <= 10:
+        for s in ('Science', 'General Science'):
+            if s in cls_data:
+                return cls_data[s]
+
+    # 6. Database fallback for custom school subjects (e.g. from questions table)
+    try:
+        import sqlite3
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("""
+            SELECT DISTINCT chapter FROM questions 
+            WHERE class = ? AND (LOWER(TRIM(subject)) = ? OR LOWER(TRIM(subject)) LIKE ?) 
+            AND chapter IS NOT NULL AND TRIM(chapter) != ''
+        """, (str(cls), s_lower, f"%{canonical_alias}%"))
+        db_chs = [r[0] for r in c.fetchall()]
+        conn.close()
+        if db_chs:
+            return [{'chapter': ch, 'topics': []} for ch in db_chs]
+    except Exception:
+        pass
 
     return []
 
