@@ -1,4 +1,5 @@
-﻿import os
+import os
+import time
 import csv
 import requests
 from dotenv import load_dotenv
@@ -22,6 +23,7 @@ import ast
 import image_handler
 import exemplar_extractor
 import curriculum_data
+import question_bank
 from validators import validate_schema, STUDENT_LOGIN_SCHEMA, ADMIN_LOGIN_SCHEMA, SAVE_ANSWER_SCHEMA, REATTEMPT_REQUEST_SCHEMA
 
 def safe_json_loads(text):
@@ -119,7 +121,7 @@ def safe_json_loads(text):
             escaped_content = re.sub(r'(?<!\\)"', r'\"', content)
             return f'{prefix}{escaped_content}{suffix}'
 
-        line_pattern = r'("(?:question|instruction|section_title|section_label|exam_type|subject)":\s*")(.*?)("(?:\s*,\s*|\s*\}|\s*\]|\s*$))'
+        line_pattern = r'("(?:question|instruction|section_title|section_label|exam_type|subject|title|problem_statement|input_format|output_format|constraints|sample_input|sample_output|input|expected_output)":\s*")(.*?)("(?:\s*,\s*|\s*\}|\s*\]|\s*$))'
         return re.sub(line_pattern, _fix_line, json_str, flags=re.DOTALL)
 
     # Strategy 1: Direct JSON parse with strict=False
@@ -322,22 +324,44 @@ def _normalize_correct_answer(correct_raw, opt_a='', opt_b='', opt_c='', opt_d='
 
     return ''
 
-def _save_or_update_result(c, student_id, name, class_, section, subject, score, total_questions, percentage, chapter):
-    """Save new result or update existing result row for (student_id, subject, chapter)."""
+def _save_or_update_result(c, student_id, name, class_, section, subject, score, total_questions, percentage, chapter, section_breakdown=None):
+    """Save new result or update existing result row for (student_id, subject, chapter), optionally storing section_breakdown JSON."""
     c.execute("""SELECT id FROM results 
                  WHERE student_id=? AND LOWER(subject)=LOWER(?) AND (chapter=? OR (chapter IS NULL AND ?=''))""",
               (student_id, subject, chapter or '', chapter or ''))
     existing = c.fetchone()
     if existing:
-        c.execute("""UPDATE results 
-                     SET name=?, class=?, section=?, score=?, total_questions=?, percentage=?, test_date=CURRENT_TIMESTAMP
-                     WHERE id=?""",
-                  (name, class_, section or '', round(score, 2), total_questions, percentage, existing['id']))
+        if section_breakdown is not None:
+            c.execute("""UPDATE results 
+                         SET name=?, class=?, section=?, score=?, total_questions=?, percentage=?, section_breakdown=?, test_date=CURRENT_TIMESTAMP
+                         WHERE id=?""",
+                      (name, class_, section or '', round(score, 2), total_questions, percentage, section_breakdown, existing['id']))
+        else:
+            c.execute("""UPDATE results 
+                         SET name=?, class=?, section=?, score=?, total_questions=?, percentage=?, test_date=CURRENT_TIMESTAMP
+                         WHERE id=?""",
+                      (name, class_, section or '', round(score, 2), total_questions, percentage, existing['id']))
     else:
         c.execute("""INSERT INTO results 
-                     (student_id, name, class, section, subject, score, total_questions, percentage, chapter, test_date)
-                     VALUES (?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)""",
-                  (student_id, name, class_, section or '', subject, round(score, 2), total_questions, percentage, chapter or ''))
+                     (student_id, name, class, section, subject, score, total_questions, percentage, chapter, section_breakdown, test_date)
+                     VALUES (?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)""",
+                  (student_id, name, class_, section or '', subject, round(score, 2), total_questions, percentage, chapter or '', section_breakdown))
+
+def _get_multi_section_info(class_, subject, test_no, conn):
+    """Return test paper & config dict if (class_, subject, test_no) corresponds to an active Multi-Section Test."""
+    if not (class_ and subject and test_no):
+        return None
+    c = conn.cursor()
+    clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+    c.execute("""SELECT tp.id as tp_id, tp.subject as title, tp.test_no, tp.class,
+                        tsc.timing_mode, tsc.shuffle_sections, tsc.two_stage_instructions
+                 FROM test_papers tp
+                 JOIN test_section_config tsc ON tp.id = tsc.test_paper_id
+                 WHERE (tp.class=? OR tp.class LIKE ?) AND LOWER(tp.subject)=LOWER(?) AND tp.test_no=? AND tp.paper_type='multi_section'
+                 LIMIT 1""",
+              (class_, f"%{clean_cls}%", subject, test_no))
+    row = c.fetchone()
+    return dict(row) if row else None
 
 def get_working_model(api_key):
     """
@@ -784,6 +808,7 @@ load_dotenv('apikey.env')
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY') or os.environ.get('FLASK_SECRET_KEY') or 'rrb-cbt-v104-secret-key-2024'
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 # ─── JWT Authentication Subsystem ──────────────────────────────────────
 import jwt
@@ -886,6 +911,7 @@ def ratelimit_handler(e):
 # Configuration
 UPLOAD_FOLDER = 'uploads'
 EXPORT_FOLDER = 'exports'
+QB_UPLOAD_FOLDER = 'question_bank_uploads'  # Raw PDFs for Question Bank
 BRANDING_FOLDER = os.path.join('static', 'uploads', 'branding')
 STUDENT_PIC_FOLDER = os.path.join('static', 'student_profile_pic')
 TEACHER_PIC_FOLDER = os.path.join('static', 'Teacher_profile_picture')
@@ -894,6 +920,8 @@ ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(EXPORT_FOLDER, exist_ok=True)
+os.makedirs(QB_UPLOAD_FOLDER, exist_ok=True)
+os.makedirs('question_bank_images', exist_ok=True)
 os.makedirs(os.path.join('static', 'uploads'), exist_ok=True)
 os.makedirs(BRANDING_FOLDER, exist_ok=True)
 os.makedirs(STUDENT_PIC_FOLDER, exist_ok=True)
@@ -1099,6 +1127,47 @@ def init_db():
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('logo_path', '')")
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('school_address', '')")
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('academic_session', '')")
+    # Theme settings
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_primary',    '#1a237e')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_secondary',  '#3949ab')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_accent',     '#10b981')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_student',    '#1b5e20')")
+    # Extended theme color settings
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_icon_color',     '#4f46e5')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_btn_bg',          '#1a237e')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_btn_text',         '#ffffff')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_heading_color',    '#1e1b4b')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_body_text',        '#1e293b')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_muted_text',       '#64748b')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_page_bg',          '#f0f4f8')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_card_bg',          '#ffffff')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_sidebar_bg',       '#1a237e')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_link_color',       '#3949ab')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_hover_color',      '#4f46e5')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_border_color',     '#e2e8f0')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_success_color',    '#16a34a')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_warning_color',    '#f59e0b')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_danger_color',     '#dc2626')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_font_web',   'Poppins')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme_font_export','Arial')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('developer_credit', 'Developed by Gaurav Shukla & Team')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('active_language',  'en')")
+
+    # Translation cache for language switcher
+    c.execute('''CREATE TABLE IF NOT EXISTS translation_cache
+                 (lang_code  TEXT NOT NULL,
+                  string_key TEXT NOT NULL,
+                  translated TEXT NOT NULL,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  PRIMARY KEY (lang_code, string_key))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS translation_meta
+                 (lang_code        TEXT PRIMARY KEY,
+                  source_hash      TEXT,
+                  status           TEXT DEFAULT 'pending',
+                  progress         INTEGER DEFAULT 0,
+                  total_strings    INTEGER DEFAULT 0,
+                  translated_count INTEGER DEFAULT 0,
+                  last_updated     TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS reattempt_requests
                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1284,6 +1353,184 @@ def init_db():
                   created_by TEXT DEFAULT 'admin',
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
 
+    # ── Per-Session Exam Control ────────────────────────────────────────
+    # Each teacher/admin start_exam call creates ONE row here, allowing
+    # multiple independent sessions to run simultaneously on the same server.
+    c.execute('''CREATE TABLE IF NOT EXISTS exam_sessions
+                 (id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                  teacher_id        INTEGER,
+                  started_by_type   TEXT DEFAULT 'teacher',
+                  started_by_name   TEXT,
+                  lab_ip            TEXT NOT NULL,
+                  lab_label         TEXT,
+                  class             TEXT NOT NULL,
+                  section           TEXT DEFAULT '',
+                  subject           TEXT NOT NULL,
+                  test_no           TEXT DEFAULT '',
+                  allotted_duration INTEGER NOT NULL,
+                  start_time        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  pause_started_at  TIMESTAMP,
+                  total_paused_secs INTEGER DEFAULT 0,
+                  status            TEXT DEFAULT 'running',
+                  end_time          TIMESTAMP,
+                  end_reason        TEXT,
+                  end_message       TEXT,
+                  negative_marking  INTEGER DEFAULT 0,
+                  negative_value    REAL DEFAULT 0.33,
+                  created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    # ── Coding Test Module Schema ──────────────────────────────────────
+    c.execute('''CREATE TABLE IF NOT EXISTS coding_questions
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  test_no TEXT NOT NULL,
+                  class TEXT NOT NULL,
+                  section TEXT DEFAULT '',
+                  subject TEXT NOT NULL,
+                  title TEXT NOT NULL,
+                  problem_statement TEXT NOT NULL,
+                  allowed_languages TEXT DEFAULT 'python,java,c,cpp',
+                  sample_input TEXT DEFAULT '',
+                  sample_output TEXT DEFAULT '',
+                  total_marks INTEGER DEFAULT 10,
+                  created_by TEXT DEFAULT 'admin',
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    c.execute("PRAGMA table_info(coding_questions)")
+    cq_cols = [col[1] for col in c.fetchall()]
+    for col_name, col_def in [
+        ('topic', "TEXT DEFAULT ''"),
+        ('difficulty', "TEXT DEFAULT 'medium'"),
+        ('input_format', "TEXT DEFAULT ''"),
+        ('output_format', "TEXT DEFAULT ''"),
+        ('constraints', "TEXT DEFAULT ''"),
+        ('ai_generated', "INTEGER DEFAULT 0"),
+        ('approved', "INTEGER DEFAULT 0")
+    ]:
+        if col_name not in cq_cols:
+            c.execute(f"ALTER TABLE coding_questions ADD COLUMN {col_name} {col_def}")
+
+    c.execute('''CREATE TABLE IF NOT EXISTS coding_test_cases
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  question_id INTEGER NOT NULL,
+                  input TEXT DEFAULT '',
+                  expected_output TEXT DEFAULT '',
+                  is_hidden INTEGER DEFAULT 0,
+                  marks_weight REAL DEFAULT 1.0,
+                  FOREIGN KEY(question_id) REFERENCES coding_questions(id) ON DELETE CASCADE)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS coding_submissions
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  student_id TEXT NOT NULL,
+                  question_id INTEGER NOT NULL,
+                  code TEXT NOT NULL,
+                  language TEXT NOT NULL,
+                  test_cases_passed INTEGER DEFAULT 0,
+                  total_test_cases INTEGER DEFAULT 0,
+                  marks_awarded REAL DEFAULT 0.0,
+                  status TEXT DEFAULT 'Pending',
+                  stdout_output TEXT DEFAULT '',
+                  stderr_output TEXT DEFAULT '',
+                  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  FOREIGN KEY(question_id) REFERENCES coding_questions(id) ON DELETE CASCADE)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS coding_drafts
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  student_id TEXT NOT NULL,
+                  question_id INTEGER NOT NULL,
+                  language TEXT NOT NULL,
+                  code TEXT NOT NULL,
+                  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(student_id, question_id, language))''')
+
+    # Ensure board column exists in questions, test_generation_history, and test_papers
+    for tbl in ('questions', 'test_generation_history', 'test_papers'):
+        try:
+            c.execute(f"ALTER TABLE {tbl} ADD COLUMN board TEXT DEFAULT 'CBSE'")
+        except Exception:
+            pass
+
+    # ── Question Bank Module Tables ───────────────────────────────────────
+    c.execute('''CREATE TABLE IF NOT EXISTS question_bank_papers
+                 (id               INTEGER PRIMARY KEY AUTOINCREMENT,
+                  uploaded_by      TEXT NOT NULL,
+                  uploader_type    TEXT DEFAULT 'teacher',
+                  original_filename TEXT NOT NULL,
+                  board            TEXT NOT NULL,
+                  class            TEXT NOT NULL,
+                  subject          TEXT NOT NULL,
+                  chapter          TEXT NOT NULL,
+                  question_type    TEXT NOT NULL,
+                  upload_date      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  status           TEXT DEFAULT 'pending')''')
+
+    c.execute("""CREATE TABLE IF NOT EXISTS question_bank_items
+                 (id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+                  paper_id           INTEGER,
+                  board              TEXT NOT NULL,
+                  class              TEXT NOT NULL,
+                  subject            TEXT NOT NULL,
+                  chapter            TEXT NOT NULL,
+                  question_type      TEXT NOT NULL,
+                  raw_question_text  TEXT NOT NULL,
+                  raw_options        TEXT DEFAULT '[]',
+                  raw_answer         TEXT DEFAULT '',
+                  image_path         TEXT DEFAULT '',
+                  ai_generated       INTEGER DEFAULT 0,
+                  approved           INTEGER DEFAULT 0,
+                  approved_by        TEXT DEFAULT '',
+                  approved_at        TIMESTAMP,
+                  source_page        INTEGER DEFAULT 0,
+                  created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  FOREIGN KEY (paper_id) REFERENCES question_bank_papers(id) ON DELETE SET NULL)""")
+
+    # ── Multi-Section Test Tables & Migrations ──────────────────────────────
+    c.execute("""CREATE TABLE IF NOT EXISTS test_sections
+                 (id               INTEGER PRIMARY KEY AUTOINCREMENT,
+                  test_paper_id    INTEGER NOT NULL,
+                  section_name     TEXT NOT NULL,
+                  subject          TEXT NOT NULL,
+                  question_count   INTEGER NOT NULL,
+                  positive_marks   REAL DEFAULT 1.0,
+                  negative_marks   REAL DEFAULT 0.0,
+                  duration_minutes INTEGER DEFAULT 0,
+                  order_index      INTEGER DEFAULT 0,
+                  generation_mode  TEXT DEFAULT 'ai',
+                  FOREIGN KEY (test_paper_id) REFERENCES test_papers(id) ON DELETE CASCADE)""")
+
+    c.execute("""CREATE TABLE IF NOT EXISTS test_section_config
+                 (id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+                  test_paper_id          INTEGER NOT NULL UNIQUE,
+                  timing_mode            TEXT DEFAULT 'disabled',
+                  shuffle_sections       INTEGER DEFAULT 0,
+                  two_stage_instructions INTEGER DEFAULT 1,
+                  FOREIGN KEY (test_paper_id) REFERENCES test_papers(id) ON DELETE CASCADE)""")
+
+    c.execute("""CREATE TABLE IF NOT EXISTS student_section_progress
+                 (id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+                  student_id         TEXT NOT NULL,
+                  test_paper_id      INTEGER NOT NULL,
+                  current_section_id INTEGER,
+                  locked_sections    TEXT DEFAULT '[]',
+                  section_time_left  TEXT DEFAULT '{}',
+                  updated_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(student_id, test_paper_id))""")
+
+    # Column migrations
+    c.execute("PRAGMA table_info(results)")
+    res_cols = [r[1] for r in c.fetchall()]
+    if 'section_breakdown' not in res_cols:
+        c.execute("ALTER TABLE results ADD COLUMN section_breakdown TEXT DEFAULT ''")
+
+    c.execute("PRAGMA table_info(students)")
+    stu_cols = [r[1] for r in c.fetchall()]
+    if 'current_section' not in stu_cols:
+        c.execute("ALTER TABLE students ADD COLUMN current_section TEXT DEFAULT ''")
+
+    c.execute("PRAGMA table_info(questions)")
+    q_cols = [r[1] for r in c.fetchall()]
+    if 'section_id' not in q_cols:
+        c.execute("ALTER TABLE questions ADD COLUMN section_id INTEGER DEFAULT NULL")
+
     conn.commit()
     conn.close()
 
@@ -1388,15 +1635,179 @@ def get_db():
 def reset_exam_on_startup():
     """
     Reset the exam status on application startup to ensure clean state.
+    Also terminates any orphaned running/paused sessions from previous server runs.
     """
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE exam_control SET is_active=0, start_time=NULL WHERE id=1")
-    conn.commit()
-    conn.close()
+def reset_exam_on_startup():
+    """Do not forcibly terminate active exam sessions on application reloads."""
+    pass
 
 init_db()
-reset_exam_on_startup()
+
+# ── Per-Session Exam Control Helpers ─────────────────────────────────────
+def parse_session_dt(val):
+    """Safely parse SQLite timestamp strings or datetime objects."""
+    if isinstance(val, datetime.datetime):
+        return val
+    if not val:
+        return datetime.datetime.now()
+    s = str(val).strip().replace('T', ' ')
+    for fmt in ('%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M'):
+        try:
+            return datetime.datetime.strptime(s[:19] if fmt != '%Y-%m-%d %H:%M:%S.%f' else s, fmt)
+        except Exception:
+            pass
+    return datetime.datetime.now()
+
+def get_session_remaining_seconds(sess):
+    """
+    Calculate remaining time in seconds for an exam session, accounting for
+    allotted_duration, start_time, pause_started_at, and total_paused_secs.
+    """
+    if not sess:
+        return 0
+    if sess.get('status') == 'ended':
+        return 0
+    now = datetime.datetime.now()
+    st = parse_session_dt(sess.get('start_time'))
+    total_paused = int(sess.get('total_paused_secs') or 0)
+    allotted_secs = int(sess.get('allotted_duration') or 60) * 60
+
+    if sess.get('status') == 'paused':
+        pause_st = parse_session_dt(sess.get('pause_started_at')) if sess.get('pause_started_at') else now
+        elapsed = (pause_st - st).total_seconds() - total_paused
+    else:  # 'running'
+        elapsed = (now - st).total_seconds() - total_paused
+
+    rem = allotted_secs - max(0, elapsed)
+    return max(0, int(rem))
+
+def get_active_session_for_student(student_id=None, class_=None, section=None, subject=None, test_no=None, conn=None):
+    """
+    Find the most recent running or paused exam session matching the student's scope.
+    """
+    close_conn = False
+    if conn is None:
+        conn = get_db()
+        close_conn = True
+    try:
+        c = conn.cursor()
+        if student_id and not (class_ and subject):
+            c.execute("SELECT class, section, subject, test_no FROM students WHERE student_id=?", (student_id,))
+            st = c.fetchone()
+            if st:
+                class_ = class_ or st['class']
+                section = section if section is not None else st['section']
+                subject = subject or st['subject']
+                test_no = test_no if test_no is not None else (st['test_no'] if 'test_no' in st.keys() else '')
+
+        if not (class_ and subject):
+            return None
+
+        clean_cls = str(class_).replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+        sec = str(section or '').strip()
+        subj = str(subject or '').strip()
+        tno = str(test_no or '').strip()
+
+        query = """
+            SELECT * FROM exam_sessions
+            WHERE status IN ('running', 'paused')
+              AND (class = ? OR class = ? OR ? LIKE '%' || class || '%')
+              AND (section = '' OR section IS NULL OR LOWER(section) = LOWER(?))
+              AND LOWER(subject) = LOWER(?)
+              AND (test_no = '' OR test_no IS NULL OR test_no = ?)
+            ORDER BY id DESC LIMIT 1
+        """
+        c.execute(query, (class_, clean_cls, class_, sec, subj, tno))
+        row = c.fetchone()
+        return dict(row) if row else None
+    finally:
+        if close_conn:
+            conn.close()
+
+def get_latest_session_for_student(student_id=None, class_=None, section=None, subject=None, test_no=None, conn=None):
+    """
+    Find the most recent session for the student within the last 24h regardless of status.
+    Useful for checking if a session was ended by admin/teacher with an end_message.
+    """
+    close_conn = False
+    if conn is None:
+        conn = get_db()
+        close_conn = True
+    try:
+        c = conn.cursor()
+        if student_id and not (class_ and subject):
+            c.execute("SELECT class, section, subject, test_no FROM students WHERE student_id=?", (student_id,))
+            st = c.fetchone()
+            if st:
+                class_ = class_ or st['class']
+                section = section if section is not None else st['section']
+                subject = subject or st['subject']
+                test_no = test_no if test_no is not None else (st['test_no'] if 'test_no' in st.keys() else '')
+
+        if not (class_ and subject):
+            return None
+
+        clean_cls = str(class_).replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+        sec = str(section or '').strip()
+        subj = str(subject or '').strip()
+        tno = str(test_no or '').strip()
+
+        query = """
+            SELECT * FROM exam_sessions
+            WHERE (class = ? OR class = ? OR ? LIKE '%' || class || '%')
+              AND (section = '' OR section IS NULL OR LOWER(section) = LOWER(?))
+              AND LOWER(subject) = LOWER(?)
+              AND (test_no = '' OR test_no IS NULL OR test_no = ?)
+              AND created_at >= datetime('now', '-24 hours')
+            ORDER BY id DESC LIMIT 1
+        """
+        c.execute(query, (class_, clean_cls, class_, sec, subj, tno))
+        row = c.fetchone()
+        return dict(row) if row else None
+    finally:
+        if close_conn:
+            conn.close()
+
+def get_session_student_counts(sess, conn=None):
+    """
+    Returns counts of In Progress, Submitted, and Total students matching session scope.
+    """
+    close_conn = False
+    if conn is None:
+        conn = get_db()
+        close_conn = True
+    try:
+        c = conn.cursor()
+        cls = sess.get('class', '')
+        clean_cls = str(cls).replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+        sec = sess.get('section', '')
+        subj = sess.get('subject', '')
+        tno = sess.get('test_no', '')
+
+        # Base filter
+        where = "(class = ? OR class = ? OR ? LIKE '%' || class || '%') AND LOWER(subject) = LOWER(?)"
+        params = [cls, clean_cls, cls, subj]
+        if sec:
+            where += " AND LOWER(section) = LOWER(?)"
+            params.append(sec)
+        if tno:
+            where += " AND (test_no = ? OR test_no = '' OR test_no IS NULL)"
+            params.append(tno)
+
+        c.execute(f"SELECT COUNT(*) FROM students WHERE status='In Progress' AND {where}", params)
+        in_prog = c.fetchone()[0]
+
+        c.execute(f"SELECT COUNT(*) FROM students WHERE status='Submitted' AND {where}", params)
+        submitted = c.fetchone()[0]
+
+        c.execute(f"SELECT COUNT(*) FROM students WHERE {where}", params)
+        total = c.fetchone()[0]
+
+        return {'in_progress': in_prog, 'submitted': submitted, 'total': total}
+    finally:
+        if close_conn:
+            conn.close()
+
 
 def get_setting(key, default=''):
     """
@@ -1419,7 +1830,222 @@ def set_setting(key, value):
     conn.commit()
     conn.close()
 
+# ---------------------------------------------------------------------------
+# SITE CONFIG — single source of truth for all white-label values
+# Callable from both Flask routes (via context processor) AND export code
+# ---------------------------------------------------------------------------
+_GOOGLE_FONTS_MAP = {
+    'Poppins':           'Poppins:wght@400;500;600;700',
+    'Plus Jakarta Sans': 'Plus+Jakarta+Sans:wght@400;500;600;700;800',
+    'Inter':             'Inter:wght@300;400;500;600;700',
+    'Roboto':            'Roboto:wght@300;400;500;700',
+    'Nunito':            'Nunito:wght@400;600;700;800',
+}
+_FALLBACK_CREDIT = 'Developed by Gaurav Shukla &amp; Team'
+
+def get_site_config() -> dict:
+    """
+    Returns all white-label config values with safe defaults.
+    Callable from Python routes, export functions, and context processor.
+    """
+    return {
+        # Branding
+        'school_name':       get_setting('school_name',       'RRB Group of Schools'),
+        'school_address':    get_setting('school_address',    ''),
+        'academic_session':  get_setting('academic_session',  ''),
+        'logo_path':         get_setting('logo_path',         ''),
+        # Theme colors - Brand
+        'theme_primary':     get_setting('theme_primary',     '#1a237e'),
+        'theme_secondary':   get_setting('theme_secondary',   '#3949ab'),
+        'theme_accent':      get_setting('theme_accent',      '#10b981'),
+        'theme_student':     get_setting('theme_student',     '#1b5e20'),
+        # Theme colors - Extended
+        'theme_icon_color':  get_setting('theme_icon_color',  '#4f46e5'),
+        'theme_btn_bg':      get_setting('theme_btn_bg',      '#1a237e'),
+        'theme_btn_text':    get_setting('theme_btn_text',    '#ffffff'),
+        'theme_heading_color':   get_setting('theme_heading_color',  '#1e1b4b'),
+        'theme_body_text':       get_setting('theme_body_text',      '#1e293b'),
+        'theme_muted_text':      get_setting('theme_muted_text',     '#64748b'),
+        'theme_page_bg':         get_setting('theme_page_bg',        '#f0f4f8'),
+        'theme_card_bg':         get_setting('theme_card_bg',        '#ffffff'),
+        'theme_sidebar_bg':      get_setting('theme_sidebar_bg',     '#1a237e'),
+        'theme_link_color':      get_setting('theme_link_color',     '#3949ab'),
+        'theme_hover_color':     get_setting('theme_hover_color',    '#4f46e5'),
+        'theme_border_color':    get_setting('theme_border_color',   '#e2e8f0'),
+        'theme_success_color':   get_setting('theme_success_color',  '#16a34a'),
+        'theme_warning_color':   get_setting('theme_warning_color',  '#f59e0b'),
+        'theme_danger_color':    get_setting('theme_danger_color',   '#dc2626'),
+        # Fonts
+        'theme_font_web':    get_setting('theme_font_web',    'Poppins'),
+        'theme_font_export': get_setting('theme_font_export', 'Arial'),
+        # Developer credit (HTML-safe version for direct template injection)
+        'developer_credit':  get_setting('developer_credit',  'Developed by Gaurav Shukla &amp; Team'),
+        # Language
+        'active_language':   get_setting('active_language',   'en'),
+    }
+
+
+@app.context_processor
+def inject_branding():
+    """
+    Injects all white-label + theme variables into every Jinja template.
+    Also provides the `t()` translation helper and a `theme_style_tag` for CSS overrides.
+    Falls back to safe defaults if the settings table is missing any key.
+    """
+    cfg = get_site_config()
+
+    # ── Logo base64 ──────────────────────────────────────────────────────
+    logo_path = cfg['logo_path']
+    logo_base64 = None
+    if logo_path:
+        try:
+            abs_path = os.path.join(app.static_folder, logo_path)
+            if os.path.exists(abs_path):
+                with open(abs_path, 'rb') as _f:
+                    _lb   = _f.read()
+                    _ext  = os.path.splitext(abs_path)[1].lower()
+                    _mime = 'image/png' if _ext == '.png' else 'image/jpeg'
+                    logo_base64 = f"data:{_mime};base64,{base64.b64encode(_lb).decode('utf-8')}"
+        except Exception:
+            logo_base64 = None
+
+    # ── Google Fonts <link> tag ──────────────────────────────────────────
+    font_web = cfg['theme_font_web']
+    gf_param = _GOOGLE_FONTS_MAP.get(font_web)
+    if gf_param:
+        font_link_tag = (
+            f'<link href="https://fonts.googleapis.com/css2?family={gf_param}&display=swap" '
+            f'rel="stylesheet">'
+        )
+    else:
+        font_link_tag = ''  # Custom / system font — no Google Fonts link needed
+
+    # Compute darkened shade of primary for --primary-dark
+    def _darken(hex_col, factor=0.75):
+        hex_col = hex_col.lstrip('#')
+        try:
+            r, g, b = int(hex_col[0:2], 16), int(hex_col[2:4], 16), int(hex_col[4:6], 16)
+            return '#{:02x}{:02x}{:02x}'.format(int(r*factor), int(g*factor), int(b*factor))
+        except Exception:
+            return '#0d1457'
+
+    primary     = cfg['theme_primary']
+    secondary   = cfg['theme_secondary']
+    accent      = cfg['theme_accent']
+    student_col = cfg['theme_student']
+    icon_color  = cfg.get('theme_icon_color',  '#4f46e5')
+    btn_bg      = cfg.get('theme_btn_bg',      '#1a237e')
+    btn_text    = cfg.get('theme_btn_text',    '#ffffff')
+    heading_col = cfg.get('theme_heading_color','#1e1b4b')
+    body_text   = cfg.get('theme_body_text',   '#1e293b')
+    muted_text  = cfg.get('theme_muted_text',  '#64748b')
+    page_bg     = cfg.get('theme_page_bg',     '#f0f4f8')
+    card_bg     = cfg.get('theme_card_bg',     '#ffffff')
+    sidebar_bg  = cfg.get('theme_sidebar_bg',  '#1a237e')
+    link_color  = cfg.get('theme_link_color',  '#3949ab')
+    hover_color = cfg.get('theme_hover_color', '#4f46e5')
+    border_color= cfg.get('theme_border_color','#e2e8f0')
+    success_col = cfg.get('theme_success_color','#16a34a')
+    warning_col = cfg.get('theme_warning_color','#f59e0b')
+    danger_col  = cfg.get('theme_danger_color', '#dc2626')
+    primary_dark = _darken(primary)
+
+    # ── Injected <style> block (overrides per-template :root definitions) ─
+    css_font_family = f"'{font_web}', sans-serif" if font_web in _GOOGLE_FONTS_MAP else f'{font_web}, sans-serif'
+    theme_style_tag = f"""{font_link_tag}
+<style id="site-theme-vars">
+:root {{
+  /* Brand Colors */
+  --primary:        {primary};
+  --primary-light:  {secondary};
+  --primary-lighter:{secondary};
+  --primary-dark:   {primary_dark};
+  --accent:         {accent};
+  --green-dk:       {student_col};
+  --green:          {student_col};
+  /* Extended Theme Colors */
+  --theme-icon-color:    {icon_color};
+  --theme-btn-bg:        {btn_bg};
+  --theme-btn-text:      {btn_text};
+  --theme-heading-color: {heading_col};
+  --theme-body-text:     {body_text};
+  --theme-muted-text:    {muted_text};
+  --theme-page-bg:       {page_bg};
+  --theme-card-bg:       {card_bg};
+  --theme-sidebar-bg:    {sidebar_bg};
+  --theme-link-color:    {link_color};
+  --theme-hover-color:   {hover_color};
+  --theme-border-color:  {border_color};
+  --theme-success:       {success_col};
+  --theme-warning:       {warning_col};
+  --theme-danger:        {danger_col};
+  --theme-font:     {css_font_family};
+}}
+body {{ font-family: {css_font_family}; background: {page_bg}; color: {body_text}; }}
+</style>"""
+
+    # ── t() translation helper ───────────────────────────────────────────
+    active_lang = session.get('student_lang') or cfg['active_language']
+
+    def t(key, fallback=None):
+        """Return translated string for given key, falling back to English."""
+        if active_lang != 'en':
+            try:
+                conn = get_db()
+                cur  = conn.cursor()
+                cur.execute(
+                    'SELECT translated FROM translation_cache WHERE lang_code=? AND string_key=?',
+                    (active_lang, key)
+                )
+                row = cur.fetchone()
+                conn.close()
+                if row and row[0]:
+                    return row[0]
+            except Exception:
+                pass
+        # Fallback: English
+        try:
+            from ui_strings import UI_STRINGS
+            return UI_STRINGS.get(key, fallback or key)
+        except Exception:
+            return fallback or key
+
+    return dict(
+        school_name=cfg['school_name'],
+        school_address=cfg['school_address'],
+        academic_session=cfg['academic_session'],
+        logo_path=logo_path,
+        logo_base64=logo_base64,
+        theme_primary=primary,
+        theme_secondary=secondary,
+        theme_accent=accent,
+        theme_student=student_col,
+        theme_icon_color=icon_color,
+        theme_btn_bg=btn_bg,
+        theme_btn_text=btn_text,
+        theme_heading_color=heading_col,
+        theme_body_text=body_text,
+        theme_muted_text=muted_text,
+        theme_page_bg=page_bg,
+        theme_card_bg=card_bg,
+        theme_sidebar_bg=sidebar_bg,
+        theme_link_color=link_color,
+        theme_hover_color=hover_color,
+        theme_border_color=border_color,
+        theme_success_color=success_col,
+        theme_warning_color=warning_col,
+        theme_danger_color=danger_col,
+        theme_font_web=font_web,
+        theme_font_export=cfg['theme_font_export'],
+        developer_credit=cfg['developer_credit'],
+        active_language=active_lang,
+        theme_style_tag=theme_style_tag,
+        t=t,
+    )
+
+
 def log_audit_event(user_type, user_id, action, target_table='', target_id='', ip_address=''):
+
     """
     Inserts record into audit_logs table for audit tracking.
     """
@@ -1491,10 +2117,14 @@ def index():
     """
     Render the student login page with available classes, subjects, bulletins, and class teachers.
     """
-    session.pop('admin_logged_in', None)
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT DISTINCT class, subject FROM questions WHERE class IS NOT NULL AND class != '' ORDER BY class, subject")
+    c.execute("""SELECT DISTINCT class, subject FROM questions WHERE class IS NOT NULL AND class != ''
+                 UNION
+                 SELECT DISTINCT class, subject FROM coding_questions WHERE class IS NOT NULL AND class != ''
+                 UNION
+                 SELECT DISTINCT class, subject FROM test_papers WHERE class IS NOT NULL AND class != ''
+                 ORDER BY class, subject""")
     rows = c.fetchall()
 
     class_subject_map = {}
@@ -1618,42 +2248,32 @@ def student_login():
     test_no     = request.form.get('test_no', '').strip()   # Feature #4
     ip          = request.remote_addr
 
-    if not all([name, student_id, class_, subject]):
-        return "All fields required", 400
+    if not all([name, student_id, class_, section, subject]):
+        return "All fields required (Name, Admission No, Class, Section, Subject)", 400
 
     conn = get_db()
     c = conn.cursor()
 
-    # Auto-select latest active test if no specific test_no was selected by student
+    # Auto-select active or scheduled test if no specific test_no was selected by student
     if not test_no:
         clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
-        c.execute("""SELECT test_no FROM test_papers
-                     WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND is_active=1 AND test_no IS NOT NULL AND test_no != ''
-                     ORDER BY id DESC LIMIT 1""",
-                  (class_, f"%{clean_cls}%", subject))
-        row = c.fetchone()
-        if not row or not row['test_no']:
-            c.execute("""SELECT test_no FROM questions
-                         WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND test_no IS NOT NULL AND test_no != ''
-                           AND test_no NOT IN (
-                               SELECT test_no FROM test_papers 
-                               WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND is_active=0 AND test_no IS NOT NULL
-                           )
-                         ORDER BY id DESC LIMIT 1""",
-                      (class_, f"%{clean_cls}%", subject, class_, f"%{clean_cls}%", subject))
-            row = c.fetchone()
-        if not row or not row['test_no']:
-            c.execute("""SELECT chapter as test_no FROM questions
-                         WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND chapter IS NOT NULL AND chapter != ''
-                           AND chapter NOT IN (
-                               SELECT test_no FROM test_papers 
-                               WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND is_active=0 AND test_no IS NOT NULL
-                           )
-                         ORDER BY id DESC LIMIT 1""",
-                      (class_, f"%{clean_cls}%", subject, class_, f"%{clean_cls}%", subject))
-            row = c.fetchone()
-        if row and row['test_no']:
-            test_no = row['test_no']
+        c.execute("""SELECT test_no FROM scheduled_tests
+                     WHERE (class=? OR class LIKE ?) AND (? = '' OR section=? OR section='' OR section IS NULL)
+                       AND LOWER(subject)=LOWER(?) AND status != 'cancelled'
+                     ORDER BY CASE WHEN status='active' THEN 0 WHEN status='scheduled' THEN 1 ELSE 2 END, id DESC
+                     LIMIT 1""",
+                  (class_, f"%{clean_cls}%", section, section, subject))
+        sch_row = c.fetchone()
+        if sch_row and sch_row['test_no']:
+            test_no = sch_row['test_no']
+        else:
+            conn.close()
+            return render_template('index.html',
+                                   error=f"No test is currently scheduled for Class {class_} ({section}) - {subject}. Students can only take scheduled tests.",
+                                   class_subject_map=_get_class_subject_map(),
+                                   bulletins=[], scheduled_tests=[], class_teachers=[],
+                                   school_name=get_setting('school_name','RRB Group of Schools'),
+                                   logo_path=get_setting('logo_path',''))
 
     # ── INACTIVE TEST PAPER CHECK ─────────────────────────────────
     if class_ and subject and test_no:
@@ -1674,13 +2294,22 @@ def student_login():
                                    school_name=get_setting('school_name','RRB Group of Schools'),
                                    logo_path=get_setting('logo_path',''))
 
-    # ── SCHEDULE LOCK CHECK ───────────────────────────────────────
+    # ── SCHEDULE EXISTENCE & LOCK CHECK ───────────────────────────
     if class_ and subject and test_no:
+        ms_info = _get_multi_section_info(class_, subject, test_no, conn)
         sch_res = get_student_schedule_status(class_, section, subject, test_no, student_id)
         if sch_res['state'] in ('upcoming', 'expired'):
             conn.close()
             return render_template('index.html',
                                    error=f"Test '{test_no}' is locked. {sch_res['message']}",
+                                   class_subject_map=_get_class_subject_map(),
+                                   bulletins=[], scheduled_tests=[], class_teachers=[],
+                                   school_name=get_setting('school_name','RRB Group of Schools'),
+                                   logo_path=get_setting('logo_path',''))
+        elif sch_res['state'] == 'none' and not ms_info:
+            conn.close()
+            return render_template('index.html',
+                                   error=f"Test '{test_no}' is not scheduled. Students can only take scheduled tests.",
                                    class_subject_map=_get_class_subject_map(),
                                    bulletins=[], scheduled_tests=[], class_teachers=[],
                                    school_name=get_setting('school_name','RRB Group of Schools'),
@@ -1735,6 +2364,59 @@ def student_login():
             c.execute("DELETE FROM shuffled_questions WHERE student_id=?", (student_id,))
             conn.commit()
 
+    # ── RESUME-ON-RECONNECT ─────────────────────────────────────────────────
+    # If a student is 'In Progress' on the SAME test (same subject + test_no),
+    # this is a reconnect after a power cut / browser crash — NOT a fresh start.
+    # We must NOT delete or reshuffle their questions; their saved answers in the
+    # `responses` table are intact and will be pre-filled by /get_questions.
+    # The timer in /get_exam_time already deducts elapsed time from exam_started_at,
+    # so the remaining time shown on reconnect is automatically correct.
+    if student and student['status'] == 'In Progress':
+        prev_subject = (student['subject'] or '').strip()
+        prev_test_no = ((student['test_no'] if 'test_no' in student.keys() else '') or '').strip()
+        if prev_subject.lower() == subject.lower() and prev_test_no == test_no:
+            # Same ongoing exam — restore session and skip reshuffle
+            _sn = request.headers.get('User-Agent', 'Unknown')[:255]
+            c.execute("UPDATE students SET name=?, ip=?, system_name=? WHERE student_id=?",
+                      (name, ip, _sn, student_id))
+            # Determine test type for correct routing (coding vs MCQ)
+            _clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+            c.execute("""SELECT paper_type FROM test_papers
+                         WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?)
+                           AND test_no=? AND paper_type='Coding Test' LIMIT 1""",
+                      (class_, f"%{_clean_cls}%", subject, test_no))
+            _is_coding_resume = bool(c.fetchone())
+            # Detect combined test
+            _comb_id, _comb_subjs = None, []
+            _ms = None
+            if not _is_coding_resume and test_no:
+                _ms = _get_multi_section_info(class_, subject, test_no, conn)
+                if not _ms:
+                    c.execute("""SELECT ct.id FROM combined_tests ct
+                                 WHERE ct.test_no=? AND ct.class=? AND ct.is_active=1""",
+                              (test_no, class_))
+                    _ct = c.fetchone()
+                    if _ct:
+                        _comb_id = _ct['id']
+                        c.execute("""SELECT subject FROM combined_test_subjects
+                                     WHERE combined_test_id=? ORDER BY id""", (_comb_id,))
+                        _comb_subjs = [r['subject'] for r in c.fetchall()]
+            conn.commit()
+            conn.close()
+            session.update({
+                'student_id': student_id, 'student_name': name,
+                'class': class_, 'subject': subject, 'section': section, 'test_no': test_no,
+                'test_type': 'Coding Test' if _is_coding_resume else 'MCQ',
+                'combined_test_id': _comb_id,
+                'combined_subjects': _comb_subjs,
+                'is_multi_section': bool(_ms),
+                'test_paper_id': _ms['tp_id'] if _ms else None,
+                'timing_mode': _ms['timing_mode'] if _ms else 'disabled',
+                'resume_mode': True
+            })
+            return redirect(url_for('waiting'))
+    # ── END RESUME-ON-RECONNECT ─────────────────────────────────────────────
+
     system_name = request.headers.get('User-Agent', 'Unknown')[:255]  # limit length
 
     if student:
@@ -1757,6 +2439,122 @@ def student_login():
         session.update({'student_id': student_id, 'student_name': name,
                         'class': class_, 'subject': subject, 'section': section, 'test_no': test_no})
         return redirect(url_for('submitted'))
+
+    # ── CODING TEST DETECTION & ROUTING ────────────────────────────
+    clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+    c.execute("""SELECT paper_type FROM test_papers 
+                 WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND test_no=? AND paper_type='Coding Test' LIMIT 1""",
+              (class_, f"%{clean_cls}%", subject, test_no))
+    is_coding = bool(c.fetchone())
+
+    if not is_coding and test_no:
+        c.execute("""SELECT id FROM coding_questions 
+                     WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND test_no=? LIMIT 1""",
+                  (class_, f"%{clean_cls}%", subject, test_no))
+        is_coding = bool(c.fetchone())
+
+    if is_coding:
+        c.execute("""SELECT id FROM coding_questions
+                     WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND (test_no=? OR topic=?)
+                     ORDER BY id""",
+                  (class_, f"%{clean_cls}%", subject, test_no, test_no))
+        cqids = [r['id'] for r in c.fetchall()]
+        if not cqids:
+            c.execute("""SELECT id FROM coding_questions
+                         WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?)
+                         ORDER BY id""",
+                      (class_, f"%{clean_cls}%", subject))
+            cqids = [r['id'] for r in c.fetchall()]
+
+        random.shuffle(cqids)
+        c.execute("DELETE FROM shuffled_questions WHERE student_id=?", (student_id,))
+        for idx, qid in enumerate(cqids):
+            c.execute("INSERT INTO shuffled_questions (student_id, question_id, shuffled_index, option_order) VALUES (?,?,?,?)",
+                       (student_id, qid, idx, ''))
+        conn.commit()
+        conn.close()
+
+        session.update({'student_id': student_id, 'student_name': name,
+                        'class': class_, 'subject': subject, 'section': section, 'test_no': test_no,
+                        'test_type': 'Coding Test',
+                        'combined_test_id': None,
+                        'combined_subjects': []})
+        return redirect(url_for('waiting'))
+
+    # ── MULTI-SECTION TEST HANDLING ──────────────────────────────────────────
+    ms_info = _get_multi_section_info(class_, subject, test_no, conn)
+    if ms_info:
+        tp_id = ms_info['tp_id']
+        timing_mode = ms_info['timing_mode']
+        shuffle_secs = bool(ms_info['shuffle_sections'])
+
+        c.execute("""SELECT id, section_name, subject, question_count, duration_minutes, order_index
+                     FROM test_sections
+                     WHERE test_paper_id=?
+                     ORDER BY order_index ASC""", (tp_id,))
+        sec_rows = [dict(r) for r in c.fetchall()]
+
+        if shuffle_secs:
+            random.shuffle(sec_rows)
+
+        c.execute("DELETE FROM shuffled_questions WHERE student_id=?", (student_id,))
+        global_q_idx = 0
+        first_sec_id = None
+        first_sec_name = ''
+        first_sec_dur = 0
+
+        for s_idx, sec in enumerate(sec_rows):
+            sec_display_name = sec['section_name']
+            if sec.get('subject') and sec.get('subject').lower() not in sec_display_name.lower():
+                sec_display_name = f"{sec['section_name']} - {sec['subject']}"
+            if s_idx == 0:
+                first_sec_id = sec['id']
+                first_sec_name = sec_display_name
+                first_sec_dur = sec['duration_minutes'] or 0
+
+            c.execute("""SELECT id FROM questions 
+                         WHERE section_id=? ORDER BY id""", (sec['id'],))
+            s_qids = [r['id'] for r in c.fetchall()]
+            if not s_qids:
+                c.execute("""SELECT id FROM questions 
+                             WHERE class=? AND subject=? AND test_no=? 
+                             ORDER BY id""", (class_, sec['subject'], test_no))
+                s_qids = [r['id'] for r in c.fetchall()]
+
+            random.shuffle(s_qids)
+
+            for qid in s_qids:
+                opt_order = _shuffle_options_safe(qid, c)
+                c.execute("INSERT INTO shuffled_questions (student_id, question_id, shuffled_index, option_order) VALUES (?,?,?,?)",
+                          (student_id, qid, global_q_idx, opt_order))
+                global_q_idx += 1
+
+        c.execute("""INSERT OR REPLACE INTO student_section_progress
+                     (id, student_id, test_paper_id, current_section_id, locked_sections, section_time_left, updated_at)
+                     VALUES (
+                         (SELECT id FROM student_section_progress WHERE student_id=? AND test_paper_id=?),
+                         ?, ?, ?, '[]', ?, CURRENT_TIMESTAMP
+                     )""",
+                  (student_id, tp_id, student_id, tp_id, first_sec_id, first_sec_dur * 60))
+
+        if first_sec_name:
+            c.execute("UPDATE students SET current_section=? WHERE student_id=?", (first_sec_name, student_id))
+
+        conn.commit()
+        conn.close()
+
+        session.update({
+            'student_id': student_id, 'student_name': name,
+            'class': class_, 'subject': subject, 'section': section, 'test_no': test_no,
+            'test_type': 'MCQ',
+            'combined_test_id': None,
+            'combined_subjects': [],
+            'is_multi_section': True,
+            'test_paper_id': tp_id,
+            'timing_mode': timing_mode
+        })
+        return redirect(url_for('waiting'))
+    # ── END MULTI-SECTION TEST HANDLING ──────────────────────────────────────
 
     # Shuffle questions — filter by test_no if provided
     # For combined tests, detect and load ALL subjects
@@ -1783,8 +2581,14 @@ def student_login():
                        [class_, test_no] + combined_subjects)
             qids = [r['id'] for r in c.fetchall()]
         else:
-            c.execute("SELECT id FROM questions WHERE class=? AND subject=? AND (test_no=? OR chapter=?) ORDER BY id",
-                       (class_, subject, test_no, test_no))
+            c.execute("PRAGMA table_info(questions)")
+            q_cols = [col[1] for col in c.fetchall()]
+            if 'chapter' in q_cols:
+                c.execute("SELECT id FROM questions WHERE class=? AND subject=? AND (test_no=? OR chapter=?) ORDER BY id",
+                           (class_, subject, test_no, test_no))
+            else:
+                c.execute("SELECT id FROM questions WHERE class=? AND subject=? AND test_no=? ORDER BY id",
+                           (class_, subject, test_no))
             qids = [r['id'] for r in c.fetchall()]
     else:
         c.execute("SELECT id FROM questions WHERE class=? AND subject=? ORDER BY id", (class_, subject))
@@ -1801,6 +2605,7 @@ def student_login():
 
     session.update({'student_id': student_id, 'student_name': name,
                     'class': class_, 'subject': subject, 'section': section, 'test_no': test_no,
+                    'test_type': 'MCQ',
                     'combined_test_id': combined_test_id,
                     'combined_subjects': combined_subjects})
     return redirect(url_for('waiting'))
@@ -1811,7 +2616,12 @@ def _get_class_subject_map():
     """
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT DISTINCT class, subject FROM questions WHERE class IS NOT NULL AND class!='' ORDER BY class, subject")
+    c.execute("""SELECT DISTINCT class, subject FROM questions WHERE class IS NOT NULL AND class != ''
+                 UNION
+                 SELECT DISTINCT class, subject FROM coding_questions WHERE class IS NOT NULL AND class != ''
+                 UNION
+                 SELECT DISTINCT class, subject FROM test_papers WHERE class IS NOT NULL AND class != ''
+                 ORDER BY class, subject""")
     rows = c.fetchall()
     conn.close()
     csmap = {}
@@ -1819,12 +2629,93 @@ def _get_class_subject_map():
         csmap.setdefault(r['class'], []).append(r['subject'])
     return csmap
 
+@app.route('/api/get_subjects_for_class')
+def api_get_subjects_for_class():
+    """Return distinct subjects available for a given class across questions, QB, test papers, and curriculum."""
+    class_ = request.args.get('class', '').strip()
+    board = (request.args.get('board') or 'CBSE').strip() or 'CBSE'
+    if not class_:
+        return jsonify({'subjects': []})
+    conn = get_db()
+    c = conn.cursor()
+    clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+    c.execute("""SELECT DISTINCT subject FROM questions WHERE class=? OR class LIKE ?
+                 UNION
+                 SELECT DISTINCT subject FROM question_bank_items WHERE class=? OR class LIKE ?
+                 UNION
+                 SELECT DISTINCT subject FROM test_papers WHERE class=? OR class LIKE ?
+                 ORDER BY subject""", (class_, f"%{clean_cls}%", class_, f"%{clean_cls}%", class_, f"%{clean_cls}%"))
+    db_subjs = [r['subject'] for r in c.fetchall() if r['subject']]
+    conn.close()
+
+    curr_subjs = []
+    try:
+        curr_subjs = curriculum_data.get_subjects_for_class(clean_cls, board) or []
+    except Exception:
+        pass
+
+    seen = set()
+    all_subjs = []
+    for s in db_subjs + curr_subjs:
+        s_clean = s.strip()
+        if s_clean and s_clean.lower() not in seen:
+            seen.add(s_clean.lower())
+            all_subjs.append(s_clean)
+    all_subjs.sort()
+    return jsonify({'subjects': all_subjs})
+
+@app.route('/api/student_lookup')
+@app.route('/api/student/lookup')
+def api_student_lookup():
+    """
+    Look up a student by admission number (or student_id) for instant login autofill.
+    Searches both admission_no and student_id fields.
+    """
+    admission_no = request.args.get('admission_no', '').strip() or request.args.get('student_id', '').strip()
+    if not admission_no:
+        return jsonify({'status': 'error', 'found': False, 'message': 'Admission number is required'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT student_id, admission_no, name, class, section, house, dob, parents_name
+        FROM students
+        WHERE LOWER(TRIM(COALESCE(admission_no, ''))) = LOWER(TRIM(?))
+           OR LOWER(TRIM(COALESCE(student_id, ''))) = LOWER(TRIM(?))
+        ORDER BY CASE WHEN admission_no IS NOT NULL AND admission_no != '' THEN 0 ELSE 1 END, rowid DESC
+        LIMIT 1
+    """, (admission_no, admission_no))
+    row = c.fetchone()
+    conn.close()
+
+    if not row:
+        return jsonify({'status': 'success', 'found': False, 'message': 'Student not found in registry'})
+
+    st = dict(row)
+    return jsonify({
+        'status': 'success',
+        'found': True,
+        'student': {
+            'student_id': st.get('student_id') or admission_no,
+            'admission_no': st.get('admission_no') or st.get('student_id') or admission_no,
+            'name': st.get('name') or '',
+            'class': st.get('class') or '',
+            'section': st.get('section') or '',
+            'house': st.get('house') or '',
+            'dob': st.get('dob') or '',
+            'parents_name': st.get('parents_name') or ''
+        }
+    })
+
 @app.route('/api/test_numbers')
 def api_test_numbers():
     """Return distinct test_no values for a class+subject combo with schedule lock status."""
     class_   = request.args.get('class','').strip()
     section  = request.args.get('section','').strip()
     subject  = request.args.get('subject','').strip()
+    for_student = request.args.get('for_student', '').strip()
+    is_student = (for_student == '1') or (not session.get('admin_logged_in') and not session.get('teacher_logged_in'))
+
     if not class_:
         return jsonify({'test_numbers': [], 'test_details': [], 'combined_tests': []})
 
@@ -1860,8 +2751,21 @@ def api_test_numbers():
                   (class_, f"%{clean_cls}%", subject))
         q_nos = set(r[0] for r in c.fetchall() if r[0])
 
+        # Coding questions table test numbers
+        c.execute("""SELECT DISTINCT test_no FROM coding_questions
+                     WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND test_no IS NOT NULL AND test_no != ''""",
+                  (class_, f"%{clean_cls}%", subject))
+        cq_nos = set(r[0] for r in c.fetchall() if r[0])
+
+        # Also get any test numbers defined in scheduled_tests directly
+        c.execute("""SELECT DISTINCT test_no FROM scheduled_tests
+                     WHERE (class=? OR class LIKE ?) AND (? = '' OR section=? OR section='' OR section IS NULL)
+                       AND LOWER(subject)=LOWER(?) AND status != 'cancelled' AND test_no IS NOT NULL AND test_no != ''""",
+                  (class_, f"%{clean_cls}%", section, section, subject))
+        sched_nos = set(r[0] for r in c.fetchall() if r[0])
+
         # Combine active and subtract any inactive test papers
-        valid_nos = (active_tp_nos | q_nos) - inactive_test_nos
+        valid_nos = (active_tp_nos | q_nos | cq_nos | sched_nos) - inactive_test_nos
         test_numbers = sorted(list(valid_nos))
     else:
         test_numbers = []
@@ -1872,6 +2776,11 @@ def api_test_numbers():
     for tn in test_numbers:
         sch_res = get_student_schedule_status(class_, section, subject, tn)
         state = sch_res.get('state', 'none')
+
+        # When serving student view, only show scheduled tests!
+        if is_student and state == 'none':
+            continue
+
         is_locked = False
         status_label = ""
         msg = sch_res.get('message', '')
@@ -1895,14 +2804,20 @@ def api_test_numbers():
             'message': msg
         })
 
-    # Combined (multi-subject) tests for this class
-    c.execute("""SELECT ct.id, ct.test_no, ct.title,
-                        GROUP_CONCAT(cts.subject || '(' || cts.question_count || 'Q)', ', ') as subjects_info
-                 FROM combined_tests ct
-                 JOIN combined_test_subjects cts ON cts.combined_test_id = ct.id
-                 WHERE ct.class=? AND ct.is_active=1
-                 GROUP BY ct.id ORDER BY ct.created_at DESC""", (class_,))
-    combined = [dict(r) for r in c.fetchall()]
+    # For students, test_numbers list only contains the scheduled tests
+    if is_student:
+        test_numbers = [d['test_no'] for d in test_details]
+        combined = []
+    else:
+        # Combined (multi-subject) tests for this class (admin/teacher view)
+        c.execute("""SELECT ct.id, ct.test_no, ct.title,
+                            GROUP_CONCAT(cts.subject || '(' || cts.question_count || 'Q)', ', ') as subjects_info
+                     FROM combined_tests ct
+                     JOIN combined_test_subjects cts ON cts.combined_test_id = ct.id
+                     WHERE ct.class=? AND ct.is_active=1
+                     GROUP BY ct.id ORDER BY ct.created_at DESC""", (class_,))
+        combined = [dict(r) for r in c.fetchall()]
+
     conn.close()
     return jsonify({'test_numbers': test_numbers, 'test_details': test_details, 'combined_tests': combined})
 
@@ -1963,28 +2878,15 @@ def generate_combined_test():
         if not subject or mcq_count <= 0:
             continue
 
-        time.sleep(2)  # Pause to remain within Gemini Free Tier 15 RPM rate limits
-
-        # Build AI prompt for this subject
-        prompt = _build_ai_prompt(class_, section, subject,
-                                  f'{title} — {subject}', test_no,
-                                  remark or 'Standard CBSE difficulty',
-                                  [f"{mcq_count} MCQ (4 options, mark correct_answer as option_a/b/c/d)"])
         try:
-            result, provider, err_msg = generate_ai_content(prompt, timeout=60)
-            if not result:
-                app.logger.error(f"Auto generate failed: {err_msg}")
-                continue
-
-            raw = result['candidates'][0]['content']['parts'][0]['text'].strip()
-            if '```' in raw:
-                for part in raw.split('```'):
-                    part = part.strip()
-                    if part.startswith('json'): part = part[4:].strip()
-                    if part.startswith('['): raw = part; break
-            questions = safe_json_loads(raw)
+            questions, gen_err = generate_cbt_questions_in_batches(
+                class_, section, subject, f'{title} — {subject}', test_no,
+                remark or 'Standard CBSE difficulty',
+                type_counts=[('MCQ (4 options, mark correct_answer as option_a/b/c/d)', mcq_count)],
+                board='CBSE', max_batch_size=10
+            )
             if not questions or not isinstance(questions, list):
-                app.logger.error("Auto generate failed to parse JSON questions")
+                app.logger.error(f"Auto generate failed for {subject}: {gen_err}")
                 continue
 
             inserted = 0
@@ -2039,8 +2941,254 @@ def api_check_test_no():
                  WHERE tp.subject=? AND tp.test_no=? AND tp.class=?""",
              (subject, test_no, class_))
     rows = [dict(r) for r in c.fetchall()]
-    conn.close()
     return jsonify({'exists': len(rows) > 0, 'details': rows})
+
+
+# ── MULTI-SECTION TEST CREATION ROUTE ──────────────────────────────────────────
+
+@app.route('/api/create_multi_section_test', methods=['POST'])
+@limiter.limit("15 per minute")
+def api_create_multi_section_test():
+    """Create a Multi-Section Test with independent per-section subjects, counts, marking schemes, and question sources."""
+    is_admin = session.get('admin_logged_in')
+    is_teacher = session.get('teacher_logged_in')
+    if not (is_admin or is_teacher):
+        return jsonify({'status': 'error', 'message': 'Not authenticated'}), 401
+
+    uploader_type = 'admin' if is_admin else 'teacher'
+    uploader_id = str(session.get('teacher_id') or 'admin')
+    teacher_name = session.get('teacher_name') or uploader_type.capitalize()
+
+    if request.is_json:
+        data = request.get_json() or {}
+        board = (data.get('board') or 'CBSE').strip() or 'CBSE'
+        class_ = (data.get('class') or '').strip()
+        section = (data.get('section') or '').strip()
+        title = (data.get('title') or '').strip()
+        test_no = (data.get('test_no') or '').strip()
+        timing_mode = (data.get('timing_mode') or 'disabled').strip()
+        shuffle_sections = 1 if data.get('shuffle_sections') in (True, 1, '1', 'true', 'on') else 0
+        remark = (data.get('remark') or '').strip()
+        sections = data.get('sections', [])
+    else:
+        board = request.form.get('board', 'CBSE').strip() or 'CBSE'
+        class_ = request.form.get('class', '').strip()
+        section = request.form.get('section', '').strip()
+        title = request.form.get('title', '').strip()
+        test_no = request.form.get('test_no', '').strip()
+        timing_mode = request.form.get('timing_mode', 'disabled').strip()
+        shuffle_sections = 1 if request.form.get('shuffle_sections') in ('true', '1', 'on') else 0
+        remark = request.form.get('remark', '').strip()
+        try:
+            sections = json.loads(request.form.get('sections_json', '[]'))
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': f'Invalid sections data: {str(e)}'}), 400
+
+    if not (class_ and title and test_no and sections):
+        return jsonify({'status': 'error', 'message': 'Class, Title, Test No and at least one section are required'}), 400
+
+    clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Check for duplicate test title + test_no in this class
+    c.execute("""SELECT id FROM test_papers 
+                 WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND test_no=?""",
+              (class_, f"%{clean_cls}%", title, test_no))
+    if c.fetchone():
+        conn.close()
+        return jsonify({'status': 'error', 'message': f'A test with Title "{title}" and Test No "{test_no}" already exists in Class {class_}. Please choose a different Test No or Title.'}), 400
+
+    # 1. Insert test_papers record
+    c.execute("""INSERT INTO test_papers
+                 (filename, class, section, subject, test_no, uploaded_by, uploader_type, question_count, is_active, board, paper_type)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1, ?, 'multi_section')""",
+              (f"{class_}{section}_{title}_{test_no}", class_, section, title, test_no, uploader_id, uploader_type, board))
+    test_paper_id = c.lastrowid
+
+    # 2. Insert test_section_config
+    c.execute("""INSERT INTO test_section_config
+                 (test_paper_id, timing_mode, shuffle_sections, two_stage_instructions)
+                 VALUES (?, ?, ?, 1)""",
+              (test_paper_id, timing_mode, shuffle_sections))
+
+    total_inserted = 0
+    errors = []
+
+    # 3. Process each section
+    for idx, sec in enumerate(sections):
+        sec_name = sec.get('section_name', f'Section {chr(65 + idx)}').strip()
+        sec_subj = sec.get('subject', '').strip()
+        sec_count = int(sec.get('question_count', 5))
+        pos_marks = float(sec.get('positive_marks', 1.0))
+        neg_marks = float(sec.get('negative_marks', 0.0))
+        duration_mins = int(sec.get('duration_minutes', 0)) if timing_mode == 'fixed' else 0
+        gen_mode = (sec.get('generation_mode') or sec.get('source_mode') or 'ai').strip().lower()
+        sec_chapter = sec.get('chapter', '').strip()
+
+        if not sec_subj or sec_count <= 0:
+            continue
+
+        c.execute("""INSERT INTO test_sections
+                     (test_paper_id, section_name, subject, question_count, positive_marks, negative_marks, duration_minutes, order_index, generation_mode)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                  (test_paper_id, sec_name, sec_subj, sec_count, pos_marks, neg_marks, duration_mins, idx, gen_mode))
+        section_id = c.lastrowid
+
+        sec_inserted = 0
+
+        # Mode A: Question Bank Auto-Pick
+        if gen_mode == 'qb':
+            qb_query = "SELECT * FROM question_bank_items WHERE approved=1 AND class=? AND subject=?"
+            qb_params = [class_, sec_subj]
+            if sec_chapter:
+                qb_query += " AND chapter LIKE ?"
+                qb_params.append(f"%{sec_chapter}%")
+            qb_query += " ORDER BY RANDOM() LIMIT ?"
+            qb_params.append(sec_count)
+            c.execute(qb_query, qb_params)
+            qb_items = [dict(r) for r in c.fetchall()]
+
+            for qi in qb_items:
+                raw_opts = qi.get('raw_options', '[]')
+                try:
+                    opts = json.loads(raw_opts)
+                except Exception:
+                    opts = []
+                opt_a = opts[0] if len(opts) > 0 else 'A'
+                opt_b = opts[1] if len(opts) > 1 else 'B'
+                opt_c = opts[2] if len(opts) > 2 else 'C'
+                opt_d = opts[3] if len(opts) > 3 else 'D'
+                c.execute("""INSERT INTO questions
+                             (class, subject, chapter, test_no, question_type, question, question_hi,
+                              option_a, option_b, option_c, option_d, correct_answer, board, section_id, image_path)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                          (class_, sec_subj, f"{sec_name}: {sec_subj}", test_no,
+                           qi.get('question_type', 'MCQ'), qi.get('raw_question_text', ''), '',
+                           opt_a, opt_b, opt_c, opt_d,
+                           qi.get('raw_answer', ''), board, section_id, qi.get('image_path', '')))
+                sec_inserted += 1
+
+            if sec_inserted < sec_count:
+                needed = sec_count - sec_inserted
+                c.execute("""SELECT * FROM questions 
+                             WHERE class=? AND subject=? AND (test_no != ? OR test_no IS NULL)
+                             ORDER BY RANDOM() LIMIT ?""", (class_, sec_subj, test_no, needed))
+                repo_items = [dict(r) for r in c.fetchall()]
+                for ri in repo_items:
+                    c.execute("""INSERT INTO questions
+                                 (class, subject, chapter, test_no, question_type, question, question_hi,
+                                  option_a, option_a_hi, option_b, option_b_hi, option_c, option_c_hi,
+                                  option_d, option_d_hi, correct_answer, board, section_id, image_path)
+                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                              (class_, sec_subj, f"{sec_name}: {sec_subj}", test_no,
+                               ri.get('question_type', 'MCQ'), ri.get('question', ''), ri.get('question_hi', ''),
+                               ri.get('option_a', ''), ri.get('option_a_hi', ''),
+                               ri.get('option_b', ''), ri.get('option_b_hi', ''),
+                               ri.get('option_c', ''), ri.get('option_c_hi', ''),
+                               ri.get('option_d', ''), ri.get('option_d_hi', ''),
+                               ri.get('correct_answer', ''), board, section_id, ri.get('image_path', '')))
+                    sec_inserted += 1
+
+        # Mode B: CSV Upload for section
+        elif gen_mode == 'upload':
+            file_key = f'csv_file_{idx}'
+            csv_file = request.files.get(file_key)
+            if csv_file and csv_file.filename.endswith('.csv'):
+                fname = secure_filename(csv_file.filename)
+                fpath = os.path.join(app.config['UPLOAD_FOLDER'], f"ms_{uuid.uuid4().hex[:8]}_{fname}")
+                csv_file.save(fpath)
+                try:
+                    with open(fpath, 'r', encoding='utf-8-sig') as f:
+                        reader = csv.DictReader(f)
+                        for r_row in reader:
+                            if sec_inserted >= sec_count:
+                                break
+                            parsed = parse_question_csv_row(r_row)
+                            if not parsed or not parsed['question']:
+                                continue
+                            c.execute("""INSERT INTO questions
+                                         (class, subject, chapter, test_no, question_type, question,
+                                          option_a, option_b, option_c, option_d, correct_answer, board, section_id)
+                                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                                      (class_, sec_subj, f"{sec_name}: {sec_subj}", test_no,
+                                       parsed.get('question_type', 'MCQ'), parsed['question'],
+                                       parsed['option_a'], parsed['option_b'], parsed['option_c'], parsed['option_d'],
+                                       parsed['correct_answer'], board, section_id))
+                            sec_inserted += 1
+                finally:
+                    if os.path.exists(fpath):
+                        os.remove(fpath)
+            else:
+                errors.append(f"{sec_name} ({sec_subj}): No valid CSV file uploaded.")
+
+        # Mode C: AI Generate (Default)
+        else:
+            try:
+                type_counts = [('MCQ (4 options)', sec_count)]
+                q_list, gen_err = generate_cbt_questions_in_batches(
+                    class_, section, sec_subj, sec_chapter or f"{title} — {sec_name}", test_no,
+                    remark=remark or f"Multi-Section: {sec_name}",
+                    type_counts=type_counts, board=board, max_batch_size=10
+                )
+                if q_list and isinstance(q_list, list):
+                    for q in q_list:
+                        img_path = process_cbt_question_image(q, class_, section, sec_subj, sec_chapter)
+                        c.execute("""INSERT INTO questions
+                                     (class, subject, chapter, test_no, question_type, question, question_hi,
+                                      option_a, option_a_hi, option_b, option_b_hi, option_c, option_c_hi,
+                                      option_d, option_d_hi, correct_answer, image_path, board, section_id)
+                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                                  (class_, sec_subj, f"{sec_name}: {sec_subj}", test_no,
+                                   q.get('question_type', 'MCQ'), q.get('question', ''), q.get('question_hi', ''),
+                                   q.get('option_a', ''), q.get('option_a_hi', ''),
+                                   q.get('option_b', ''), q.get('option_b_hi', ''),
+                                   q.get('option_c', ''), q.get('option_c_hi', ''),
+                                   q.get('option_d', ''), q.get('option_d_hi', ''),
+                                   q.get('correct_answer', ''), img_path, board, section_id))
+                        sec_inserted += 1
+                else:
+                    errors.append(f"{sec_name} ({sec_subj}): AI Generation failed ({gen_err})")
+            except Exception as e:
+                errors.append(f"{sec_name} ({sec_subj}): {str(e)}")
+
+        total_inserted += sec_inserted
+
+    # Update question count in test_papers
+    c.execute("UPDATE test_papers SET question_count=? WHERE id=?", (total_inserted, test_paper_id))
+
+    # Record history
+    c.execute("""INSERT INTO test_generation_history
+                 (teacher_id, class, section, subject, chapter, test_no, output_mode,
+                  total_questions, mcq_count, remark, board, paper_type)
+                 VALUES (?, ?, ?, ?, ?, ?, 'cbt', ?, ?, ?, ?, 'multi_section')""",
+              (uploader_id, class_, section, title, f"Multi-Section: {len(sections)} sections", test_no,
+               total_inserted, total_inserted, remark or 'Multi-Section Test', board))
+
+    c.execute("""INSERT INTO mcq_test_history (teacher_id, teacher_name, class, section, subject, test_no, question_count)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)""",
+              (uploader_id if uploader_type == 'teacher' else 0, teacher_name, class_, section, title, test_no, total_inserted))
+
+    conn.commit()
+    conn.close()
+
+    if total_inserted == 0:
+        return jsonify({'status': 'error', 'message': 'Failed to create sections:\n' + '\n'.join(errors)}), 500
+
+    msg = f'Multi-Section Test "{title}" ({test_no}) created with {total_inserted} questions across {len(sections)} sections.'
+    if errors:
+        msg += '\nWarnings: ' + '; '.join(errors)
+
+    return jsonify({
+        'status': 'success',
+        'message': msg,
+        'test_paper_id': test_paper_id,
+        'title': title,
+        'test_no': test_no,
+        'total_questions': total_inserted
+    })
+
 
 @app.route('/waiting')
 @student_required
@@ -2056,11 +3204,14 @@ def waiting():
     c.execute("SELECT status, class, section, subject, test_no FROM students WHERE student_id=?", (student_id,))
     student = c.fetchone()
 
+    active_sess = get_active_session_for_student(student_id=student_id, conn=conn)
+    is_active = (active_sess is not None and active_sess.get('status') in ('running', 'paused')) or (row and bool(row['is_active']))
+
     lock_info = None
     if student and student['class'] and student['subject']:
         tno = student['test_no'] or session.get('test_no', '')
-        # Check if test paper is inactive
-        if tno:
+        # Check if test paper is inactive (only if exam session is NOT actively running)
+        if tno and not is_active:
             clean_cls = student['class'].replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
             c.execute("""SELECT id FROM test_papers 
                          WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND test_no=? AND is_active=0""",
@@ -2080,10 +3231,20 @@ def waiting():
                 lock_info = {'title': 'Exam Locked', 'message': sch_res['message'], 'icon': 'fa-lock', 'color': '#eab308', 'state': 'upcoming'}
             elif sch_res['state'] == 'expired' and student['status'] == 'Not Started':
                 lock_info = {'title': 'Exam Window Closed', 'message': sch_res['message'], 'icon': 'fa-times-circle', 'color': '#ef4444', 'state': 'expired'}
+            elif sch_res['state'] == 'none':
+                ms_info = _get_multi_section_info(student['class'], student['subject'], tno, conn)
+                if not ms_info:
+                    lock_info = {'title': 'Test Not Scheduled', 'message': f"Test '{tno}' is not scheduled. Students can only take scheduled tests.", 'icon': 'fa-calendar-times', 'color': '#ef4444', 'state': 'none'}
 
+    active_sess = get_active_session_for_student(student_id=student_id, conn=conn)
+    is_active = (active_sess is not None and active_sess.get('status') in ('running', 'paused')) or (row and bool(row['is_active']))
     conn.close()
 
-    if not lock_info and row and row['is_active']:
+    if not lock_info and is_active:
+        if session.get('resume_mode'):
+            return redirect(url_for('exam'))
+        if session.get('is_multi_section'):
+            return redirect(url_for('instructions_stage1'))
         return redirect(url_for('guidelines'))
     return render_template('waiting.html', lock_info=lock_info)
 
@@ -2092,6 +3253,7 @@ def waiting():
 def check_exam_status():
     """
     API endpoint to check if the exam has started.
+    Returns session-specific state, paused status, and custom end_message if ended.
     """
     auto_submit_expired_exams()
     update_scheduled_tests_status()
@@ -2105,8 +3267,11 @@ def check_exam_status():
 
     force_submitted = bool(student and student['status'] == 'Submitted')
     if force_submitted:
+        # Check if the session ended with a custom message
+        latest_sess = get_latest_session_for_student(student_id=student_id, conn=conn)
+        end_message = latest_sess.get('end_message') if latest_sess else None
         conn.close()
-        return jsonify({'active': False, 'force_submitted': True})
+        return jsonify({'active': False, 'force_submitted': True, 'end_message': end_message})
 
     if student and student['class'] and student['subject']:
         tno = student['test_no'] or session.get('test_no', '')
@@ -2126,11 +3291,21 @@ def check_exam_status():
         elif sch_res['state'] == 'expired' and student['status'] == 'Not Started':
             conn.close()
             return jsonify({'active': False, 'force_submitted': False, 'schedule_locked': True, 'state': 'expired', 'message': sch_res['message']})
+        elif sch_res['state'] == 'none':
+            conn.close()
+            return jsonify({'active': False, 'force_submitted': False, 'schedule_locked': True, 'state': 'none', 'message': f"Test '{tno}' is not scheduled."})
 
+    # Check session-based control first
+    active_sess = get_active_session_for_student(student_id=student_id, conn=conn)
+    if active_sess:
+        conn.close()
+        is_paused = (active_sess.get('status') == 'paused')
+        return jsonify({'active': True, 'paused': is_paused, 'force_submitted': False, 'session_id': active_sess['id']})
+
+    # Fallback to global exam_control
+    is_active = bool(row and row['is_active'])
     conn.close()
-    if not row or not row['is_active']:
-        return jsonify({'active': False, 'force_submitted': False})
-    return jsonify({'active': True, 'force_submitted': False})
+    return jsonify({'active': is_active, 'paused': False, 'force_submitted': False})
 
 @app.route('/exam')
 @student_required
@@ -2138,15 +3313,21 @@ def exam():
     """
     Render the exam page with shuffled questions for the student.
     """
+    if session.get('test_type') == 'Coding Test':
+        return redirect(url_for('coding_exam_list'))
+
     import random
     conn = get_db()
     c = conn.cursor()
 
-    c.execute("SELECT is_active FROM exam_control WHERE id=1")
-    row = c.fetchone()
-    if not row or not row['is_active']:
-        conn.close()
-        return redirect(url_for('waiting'))
+    active_sess = get_active_session_for_student(student_id=session.get('student_id'), conn=conn)
+    is_active = (active_sess is not None and active_sess.get('status') in ('running', 'paused'))
+    if not is_active:
+        c.execute("SELECT is_active FROM exam_control WHERE id=1")
+        row = c.fetchone()
+        if not row or not row['is_active']:
+            conn.close()
+            return redirect(url_for('waiting'))
 
     student_id = session['student_id']
     c.execute("SELECT * FROM students WHERE student_id=?", (student_id,))
@@ -2166,15 +3347,29 @@ def exam():
                 conn.close()
                 return redirect(url_for('waiting'))
 
+        ms_info = _get_multi_section_info(student['class'], student['subject'], tno, conn)
         sch_res = get_student_schedule_status(student['class'], student['section'], student['subject'], tno, student_id)
         if sch_res['state'] in ('upcoming', 'expired'):
             conn.close()
             return redirect(url_for('waiting'))
+        elif sch_res['state'] == 'none' and not ms_info:
+            conn.close()
+            return redirect(url_for('waiting'))
 
     if student:
-        c.execute("SELECT COUNT(*) FROM questions WHERE class=? AND subject=?",
-                  (student['class'], student['subject']))
-        q_count = c.fetchone()[0]
+        tno = (student['test_no'] if ('test_no' in student.keys() and student['test_no']) else session.get('test_no', '') or '').strip()
+        ms_info = _get_multi_section_info(student['class'], student['subject'], tno, conn)
+
+        if ms_info:
+            c.execute("""SELECT COUNT(q.id) FROM questions q
+                         JOIN test_sections ts ON q.section_id = ts.id
+                         WHERE ts.test_paper_id = ?""", (ms_info['tp_id'],))
+            q_count = c.fetchone()[0]
+        else:
+            c.execute("SELECT COUNT(*) FROM questions WHERE class=? AND subject=?",
+                      (student['class'], student['subject']))
+            q_count = c.fetchone()[0]
+
         if q_count == 0:
             conn.close()
             return "No questions available for this subject/class. Please contact admin.", 404
@@ -2183,18 +3378,62 @@ def exam():
         count = c.fetchone()[0]
         if count == 0:
             test_no = (student['test_no'] if ('test_no' in student.keys() and student['test_no']) else session.get('test_no', '') or '').strip()
-            if test_no:
+            if ms_info:
+                # Multi-section: populate across all sections
+                c.execute("""SELECT id, section_name, subject, duration_minutes, order_index
+                             FROM test_sections WHERE test_paper_id=? ORDER BY order_index ASC""", (ms_info['tp_id'],))
+                sec_rows = [dict(r) for r in c.fetchall()]
+                global_q_idx = 0
+                first_sec_id = None
+                first_sec_name = ''
+                first_sec_dur = 0
+                for s_idx, sec in enumerate(sec_rows):
+                    sec_display_name = sec['section_name']
+                    if sec.get('subject') and sec.get('subject').lower() not in sec_display_name.lower():
+                        sec_display_name = f"{sec['section_name']} - {sec['subject']}"
+                    if s_idx == 0:
+                        first_sec_id = sec['id']
+                        first_sec_name = sec_display_name
+                        first_sec_dur = sec['duration_minutes'] or 0
+                    c.execute("SELECT id FROM questions WHERE section_id=? ORDER BY id", (sec['id'],))
+                    s_qids = [r['id'] for r in c.fetchall()]
+                    if not s_qids:
+                        c.execute("SELECT id FROM questions WHERE class=? AND subject=? AND test_no=? ORDER BY id",
+                                  (student['class'], sec['subject'], test_no))
+                        s_qids = [r['id'] for r in c.fetchall()]
+                    random.shuffle(s_qids)
+                    for qid in s_qids:
+                        opt_order = _shuffle_options_safe(qid, c)
+                        c.execute("INSERT INTO shuffled_questions (student_id, question_id, shuffled_index, option_order) VALUES (?,?,?,?)",
+                                  (student_id, qid, global_q_idx, opt_order))
+                        global_q_idx += 1
+                c.execute("""INSERT OR REPLACE INTO student_section_progress
+                             (id, student_id, test_paper_id, current_section_id, locked_sections, section_time_left, updated_at)
+                             VALUES (
+                                 (SELECT id FROM student_section_progress WHERE student_id=? AND test_paper_id=?),
+                                 ?, ?, ?, '[]', ?, CURRENT_TIMESTAMP
+                             )""",
+                          (student_id, ms_info['tp_id'], student_id, ms_info['tp_id'], first_sec_id, first_sec_dur * 60))
+                if first_sec_name:
+                    c.execute("UPDATE students SET current_section=? WHERE student_id=?", (first_sec_name, student_id))
+            elif test_no:
                 c.execute("SELECT id FROM questions WHERE class=? AND subject=? AND (test_no=? OR chapter=?) ORDER BY id",
                           (student['class'], student['subject'], test_no, test_no))
+                qids = [row['id'] for row in c.fetchall()]
+                random.shuffle(qids)
+                for idx, qid in enumerate(qids):
+                    opt_order = _shuffle_options_safe(qid, c)
+                    c.execute("INSERT INTO shuffled_questions (student_id, question_id, shuffled_index, option_order) VALUES (?,?,?,?)",
+                              (student_id, qid, idx, opt_order))
             else:
                 c.execute("SELECT id FROM questions WHERE class=? AND subject=? ORDER BY id",
                           (student['class'], student['subject']))
-            qids = [row['id'] for row in c.fetchall()]
-            random.shuffle(qids)
-            for idx, qid in enumerate(qids):
-                opt_order = _shuffle_options_safe(qid, c)
-                c.execute("INSERT INTO shuffled_questions (student_id, question_id, shuffled_index, option_order) VALUES (?,?,?,?)",
-                          (student_id, qid, idx, opt_order))
+                qids = [row['id'] for row in c.fetchall()]
+                random.shuffle(qids)
+                for idx, qid in enumerate(qids):
+                    opt_order = _shuffle_options_safe(qid, c)
+                    c.execute("INSERT INTO shuffled_questions (student_id, question_id, shuffled_index, option_order) VALUES (?,?,?,?)",
+                              (student_id, qid, idx, opt_order))
             conn.commit()
 
         if student['exam_started_at'] is None or student['status'] == 'Not Started':
@@ -2216,6 +3455,10 @@ def exam():
     now = datetime.datetime.now()
     combined_subjects = session.get('combined_subjects', [])
     is_combined       = bool(session.get('combined_test_id'))
+    is_multi_section  = bool(session.get('is_multi_section') or ms_info)
+    timing_mode       = ms_info['timing_mode'] if ms_info else session.get('timing_mode', 'disabled')
+    test_paper_id     = ms_info['tp_id'] if ms_info else session.get('test_paper_id')
+
     return render_template('exam.html',
                            school_name=school_name,
                            logo_path=logo_path,
@@ -2229,7 +3472,51 @@ def exam():
                            exam_date=now.strftime('%d/%m/%Y'),
                            exam_day=now.strftime('%A'),
                            is_combined=is_combined,
-                           combined_subjects=combined_subjects)
+                           combined_subjects=combined_subjects,
+                           is_multi_section=is_multi_section,
+                           timing_mode=timing_mode,
+                           test_paper_id=test_paper_id)
+
+# ── Language Subject Detection Helper ───────────────────────────────────────────
+def is_language_subject(subj):
+    """Return True if the subject represents a language subject (English, Hindi, Sanskrit, etc.)."""
+    if not subj:
+        return False
+    s = str(subj).strip().lower()
+    lang_keywords = [
+        'english', 'अंग्रेजी', 'अंग्रेज़ी',
+        'hindi', 'हिन्दी', 'हिंदी',
+        'sanskrit', 'संस्कृत',
+        'urdu', 'उर्दू',
+        'french', 'français',
+        'german', 'deutsch',
+        'spanish', 'español',
+        'bengali', 'bangla', 'বাংলা',
+        'marathi', 'मराठी',
+        'gujarati', 'ગુજરાતી',
+        'tamil', 'தமிழ்',
+        'telugu', 'తెలుగు',
+        'kannada', 'ಕನ್ನಡ',
+        'malayalam', 'മലയാളം',
+        'punjabi', 'ਪੰਜਾਬੀ',
+        'odia', 'oriya', 'ଓଡ଼ିଆ',
+        'assamese', 'অসমীয়া',
+        'maithili', 'मैथिली',
+        'kashmiri', 'कॉशुर',
+        'nepali', 'नेपाली',
+        'konkani', 'कोंकणी',
+        'sindhi', 'سنڌي',
+        'manipuri', 'meitei',
+        'arabic', 'عربي',
+        'persian', 'فارسی',
+        'russian', 'русский',
+        'japanese', '日本語',
+        'chinese', 'mandarin', '中文',
+        'korean', '한국어',
+        'latin',
+        'language', 'literature', 'vyakaran', 'sahitya', 'grammar', 'bhasha'
+    ]
+    return any(kw in s for kw in lang_keywords)
 
 @app.route('/get_questions')
 @student_required
@@ -2246,12 +3533,14 @@ def get_questions():
     c.execute('''
         SELECT q.id, q.question, q.option_a, q.option_b, q.option_c, q.option_d,
                q.question_hi, q.option_a_hi, q.option_b_hi, q.option_c_hi, q.option_d_hi,
-               q.image_path, q.subject, q.question_type,
+               q.image_path, q.subject, q.question_type, q.section_id,
                COALESCE(sq.option_order, 'ABCD') as option_order,
-               r.selected_option
+               r.selected_option,
+               ts.section_name, ts.positive_marks, ts.negative_marks, ts.duration_minutes, ts.order_index
         FROM questions q
         LEFT JOIN shuffled_questions sq ON q.id = sq.question_id AND sq.student_id = ?
         LEFT JOIN responses r           ON q.id = r.question_id  AND r.student_id = ?
+        LEFT JOIN test_sections ts      ON q.section_id = ts.id
         WHERE sq.student_id = ?
         ORDER BY COALESCE(sq.shuffled_index, q.id)
     ''', (student_id, student_id, student_id))
@@ -2283,25 +3572,150 @@ def get_questions():
             smiles_val   = ''
             actual_image = raw_image if raw_image else None
 
+        q_subj = row['subject'] or ''
+        is_lang = is_language_subject(q_subj)
+        is_pure_hindi = any(h in q_subj.lower() for h in ['hindi', 'हिन्दी', 'हिंदी'])
+
+        # Language subjects other than pure Hindi MUST NEVER have Hindi translation fields
+        if is_lang and not is_pure_hindi:
+            q_hi = ''
+            opt_a_hi = ''
+            opt_b_hi = ''
+            opt_c_hi = ''
+            opt_d_hi = ''
+        else:
+            q_hi = row['question_hi'] or ''
+            opt_a_hi = shuffled_options_hi['A']
+            opt_b_hi = shuffled_options_hi['B']
+            opt_c_hi = shuffled_options_hi['C']
+            opt_d_hi = shuffled_options_hi['D']
+
         questions.append({
-            'id':            row['id'],
-            'question':      row['question'],
-            'question_hi':   row['question_hi'] or '',
-            'option_a':      shuffled_options['A'],
-            'option_b':      shuffled_options['B'],
-            'option_c':      shuffled_options['C'],
-            'option_d':      shuffled_options['D'],
-            'option_a_hi':   shuffled_options_hi['A'],
-            'option_b_hi':   shuffled_options_hi['B'],
-            'option_c_hi':   shuffled_options_hi['C'],
-            'option_d_hi':   shuffled_options_hi['D'],
-            'image_path':    actual_image,
-            'smiles':        smiles_val,
-            'subject':       row['subject'],       # for tab grouping
-            'question_type': row['question_type'] or 'MCQ',
-            'selected':      row['selected_option'] or '',
+            'id':               row['id'],
+            'question':         row['question'],
+            'question_hi':      q_hi,
+            'option_a':         shuffled_options['A'],
+            'option_b':         shuffled_options['B'],
+            'option_c':         shuffled_options['C'],
+            'option_d':         shuffled_options['D'],
+            'option_a_hi':      opt_a_hi,
+            'option_b_hi':      opt_b_hi,
+            'option_c_hi':      opt_c_hi,
+            'option_d_hi':      opt_d_hi,
+            'image_path':       actual_image,
+            'smiles':           smiles_val,
+            'subject':          row['subject'],       # for tab grouping
+            'question_type':    row['question_type'] or 'MCQ',
+            'selected':         row['selected_option'] or '',
+            'section_id':       row['section_id'] or None,
+            'section_name':     row['section_name'] or '',
+            'positive_marks':   float(row['positive_marks']) if row['positive_marks'] is not None else 1.0,
+            'negative_marks':   float(row['negative_marks']) if row['negative_marks'] is not None else 0.0,
+            'duration_minutes': int(row['duration_minutes']) if row['duration_minutes'] is not None else 0,
+            'order_index':      row['order_index'] if row['order_index'] is not None else 0,
         })
     return jsonify(questions)
+
+@app.route('/api/section_progress', methods=['GET', 'POST'])
+@student_required
+def api_section_progress():
+    """Retrieve or update student section progress, locks, and timing."""
+    student_id = session.get('student_id')
+    test_paper_id = session.get('test_paper_id')
+    timing_mode = session.get('timing_mode', 'disabled')
+
+    conn = get_db()
+    c = conn.cursor()
+
+    if not test_paper_id:
+        c.execute("SELECT class, subject, test_no FROM students WHERE student_id=?", (student_id,))
+        st = c.fetchone()
+        if st:
+            ms_info = _get_multi_section_info(st['class'], st['subject'], st['test_no'], conn)
+            if ms_info:
+                test_paper_id = ms_info['tp_id']
+                timing_mode = ms_info['timing_mode']
+                session['test_paper_id'] = test_paper_id
+                session['timing_mode'] = timing_mode
+
+    if not test_paper_id:
+        conn.close()
+        return jsonify({'status': 'none', 'message': 'Not a multi-section test'}), 200
+
+    if request.method == 'POST':
+        data = request.get_json() or {}
+        curr_sec_id = data.get('current_section_id')
+        lock_sec_id = data.get('lock_section_id')
+        sec_time_left = data.get('section_time_left')
+
+        c.execute("SELECT * FROM student_section_progress WHERE student_id=? AND test_paper_id=?",
+                  (student_id, test_paper_id))
+        prog = c.fetchone()
+        locked = []
+        if prog and prog['locked_sections']:
+            try:
+                locked = json.loads(prog['locked_sections'])
+            except Exception:
+                locked = []
+
+        if lock_sec_id and lock_sec_id not in locked:
+            locked.append(lock_sec_id)
+
+        locked_json = json.dumps(locked)
+        time_left_val = int(sec_time_left) if sec_time_left is not None else (prog['section_time_left'] if prog else 0)
+        new_curr_id = curr_sec_id if curr_sec_id is not None else (prog['current_section_id'] if prog else None)
+
+        c.execute("""INSERT OR REPLACE INTO student_section_progress
+                     (id, student_id, test_paper_id, current_section_id, locked_sections, section_time_left, updated_at)
+                     VALUES (
+                         (SELECT id FROM student_section_progress WHERE student_id=? AND test_paper_id=?),
+                         ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
+                     )""",
+                  (student_id, test_paper_id, student_id, test_paper_id, new_curr_id, locked_json, time_left_val))
+
+        if new_curr_id:
+            c.execute("SELECT section_name, subject FROM test_sections WHERE id=?", (new_curr_id,))
+            sec_name_row = c.fetchone()
+            if sec_name_row:
+                s_name = sec_name_row['section_name']
+                s_subj = sec_name_row['subject']
+                if s_subj and s_subj.lower() not in s_name.lower():
+                    s_name = f"{s_name} - {s_subj}"
+                c.execute("UPDATE students SET current_section=? WHERE student_id=?", (s_name, student_id))
+
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'ok', 'locked_sections': locked, 'current_section_id': new_curr_id})
+
+    # GET
+    c.execute("SELECT * FROM student_section_progress WHERE student_id=? AND test_paper_id=?",
+              (student_id, test_paper_id))
+    prog = c.fetchone()
+    locked = []
+    curr_sec_id = None
+    time_left = 0
+    if prog:
+        curr_sec_id = prog['current_section_id']
+        time_left = prog['section_time_left']
+        try:
+            locked = json.loads(prog['locked_sections'] or '[]')
+        except Exception:
+            locked = []
+
+    c.execute("""SELECT id, section_name, subject, question_count, positive_marks, negative_marks, duration_minutes, order_index
+                 FROM test_sections WHERE test_paper_id=? ORDER BY order_index ASC""", (test_paper_id,))
+    secs = [dict(r) for r in c.fetchall()]
+
+    conn.close()
+    return jsonify({
+        'status': 'ok',
+        'is_multi_section': True,
+        'timing_mode': timing_mode,
+        'current_section_id': curr_sec_id,
+        'locked_sections': locked,
+        'section_time_left': time_left,
+        'sections': secs
+    })
 
 @app.route('/save_answer', methods=['POST'])
 @student_required
@@ -2397,7 +3811,79 @@ def submit_exam():
     section_val = (st_row['section'] if st_row and st_row['section'] else session.get('section', ''))
     test_no_val = (st_row['test_no'] if st_row and st_row['test_no'] else session.get('test_no', ''))
 
-    if combined_subjects:
+    ms_info = _get_multi_section_info(class_, subject, test_no_val, conn)
+    if ms_info:
+        tp_id = ms_info['tp_id']
+        c.execute("""SELECT id, section_name, subject, question_count, positive_marks, negative_marks, duration_minutes, order_index
+                     FROM test_sections WHERE test_paper_id=? ORDER BY order_index ASC""", (tp_id,))
+        sections = [dict(r) for r in c.fetchall()]
+
+        total_exam_questions = 0
+        total_exam_score = 0.0
+        max_possible_marks = 0.0
+        section_breakdowns = []
+
+        for sec in sections:
+            sec_id = sec['id']
+            pos_m = float(sec['positive_marks'] if sec['positive_marks'] is not None else 1.0)
+            neg_m = float(sec['negative_marks'] if sec['negative_marks'] is not None else 0.0)
+
+            c.execute("""SELECT q.id, q.correct_answer, q.option_a, q.option_b, q.option_c, q.option_d, r.selected_option
+                         FROM shuffled_questions sq
+                         JOIN questions q ON q.id = sq.question_id
+                         LEFT JOIN responses r ON q.id = r.question_id AND r.student_id = ?
+                         WHERE sq.student_id = ? AND q.section_id = ?""",
+                      (student_id, student_id, sec_id))
+            q_rows = c.fetchall()
+            sec_total = len(q_rows)
+            sec_attempted = 0
+            sec_correct = 0
+            sec_incorrect = 0
+            sec_score = 0.0
+            sec_max = sec_total * pos_m
+
+            for qr in q_rows:
+                sel = (qr['selected_option'] or '').strip().upper()
+                cor_letter = _normalize_correct_answer(
+                    qr['correct_answer'], qr['option_a'], qr['option_b'], qr['option_c'], qr['option_d']
+                )
+                if sel:
+                    sec_attempted += 1
+                    if cor_letter and sel == cor_letter:
+                        sec_correct += 1
+                        sec_score += pos_m
+                    else:
+                        sec_incorrect += 1
+                        sec_score -= neg_m
+
+            sec_score_final = max(0.0, sec_score)
+            total_exam_questions += sec_total
+            total_exam_score += sec_score_final
+            max_possible_marks += sec_max
+
+            section_breakdowns.append({
+                'section_id': sec_id,
+                'section_name': sec['section_name'],
+                'subject': sec['subject'],
+                'total': sec_total,
+                'attempted': sec_attempted,
+                'correct': sec_correct,
+                'incorrect': sec_incorrect,
+                'marks_obtained': round(sec_score_final, 2),
+                'max_marks': round(sec_max, 2),
+                'positive_marks': pos_m,
+                'negative_marks': neg_m
+            })
+
+        overall_pct = round((total_exam_score / max_possible_marks * 100), 2) if max_possible_marks > 0 else (
+            round((total_exam_score / total_exam_questions * 100), 2) if total_exam_questions > 0 else 0.0
+        )
+        breakdown_json = json.dumps(section_breakdowns)
+
+        _save_or_update_result(c, student_id, name, class_, section_val, subject,
+                               round(total_exam_score, 2), total_exam_questions, overall_pct, test_no_val,
+                               section_breakdown=breakdown_json)
+    elif combined_subjects:
         for subj in combined_subjects:
             score, total, pct = _score_subject(subj)
             _save_or_update_result(c, student_id, name, class_, section_val, subj, score, total, pct, test_no_val)
@@ -2491,24 +3977,65 @@ def check_reattempt_status():
 @app.route('/get_exam_time')
 @student_required
 def get_exam_time():
-    """Feature #2: Per-student timer — counts from student's own exam_started_at."""
+    """
+    Session-aware timer — calculates countdown based on the student's active exam session.
+    Accounts for paused status and total paused time.
+    Falls back to scheduled test or global exam_control if no session is active.
+    """
     student_id = session.get('student_id')
     conn = get_db()
     c = conn.cursor()
 
-    # Get exam duration from global control
+    c.execute("SELECT class, section, subject, test_no, exam_started_at, status FROM students WHERE student_id=?", (student_id,))
+    student = c.fetchone()
+
+    # 1. Check if student belongs to an active exam session
+    sess = get_active_session_for_student(student_id=student_id, conn=conn)
+
+    if sess:
+        duration = int(sess.get('allotted_duration') or 60)
+        is_paused = (sess.get('status') == 'paused')
+        sess_remaining = get_session_remaining_seconds(sess)
+
+        if student and student['status'] == 'Submitted':
+            conn.close()
+            return jsonify({'remaining': 0, 'duration': duration, 'paused': False, 'session_id': sess['id']})
+
+        if is_paused:
+            conn.close()
+            return jsonify({
+                'remaining': sess_remaining,
+                'duration': duration,
+                'paused': True,
+                'session_id': sess['id'],
+                'message': 'Exam is currently paused by proctor.'
+            })
+
+        # Running session: student countdown
+        if not student or not student['exam_started_at']:
+            remaining = sess_remaining
+        else:
+            try:
+                started_dt = parse_session_dt(student['exam_started_at'])
+                now = datetime.datetime.utcnow()
+                tot_paused = int(sess.get('total_paused_secs') or 0)
+                elapsed = (now - started_dt).total_seconds() - tot_paused
+                std_rem = int((duration * 60) - max(0, elapsed))
+                remaining = max(0, min(std_rem, sess_remaining))
+            except Exception:
+                remaining = sess_remaining
+
+        conn.close()
+        return jsonify({'remaining': remaining, 'duration': duration, 'paused': False, 'session_id': sess['id']})
+
+    # 2. Fallback to scheduled tests & global exam_control
     c.execute("SELECT duration, is_active FROM exam_control WHERE id=1")
     ctrl = c.fetchone()
     if not ctrl or not ctrl['is_active']:
         conn.close()
-        return jsonify({'remaining': 0, 'duration': 0})
+        return jsonify({'remaining': 0, 'duration': 0, 'paused': False})
 
     duration = ctrl['duration']
-
-    c.execute("SELECT class, section, subject, test_no, exam_started_at, status FROM students WHERE student_id=?", (student_id,))
-    student = c.fetchone()
-    conn.close()
-
     if student and student['class'] and student['subject']:
         tno = student['test_no'] or session.get('test_no', '')
         sch_res = get_student_schedule_status(student['class'], student['section'], student['subject'], tno, student_id)
@@ -2518,24 +4045,27 @@ def get_exam_time():
             duration = sch_res['schedule']['duration_minutes']
 
     if not student or not student['exam_started_at']:
-        return jsonify({'remaining': duration * 60, 'duration': duration})
+        conn.close()
+        return jsonify({'remaining': duration * 60, 'duration': duration, 'paused': False})
 
     if student['status'] == 'Submitted':
-        return jsonify({'remaining': 0, 'duration': duration})
+        conn.close()
+        return jsonify({'remaining': 0, 'duration': duration, 'paused': False})
 
     try:
-        # Support both ISO format and SQLite CURRENT_TIMESTAMP format
         started_str = student['exam_started_at'].replace('T', ' ')
         start = datetime.datetime.fromisoformat(started_str)
     except Exception:
-        return jsonify({'remaining': duration * 60, 'duration': duration})
+        conn.close()
+        return jsonify({'remaining': duration * 60, 'duration': duration, 'paused': False})
 
     end_time  = start + datetime.timedelta(minutes=duration)
     remaining = int((end_time - datetime.datetime.utcnow()).total_seconds())
     if remaining < 0:
         remaining = 0
 
-    return jsonify({'remaining': remaining, 'duration': duration})
+    conn.close()
+    return jsonify({'remaining': remaining, 'duration': duration, 'paused': False})
 
 # -------------------------------
 # Admin Routes
@@ -2685,13 +4215,37 @@ def exam_has_started():
 def start_exam():
     """
     API endpoint for admin to start the exam.
+    Creates an exam_sessions record and updates exam_control for backward compatibility.
     """
     duration         = request.form.get('duration', 60, type=int)
     negative_marking = 1 if request.form.get('negative_marking') == 'yes' else 0
     negative_value   = request.form.get('negative_value', 0.33, type=float)
+    cls              = request.form.get('class', '').strip()
+    sec              = request.form.get('section', '').strip()
+    subj             = request.form.get('subject', '').strip()
+    tno              = request.form.get('test_no', '').strip()
+    lab_label        = request.form.get('lab_label', '').strip() or 'Admin Console'
+    lab_ip           = request.remote_addr
+
     conn = get_db()
     c = conn.cursor()
-    start_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    start_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    c.execute("""
+        INSERT INTO exam_sessions 
+        (teacher_id, started_by_type, started_by_name, lab_ip, lab_label,
+         class, section, subject, test_no, allotted_duration, start_time,
+         status, negative_marking, negative_value)
+        VALUES (NULL, 'admin', 'Admin', ?, ?, ?, ?, ?, ?, ?, ?, 'running', ?, ?)
+    """, (lab_ip, lab_label, cls, sec, subj, tno, duration, start_time, negative_marking, negative_value))
+
+    if tno:
+        clean_cls = cls.replace('th','').replace('st','').replace('nd','').replace('rd','').strip() if cls else ''
+        c.execute("""UPDATE test_papers SET is_active=1 WHERE test_no=?""", (tno,))
+        if clean_cls and subj:
+            c.execute("""UPDATE test_papers SET is_active=1 WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?)""",
+                      (cls, f"%{clean_cls}%", subj))
+
     c.execute("""UPDATE exam_control
                  SET is_active=1, start_time=?, duration=?,
                      negative_marking=?, negative_value=?
@@ -2699,43 +4253,393 @@ def start_exam():
               (start_time, duration, negative_marking, negative_value))
     conn.commit()
     conn.close()
-    log_audit_event('admin', 'admin', 'EXAM_START', 'exam_control', 1, request.remote_addr)
+    log_audit_event('admin', 'admin', 'EXAM_START', 'exam_sessions', 1, request.remote_addr)
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/teacher/start_exam', methods=['POST'])
 @teacher_required
 def teacher_start_exam():
     """
-    API endpoint for teacher to start the exam with negative marking options.
+    API endpoint for teacher to start an exam session.
+    Isolates the session to this teacher's class/lab and prevents colliding with other teachers.
     """
+    teacher_id       = session.get('teacher_id')
     duration         = request.form.get('duration', 60, type=int)
     negative_marking = 1 if request.form.get('negative_marking') == 'yes' else 0
     negative_value   = request.form.get('negative_value', 0.33, type=float)
+    raw_assignment   = request.form.get('assignment', '').strip()
+    cls              = request.form.get('class', '').strip()
+    sec              = request.form.get('section', '').strip()
+    subj             = request.form.get('subject', '').strip()
+    tno              = request.form.get('test_no', '').strip()
+    lab_label        = request.form.get('lab_label', '').strip()
+    lab_ip           = request.remote_addr
+
+    if raw_assignment and '|' in raw_assignment:
+        parts = raw_assignment.split('|')
+        if len(parts) >= 3:
+            cls, sec, subj = parts[0].strip(), parts[1].strip(), parts[2].strip()
+        elif len(parts) == 2:
+            cls, subj = parts[0].strip(), parts[1].strip()
+
     conn = get_db()
     c = conn.cursor()
-    start_time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+
+    c.execute("SELECT name FROM teachers WHERE id=?", (teacher_id,))
+    t_row = c.fetchone()
+    teacher_name = t_row['name'] if t_row else f"Teacher #{teacher_id}"
+
+    if not lab_label:
+        lab_label = f"Lab ({lab_ip})"
+
+    assignments_to_start = []
+    if cls and subj:
+        assignments_to_start.append({'class': cls, 'section': sec, 'subject': subj})
+    else:
+        c.execute("SELECT class, section, subject FROM teacher_assignments WHERE teacher_id=?", (teacher_id,))
+        ta_rows = c.fetchall()
+        if ta_rows:
+            assignments_to_start = [dict(r) for r in ta_rows]
+        else:
+            assignments_to_start.append({'class': 'General', 'section': '', 'subject': 'General'})
+
+    start_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    for a in assignments_to_start:
+        c.execute("""
+            INSERT INTO exam_sessions 
+            (teacher_id, started_by_type, started_by_name, lab_ip, lab_label,
+             class, section, subject, test_no, allotted_duration, start_time,
+             status, negative_marking, negative_value)
+            VALUES (?, 'teacher', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'running', ?, ?)
+        """, (teacher_id, teacher_name, lab_ip, lab_label,
+              a['class'], a.get('section', ''), a['subject'], tno, duration, start_time,
+              negative_marking, negative_value))
+
+    if tno:
+        clean_cls = cls.replace('th','').replace('st','').replace('nd','').replace('rd','').strip() if cls else ''
+        c.execute("""UPDATE test_papers SET is_active=1 WHERE test_no=?""", (tno,))
+        if clean_cls and subj:
+            c.execute("""UPDATE test_papers SET is_active=1 WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?)""",
+                      (cls, f"%{clean_cls}%", subj))
+
+    # Also keep exam_control active for backward compatibility
     c.execute("""UPDATE exam_control
                  SET is_active=1, start_time=?, duration=?,
                      negative_marking=?, negative_value=?
                  WHERE id=1""",
               (start_time, duration, negative_marking, negative_value))
+
     conn.commit()
     conn.close()
+    log_audit_event('teacher', teacher_id or 'teacher', 'EXAM_START', 'exam_sessions', 1, request.remote_addr)
     return redirect(url_for('teacher_dashboard'))
 
 @app.route('/teacher/stop_exam')
 @teacher_required
 def teacher_stop_exam():
     """
-    API endpoint for teacher to stop the exam.
+    API endpoint for teacher to stop their own exam session(s).
+    Ends ONLY this teacher's active sessions! Does NOT affect any other lab/teacher!
+    """
+    teacher_id = session.get('teacher_id')
+    session_id = request.args.get('session_id', type=int)
+    conn = get_db()
+    c = conn.cursor()
+
+    if session_id:
+        c.execute("""UPDATE exam_sessions 
+                     SET status='ended', end_time=CURRENT_TIMESTAMP, end_reason='ended_by_teacher'
+                     WHERE id=? AND teacher_id=?""", (session_id, teacher_id))
+    else:
+        c.execute("""UPDATE exam_sessions 
+                     SET status='ended', end_time=CURRENT_TIMESTAMP, end_reason='ended_by_teacher'
+                     WHERE teacher_id=? AND status IN ('running', 'paused')""", (teacher_id,))
+
+    # Check if ANY running/paused sessions remain in the whole system
+    c.execute("SELECT COUNT(*) FROM exam_sessions WHERE status IN ('running', 'paused')")
+    remaining_active = c.fetchone()[0]
+    if remaining_active == 0:
+        # Only set global is_active=0 if no other teacher/admin sessions are running
+        c.execute("UPDATE exam_control SET is_active=0 WHERE id=1")
+
+    conn.commit()
+    conn.close()
+    log_audit_event('teacher', teacher_id or 'teacher', 'EXAM_STOP', 'exam_sessions', session_id or 0, request.remote_addr)
+    return redirect(url_for('teacher_dashboard'))
+
+# ── Per-Session Exam Control API Routes (Admin & Teacher) ─────────────────
+@app.route('/admin/exam_sessions')
+@admin_required
+def admin_exam_sessions():
+    """
+    Render dedicated Exam Control & Live Lab Sessions Panel for Admin.
+    """
+    return render_template('admin_exam_sessions.html')
+
+@app.route('/admin/exam_sessions/data')
+@admin_required
+def admin_exam_sessions_data():
+    """
+    Return JSON list of all active (running/paused) and recent (last 24h) exam sessions.
     """
     conn = get_db()
     c = conn.cursor()
-    c.execute("UPDATE exam_control SET is_active=0 WHERE id=1")
+    c.execute("""
+        SELECT * FROM exam_sessions 
+        WHERE status IN ('running', 'paused') 
+           OR created_at >= datetime('now', '-24 hours')
+        ORDER BY 
+            CASE status WHEN 'running' THEN 1 WHEN 'paused' THEN 2 ELSE 3 END,
+            id DESC
+    """)
+    rows = [dict(r) for r in c.fetchall()]
+    sessions_data = []
+    for s in rows:
+        counts = get_session_student_counts(s, conn=conn)
+        rem_secs = get_session_remaining_seconds(s)
+        s_data = dict(s)
+        s_data['remaining_seconds'] = rem_secs
+        s_data['in_progress_count'] = counts['in_progress']
+        s_data['submitted_count'] = counts['submitted']
+        s_data['total_students'] = counts['total']
+        sessions_data.append(s_data)
+    conn.close()
+    return jsonify({'status': 'success', 'sessions': sessions_data})
+
+@app.route('/admin/exam_sessions/<int:session_id>/end', methods=['POST'])
+@admin_required
+def admin_end_exam_session(session_id):
+    """
+    Admin ends a specific running or paused exam session, optionally attaching a custom message.
+    Force-submits all students scoped to that session.
+    """
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM exam_sessions WHERE id=?", (session_id,))
+    sess = c.fetchone()
+    if not sess:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Session not found'}), 404
+
+    sess = dict(sess)
+    data = request.get_json(silent=True) or request.form
+    end_msg = (data.get('message') or '').strip() or 'Exam ended by Administrator.'
+
+    c.execute("""UPDATE exam_sessions 
+                 SET status='ended', end_time=CURRENT_TIMESTAMP, end_reason='ended_by_admin', end_message=?
+                 WHERE id=?""", (end_msg, session_id))
+
+    # Force submit all in-progress students in this session scope
+    cls = sess['class']
+    clean_cls = str(cls).replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+    sec = sess['section']
+    subj = sess['subject']
+    tno = sess['test_no']
+    where = "status='In Progress' AND (class=? OR class=? OR ? LIKE '%' || class || '%') AND LOWER(subject)=LOWER(?)"
+    params = [cls, clean_cls, cls, subj]
+    if sec:
+        where += " AND LOWER(section)=LOWER(?)"
+        params.append(sec)
+    if tno:
+        where += " AND (test_no=? OR test_no='' OR test_no IS NULL)"
+        params.append(tno)
+    c.execute(f"SELECT student_id FROM students WHERE {where}", params)
+    ended_sids = [r['student_id'] for r in c.fetchall()]
+    c.execute(f"UPDATE students SET status='Submitted' WHERE {where}", params)
+    if ended_sids:
+        process_coding_auto_submissions(ended_sids, conn=conn)
+
+    # Check if other running/paused sessions remain in system
+    c.execute("SELECT COUNT(*) FROM exam_sessions WHERE status IN ('running', 'paused')")
+    if c.fetchone()[0] == 0:
+        c.execute("UPDATE exam_control SET is_active=0 WHERE id=1")
+
     conn.commit()
     conn.close()
-    log_audit_event('teacher', session.get('teacher_id') or 'teacher', 'EXAM_STOP', 'exam_control', 1, request.remote_addr)
-    return redirect(url_for('teacher_dashboard'))
+    log_audit_event('admin', 'admin', 'EXAM_SESSION_END', 'exam_sessions', session_id, request.remote_addr)
+    return jsonify({'status': 'success', 'message': f'Session #{session_id} ended successfully.'})
+
+@app.route('/admin/exam_sessions/<int:session_id>/extend', methods=['POST'])
+@admin_required
+def admin_extend_exam_session(session_id):
+    """
+    Adjust allotted duration for a session (+ or - N minutes).
+    """
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM exam_sessions WHERE id=?", (session_id,))
+    sess = c.fetchone()
+    if not sess:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Session not found'}), 404
+
+    data = request.get_json(silent=True) or request.form
+    minutes = int(data.get('minutes', 5))
+    curr_dur = int(sess['allotted_duration'] or 60)
+    new_dur = max(1, curr_dur + minutes)
+
+    c.execute("UPDATE exam_sessions SET allotted_duration=? WHERE id=?", (new_dur, session_id))
+    conn.commit()
+
+    c.execute("SELECT * FROM exam_sessions WHERE id=?", (session_id,))
+    updated_sess = dict(c.fetchone())
+    conn.close()
+
+    rem = get_session_remaining_seconds(updated_sess)
+    log_audit_event('admin', 'admin', 'EXAM_SESSION_EXTEND', 'exam_sessions', session_id, request.remote_addr)
+    return jsonify({'status': 'success', 'new_duration': new_dur, 'remaining_seconds': rem})
+
+@app.route('/admin/exam_sessions/<int:session_id>/pause', methods=['POST'])
+@admin_required
+def admin_pause_exam_session(session_id):
+    """
+    Pause a running session and freeze countdown.
+    """
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM exam_sessions WHERE id=?", (session_id,))
+    sess = c.fetchone()
+    if not sess:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Session not found'}), 404
+
+    if sess['status'] == 'running':
+        now_str = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        c.execute("UPDATE exam_sessions SET status='paused', pause_started_at=? WHERE id=?", (now_str, session_id))
+        conn.commit()
+
+    conn.close()
+    log_audit_event('admin', 'admin', 'EXAM_SESSION_PAUSE', 'exam_sessions', session_id, request.remote_addr)
+    return jsonify({'status': 'success', 'message': f'Session #{session_id} paused.'})
+
+@app.route('/admin/exam_sessions/<int:session_id>/resume', methods=['POST'])
+@admin_required
+def admin_resume_exam_session(session_id):
+    """
+    Resume a paused session, accumulating paused duration.
+    """
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM exam_sessions WHERE id=?", (session_id,))
+    sess = c.fetchone()
+    if not sess:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Session not found'}), 404
+
+    if sess['status'] == 'paused' and sess['pause_started_at']:
+        now = datetime.datetime.utcnow()
+        p_start = parse_session_dt(sess['pause_started_at'])
+        p_secs = max(0, int((now - p_start).total_seconds()))
+        curr_paused = int(sess['total_paused_secs'] or 0)
+        new_paused = curr_paused + p_secs
+        c.execute("""UPDATE exam_sessions 
+                     SET status='running', pause_started_at=NULL, total_paused_secs=?
+                     WHERE id=?""", (new_paused, session_id))
+        conn.commit()
+
+    conn.close()
+    log_audit_event('admin', 'admin', 'EXAM_SESSION_RESUME', 'exam_sessions', session_id, request.remote_addr)
+    return jsonify({'status': 'success', 'message': f'Session #{session_id} resumed.'})
+
+@app.route('/admin/exam_sessions/<int:session_id>/label', methods=['POST', 'PATCH'])
+@admin_required
+def admin_label_exam_session(session_id):
+    """
+    Update friendly lab label (e.g. 'Lab 204 - Computer Science') for a session.
+    """
+    data = request.get_json(silent=True) or request.form
+    label = (data.get('label') or '').strip()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE exam_sessions SET lab_label=? WHERE id=?", (label, session_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success', 'lab_label': label})
+
+@app.route('/teacher/exam_sessions/data')
+@teacher_required
+def teacher_exam_sessions_data():
+    """
+    Return JSON list of this teacher's active and recent exam sessions.
+    """
+    teacher_id = session.get('teacher_id')
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT * FROM exam_sessions 
+        WHERE teacher_id=? 
+          AND (status IN ('running', 'paused') OR created_at >= datetime('now', '-24 hours'))
+        ORDER BY 
+            CASE status WHEN 'running' THEN 1 WHEN 'paused' THEN 2 ELSE 3 END,
+            id DESC
+    """, (teacher_id,))
+    rows = [dict(r) for r in c.fetchall()]
+    sessions_data = []
+    for s in rows:
+        counts = get_session_student_counts(s, conn=conn)
+        rem_secs = get_session_remaining_seconds(s)
+        s_data = dict(s)
+        s_data['remaining_seconds'] = rem_secs
+        s_data['in_progress_count'] = counts['in_progress']
+        s_data['submitted_count'] = counts['submitted']
+        s_data['total_students'] = counts['total']
+        sessions_data.append(s_data)
+    conn.close()
+    return jsonify({'status': 'success', 'sessions': sessions_data})
+
+@app.route('/teacher/exam_sessions/<int:session_id>/end', methods=['POST'])
+@teacher_required
+def teacher_end_specific_exam_session(session_id):
+    """
+    Teacher ends their own specific exam session.
+    """
+    teacher_id = session.get('teacher_id')
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM exam_sessions WHERE id=? AND teacher_id=?", (session_id, teacher_id))
+    sess = c.fetchone()
+    if not sess:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Session not found or unauthorized'}), 404
+
+    sess = dict(sess)
+    data = request.get_json(silent=True) or request.form
+    end_msg = (data.get('message') or '').strip() or 'Exam ended by Teacher.'
+    c.execute("""UPDATE exam_sessions 
+                 SET status='ended', end_time=CURRENT_TIMESTAMP, end_reason='ended_by_teacher', end_message=?
+                 WHERE id=?""", (end_msg, session_id))
+
+    # Force submit students for this session
+    cls = sess['class']
+    clean_cls = str(cls).replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+    sec = sess['section']
+    subj = sess['subject']
+    tno = sess['test_no']
+    where = "status='In Progress' AND (class=? OR class=? OR ? LIKE '%' || class || '%') AND LOWER(subject)=LOWER(?)"
+    params = [cls, clean_cls, cls, subj]
+    if sec:
+        where += " AND LOWER(section)=LOWER(?)"
+        params.append(sec)
+    if tno:
+        where += " AND (test_no=? OR test_no='' OR test_no IS NULL)"
+        params.append(tno)
+    c.execute(f"SELECT student_id FROM students WHERE {where}", params)
+    ended_sids = [r['student_id'] for r in c.fetchall()]
+    c.execute(f"UPDATE students SET status='Submitted' WHERE {where}", params)
+    if ended_sids:
+        process_coding_auto_submissions(ended_sids, conn=conn)
+
+    # Check if other sessions are running before touching global is_active
+    c.execute("SELECT COUNT(*) FROM exam_sessions WHERE status IN ('running', 'paused')")
+    if c.fetchone()[0] == 0:
+        c.execute("UPDATE exam_control SET is_active=0 WHERE id=1")
+
+    conn.commit()
+    conn.close()
+    log_audit_event('teacher', teacher_id or 'teacher', 'EXAM_SESSION_END', 'exam_sessions', session_id, request.remote_addr)
+    return jsonify({'status': 'success', 'message': f'Session #{session_id} ended.'})
+
 
 @app.route('/admin/exam_settings')
 @admin_required
@@ -3114,6 +5018,7 @@ def admin_force_submit_student(student_id):
     # Save result
     _save_or_update_result(c, student_id, name, class_, student['section'] if 'section' in student.keys() else '', subject, score, total, percentage, test_no)
     c.execute("UPDATE students SET status='Submitted' WHERE student_id=?", (student_id,))
+    process_coding_auto_submissions([student_id], conn=conn)
     conn.commit()
     conn.close()
     return jsonify({'status': 'success', 'message': f'{name} submitted. Score: {round(score,2)}/{total}'})
@@ -3122,13 +5027,18 @@ def admin_force_submit_student(student_id):
 @admin_required
 def stop_exam():
     """
-    API endpoint for admin to stop the exam.
+    API endpoint for admin to stop all exams globally (Master Kill Switch).
+    Marks all running/paused sessions as ended and sets exam_control.is_active=0.
     """
     conn = get_db()
     c = conn.cursor()
     c.execute("UPDATE exam_control SET is_active=0 WHERE id=1")
+    c.execute("""UPDATE exam_sessions 
+                 SET status='ended', end_time=CURRENT_TIMESTAMP, end_reason='ended_by_admin', end_message='Exam stopped globally by Administrator.'
+                 WHERE status IN ('running', 'paused')""")
     conn.commit()
     conn.close()
+    log_audit_event('admin', 'admin', 'EXAM_STOP_GLOBAL', 'exam_control', 1, request.remote_addr)
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/settings', methods=['GET', 'POST'])
@@ -3190,7 +5100,7 @@ def generate_question_paper():
     clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
 
     # Query matching questions using multi-tier fallback
-    c.execute("""SELECT id, question, option_a, option_b, option_c, option_d, correct_answer, image_path, chapter, test_no,
+    c.execute("""SELECT id, question, option_a, option_b, option_c, option_d, correct_answer, image_path, chapter, test_no, board,
                         CASE WHEN question_type IS NULL OR trim(question_type) = '' THEN 'MCQ' ELSE question_type END as question_type
                  FROM questions
                  WHERE (class=? OR class=? OR class LIKE ?)
@@ -3205,7 +5115,7 @@ def generate_question_paper():
     questions = [dict(row) for row in c.fetchall()]
 
     if not questions:
-        c.execute("""SELECT id, question, option_a, option_b, option_c, option_d, correct_answer, image_path, chapter, test_no,
+        c.execute("""SELECT id, question, option_a, option_b, option_c, option_d, correct_answer, image_path, chapter, test_no, board,
                             CASE WHEN question_type IS NULL OR trim(question_type) = '' THEN 'MCQ' ELSE question_type END as question_type
                      FROM questions
                      WHERE (LOWER(class)=LOWER(?) OR LOWER(class)=LOWER(?) OR class LIKE ?)
@@ -3248,6 +5158,9 @@ def generate_question_paper():
         else:
             chapter_display = 'All Chapters'
 
+    req_board = request.args.get('board', '').strip()
+    board_display = req_board or (questions[0].get('board') if questions and questions[0].get('board') else 'CBSE')
+
     total_marks = len(questions)
     display_class = f"{class_}{section}" if section else class_
     rendered_html = render_template(
@@ -3258,6 +5171,7 @@ def generate_question_paper():
         subject=subject,
         chapter=chapter_display,
         test_no=test_no or 'All',
+        board=board_display,
         questions=questions,
         total_marks=total_marks,
         date=datetime.datetime.now().strftime('%d/%m/%Y')
@@ -3780,14 +5694,16 @@ def manage_students():
 def students_data():
     """
     API endpoint to fetch students data with advanced filtering:
-    class, section, subject, test_no, date (exam_started_at).
+    q (search name, admission_no, student_id), class, section, subject, status, test_no, date.
     Also returns system_name (instead of IP) and exam_started_at.
     """
-    filter_class   = request.args.get('class', '')
-    filter_section = request.args.get('section', '')
-    filter_subject = request.args.get('subject', '')
-    filter_test_no = request.args.get('test_no', '')
-    filter_date    = request.args.get('date', '')
+    filter_q       = request.args.get('q', '').strip()
+    filter_class   = request.args.get('class', '').strip()
+    filter_section = request.args.get('section', '').strip()
+    filter_subject = request.args.get('subject', '').strip()
+    filter_status  = request.args.get('status', '').strip()
+    filter_test_no = request.args.get('test_no', '').strip()
+    filter_date    = request.args.get('date', '').strip()
 
     conn = get_db()
     c = conn.cursor()
@@ -3798,6 +5714,10 @@ def students_data():
                FROM students WHERE 1=1"""
     params = []
 
+    if filter_q:
+        query += " AND (name LIKE ? OR admission_no LIKE ? OR student_id LIKE ?)"
+        q_wild = f"%{filter_q}%"
+        params.extend([q_wild, q_wild, q_wild])
     if filter_class:
         query += " AND class = ?"
         params.append(filter_class)
@@ -3807,20 +5727,98 @@ def students_data():
     if filter_subject:
         query += " AND subject = ?"
         params.append(filter_subject)
+    if filter_status:
+        query += " AND status = ?"
+        params.append(filter_status)
     if filter_test_no:
-        # test_no is stored as text, use LIKE for partial match
         query += " AND test_no LIKE ?"
         params.append(f"%{filter_test_no}%")
     if filter_date:
-        # filter by exam_started_at date (YYYY-MM-DD)
         query += " AND DATE(exam_started_at) = ?"
         params.append(filter_date)
 
     query += " ORDER BY class, section, name"
     c.execute(query, params)
     students = [dict(row) for row in c.fetchall()]
+
+    # Fetch distinct classes and sections across all students for filter options
+    c.execute("SELECT DISTINCT class FROM students WHERE class IS NOT NULL AND class != '' ORDER BY class")
+    classes = [r['class'] for r in c.fetchall()]
+    c.execute("SELECT DISTINCT section FROM students WHERE section IS NOT NULL AND section != '' ORDER BY section")
+    sections = [r['section'] for r in c.fetchall()]
+    c.execute("SELECT DISTINCT subject FROM students WHERE subject IS NOT NULL AND subject != '' ORDER BY subject")
+    subjects = [r['subject'] for r in c.fetchall()]
+
     conn.close()
-    return jsonify(students)
+    return jsonify({
+        'status': 'success',
+        'students': students,
+        'classes': classes,
+        'sections': sections,
+        'subjects': subjects,
+        'total': len(students)
+    })
+
+@app.route('/admin/student/edit/<student_id>', methods=['POST'])
+@admin_required
+def admin_edit_student(student_id):
+    """
+    API endpoint for Admin to edit student information.
+    """
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    name = (data.get('name') or '').strip()
+    admission_no = (data.get('admission_no') or '').strip()
+    class_ = (data.get('class') or '').strip()
+    section = (data.get('section') or '').strip()
+    dob = (data.get('dob') or '').strip()
+    house = (data.get('house') or '').strip()
+    parents_name = (data.get('parents_name') or '').strip()
+    address = (data.get('address') or '').strip()
+    status = (data.get('status') or '').strip()
+
+    if not name:
+        return jsonify({'status': 'error', 'message': 'Student Name is required.'}), 400
+    if not class_:
+        return jsonify({'status': 'error', 'message': 'Class is required.'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM students WHERE student_id=?", (student_id,))
+    existing = c.fetchone()
+    if not existing:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Student not found.'}), 404
+
+    # Check for duplicate admission number with another student
+    if admission_no:
+        c.execute("""SELECT student_id FROM students 
+                     WHERE LOWER(TRIM(COALESCE(admission_no, '')))=LOWER(TRIM(?))
+                       AND student_id != ?""", (admission_no, student_id))
+        dup = c.fetchone()
+        if dup:
+            conn.close()
+            return jsonify({'status': 'error', 'message': f'Admission Number "{admission_no}" is already used by another student.'}), 400
+
+    valid_statuses = ('Not Started', 'In Progress', 'Submitted')
+    if status and status not in valid_statuses:
+        status = existing['status'] or 'Not Started'
+    elif not status:
+        status = existing['status'] or 'Not Started'
+
+    c.execute("""
+        UPDATE students
+        SET name=?, admission_no=?, class=?, section=?, dob=?, house=?, parents_name=?, address=?, status=?
+        WHERE student_id=?
+    """, (name, admission_no, class_, section, dob, house, parents_name, address, status, student_id))
+
+    conn.commit()
+    conn.close()
+
+    log_audit_event('admin', 'admin', 'STUDENT_EDIT', 'students', student_id, request.remote_addr)
+    return jsonify({
+        'status': 'success',
+        'message': 'Student details updated successfully.'
+    })
 
 @app.route('/api/class_report/subjects')
 def api_class_report_subjects():
@@ -3906,7 +5904,415 @@ def delete_student(student_id):
     c.execute("DELETE FROM reattempt_requests WHERE student_id=?", (student_id,))
     conn.commit()
     conn.close()
-    return jsonify({'status': 'deleted'})
+    log_audit_event('admin', 'admin', 'STUDENT_DELETE', 'students', student_id, request.remote_addr)
+    return jsonify({'status': 'deleted', 'message': 'Student deleted successfully.'})
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# BULK STUDENT UPLOAD VIA EXCEL — 3 routes
+# ══════════════════════════════════════════════════════════════════════════
+
+@app.route('/admin/students/bulk_upload_page')
+@admin_required
+def bulk_upload_students_page():
+    """Render the bulk student upload review/edit page."""
+    return render_template('bulk_upload_students.html')
+
+
+@app.route('/admin/students/bulk_upload_template')
+@admin_required
+def bulk_upload_template():
+    """
+    Stream a downloadable .xlsx Excel template for bulk student upload.
+    Headers: Admission No, Name, Class, Section, Date of Birth, House, Parent Name, Address
+    """
+    import io
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+    from flask import send_file
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Students"
+
+    # ── column definitions ────────────────────────────────────────────────
+    headers = [
+        ("Admission No", 18, True,  "Login key — what student types at login (required)"),
+        ("Name",         28, True,  "Full name of the student (required)"),
+        ("Class",        10, True,  "Plain digit: 1 to 12 (required)"),
+        ("Section",      12, True,  "A, B, C or D (required)"),
+        ("Date of Birth",16, False, "Optional — e.g. 2010-05-15"),
+        ("House",        14, False, "Optional — e.g. Red, Blue"),
+        ("Parent Name",  24, False, "Optional — parent/guardian name"),
+        ("Address",      32, False, "Optional — full address"),
+    ]
+
+    # ── header row styling ────────────────────────────────────────────────
+    hdr_fill_req  = PatternFill("solid", fgColor="1A237E")   # dark blue   — required
+    hdr_fill_opt  = PatternFill("solid", fgColor="3949AB")   # medium blue — optional
+    hdr_font      = Font(bold=True, color="FFFFFF", size=11)
+    centre        = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    thin          = Side(style="thin", color="CCCCCC")
+    border        = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    for col_idx, (label, width, required, note) in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=label)
+        cell.font      = hdr_font
+        cell.fill      = hdr_fill_req if required else hdr_fill_opt
+        cell.alignment = centre
+        cell.border    = border
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+    ws.row_dimensions[1].height = 30
+
+    # ── instruction row (row 2) ───────────────────────────────────────────
+    inst_notes = [h[3] for h in headers]
+    inst_fill  = PatternFill("solid", fgColor="E8EAF6")
+    inst_font  = Font(italic=True, color="555588", size=9)
+    for col_idx, note in enumerate(inst_notes, start=1):
+        cell = ws.cell(row=2, column=col_idx, value=note)
+        cell.fill      = inst_fill
+        cell.font      = inst_font
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        cell.border    = border
+    ws.row_dimensions[2].height = 40
+
+    # ── sample data row (row 3) — greyed out ─────────────────────────────
+    sample = ["2024001", "Aarav Sharma", "10", "A", "2010-04-15", "Red", "Rajesh Sharma", "12 MG Road, Delhi"]
+    sample_font = Font(color="999999", italic=True, size=10)
+    sample_fill = PatternFill("solid", fgColor="F5F5F5")
+    for col_idx, val in enumerate(sample, start=1):
+        cell = ws.cell(row=3, column=col_idx, value=val)
+        cell.font   = sample_font
+        cell.fill   = sample_fill
+        cell.border = border
+
+    # ── freeze top 2 rows ────────────────────────────────────────────────
+    ws.freeze_panes = "A3"
+
+    # ── add a note tab ────────────────────────────────────────────────────
+    ws2 = wb.create_sheet("Instructions")
+    instructions = [
+        ["Field",        "Required?", "Valid Values / Notes"],
+        ["Admission No", "YES",       "Unique per student. Students use this to log in. No spaces."],
+        ["Name",         "YES",       "Full name, max ~100 chars."],
+        ["Class",        "YES",       "Plain number only: 1, 2, 3 ... 12 (not 'Class 6' or 'VI')."],
+        ["Section",      "YES",       "Exactly one letter: A, B, C, or D (uppercase)."],
+        ["Date of Birth","No",        "YYYY-MM-DD format e.g. 2010-05-15. Leave blank if unknown."],
+        ["House",        "No",        "House name e.g. Red, Blue, Green, Yellow."],
+        ["Parent Name",  "No",        "Full name of parent/guardian."],
+        ["Address",      "No",        "Full address string."],
+    ]
+    for r_idx, row_data in enumerate(instructions, start=1):
+        for c_idx, val in enumerate(row_data, start=1):
+            cell = ws2.cell(row=r_idx, column=c_idx, value=val)
+            if r_idx == 1:
+                cell.font = Font(bold=True, color="FFFFFF")
+                cell.fill = PatternFill("solid", fgColor="1A237E")
+            cell.border = border
+    ws2.column_dimensions["A"].width = 18
+    ws2.column_dimensions["B"].width = 12
+    ws2.column_dimensions["C"].width = 55
+
+    # ── stream to client ──────────────────────────────────────────────────
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(
+        buf,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name="bulk_student_upload_template.xlsx"
+    )
+
+
+@app.route('/admin/students/bulk_upload', methods=['POST'])
+@admin_required
+def bulk_upload_students():
+    """
+    Parse an uploaded Excel file, validate every row, and return JSON
+    describing each row's status — NOTHING is saved to the database here.
+
+    Validation checks per row:
+      (a) DB duplicate    — student_id already exists in students table
+      (b) Batch duplicate — same student_id appears more than once in the file
+      (c) Missing field   — name, class, or section is blank
+      (d) Invalid class   — not in '1'..'12'
+      (e) Invalid section — not in A/B/C/D
+    """
+    import openpyxl
+
+    f = request.files.get('excel_file')
+    if not f or not f.filename:
+        return jsonify({'status': 'error', 'message': 'No file uploaded.'}), 400
+
+    fn = f.filename.lower()
+    if not fn.endswith('.xlsx') and not fn.endswith('.xls'):
+        return jsonify({'status': 'error', 'message': 'Only .xlsx files are accepted.'}), 400
+
+    try:
+        wb = openpyxl.load_workbook(f, data_only=True)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Cannot read Excel file: {e}'}), 400
+
+    ws = wb.active
+
+    VALID_CLASSES  = {str(i) for i in range(1, 13)}
+    VALID_SECTIONS = {'A', 'B', 'C', 'D'}
+    EXPECTED_COLS  = ['Admission No', 'Name', 'Class', 'Section',
+                      'Date of Birth', 'House', 'Parent Name', 'Address']
+
+    # ── read header row ───────────────────────────────────────────────────
+    rows_iter = ws.iter_rows(values_only=True)
+    header_row = next(rows_iter, None)
+    if header_row is None:
+        return jsonify({'status': 'error', 'message': 'The Excel file is empty.'}), 400
+
+    # Normalise header names (strip whitespace)
+    headers = [str(h).strip() if h is not None else '' for h in header_row]
+
+    # Skip instruction row if it looks like a note (second row)
+    # We peek at the second row — if first cell doesn't look like an admission_no, skip it
+    peek = next(rows_iter, None)
+    if peek is not None:
+        peek_val = str(peek[0]).strip() if peek[0] is not None else ''
+        # If the "Admission No" cell of row 2 starts with lowercase or contains "optional/login/required"
+        if peek_val.lower().startswith('login') or 'required' in peek_val.lower() or 'optional' in peek_val.lower():
+            peek = None  # discard instruction row, read next
+
+    # ── map column index from headers ─────────────────────────────────────
+    def col(name):
+        try:
+            return headers.index(name)
+        except ValueError:
+            return -1
+
+    idx_adm  = col('Admission No')
+    idx_name = col('Name')
+    idx_cls  = col('Class')
+    idx_sec  = col('Section')
+    idx_dob  = col('Date of Birth')
+    idx_hse  = col('House')
+    idx_par  = col('Parent Name')
+    idx_adr  = col('Address')
+
+    if idx_adm == -1 or idx_name == -1 or idx_cls == -1 or idx_sec == -1:
+        return jsonify({
+            'status': 'error',
+            'message': (
+                'Missing required columns. Expected: "Admission No", "Name", "Class", "Section". '
+                'Please use the downloaded template.'
+            )
+        }), 400
+
+    def cell_val(row, idx):
+        if idx == -1 or idx >= len(row):
+            return ''
+        v = row[idx]
+        return str(v).strip() if v is not None else ''
+
+    # ── collect all data rows ─────────────────────────────────────────────
+    raw_rows = []
+    if peek is not None:
+        raw_rows.append(peek)
+    for row in rows_iter:
+        if all((v is None or str(v).strip() == '') for v in row):
+            continue  # skip fully blank rows
+        raw_rows.append(row)
+
+    if not raw_rows:
+        return jsonify({'status': 'error', 'message': 'No data rows found in the file (only header was present).'}), 400
+
+    # ── first pass: extract data + detect batch duplicates ───────────────
+    parsed = []
+    adm_seen = {}   # admission_no -> first row index (0-based)
+    for i, row in enumerate(raw_rows):
+        adm     = cell_val(row, idx_adm)
+        name    = cell_val(row, idx_name)
+        cls     = cell_val(row, idx_cls).replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+        sec     = cell_val(row, idx_sec).upper().strip()
+        dob     = cell_val(row, idx_dob)
+        house   = cell_val(row, idx_hse)
+        par     = cell_val(row, idx_par)
+        addr    = cell_val(row, idx_adr)
+
+        parsed.append({
+            'row_index':    i,
+            'admission_no': adm,
+            'name':         name,
+            'class':        cls,
+            'section':      sec,
+            'dob':          dob,
+            'house':        house,
+            'parents_name': par,
+            'address':      addr,
+            'issues':       [],
+            'status':       'ok',  # overwritten below
+        })
+
+        if adm:
+            if adm in adm_seen:
+                # mark both this row and the previous occurrence
+                adm_seen[adm].append(i)
+            else:
+                adm_seen[adm] = [i]
+
+    # ── fetch existing student_ids from DB ────────────────────────────────
+    conn = get_db()
+    c    = conn.cursor()
+    batch_adm_list = [r['admission_no'] for r in parsed if r['admission_no']]
+    existing_ids   = set()
+    if batch_adm_list:
+        placeholders = ','.join(['?'] * len(batch_adm_list))
+        c.execute(f"SELECT student_id FROM students WHERE student_id IN ({placeholders})", batch_adm_list)
+        existing_ids = {row[0] for row in c.fetchall()}
+    conn.close()
+
+    # ── second pass: assign issue flags ──────────────────────────────────
+    batch_dup_indices = set()
+    for adm, indices in adm_seen.items():
+        if len(indices) > 1:
+            for idx in indices:
+                batch_dup_indices.add(idx)
+
+    for r in parsed:
+        issues = []
+        adm = r['admission_no']
+
+        if not adm:
+            issues.append({'field': 'admission_no', 'type': 'missing', 'message': 'Admission No is required'})
+        else:
+            if adm in existing_ids:
+                issues.append({'field': 'admission_no', 'type': 'db_duplicate',
+                                'message': 'Already exists in database'})
+            if r['row_index'] in batch_dup_indices:
+                issues.append({'field': 'admission_no', 'type': 'batch_duplicate',
+                                'message': 'Duplicate within this file'})
+
+        if not r['name']:
+            issues.append({'field': 'name', 'type': 'missing', 'message': 'Name is required'})
+        if not r['class']:
+            issues.append({'field': 'class', 'type': 'missing', 'message': 'Class is required'})
+        elif r['class'] not in VALID_CLASSES:
+            issues.append({'field': 'class', 'type': 'invalid',
+                           'message': f'Invalid class "{r["class"]}" — must be 1 to 12'})
+        if not r['section']:
+            issues.append({'field': 'section', 'type': 'missing', 'message': 'Section is required'})
+        elif r['section'] not in VALID_SECTIONS:
+            issues.append({'field': 'section', 'type': 'invalid',
+                           'message': f'Invalid section "{r["section"]}" — must be A, B, C or D'})
+
+        r['issues'] = issues
+        r['status'] = 'ok' if not issues else 'error'
+
+    total_ok    = sum(1 for r in parsed if r['status'] == 'ok')
+    total_error = sum(1 for r in parsed if r['status'] == 'error')
+
+    return jsonify({
+        'status':      'parsed',
+        'rows':        parsed,
+        'total':       len(parsed),
+        'total_ok':    total_ok,
+        'total_error': total_error,
+        'existing_ids': list(existing_ids),   # sent to frontend for client-side re-validation
+    })
+
+
+@app.route('/admin/students/bulk_save', methods=['POST'])
+@admin_required
+def bulk_save_students():
+    """
+    Save only validated rows into the students table.
+    Accepts JSON: { "rows": [ { admission_no, name, class, section, dob, house, parents_name, address }, ... ] }
+    Performs a final server-side re-validation before inserting.
+    Uses INSERT OR IGNORE so race conditions won't crash the batch.
+    Returns counts of saved / skipped rows.
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    rows = data.get('rows', [])
+
+    if not rows:
+        return jsonify({'status': 'error', 'message': 'No rows provided.'}), 400
+
+    VALID_CLASSES  = {str(i) for i in range(1, 13)}
+    VALID_SECTIONS = {'A', 'B', 'C', 'D'}
+
+    conn = get_db()
+    c    = conn.cursor()
+
+    # ── fetch existing IDs for server-side re-validation ─────────────────
+    adm_list = [r.get('admission_no', '').strip() for r in rows if r.get('admission_no', '').strip()]
+    existing_ids = set()
+    if adm_list:
+        placeholders = ','.join(['?'] * len(adm_list))
+        c.execute(f"SELECT student_id FROM students WHERE student_id IN ({placeholders})", adm_list)
+        existing_ids = {row[0] for row in c.fetchall()}
+
+    # ── detect batch duplicates within this save request ─────────────────
+    seen_in_batch = set()
+    batch_dups    = set()
+    for r in rows:
+        adm = r.get('admission_no', '').strip()
+        if adm:
+            if adm in seen_in_batch:
+                batch_dups.add(adm)
+            else:
+                seen_in_batch.add(adm)
+
+    saved   = 0
+    skipped = []
+
+    for r in rows:
+        adm  = r.get('admission_no', '').strip()
+        name = r.get('name', '').strip()
+        cls  = r.get('class', '').strip()
+        sec  = r.get('section', '').strip().upper()
+        dob  = r.get('dob', '').strip()
+        house     = r.get('house', '').strip()
+        par       = r.get('parents_name', '').strip()
+        addr      = r.get('address', '').strip()
+
+        # Final validation gate
+        fail_reasons = []
+        if not adm:
+            fail_reasons.append('missing admission_no')
+        if adm in existing_ids:
+            fail_reasons.append('already exists in DB')
+        if adm in batch_dups:
+            fail_reasons.append('duplicate in batch')
+        if not name:
+            fail_reasons.append('missing name')
+        if not cls or cls not in VALID_CLASSES:
+            fail_reasons.append(f'invalid class "{cls}"')
+        if not sec or sec not in VALID_SECTIONS:
+            fail_reasons.append(f'invalid section "{sec}"')
+
+        if fail_reasons:
+            skipped.append({'admission_no': adm, 'reasons': fail_reasons})
+            continue
+
+        try:
+            c.execute("""INSERT OR IGNORE INTO students
+                         (student_id, name, class, section, admission_no, dob, house, parents_name, address, status)
+                         VALUES (?,?,?,?,?,?,?,?,?,'Not Started')""",
+                      (adm, name, cls, sec, adm, dob, house, par, addr))
+            if c.rowcount > 0:
+                saved += 1
+            else:
+                skipped.append({'admission_no': adm, 'reasons': ['INSERT OR IGNORE — already inserted by concurrent request']})
+        except Exception as e:
+            skipped.append({'admission_no': adm, 'reasons': [str(e)]})
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'status':  'saved',
+        'saved':   saved,
+        'skipped': skipped,
+    })
+
 
 @app.route('/admin/monitoring')
 @admin_required
@@ -3925,10 +6331,10 @@ def monitoring_data():
     auto_submit_expired_exams()
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT name, class, subject, student_id, ip, status, exam_started_at FROM students ORDER BY status, name")
+    c.execute("SELECT name, class, subject, student_id, ip, status, exam_started_at, current_section FROM students ORDER BY status, name")
     students = [dict(row) for row in c.fetchall()]
     conn.close()
-    return jsonify(students)
+    return jsonify({'students': students})
 
 @app.route('/admin/evaluate')
 @admin_required
@@ -4110,7 +6516,7 @@ def results_data():
         SELECT
             r.id, r.student_id, r.name, r.class, r.subject,
             r.score, r.total_questions, r.percentage, r.test_date,
-            r.chapter,
+            r.chapter, r.section_breakdown,
             COALESCE(r.section, s.section, '') as section,
             s.exam_started_at
         FROM results r
@@ -4453,18 +6859,51 @@ def view_student_responses(student_id):
         return "Student not found", 404
     log_audit_event('admin', 'admin', 'STUDENT_RESULT_VIEW', 'students', student_id, request.remote_addr)
 
-    # Fetch questions with all option texts, filtering by test_no if set
-    test_no = (student['test_no'] if ('test_no' in student.keys() and student['test_no']) else '').strip()
-    if test_no:
-        c.execute("SELECT id, question, option_a, option_b, option_c, option_d, correct_answer FROM questions WHERE class=? AND subject=? AND (test_no=? OR chapter=?) ORDER BY id",
-                  (student['class'], student['subject'], test_no, test_no))
-    else:
-        c.execute("SELECT id, question, option_a, option_b, option_c, option_d, correct_answer FROM questions WHERE class=? AND subject=? ORDER BY id",
-                  (student['class'], student['subject']))
+    # Fetch questions, prioritizing shuffled_questions for exact student exam sequence & multi-section support
+    c.execute("""
+        SELECT q.id, q.question, q.option_a, q.option_b, q.option_c, q.option_d, q.correct_answer,
+               q.section_id, ts.section_name
+        FROM shuffled_questions sq
+        JOIN questions q ON sq.question_id = q.id
+        LEFT JOIN test_sections ts ON q.section_id = ts.id
+        WHERE sq.student_id = ?
+        ORDER BY sq.shuffled_index
+    """, (student_id,))
     questions = c.fetchall()
+
+    test_no = (student['test_no'] if ('test_no' in student.keys() and student['test_no']) else '').strip()
+    if not questions:
+        if test_no:
+            c.execute("SELECT id, question, option_a, option_b, option_c, option_d, correct_answer, NULL as section_id, '' as section_name FROM questions WHERE class=? AND subject=? AND (test_no=? OR chapter=?) ORDER BY id",
+                      (student['class'], student['subject'], test_no, test_no))
+        else:
+            c.execute("SELECT id, question, option_a, option_b, option_c, option_d, correct_answer, NULL as section_id, '' as section_name FROM questions WHERE class=? AND subject=? ORDER BY id",
+                      (student['class'], student['subject']))
+        questions = c.fetchall()
+
+    c.execute("SELECT section_breakdown FROM results WHERE student_id=? ORDER BY id DESC LIMIT 1", (student_id,))
+    res_row = c.fetchone()
+    section_breakdown = []
+    if res_row and res_row['section_breakdown']:
+        try:
+            section_breakdown = json.loads(res_row['section_breakdown'])
+        except Exception:
+            section_breakdown = []
 
     c.execute("SELECT question_id, selected_option FROM responses WHERE student_id=?", (student_id,))
     responses = {row['question_id']: row['selected_option'] for row in c.fetchall()}
+
+    # Fetch coding submissions & approved coding questions for this student
+    clean_cls = (student['class'] or '').replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+    c.execute("SELECT * FROM coding_submissions WHERE student_id=? ORDER BY question_id", (student_id,))
+    coding_subs = {row['question_id']: dict(row) for row in c.fetchall()}
+
+    c.execute("""SELECT id, title, problem_statement, constraints, sample_input, sample_output, total_marks 
+                 FROM coding_questions 
+                 WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND (test_no=? OR topic=? OR test_no='') AND approved=1
+                 ORDER BY id""",
+              (student['class'], f"%{clean_cls}%", student['subject'], test_no, test_no))
+    coding_qs = [dict(r) for r in c.fetchall()]
 
     conn.close()
 
@@ -4480,9 +6919,16 @@ def view_student_responses(student_id):
         )
         is_correct = bool(selected and correct_letter and selected.strip().upper() == correct_letter)
 
+        sec_name = ''
+        try:
+            sec_name = q['section_name'] or ''
+        except Exception:
+            pass
+
         question_data.append({
             'id': q['id'],
             'question': q['question'],
+            'section_name': sec_name,
             'options': {
                 'A': q['option_a'],
                 'B': q['option_b'],
@@ -4494,7 +6940,32 @@ def view_student_responses(student_id):
             'is_correct': is_correct
         })
 
-    return render_template('student_responses.html', student=student, questions=question_data)
+    coding_responses = []
+    for q in coding_qs:
+        sub = coding_subs.get(q['id'])
+        case_results = []
+        if sub and sub.get('stdout_output'):
+            try:
+                case_results = json.loads(sub['stdout_output'])
+            except Exception:
+                case_results = []
+                
+        coding_responses.append({
+            'id': q['id'],
+            'title': q['title'],
+            'problem_statement': q['problem_statement'],
+            'total_marks': float(q['total_marks'] or 10.0),
+            'submitted': bool(sub),
+            'language': sub['language'] if sub else 'N/A',
+            'code': sub['code'] if sub else '',
+            'status': sub['status'] if sub else 'Unattempted',
+            'test_cases_passed': sub['test_cases_passed'] if sub else 0,
+            'total_test_cases': sub['total_test_cases'] if sub else 0,
+            'marks_awarded': float(sub['marks_awarded']) if sub else 0.0,
+            'case_results': case_results
+        })
+
+    return render_template('student_responses.html', student=student, questions=question_data, coding_responses=coding_responses, section_breakdown=section_breakdown)
 
 # ─────── HIERARCHICAL RESULTS FILTERING APIS ────────
 
@@ -4826,9 +7297,23 @@ def current_test_results():
     if not results:
         return "No results found for the selected filters.", 404
 
-    # Assign ranks
+    # Assign ranks and parse section_breakdown
     for i, res in enumerate(results):
         res['rank'] = i + 1
+        bd = res.get('section_breakdown')
+        if bd and isinstance(bd, str):
+            try:
+                res['parsed_breakdown'] = json.loads(bd)
+            except Exception:
+                res['parsed_breakdown'] = []
+        elif isinstance(bd, list):
+            res['parsed_breakdown'] = bd
+        else:
+            res['parsed_breakdown'] = []
+        if res.get('parsed_breakdown'):
+            res_max = sum(s.get('max_marks', 0) for s in res['parsed_breakdown'])
+            if res_max > 0:
+                res['max_marks'] = res_max
 
     total_q = results[0].get('total_questions', 0) if results else 0
     school_name = get_setting('school_name', 'RRB Group of Schools')
@@ -4844,7 +7329,7 @@ def current_test_results():
                 logo_base64 = f"data:{mime};base64,{base64.b64encode(logo_bytes).decode()}"
 
     total_q_map = {f"{res['class']}_{res['subject']}": res.get('total_questions', 0) for res in results}
-    max_total_marks = total_q
+    max_total_marks = results[0].get('max_marks') if (results and results[0].get('max_marks')) else total_q
 
     display_class = results[0]['class'] if results else '—'
     display_section = section_filter or results[0].get('student_section', '—') if results else '—'
@@ -4890,10 +7375,10 @@ def current_test_results():
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Results"
-        ws.append(['Rank', 'S.No.', 'Admission No', 'Student Name', 'Class', 'Section', 'Subject', f'Marks (out of {max_total_marks})', 'Percentage'])
+        ws.append(['Rank', 'S.No.', 'Admission No', 'Student Name', 'Class', 'Section', 'Subject', 'Test No', f'Marks (out of {max_total_marks})', 'Percentage'])
         for i, res in enumerate(results):
             pct_str = f"{res['percentage']:.1f}%" if res.get('percentage') else 'N/A'
-            ws.append([res['rank'], i+1, res.get('admission_no', ''), res['name'], res['class'], res.get('student_section', '—'), res['subject'], f"{res['score']}/{max_total_marks}", pct_str])
+            ws.append([res['rank'], i+1, res.get('admission_no', ''), res['name'], res['class'], res.get('student_section', '—'), res['subject'], res.get('chapter') or display_test_no or '—', f"{res['score']}/{max_total_marks}", pct_str])
         filename = f"current_test_results_{display_class}_{display_subject}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         filepath = os.path.join(app.config['EXPORT_FOLDER'], filename)
         wb.save(filepath)
@@ -5001,44 +7486,297 @@ def teacher_reattempt_requests_data():
     conn.close()
     return jsonify({'requests': requests, 'exam_is_active': exam_is_active})
 
+def process_coding_auto_submissions(student_ids, conn=None):
+    """
+    Auto-submit last-autosaved code drafts for students when their exam session expires or is ended.
+    Evaluates un-submitted drafts and records 0 marks for unattempted questions, then updates results table.
+    """
+    if not student_ids:
+        return
+        
+    close_db = False
+    if conn is None:
+        conn = get_db()
+        close_db = True
+        
+    try:
+        import json
+        c = conn.cursor()
+        for sid in student_ids:
+            c.execute("SELECT * FROM students WHERE student_id=?", (sid,))
+            student = c.fetchone()
+            if not student:
+                continue
+                
+            test_no = student['test_no'] or ''
+            clean_cls = (student['class'] or '').replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+            
+            # Fetch all approved coding questions for this test
+            c.execute("""SELECT id, total_marks, sample_input, sample_output FROM coding_questions
+                         WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND (test_no=? OR topic=? OR test_no='') AND approved=1""",
+                      (student['class'], f"%{clean_cls}%", student['subject'], test_no, test_no))
+            questions = c.fetchall()
+            
+            if not questions:
+                continue
+                
+            for q in questions:
+                qid = q['id']
+                qmarks = float(q['total_marks'] or 10.0)
+                
+                # Check if submission already exists
+                c.execute("SELECT id FROM coding_submissions WHERE student_id=? AND question_id=?", (sid, qid))
+                sub_row = c.fetchone()
+                if sub_row:
+                    continue
+                    
+                # Check if draft exists for this student + question
+                c.execute("""SELECT language, code FROM coding_drafts 
+                             WHERE student_id=? AND question_id=? AND code != '' 
+                             ORDER BY updated_at DESC LIMIT 1""", (sid, qid))
+                draft_row = c.fetchone()
+                
+                if draft_row and draft_row['code'].strip():
+                    lang = draft_row['language']
+                    code = draft_row['code']
+                    
+                    c.execute("""SELECT id, input, expected_output, is_hidden, marks_weight 
+                                 FROM coding_test_cases WHERE question_id=? ORDER BY id""", (qid,))
+                    tc_rows = [dict(r) for r in c.fetchall()]
+                    if not tc_rows:
+                        tc_rows = [{'id': 1, 'input': q['sample_input'] or '', 'expected_output': q['sample_output'] or '', 'is_hidden': 0, 'marks_weight': 1.0}]
+                        
+                    eval_res = evaluate_submission(code, lang, tc_rows, question_marks=qmarks, timeout_seconds=5)
+                    
+                    sanitized_results = []
+                    for r in eval_res['results']:
+                        is_h = bool(r.get('is_hidden'))
+                        sanitized_results.append({
+                            'test_case_id': r.get('test_case_id'),
+                            'is_hidden': is_h,
+                            'passed': bool(r.get('passed')),
+                            'status': r.get('status'),
+                            'input': '[Hidden]' if is_h else r.get('input'),
+                            'expected_output': '[Hidden]' if is_h else r.get('expected_output'),
+                            'actual_output': '[Hidden]' if is_h else r.get('actual_output'),
+                            'execution_time_ms': round(float(r.get('execution_time_ms', 0)), 1),
+                            'stderr': '[Hidden]' if is_h else r.get('stderr')
+                        })
+                        
+                    c.execute("""INSERT INTO coding_submissions 
+                                 (student_id, question_id, code, language, test_cases_passed, total_test_cases, marks_awarded, status, stdout_output, stderr_output, submitted_at)
+                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)""",
+                              (sid, qid, code, lang, eval_res['passed_count'], eval_res['total_test_cases'], eval_res['marks_awarded'], 'Auto-Submitted', json.dumps(sanitized_results), ''))
+                else:
+                    c.execute("""SELECT COUNT(*) FROM coding_test_cases WHERE question_id=?""", (qid,))
+                    tc_cnt = c.fetchone()[0] or 1
+                    c.execute("""INSERT INTO coding_submissions 
+                                 (student_id, question_id, code, language, test_cases_passed, total_test_cases, marks_awarded, status, stdout_output, stderr_output, submitted_at)
+                                 VALUES (?, ?, ?, ?, 0, ?, 0.0, 'Unattempted', '[]', '', CURRENT_TIMESTAMP)""",
+                              (sid, qid, '', 'python', tc_cnt))
+                              
+            sync_student_coding_results(sid, conn=conn)
+            
+        conn.commit()
+    except Exception as e:
+        app.logger.error(f"Error in process_coding_auto_submissions: {e}")
+    finally:
+        if close_db:
+            conn.close()
+
 def auto_submit_expired_exams():
     """
-    Auto-submit exams that have exceeded the time limit.
+    Auto-submit exams that have exceeded their allotted time.
+    Handles per-session expiry and pause awareness, and falls back to global exam_control.
     """
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT id, duration, is_active FROM exam_control WHERE id=1")
-    exam = c.fetchone()
 
-    if not exam or not exam['duration'] or not exam['is_active']:
+    try:
+        # ── 1. Per-Session Auto-Submit ────────────────────────────────────
+        c.execute("SELECT * FROM exam_sessions WHERE status IN ('running', 'paused')")
+        active_sessions = [dict(r) for r in c.fetchall()]
+
+        for sess in active_sessions:
+            if sess.get('status') == 'paused':
+                continue
+
+            rem_secs = get_session_remaining_seconds(sess)
+            cls = sess.get('class', '')
+            clean_cls = str(cls).replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+            sec = sess.get('section', '')
+            subj = sess.get('subject', '')
+            tno = sess.get('test_no', '')
+
+            scope_where = "(class=? OR class=? OR ? LIKE '%' || class || '%') AND LOWER(subject)=LOWER(?)"
+            scope_params = [cls, clean_cls, cls, subj]
+            if sec:
+                scope_where += " AND LOWER(section)=LOWER(?)"
+                scope_params.append(sec)
+            if tno:
+                scope_where += " AND (test_no=? OR test_no='' OR test_no IS NULL)"
+                scope_params.append(tno)
+
+            if rem_secs <= 0:
+                c.execute("""UPDATE exam_sessions 
+                             SET status='ended', end_time=CURRENT_TIMESTAMP, end_reason='time_expired' 
+                             WHERE id=?""", (sess['id'],))
+                
+                c.execute(f"SELECT student_id FROM students WHERE status='In Progress' AND {scope_where}", scope_params)
+                expired_sids = [r['student_id'] for r in c.fetchall()]
+                
+                c.execute(f"UPDATE students SET status='Submitted' WHERE status='In Progress' AND {scope_where}", scope_params)
+                
+                if expired_sids:
+                    process_coding_auto_submissions(expired_sids, conn=conn)
+            else:
+                tot_paused_mins = int((sess.get('total_paused_secs') or 0) // 60)
+                allowed_mins = int(sess.get('allotted_duration') or 60) + tot_paused_mins
+                
+                c.execute(f"""
+                    SELECT student_id FROM students 
+                    WHERE status='In Progress'
+                      AND exam_started_at IS NOT NULL
+                      AND {scope_where}
+                      AND datetime(exam_started_at, ? || ' minutes') < datetime('now')
+                """, tuple(scope_params + [str(allowed_mins)]))
+                indiv_sids = [r['student_id'] for r in c.fetchall()]
+
+                c.execute(f"""
+                    UPDATE students 
+                    SET status='Submitted'
+                    WHERE status='In Progress'
+                      AND exam_started_at IS NOT NULL
+                      AND {scope_where}
+                      AND datetime(exam_started_at, ? || ' minutes') < datetime('now')
+                """, tuple(scope_params + [str(allowed_mins)]))
+                
+                if indiv_sids:
+                    process_coding_auto_submissions(indiv_sids, conn=conn)
+
+        # ── 2. Legacy Global Auto-Submit (Fallback) ───────────────────────
+        c.execute("SELECT id, duration, is_active FROM exam_control WHERE id=1")
+        exam = c.fetchone()
+        if exam and exam['duration'] and exam['is_active']:
+            duration = exam['duration']
+            c.execute("""
+                SELECT student_id FROM students 
+                WHERE status='In Progress'
+                AND exam_started_at IS NOT NULL
+                AND datetime(exam_started_at, ? || ' minutes') < datetime('now')
+            """, (str(duration),))
+            glob_sids = [r['student_id'] for r in c.fetchall()]
+
+            c.execute("""
+                UPDATE students 
+                SET status='Submitted'
+                WHERE status='In Progress'
+                AND exam_started_at IS NOT NULL
+                AND datetime(exam_started_at, ? || ' minutes') < datetime('now')
+            """, (str(duration),))
+
+            if glob_sids:
+                process_coding_auto_submissions(glob_sids, conn=conn)
+
+        conn.commit()
+    except Exception as e:
+        app.logger.error(f"Error in auto_submit_expired_exams: {e}")
+    finally:
         conn.close()
-        return
-
-    duration = exam['duration']
-
-    # ✅ Use SQLite's own time for comparison — avoids timezone mismatch
-    c.execute("""
-        UPDATE students 
-        SET status='Submitted'
-        WHERE status='In Progress'
-        AND exam_started_at IS NOT NULL
-        AND datetime(exam_started_at, ? || ' minutes') < datetime('now')
-    """, (str(duration),))
-
-    conn.commit()
-    conn.close()
 
 @app.route('/guidelines')
 @student_required
 def guidelines():
     # Mark that the student has not yet accepted guidelines for this session
     session['guidelines_accepted'] = False
+    # Clear resume_mode after it has been displayed on the waiting page;
+    # it should not persist beyond the guidelines screen.
+    session.pop('resume_mode', None)
     return render_template('guidelines.html')
 
 @app.route('/accept_guidelines', methods=['POST'])
 @student_required
 def accept_guidelines():
     session['guidelines_accepted'] = True
+    if session.get('test_type') == 'Coding Test':
+        return redirect(url_for('coding_exam_list'))
+    return redirect(url_for('exam'))
+
+# ── TWO-STAGE INSTRUCTIONS ROUTES ─────────────────────────────────────────────
+
+@app.route('/exam/instructions/stage1')
+@student_required
+def instructions_stage1():
+    """Render Stage 1: General CBT instructions and palette legend."""
+    session['guidelines_accepted'] = False
+    session.pop('resume_mode', None)
+    school_name = get_setting('school_name', 'RRB Group of Schools')
+    logo_path = get_setting('logo_path', '')
+    return render_template('instructions_stage1.html', school_name=school_name, logo_path=logo_path)
+
+@app.route('/exam/instructions/stage2')
+@student_required
+def instructions_stage2():
+    """Render Stage 2: Test structure table, marking schemes, language selector, and declaration."""
+    student_id = session.get('student_id')
+    test_paper_id = session.get('test_paper_id')
+    timing_mode = session.get('timing_mode', 'disabled')
+    subject = session.get('subject', '')
+    test_no = session.get('test_no', '')
+    class_ = session.get('class', '')
+
+    conn = get_db()
+    c = conn.cursor()
+    if not test_paper_id:
+        clean_cls = class_.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+        c.execute("""SELECT tp.id, tsc.timing_mode FROM test_papers tp
+                     JOIN test_section_config tsc ON tp.id = tsc.test_paper_id
+                     WHERE (tp.class=? OR tp.class LIKE ?) AND LOWER(tp.subject)=LOWER(?) AND tp.test_no=?
+                     LIMIT 1""", (class_, f"%{clean_cls}%", subject, test_no))
+        tp_row = c.fetchone()
+        if tp_row:
+            test_paper_id = tp_row['id']
+            timing_mode = tp_row['timing_mode']
+            session['test_paper_id'] = test_paper_id
+            session['timing_mode'] = timing_mode
+
+    sections = []
+    if test_paper_id:
+        c.execute("""SELECT id, section_name, subject, question_count, positive_marks, negative_marks, duration_minutes, order_index
+                     FROM test_sections
+                     WHERE test_paper_id=?
+                     ORDER BY order_index ASC""", (test_paper_id,))
+        sections = [dict(r) for r in c.fetchall()]
+
+    conn.close()
+
+    total_questions = sum(s.get('question_count', 0) for s in sections)
+    if timing_mode == 'fixed':
+        total_duration = sum(s.get('duration_minutes', 0) for s in sections)
+    else:
+        total_duration = int(get_setting('exam_duration', '60') or 60)
+
+    school_name = get_setting('school_name', 'RRB Group of Schools')
+    logo_path = get_setting('logo_path', '')
+    return render_template('instructions_stage2.html',
+                           sections=sections,
+                           timing_mode=timing_mode,
+                           test_title=subject,
+                           test_no=test_no,
+                           total_questions=total_questions,
+                           total_duration=total_duration,
+                           school_name=school_name,
+                           logo_path=logo_path)
+
+@app.route('/exam/instructions/accept', methods=['POST'])
+@student_required
+def instructions_accept():
+    """Accept declaration, save language preference, and start exam."""
+    session['guidelines_accepted'] = True
+    exam_lang = (request.form.get('exam_language') or 'English').strip()
+    session['exam_language'] = exam_lang
+    lang_code = 'hi' if 'hindi' in exam_lang.lower() or exam_lang.lower() == 'hi' else ('en' if 'english' in exam_lang.lower() or exam_lang.lower() == 'en' else exam_lang.lower())
+    session['student_lang'] = lang_code
     return redirect(url_for('exam'))
 
 @app.route('/admin/reattempt_request/<int:req_id>/<action>', methods=['POST'])
@@ -5084,6 +7822,69 @@ def handle_reattempt_request(req_id, action):
     conn.close()
     log_audit_event('admin', 'admin', 'REATTEMPT_' + action.upper(), 'reattempt_requests', req_id, request.remote_addr)
     return jsonify({'status': 'success'})
+
+@app.route('/admin/reattempt_requests/bulk_action', methods=['POST'])
+@admin_required
+def admin_bulk_reattempt_action():
+    """
+    Approve or reject all (or specified) pending reattempt requests as Admin.
+    """
+    data = request.get_json(silent=True) or {}
+    action = data.get('action', '').strip().lower()
+    if action not in ('approve', 'reject'):
+        return jsonify({'status': 'error', 'message': 'Invalid action. Must be approve or reject.'}), 400
+
+    admin_note = (data.get('note') or '').strip()
+    request_ids = data.get('request_ids', [])
+
+    conn = get_db()
+    c = conn.cursor()
+
+    if request_ids:
+        placeholders = ','.join(['?'] * len(request_ids))
+        c.execute(f"SELECT id, student_id, class, subject FROM reattempt_requests WHERE id IN ({placeholders}) AND status='pending'", request_ids)
+    else:
+        c.execute("SELECT id, student_id, class, subject FROM reattempt_requests WHERE status='pending'")
+    
+    pending_reqs = [dict(r) for r in c.fetchall()]
+
+    if not pending_reqs:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'No pending requests found to process.'}), 400
+
+    processed_count = 0
+    for req in pending_reqs:
+        req_id = req['id']
+        student_id = req['student_id']
+        class_ = req['class']
+        subject = req['subject']
+
+        if action == 'approve':
+            c.execute("""DELETE FROM responses WHERE student_id=? AND question_id IN (
+                         SELECT id FROM questions WHERE class=? AND LOWER(subject)=LOWER(?)
+                      )""", (student_id, class_, subject))
+            c.execute("DELETE FROM results WHERE student_id=? AND class=? AND LOWER(subject)=LOWER(?)",
+                      (student_id, class_, subject))
+            c.execute("""DELETE FROM shuffled_questions WHERE student_id=? AND question_id IN (
+                         SELECT id FROM questions WHERE class=? AND LOWER(subject)=LOWER(?)
+                      )""", (student_id, class_, subject))
+            c.execute("UPDATE students SET status='Not Started', exam_started_at=NULL WHERE student_id=?", (student_id,))
+            c.execute("UPDATE reattempt_requests SET status='approved', reviewed_at=CURRENT_TIMESTAMP, admin_note=? WHERE id=?",
+                      (admin_note, req_id))
+        else:
+            c.execute("UPDATE reattempt_requests SET status='rejected', reviewed_at=CURRENT_TIMESTAMP, admin_note=? WHERE id=?",
+                      (admin_note, req_id))
+        processed_count += 1
+
+    conn.commit()
+    conn.close()
+    log_audit_event('admin', 'admin', f'REATTEMPT_BULK_{action.upper()}', 'reattempt_requests', processed_count, request.remote_addr)
+    past_action = 'approved' if action == 'approve' else 'rejected'
+    return jsonify({
+        'status': 'success',
+        'count': processed_count,
+        'message': f"Successfully {past_action} {processed_count} reattempt request(s)."
+    })
 
 @app.route('/teacher/reattempt_request/<int:req_id>/<action>', methods=['POST'])
 @teacher_required
@@ -5136,6 +7937,90 @@ def teacher_handle_reattempt_request(req_id, action):
     conn.close()
     log_audit_event('teacher', str(teacher_id), 'REATTEMPT_' + action.upper(), 'reattempt_requests', req_id, request.remote_addr)
     return jsonify({'status': 'success'})
+
+@app.route('/teacher/reattempt_requests/bulk_action', methods=['POST'])
+@teacher_required
+def teacher_bulk_reattempt_action():
+    """
+    Approve or reject all (or specified) authorized pending reattempt requests as Teacher.
+    """
+    data = request.get_json(silent=True) or {}
+    action = data.get('action', '').strip().lower()
+    if action not in ('approve', 'reject'):
+        return jsonify({'status': 'error', 'message': 'Invalid action. Must be approve or reject.'}), 400
+
+    teacher_note = (data.get('note') or '').strip()
+    teacher_id = session.get('teacher_id')
+    teacher_name = session.get('teacher_name', 'Teacher')
+    request_ids = data.get('request_ids', [])
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT DISTINCT class, subject FROM teacher_assignments WHERE teacher_id=?", (teacher_id,))
+    assignments = c.fetchall()
+
+    query = """
+        SELECT r.id, r.student_id, r.class, r.subject
+        FROM reattempt_requests r
+        WHERE r.status = 'pending'
+    """
+    params = []
+    if request_ids:
+        placeholders = ','.join(['?'] * len(request_ids))
+        query += f" AND r.id IN ({placeholders})"
+        params.extend(request_ids)
+
+    if assignments:
+        where_clauses = []
+        for a in assignments:
+            cls = str(a['class']).strip()
+            clean_cls = cls.replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+            subj = str(a['subject']).strip()
+            where_clauses.append("((r.class=? OR r.class=? OR r.class LIKE ?) AND (LOWER(r.subject)=LOWER(?) OR r.subject LIKE ?))")
+            params.extend([cls, clean_cls, f"%{clean_cls}%", subj, f"%{subj}%"])
+        query += " AND (" + " OR ".join(where_clauses) + ")"
+
+    c.execute(query, params)
+    pending_reqs = [dict(r) for r in c.fetchall()]
+
+    if not pending_reqs:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'No authorized pending requests found to process.'}), 400
+
+    note_text = f"Teacher ({teacher_name}): {teacher_note}".strip() if teacher_note else f"Reviewed by {teacher_name}"
+    processed_count = 0
+    for req in pending_reqs:
+        req_id = req['id']
+        student_id = req['student_id']
+        class_ = req['class']
+        subject = req['subject']
+
+        if action == 'approve':
+            c.execute("""DELETE FROM responses WHERE student_id=? AND question_id IN (
+                         SELECT id FROM questions WHERE class=? AND LOWER(subject)=LOWER(?)
+                      )""", (student_id, class_, subject))
+            c.execute("DELETE FROM results WHERE student_id=? AND class=? AND LOWER(subject)=LOWER(?)",
+                      (student_id, class_, subject))
+            c.execute("""DELETE FROM shuffled_questions WHERE student_id=? AND question_id IN (
+                         SELECT id FROM questions WHERE class=? AND LOWER(subject)=LOWER(?)
+                      )""", (student_id, class_, subject))
+            c.execute("UPDATE students SET status='Not Started', exam_started_at=NULL WHERE student_id=?", (student_id,))
+            c.execute("UPDATE reattempt_requests SET status='approved', reviewed_at=CURRENT_TIMESTAMP, admin_note=? WHERE id=?",
+                      (note_text, req_id))
+        else:
+            c.execute("UPDATE reattempt_requests SET status='rejected', reviewed_at=CURRENT_TIMESTAMP, admin_note=? WHERE id=?",
+                      (note_text, req_id))
+        processed_count += 1
+
+    conn.commit()
+    conn.close()
+    log_audit_event('teacher', str(teacher_id), f'REATTEMPT_BULK_{action.upper()}', 'reattempt_requests', processed_count, request.remote_addr)
+    past_action = 'approved' if action == 'approve' else 'rejected'
+    return jsonify({
+        'status': 'success',
+        'count': processed_count,
+        'message': f"Successfully {past_action} {processed_count} reattempt request(s)."
+    })
 
 @app.route('/admin/student/<student_id>/allow_reattempt', methods=['POST'])
 @admin_required
@@ -5241,11 +8126,130 @@ def teacher_logout():
     session.pop('teacher_mobile', None)
     return redirect(url_for('teacher_login'))
 
+def process_cbt_question_image(q, class_, section, subject, chapter, output_dir=None):
+    """
+    Unified automatic diagram & image insertion pipeline for CBT questions.
+    Feature parity with descriptive paper generator:
+      1. Schemdraw: Electrical circuits (resistors, switches, capacitors, RLC, logic gates)
+      2. RDKit: 2D Chemical structures from SMILES or compound names
+      3. NCERT Local Bank: Handcrafted & curriculum diagrams
+      4. Wikimedia Commons: Live API diagram search and caching
+      5. Fallback: Clean styled callout placeholder image
+    Returns relative path within /static/ (e.g. 'images/generated/...' or 'images/ncert/...')
+    """
+    if not isinstance(q, dict):
+        return None
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    if not output_dir:
+        output_dir = os.path.join(script_dir, 'static', 'images', 'generated')
+    os.makedirs(output_dir, exist_ok=True)
+
+    clean_cls = re.sub(r'[^a-zA-Z0-9]', '', str(class_ or ''))
+    clean_sec = re.sub(r'[^a-zA-Z0-9]', '', str(section or ''))
+    clean_sub = re.sub(r'[^a-zA-Z0-9]', '', str(subject or ''))
+    uid = uuid.uuid4().hex[:8]
+
+    # 1. ELECTRICAL CIRCUIT (Schemdraw)
+    circuit_type = q.get('circuit_type') or q.get('params', {}).get('circuit_type')
+    is_circuit_cat = str(q.get('image_category', '')).lower() == 'circuit'
+    q_text_lower = str(q.get('question', '')).lower()
+    has_circuit_words = any(w in q_text_lower for w in ['circuit diagram', 'given circuit', 'resistors in series', 'resistors in parallel', 'wheatstone bridge', 'schematic diagram'])
+
+    if circuit_type or is_circuit_cat or (has_circuit_words and ('physics' in str(subject).lower() or 'science' in str(subject).lower())):
+        c_type = circuit_type or ('parallel_resistors' if 'parallel' in q_text_lower else 'series_resistors')
+        params = q.get('params') or {}
+        filename = f"cbt_circuit_{clean_cls}_{clean_sec}_{clean_sub}_{uid}.png"
+        out_path = os.path.join(output_dir, filename)
+        try:
+            res_c = image_handler.generate_circuit(c_type, params, out_path)
+            if res_c and os.path.exists(out_path) and os.path.getsize(out_path) > 0:
+                return f"images/generated/{filename}"
+        except Exception as e:
+            app.logger.warning(f"Error generating CBT circuit diagram: {e}")
+
+    # 2. CHEMISTRY MOLECULE STRUCTURE (RDKit)
+    smiles_val = q.get('smiles') or q.get('compound_name') or q.get('params', {}).get('smiles') or q.get('params', {}).get('compound_name')
+    if smiles_val and str(smiles_val).startswith('__smiles__'):
+        smiles_val = smiles_val[10:]
+    is_chem_cat = str(q.get('image_category', '')).lower() == 'chemistry'
+    if smiles_val or is_chem_cat:
+        chem_id = smiles_val or q.get('image_prompt') or q.get('image_keywords')
+        if isinstance(chem_id, list) and chem_id:
+            chem_id = chem_id[0]
+        if chem_id:
+            filename = f"cbt_chem_{clean_cls}_{clean_sec}_{clean_sub}_{uid}.png"
+            out_path = os.path.join(output_dir, filename)
+            try:
+                res_m = image_handler.generate_molecule_structure(str(chem_id), out_path)
+                if res_m and os.path.exists(res_m) and os.path.getsize(res_m) > 0:
+                    return f"images/generated/{filename}"
+            except Exception as e:
+                app.logger.warning(f"Error generating CBT molecular structure: {e}")
+
+    # 3. DIAGRAMS (NCERT Image Bank -> Wikimedia Commons API)
+    kws = q.get('image_keywords') or []
+    if isinstance(kws, str):
+        kws = [kws]
+    if not kws and q.get('image_prompt'):
+        kws = [q['image_prompt']]
+
+    # Infer keywords from question text if explicitly visual
+    needs_img = q.get('needs_image') or bool(kws) or any(phrase in q_text_lower for phrase in ['in the given diagram', 'in the figure below', 'shown in the figure', 'refer to the diagram', 'label the diagram', 'identify the part in the diagram'])
+    if needs_img and not kws:
+        kws = [str(chapter or subject)]
+
+    if kws:
+        try:
+            # 3a. Search Local NCERT Bank
+            matched_bank = image_handler.find_from_bank(kws)
+            if matched_bank and os.path.exists(matched_bank):
+                matched_norm = matched_bank.replace('\\', '/')
+                if 'static/' in matched_norm:
+                    return matched_norm.split('static/', 1)[1]
+                return matched_norm
+        except Exception as e:
+            app.logger.warning(f"Error searching image bank for CBT: {e}")
+
+        try:
+            # 3b. Fetch from Wikimedia Commons API
+            matched_wiki = image_handler.fetch_and_save_wikimedia_diagram(kws, topic=chapter, class_=class_, subject=subject)
+            if matched_wiki and os.path.exists(matched_wiki):
+                matched_norm = matched_wiki.replace('\\', '/')
+                if 'static/' in matched_norm:
+                    return matched_norm.split('static/', 1)[1]
+                return matched_norm
+        except Exception as e:
+            app.logger.warning(f"Error fetching Wikimedia diagram for CBT: {e}")
+
+    # 4. FALLBACK CALLOUT PLACEHOLDER (Only if an image was genuinely needed/requested)
+    if needs_img and kws:
+        try:
+            kw_text = ", ".join([str(k) for k in kws[:3]]) if isinstance(kws, list) else str(kws)
+            filename = f"cbt_ph_{clean_cls}_{clean_sec}_{uid}.png"
+            out_path = os.path.join(output_dir, filename)
+            from PIL import Image, ImageDraw
+            img = Image.new('RGB', (460, 90), color='#f8fafc')
+            draw = ImageDraw.Draw(img)
+            draw.rectangle([1, 1, 458, 88], outline='#c7d2fe', width=2)
+            draw.rectangle([4, 4, 455, 85], fill='#eef2ff')
+            draw.text((20, 22), '[ DIAGRAM PLACEHOLDER ]', fill='#3730a3')
+            draw.text((20, 48), f"Reference: {kw_text[:45]}", fill='#6366f1')
+            img.save(out_path, format='PNG')
+            if os.path.exists(out_path):
+                return f"images/generated/{filename}"
+        except Exception as e:
+            app.logger.warning(f"Error generating CBT placeholder image: {e}")
+
+    return None
+
+
 @app.route('/teacher/create_test', methods=['GET', 'POST'])
 @teacher_required
 @limiter.limit("13 per minute")
 def teacher_create_test():
     if request.method == 'POST':
+        board = request.form.get('board', 'CBSE').strip() or 'CBSE'
         class_ = request.form.get('class')
         subject = request.form.get('subject')
         chapter = request.form.get('chapter')
@@ -5268,108 +8272,40 @@ def teacher_create_test():
                     c = conn.cursor()
                     for row in reader:
                         c.execute("""INSERT INTO questions 
-                                   (class, subject, chapter, question, option_a, option_b, option_c, option_d, correct_answer)
-                                   VALUES (?,?,?,?,?,?,?,?,?)""",
+                                   (class, subject, chapter, question, option_a, option_b, option_c, option_d, correct_answer, board)
+                                   VALUES (?,?,?,?,?,?,?,?,?,?)""",
                                 (class_, subject, chapter,
                                  row.get('question', ''),
                                  row.get('option a', row.get('option_a', '')),
                                  row.get('option b', row.get('option_b', '')),
                                  row.get('option c', row.get('option_c', '')),
                                  row.get('option d', row.get('option_d', '')),
-                                 row.get('correct_answer', '')))
+                                 row.get('correct_answer', ''),
+                                 board))
                     conn.commit()
                     conn.close()
                 os.remove(filepath)
                 return jsonify({'status': 'success', 'message': 'Questions uploaded successfully'})
         
-        else:  # AI generation using Google Gemini
+        else:  # AI generation using batched Multi-Provider AI
             try:
-                import urllib.request
-                import json as json_lib
-
-                gemini_api_key = os.environ.get('GEMINI_API_KEY', '')
-                if not gemini_api_key:
-                    return jsonify({'status': 'error', 'message': 'GEMINI_API_KEY not set. Use Option 7 in the batch menu to set it.'}), 500
-
-                subj_lower = (subject or '').strip().lower()
-                is_hindi = any(h in subj_lower for h in ['hindi', 'हिन्दी', 'हिंदी'])
-                is_english = any(e in subj_lower for e in ['english', 'अंग्रेजी', 'अंग्रेज़ी'])
-
-                if is_hindi:
-                    lang_directive = "- CRITICAL LANGUAGE RULE: The subject is HINDI. Generate ALL questions, options, and text in pure HINDI language ONLY (Devanagari script). DO NOT output in English."
-                elif is_english:
-                    lang_directive = "- CRITICAL LANGUAGE RULE: The subject is ENGLISH. Generate ALL questions and options strictly in ENGLISH. DO NOT convert or translate into Hindi."
-                else:
-                    lang_directive = f"- CRITICAL LANGUAGE RULE: The subject is {subject} (NOT Hindi). Generate ALL questions and options strictly in ENGLISH. DO NOT convert or translate questions into Hindi."
-
-                ai_prompt = f"""You are an expert CBSE/ICSE question paper generator.
-Output ONLY a valid JSON array — no markdown, no text outside the array.
-
-Generate exactly {num_questions} MCQ questions for:
-Class: {class_} | Subject: {subject} | Chapter: {chapter}
-
-Teacher instructions: {prompt if prompt else 'Standard difficulty, balanced coverage'}
-
-LANGUAGE REQUIREMENT:
-{lang_directive}
-
-SCHEMA — every object must have these exact keys:
-{{
-  "question":      "<question text, use LaTeX or mhchem where needed>",
-  "option_a":      "<option text or LaTeX>",
-  "option_b":      "<option text or LaTeX>",
-  "option_c":      "<option text or LaTeX>",
-  "option_d":      "<option text or LaTeX>",
-  "correct_answer":"option_a"|"option_b"|"option_c"|"option_d",
-  "smiles":        "<SMILES for structural diagram, else empty string>",
-  "content_type":  "math"|"chemistry"|"physics"|"biology"|"text"
-}}
-
-MATHEMATICS — use MathJax LaTeX (escape backslashes in JSON):
-• Inline: $\\frac{{d}}{{dx}}(x^2)$   Block: $$\\int_0^1 x^2\\,dx = \\frac{{1}}{{3}}$$
-• Vectors: $\\vec{{F}} = m\\vec{{a}}$  Matrices: $\\begin{{pmatrix}} a & b \\\\\\\\ c & d \\end{{pmatrix}}$
-• NEVER use raw Unicode math symbols — use LaTeX commands only.
-
-CHEMISTRY — use mhchem inside $ $:
-• Equations: "$\\ce{{H2 + O2 -> H2O}}$"   Equilibrium: "$\\ce{{N2 + 3H2 <=> 2NH3}}$"
-• States: "$\\ce{{CaCO3(s) -> CaO(s) + CO2(g)}}$"   Ionic: "$\\ce{{Fe^{{2+}} + 2e- -> Fe}}$"
-• Structural diagrams: set smiles field (e.g. benzene="c1ccccc1", ethanol="CCO")
-
-Output the JSON array now:"""
-
-                # Call Multi-Provider AI (Gemini, DeepSeek, ChatGPT, Claude)
-                result, provider, err_msg = generate_ai_content(ai_prompt, timeout=90)
-                if not result:
-                    return jsonify({'status': 'error', 'message': err_msg}), 500
-
-                response_text = result['candidates'][0]['content']['parts'][0]['text'].strip()
-
-                # Clean markdown fences if present
-                if '```' in response_text:
-                    parts = response_text.split('```')
-                    for part in parts:
-                        part = part.strip()
-                        if part.startswith('json'):
-                            part = part[4:].strip()
-                        if part.startswith('['):
-                            response_text = part
-                            break
-
-                questions = safe_json_loads(response_text)
-                if not questions or not isinstance(questions, list):
-                    return jsonify({'status': 'error', 'message': 'Failed to parse generated questions. Please try again.'}), 500
+                type_counts = [('MCQ (4 options)', num_questions)]
+                questions, gen_err = generate_cbt_questions_in_batches(
+                    class_, '', subject, chapter, 'AI_Test', prompt,
+                    type_counts=type_counts, board=board, max_batch_size=10
+                )
+                if not questions:
+                    return jsonify({'status': 'error', 'message': gen_err or 'Failed to generate questions'}), 500
 
                 # Save to database (including smiles and content_type for multimodal rendering)
                 conn = get_db()
                 c = conn.cursor()
                 for q in questions:
-                    # Store smiles in image_path column prefixed so renderer knows it's SMILES
-                    smiles_val = q.get('smiles', '') or ''
-                    # Store content_type in question_type if it's a pure text field question
-                    c.execute("""INSERT INTO questions
+                    img_path = process_cbt_question_image(q, class_, '', subject, chapter)
+                    c.execute("""INSERT INTO questions 
                                (class, subject, chapter, question_type, question,
-                                option_a, option_b, option_c, option_d, correct_answer, image_path)
-                               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                                option_a, option_b, option_c, option_d, correct_answer, image_path, board)
+                               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
                             (class_, subject, chapter,
                              'MCQ',
                              q.get('question', ''),
@@ -5378,16 +8314,18 @@ Output the JSON array now:"""
                              q.get('option_c', ''),
                              q.get('option_d', ''),
                              q.get('correct_answer', ''),
-                             f'__smiles__{smiles_val}' if smiles_val else None))
+                             img_path, board))
                 conn.commit()
                 conn.close()
 
-                return jsonify({'status': 'success', 'message': f'{len(questions)} questions generated and saved using Gemini!'})
+                return jsonify({'status': 'success', 'message': f'{len(questions)} questions generated and saved!'})
 
             except urllib.error.HTTPError as e:
-                err_body = e.read().decode('utf-8')
-                return jsonify({'status': 'error', 'message': f'Gemini API error: {err_body}'}), 500
+                err_body = e.read().decode('utf-8') if hasattr(e, 'read') else str(e)
+                app.logger.error(f"Gemini HTTP error: {err_body}")
+                return jsonify({'status': 'error', 'message': f'Gemini API error: {e.code} - {err_body[:200]}'}), 500
             except Exception as e:
+                app.logger.error(f"Teacher create test error: {e}")
                 return jsonify({'status': 'error', 'message': str(e)}), 500
     
     # GET request - show form
@@ -5403,8 +8341,9 @@ Output the JSON array now:"""
             class_subject_map[cls] = []
         if a['subject'] not in class_subject_map[cls]:
             class_subject_map[cls].append(a['subject'])
-    conn.close()
-    return render_template('teacher_create_test_v2.html', assignments=assignments, class_subject_map=class_subject_map)
+    category = request.args.get('category', '').strip()
+    is_coding = (category == 'coding_test')
+    return render_template('teacher_create_test_v2.html', assignments=assignments, class_subject_map=class_subject_map, category=category, is_coding=is_coding)
 @app.route('/teacher/dashboard')
 @teacher_required
 def teacher_dashboard():
@@ -5965,16 +8904,40 @@ def teacher_view_test_responses(result_id):
         return "Test result not found", 404
     result = dict(result)
     
-    # Get student responses with full question data
+    # Parse section_breakdown if present
+    if result.get('section_breakdown'):
+        try:
+            result['parsed_breakdown'] = json.loads(result['section_breakdown'])
+        except Exception:
+            result['parsed_breakdown'] = []
+    else:
+        result['parsed_breakdown'] = []
+
+    # Get student responses with full question data, prioritizing shuffled_questions
     c.execute("""
         SELECT q.id, q.question, q.option_a, q.option_b, q.option_c, q.option_d, 
-               q.correct_answer, q.image_path, r.selected_option
-        FROM questions q
+               q.correct_answer, q.image_path, r.selected_option,
+               q.section_id, ts.section_name
+        FROM shuffled_questions sq
+        JOIN questions q ON sq.question_id = q.id
         LEFT JOIN responses r ON q.id = r.question_id AND r.student_id = ?
-        WHERE q.class = ? AND q.subject = ?
-        ORDER BY q.id
-    """, (result['student_id'], result['class'], result['subject']))
+        LEFT JOIN test_sections ts ON q.section_id = ts.id
+        WHERE sq.student_id = ?
+        ORDER BY sq.shuffled_index
+    """, (result['student_id'], result['student_id']))
     rows = c.fetchall()
+
+    if not rows:
+        c.execute("""
+            SELECT q.id, q.question, q.option_a, q.option_b, q.option_c, q.option_d, 
+                   q.correct_answer, q.image_path, r.selected_option,
+                   NULL as section_id, '' as section_name
+            FROM questions q
+            LEFT JOIN responses r ON q.id = r.question_id AND r.student_id = ?
+            WHERE q.class = ? AND q.subject = ?
+            ORDER BY q.id
+        """, (result['student_id'], result['class'], result['subject']))
+        rows = c.fetchall()
     conn.close()
     
     # Process questions to map correct_answer to a letter
@@ -6005,9 +8968,16 @@ def teacher_view_test_responses(result_id):
         if selected and correct_letter:
             is_correct = (selected.strip().upper() == correct_letter)
         
+        sec_name = ''
+        try:
+            sec_name = q['section_name'] or ''
+        except Exception:
+            pass
+
         questions.append({
             'id': q['id'],
             'question': q['question'],
+            'section_name': sec_name,
             'options': {
                 'A': q['option_a'],
                 'B': q['option_b'],
@@ -6064,7 +9034,7 @@ def teacher_generate_student_report(student_id):
             <tr>
                 <th>Date</th>
                 <th>Subject</th>
-                <th>Chapter</th>
+                <th>Test No</th>
                 <th>Marks</th>
                 <th>Percentage</th>
             </tr>
@@ -6075,7 +9045,7 @@ def teacher_generate_student_report(student_id):
             <tr>
                 <td>{test.get('test_date', '')[:10]}</td>
                 <td>{test.get('subject', 'N/A')}</td>
-                <td>{test.get('chapter', 'N/A')}</td>
+                <td>{test.get('chapter') or '—'}</td>
                 <td>{test.get('score', 0)}/{test.get('total_questions', 0)}</td>
                 <td>{test.get('percentage', 0):.1f}%</td>
             </tr>
@@ -6227,7 +9197,18 @@ def admin_update_teacher(teacher_id):
     mobile = request.form.get('mobile', '').strip()
     email = request.form.get('email', '').strip()
     address = request.form.get('address', '').strip()
+    status = request.form.get('status', 'active').strip()
     new_password = request.form.get('password', '').strip()
+
+    if not name:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Teacher name cannot be empty'}), 400
+
+    if mobile:
+        c.execute("SELECT id FROM teachers WHERE mobile=? AND id != ?", (mobile, teacher_id))
+        if c.fetchone():
+            conn.close()
+            return jsonify({'status': 'error', 'message': f'Mobile number {mobile} is already registered to another teacher'}), 400
 
     pic_file = request.files.get('picture')
     pic_path = save_teacher_picture(pic_file, teacher_id)
@@ -6235,21 +9216,32 @@ def admin_update_teacher(teacher_id):
     if new_password:
         hashed = hash_password(new_password)
         if pic_path:
-            c.execute("UPDATE teachers SET name=?, mobile=?, email=?, address=?, password=?, picture=? WHERE id=?",
-                     (name, mobile, email, address, hashed, pic_path, teacher_id))
+            c.execute("UPDATE teachers SET name=?, mobile=?, email=?, address=?, status=?, password=?, picture=? WHERE id=?",
+                     (name, mobile, email, address, status, hashed, pic_path, teacher_id))
         else:
-            c.execute("UPDATE teachers SET name=?, mobile=?, email=?, address=?, password=? WHERE id=?",
-                     (name, mobile, email, address, hashed, teacher_id))
+            c.execute("UPDATE teachers SET name=?, mobile=?, email=?, address=?, status=?, password=? WHERE id=?",
+                     (name, mobile, email, address, status, hashed, teacher_id))
     else:
         if pic_path:
-            c.execute("UPDATE teachers SET name=?, mobile=?, email=?, address=?, picture=? WHERE id=?",
-                     (name, mobile, email, address, pic_path, teacher_id))
+            c.execute("UPDATE teachers SET name=?, mobile=?, email=?, address=?, status=?, picture=? WHERE id=?",
+                     (name, mobile, email, address, status, pic_path, teacher_id))
         else:
-            c.execute("UPDATE teachers SET name=?, mobile=?, email=?, address=? WHERE id=?",
-                     (name, mobile, email, address, teacher_id))
+            c.execute("UPDATE teachers SET name=?, mobile=?, email=?, address=?, status=? WHERE id=?",
+                     (name, mobile, email, address, status, teacher_id))
     conn.commit()
     conn.close()
-    return jsonify({'status': 'success', 'message': 'Teacher updated'})
+    return jsonify({'status': 'success', 'message': 'Teacher updated successfully'})
+
+@app.route('/admin/teacher/<int:teacher_id>/delete', methods=['POST', 'DELETE'])
+@admin_required
+def admin_delete_teacher(teacher_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM teacher_assignments WHERE teacher_id=?", (teacher_id,))
+    c.execute("DELETE FROM teachers WHERE id=?", (teacher_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success', 'message': 'Teacher removed successfully'})
 
 @app.route('/admin/teacher/upload_csv', methods=['POST'])
 @admin_required
@@ -6441,6 +9433,61 @@ def toggle_test_paper(paper_id):
     msg = f"Test Paper '{row['filename']}' is now {status_label}."
     return jsonify({'status': 'success', 'is_active': new_status, 'message': msg})
 
+@app.route('/api/test_papers/<int:paper_id>/delete', methods=['DELETE', 'POST'])
+def delete_test_paper(paper_id):
+    """Delete a CBT test paper and all its associated questions from the database."""
+    if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM test_papers WHERE id=?", (paper_id,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Test paper not found'}), 404
+    
+    paper = dict(row)
+    # Check teacher authorization
+    if session.get('teacher_logged_in') and not session.get('admin_logged_in'):
+        t_id = str(session.get('teacher_id'))
+        if str(paper.get('uploaded_by')) != t_id:
+            c.execute("SELECT 1 FROM teacher_assignments WHERE teacher_id=? AND class=? AND subject=?",
+                      (t_id, paper['class'], paper['subject']))
+            if not c.fetchone():
+                conn.close()
+                return jsonify({'status': 'error', 'message': 'Not authorized to delete this test paper'}), 403
+    
+    # Delete associated questions
+    c.execute("""DELETE FROM questions 
+                 WHERE (class=? OR class=?) 
+                   AND (LOWER(subject)=LOWER(?)) 
+                   AND (test_no=? OR chapter=?)""",
+              (paper['class'],
+               paper['class'].replace('th','').replace('st','').replace('nd','').replace('rd',''),
+               paper['subject'], paper['test_no'], paper['test_no']))
+    del_questions = c.rowcount
+
+    # Delete test paper entry
+    c.execute("DELETE FROM test_papers WHERE id=?", (paper_id,))
+    
+    # Also clean up from mcq_test_history and test_generation_history
+    c.execute("""DELETE FROM mcq_test_history WHERE class=? AND LOWER(subject)=LOWER(?) AND test_no=?""",
+              (paper['class'], paper['subject'], paper['test_no']))
+    c.execute("""DELETE FROM test_generation_history WHERE class=? AND LOWER(subject)=LOWER(?) AND test_no=?""",
+              (paper['class'], paper['subject'], paper['test_no']))
+    
+    conn.commit()
+    conn.close()
+    
+    u_type = 'teacher' if session.get('teacher_logged_in') else 'admin'
+    u_id = session.get('teacher_id') if session.get('teacher_logged_in') else 0
+    log_audit_event(u_type, u_id, 'CBT_PAPER_DELETE', 'test_papers', paper_id, request.remote_addr)
+
+    return jsonify({
+        'status': 'success',
+        'message': f"Test Paper '{paper.get('filename')}' and {del_questions} CBT questions deleted successfully."
+    })
+
 @app.route('/api/test_papers/<int:paper_id>/pdf')
 def test_paper_pdf(paper_id):
     if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
@@ -6587,7 +9634,7 @@ def teacher_monitoring_data():
 
     placeholders = ','.join(['?'] * len(classes))
     c.execute(f"""SELECT s.student_id, s.name, s.class, s.subject, s.section, s.picture,
-                         s.status, s.exam_started_at,
+                         s.status, s.exam_started_at, s.current_section,
                          (SELECT COUNT(*) FROM responses r WHERE r.student_id=s.student_id) as answered
                   FROM students s
                   WHERE s.class IN ({placeholders})
@@ -6697,15 +9744,44 @@ def generate_class_report():
 
     students = list(student_map.values())
 
+    # ── AB MARKING: Determine if the selected test window has expired ──────────
+    # AB = student never submitted any result for this specific test AND the
+    # scheduled exam window has definitively closed. Only applies when a specific
+    # test_no is requested (not "All Tests").
+    test_no = data.get('test_no', '').strip()
+    is_test_window_expired = False
+    if test_no and subject:
+        c.execute("""
+            SELECT status, end_time FROM scheduled_tests
+            WHERE test_no=? AND (class=? OR class=? OR class LIKE ?)
+              AND LOWER(subject)=LOWER(?) AND status != 'cancelled'
+            ORDER BY CASE WHEN status='expired' THEN 0
+                          WHEN status='active'  THEN 1
+                          ELSE 2 END, id DESC LIMIT 1""",
+            (test_no, class_, clean_cls, f"%{clean_cls}%", subject))
+        _sch = c.fetchone()
+        if _sch:
+            if _sch['status'] == 'expired':
+                is_test_window_expired = True
+            elif _sch['status'] == 'active' and _sch['end_time']:
+                # Edge case: status not yet updated but end_time has passed
+                try:
+                    _end_dt = datetime.datetime.fromisoformat(
+                        str(_sch['end_time']).replace('T', ' '))
+                    if _end_dt < datetime.datetime.now():
+                        is_test_window_expired = True
+                except Exception:
+                    pass
+    # ── END AB MARKING SETUP ──────────────────────────────────────────────────
+
     report_data = []
     for st in students:
-        result_query  = """SELECT subject, chapter, score, total_questions, percentage, test_date
+        result_query  = """SELECT subject, chapter, score, total_questions, percentage, test_date, section_breakdown
                            FROM results WHERE student_id=?"""
         result_params = [st['student_id']]
         if subject:
             result_query += " AND (LOWER(subject)=LOWER(?) OR subject LIKE ?)"
             result_params.extend([subject, f"%{subject}%"])
-        test_no = data.get('test_no', '').strip()
         if test_no:
             result_query += " AND (chapter=? OR chapter LIKE ?)"
             result_params.extend([test_no, f"%{test_no}%"])
@@ -6718,6 +9794,17 @@ def generate_class_report():
         result_query += " ORDER BY test_date DESC"
         c.execute(result_query, result_params)
         results    = [dict(r) for r in c.fetchall()]
+        for r in results:
+            bd = r.get('section_breakdown')
+            if bd and isinstance(bd, str):
+                try:
+                    r['parsed_breakdown'] = json.loads(bd)
+                except Exception:
+                    r['parsed_breakdown'] = []
+            elif isinstance(bd, list):
+                r['parsed_breakdown'] = bd
+            else:
+                r['parsed_breakdown'] = []
         total_score      = sum(r['score'] or 0 for r in results)
         total_possible   = sum(r['total_questions'] or 0 for r in results)
         avg_pct          = round(sum(r['percentage'] or 0 for r in results) / len(results), 1) if results else 0
@@ -6726,7 +9813,16 @@ def generate_class_report():
         st['total_tests']    = len(results)
         st['total_score']    = total_score
         st['total_possible'] = total_possible
-        st['score_ratio']    = f"{total_score}/{total_possible}" if total_possible else '0/0'
+        # ── AB MARKING: never-attempted student for an expired test ──────────
+        if len(results) == 0 and is_test_window_expired:
+            st['score_ratio'] = 'AB'
+            st['is_ab']       = True
+        elif total_possible:
+            st['score_ratio'] = f"{total_score}/{total_possible}"
+            st['is_ab']       = False
+        else:
+            st['score_ratio'] = '0/0'
+            st['is_ab']       = False
         report_data.append(st)
 
     school_name = get_setting('school_name', 'RRB Group of Schools')
@@ -6756,7 +9852,7 @@ def generate_class_report():
         ws['A1'].alignment = openpyxl.styles.Alignment(horizontal='center')
 
         ws.merge_cells('A2:H2')
-        ws['A2'] = f"Class: {class_}{section}  |  Subject: {subject or 'All'}  |  Generated: {datetime.datetime.now().strftime('%d-%m-%Y')}"
+        ws['A2'] = f"Class: {class_}{section}  |  Subject: {subject or 'All'}  |  Test No: {test_no or 'All'}  |  Generated: {datetime.datetime.now().strftime('%d-%m-%Y')}"
         ws['A2'].font = openpyxl.styles.Font(bold=True, size=12)
         ws['A2'].alignment = openpyxl.styles.Alignment(horizontal='center')
         ws.append([])
@@ -6770,9 +9866,16 @@ def generate_class_report():
             cell.alignment = openpyxl.styles.Alignment(horizontal='center')
 
         for i, st in enumerate(report_data, 1):
+            row_num = i + 4  # header is rows 1-4
             ws.append([i, st.get('admission_no') or st.get('student_id') or '', st['name'], st['class'],
                        st.get('section') or '', st.get('house') or '',
                        st['total_tests'], st.get('score_ratio', '0/0')])
+            # Color AB score cell red/orange so it stands out in Excel
+            if st.get('is_ab'):
+                score_cell = ws.cell(row=row_num, column=8)
+                score_cell.font = openpyxl.styles.Font(bold=True, color='FFFFFF')
+                score_cell.fill = openpyxl.styles.PatternFill(start_color='c0392b', end_color='c0392b', fill_type='solid')
+                score_cell.alignment = openpyxl.styles.Alignment(horizontal='center')
 
         for col in ws.columns:
             ws.column_dimensions[col[0].column_letter].width = max(len(str(col[0].value or '')), 12) + 2
@@ -6784,14 +9887,22 @@ def generate_class_report():
     else:  # PDF / Printable Preview
         rows_html = ''
         for i, st in enumerate(report_data, 1):
+            _is_ab = st.get('is_ab', False)
+            _score_html = (
+                '<strong style="color:#c0392b;background:#fde8e8;padding:2px 8px;border-radius:4px;">AB</strong>'
+                if _is_ab
+                else f'<strong>{st.get("score_ratio", "0/0")}</strong>'
+            )
+            _adm_no = st.get('admission_no') or st.get('student_id') or '—'
+            _house = st.get('house') or '—'
             rows_html += f"""<tr>
                 <td>{i}</td>
-                <td>{st.get('admission_no') or st.get('student_id') or '—'}</td>
+                <td>{_adm_no}</td>
                 <td><strong>{st['name']}</strong></td>
                 <td>{st['class']}{st.get('section') or ''}</td>
-                <td>{st.get('house') or '—'}</td>
+                <td>{_house}</td>
                 <td>{st['total_tests']}</td>
-                <td><strong>{st.get('score_ratio', '0/0')}</strong></td>
+                <td>{_score_html}</td>
             </tr>"""
 
         html = f"""<!DOCTYPE html><html><head>
@@ -6852,7 +9963,7 @@ def generate_class_report():
                 {rows_html}
             </tbody>
         </table>
-        <div class="footer">Generated by RRB CBT | Developed by Gaurav Shukla &amp; Team</div>
+        <div class="footer">Generated by RRB CBT | {get_site_config()['developer_credit']}</div>
         <script>
             window.addEventListener('load', function() {{
                 if (!window.location.search.includes('noprint')) {{
@@ -6962,6 +10073,7 @@ def admin_create_test():
     if request.method == 'POST':
         import urllib.request, json as json_lib
 
+        board     = request.form.get('board', 'CBSE').strip() or 'CBSE'
         class_    = request.form.get('class','').strip()
         section   = request.form.get('section','').strip()
         subject   = request.form.get('subject','').strip()
@@ -6993,14 +10105,16 @@ def admin_create_test():
                         if not parsed or not parsed['question']:
                             continue
                         c.execute("""INSERT INTO questions
-                                   (class,subject,chapter,test_no,question_type,question,
-                                    option_a,option_b,option_c,option_d,correct_answer)
+                                   (class, subject, chapter, test_no, question, option_a, option_b, option_c, option_d, correct_answer, board)
                                    VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-                                 (class_, subject, chapter, test_no, parsed['question_type'], parsed['question'],
-                                  parsed['option_a'], parsed['option_b'], parsed['option_c'], parsed['option_d'],
-                                  parsed['correct_answer']))
+                                 (class_, subject, chapter or test_no, test_no,
+                                  parsed['question'], parsed['option_a'], parsed['option_b'],
+                                  parsed['option_c'], parsed['option_d'], parsed['correct_answer'], board))
                         inserted_ids.append(c.lastrowid)
                 conn.commit()
+            except Exception as e:
+                conn.close()
+                return jsonify({'status':'error','message':f'Error parsing English CSV: {str(e)}'}), 400
             finally:
                 if os.path.exists(eng_filepath):
                     os.remove(eng_filepath)
@@ -7009,9 +10123,9 @@ def admin_create_test():
                 conn.close()
                 return jsonify({'status':'error','message':'No valid questions found in English CSV'}), 400
 
-            # 2. Process optional Hindi CSV & update corresponding Row IDs sequentially
+            # 2. Process optional Hindi CSV & update matching English questions via Row index
             hindi_updated = 0
-            if hindi_file and hindi_file.filename and hindi_file.filename.endswith('.csv'):
+            if hindi_file and hindi_file.filename.endswith('.csv'):
                 hin_filename = secure_filename(hindi_file.filename)
                 hin_filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"hin_{uuid.uuid4().hex[:8]}_{hin_filename}")
                 hindi_file.save(hin_filepath)
@@ -7019,19 +10133,18 @@ def admin_create_test():
                     with open(hin_filepath, 'r', encoding='utf-8-sig') as csvfile:
                         reader = csv.DictReader(csvfile)
                         for idx, row in enumerate(reader):
-                            if idx >= len(inserted_ids):
-                                break
-                            parsed_hi = parse_question_csv_row(row)
-                            if not parsed_hi:
-                                continue
-                            q_id = inserted_ids[idx]
-                            c.execute("""UPDATE questions
-                                         SET question_hi=?, option_a_hi=?, option_b_hi=?, option_c_hi=?, option_d_hi=?
-                                         WHERE id=?""",
-                                     (parsed_hi['question'], parsed_hi['option_a'], parsed_hi['option_b'],
-                                      parsed_hi['option_c'], parsed_hi['option_d'], q_id))
-                            hindi_updated += 1
+                            if idx < len(inserted_ids):
+                                parsed = parse_question_csv_row(row)
+                                if parsed and parsed['question']:
+                                    c.execute("""UPDATE questions SET
+                                               question_hi=?, option_a_hi=?, option_b_hi=?, option_c_hi=?, option_d_hi=?
+                                               WHERE id=?""",
+                                             (parsed['question'], parsed['option_a'], parsed['option_b'],
+                                              parsed['option_c'], parsed['option_d'], inserted_ids[idx]))
+                                    hindi_updated += 1
                     conn.commit()
+                except Exception as e:
+                    app.logger.warning(f"Error parsing Hindi CSV: {str(e)}")
                 finally:
                     if os.path.exists(hin_filepath):
                         os.remove(hin_filepath)
@@ -7049,10 +10162,10 @@ def admin_create_test():
             c.execute("""INSERT INTO test_generation_history
                          (teacher_id,class,section,subject,chapter,test_no,output_mode,
                           total_questions,mcq_count,assertion_count,very_short_count,
-                          short_count,long_count,case_study_count,remark)
-                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                          short_count,long_count,case_study_count,remark,board)
+                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                       (uploader_id, class_, section, subject, chapter or test_no, test_no, output_mode,
-                       len(inserted_ids), len(inserted_ids), 0, 0, 0, 0, 0, remark or 'CSV Upload'))
+                       len(inserted_ids), len(inserted_ids), 0, 0, 0, 0, 0, remark or 'CSV Upload', board))
 
             c.execute("""INSERT INTO mcq_test_history (teacher_id, teacher_name, class, section, subject, test_no, question_count)
                          VALUES (?,?,?,?,?,?,?)""",
@@ -7060,10 +10173,10 @@ def admin_create_test():
 
             if output_mode in ('cbt', 'both'):
                 c.execute("""INSERT INTO test_papers
-                             (filename,class,section,subject,test_no,uploaded_by,uploader_type,question_count,is_active)
-                             VALUES (?,?,?,?,?,?,?,?,1)""",
+                             (filename,class,section,subject,test_no,uploaded_by,uploader_type,question_count,is_active,board)
+                             VALUES (?,?,?,?,?,?,?,?,1,?)""",
                           (f"{class_}{section}_{subject}_{test_no}", class_, section, subject, test_no,
-                           uploader_id, uploader_type, len(inserted_ids)))
+                           uploader_id, uploader_type, len(inserted_ids), board))
 
             conn.commit()
             conn.close()
@@ -7075,110 +10188,70 @@ def admin_create_test():
         mcq_count       = int(request.form.get('mcq_count', 0) or 0)
         assertion_count = int(request.form.get('assertion_count', 0) or 0)
 
-        type_instructions = []
-        if mcq_count:       type_instructions.append(f"{mcq_count} MCQ")
-        if assertion_count: type_instructions.append(f"{assertion_count} Assertion-Reason")
+        type_counts = []
+        if mcq_count:       type_counts.append(('MCQ', mcq_count))
+        if assertion_count: type_counts.append(('Assertion-Reason', assertion_count))
 
-        if not type_instructions:
+        if not type_counts:
             conn.close()
             return jsonify({'status':'error','message':'Enter at least 1 question quantity'}), 400
 
-        # ── AI generation ──
-        gemini_api_key = _get_gemini_key()
-        if not gemini_api_key:
-            conn.close()
-            return jsonify({'status':'error','message':'GEMINI_API_KEY not set'}), 500
+        # Check duplicate test_no upfront to avoid waiting on AI generation
+        if output_mode in ('cbt', 'both'):
+            c.execute("SELECT COUNT(*) as cnt FROM questions WHERE class=? AND subject=? AND test_no=?",
+                     (class_, subject, test_no))
+            if c.fetchone()['cnt'] > 0:
+                conn.close()
+                return jsonify({'status':'error',
+                                'message':f'Test No "{test_no}" already exists for {subject} Class {class_}. Use a different Test No.'}), 400
 
-        # Detect a working model or fallback
-        model_name = get_working_model(gemini_api_key) or 'gemini-3.5-flash-lite'
-        app.logger.info(f"Using Gemini model: {model_name}")
-
-        ai_prompt = _build_ai_prompt(class_, section, subject, chapter, test_no, remark, type_instructions)
-
+        # ── AI generation (batched to prevent token truncation) ──
         try:
-            result, provider, err_msg = generate_ai_content(ai_prompt, timeout=60)
-            if not result:
-                return jsonify({'status':'error','message': err_msg}), 500
+            questions, gen_err = generate_cbt_questions_in_batches(
+                class_, section, subject, chapter, test_no, remark,
+                type_counts=type_counts, board=board, max_batch_size=10
+            )
+            if not questions:
+                conn.close()
+                return jsonify({'status':'error','message': gen_err or 'Failed to generate questions'}), 500
 
-            raw_text = result['candidates'][0]['content']['parts'][0]['text'].strip()
-            app.logger.info(f"Raw AI response length: {len(raw_text)}")
-            app.logger.debug(f"Raw AI response (first 1000 chars): {raw_text[:1000]}")
-            if '```' in raw_text:
-                for part in raw_text.split('```'):
-                    part = part.strip()
-                    if part.startswith('json'): part = part[4:].strip()
-                    if part.startswith('['): raw_text = part; break
-
-            questions = safe_json_loads(raw_text)
-            if questions is None:
-                app.logger.error(f"AI response invalid. Full response (first 2000 chars): {raw_text[:2000]}")
-                # Also store the response in session for debugging (optional)
-                return jsonify({
-                    'status': 'error',
-                    'message': 'AI returned invalid JSON. Please try again with a simpler prompt. '
-                            'Check the server logs for the full AI response.'
-                }), 500
-            
             c.execute("""INSERT INTO test_generation_history
                          (teacher_id,class,section,subject,chapter,test_no,output_mode,
                           total_questions,mcq_count,assertion_count,very_short_count,
-                          short_count,long_count,case_study_count,remark)
-                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                          short_count,long_count,case_study_count,remark,board)
+                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                       ('admin',class_,section,subject,chapter,test_no,output_mode,
-                       len(questions),mcq_count,assertion_count,0,0,0,0,remark))
+                       len(questions),mcq_count,assertion_count,0,0,0,0,remark,board))
             c.execute("""INSERT INTO mcq_test_history (teacher_id, teacher_name, class, section, subject, test_no, question_count)
                          VALUES (0, 'Admin', ?, ?, ?, ?, ?)""",
                       (class_, section, subject, test_no, len(questions)))
-            
-            if output_mode == 'cbt':
-                c.execute("SELECT COUNT(*) as cnt FROM questions WHERE class=? AND subject=? AND test_no=?",
-                         (class_, subject, test_no))
-                if c.fetchone()['cnt'] > 0:
-                    conn.close()
-                    return jsonify({'status':'error',
-                                    'message':f'Test No "{test_no}" already exists for {subject} Class {class_}. Use a different Test No.'}), 400
+
+            if output_mode in ('cbt', 'both'):
                 inserted = 0
                 for q in questions:
                     if q.get('question_type','MCQ') in ('MCQ','Assertion-Reason'):
-                        img_path = None
-                        smiles_val = q.get('smiles', '') or q.get('compound_name', '') or ''
-                        if smiles_val:
-                            img_path = f'__smiles__{smiles_val}'
-                        elif q.get('image_prompt') or q.get('image_keywords'):
-                            kws = q.get('image_keywords') or [q.get('image_prompt', '')]
-                            matched_img = image_handler.find_from_bank(kws)
-                            if not matched_img:
-                                matched_img = image_handler.fetch_and_save_wikimedia_diagram(kws, topic=chapter, class_=class_, subject=subject)
-                            if matched_img:
-                                img_path = matched_img.replace('\\', '/')
+                        img_path = process_cbt_question_image(q, class_, section, subject, chapter)
 
                         c.execute("""INSERT INTO questions
                                    (class,subject,chapter,test_no,question_type,question,question_hi,
                                     option_a,option_a_hi,option_b,option_b_hi,option_c,option_c_hi,
-                                    option_d,option_d_hi,correct_answer,image_path)
-                                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                                    option_d,option_d_hi,correct_answer,image_path,board)
+                                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                                  (class_,subject,chapter,test_no,q.get('question_type','MCQ'),
                                   q.get('question',''),q.get('question_hi',''),
                                   q.get('option_a',''),q.get('option_a_hi',''),
                                   q.get('option_b',''),q.get('option_b_hi',''),
                                   q.get('option_c',''),q.get('option_c_hi',''),
                                   q.get('option_d',''),q.get('option_d_hi',''),
-                                  q.get('correct_answer',''),img_path))
+                                  q.get('correct_answer',''),img_path,board))
                         inserted += 1
                 c.execute("""INSERT INTO test_papers
-                             (filename,class,section,subject,test_no,uploaded_by,uploader_type,question_count,is_active)
-                             VALUES (?,?,?,?,?,?,?,?,1)""",
-                         (f"{class_}{section}_{subject}_{test_no}",class_,section,subject,test_no,
-                          'admin','admin',inserted))
+                             (filename,class,section,subject,test_no,uploaded_by,uploader_type,question_count,is_active,board)
+                             VALUES (?,?,?,?,?,?,?,?,1,?)""",
+                          (f"{class_}{section}_{subject}_{test_no}",class_,section,subject,test_no,
+                           'admin','admin',inserted,board))
                 conn.commit()
 
-            c.execute("""INSERT INTO test_generation_history
-                         (teacher_id,class,section,subject,chapter,test_no,output_mode,
-                          total_questions,mcq_count,assertion_count,very_short_count,
-                          short_count,long_count,case_study_count,remark)
-                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                     ('admin',class_,section,subject,chapter,test_no,output_mode,
-                      len(questions),mcq_count,assertion_count,0,0,0,0,remark))
             conn.commit()
             history_id = c.lastrowid
             conn.close()
@@ -7199,7 +10272,9 @@ def admin_create_test():
             return jsonify({'status':'error','message':str(e)}), 500
 
     conn.close()
-    return render_template('admin_create_test.html', all_pairs=all_pairs)
+    category = request.args.get('category', '').strip()
+    is_coding = (category == 'coding_test')
+    return render_template('admin_create_test.html', all_pairs=all_pairs, category=category, is_coding=is_coding)
 
 def teacher_has_access(teacher_id, class_name, subject_name):
     """
@@ -7592,7 +10667,7 @@ def test_gen_print_preview(hid):
                            questions=questions,
                            date=datetime.datetime.now().strftime('%d/%m/%Y'))
 
-# ── ADMIN TEST GENERATION (Feature #8) ───────────────────────────────────────
+# ── TEACHER TEST GENERATION (v2) ───────────────────────────────────────
 
 @app.route('/teacher/create_test_v2', methods=['GET', 'POST'])
 @teacher_required
@@ -7607,6 +10682,7 @@ def teacher_create_test_v2():
     if request.method == 'POST':
         import urllib.request, json as json_lib
 
+        board    = request.form.get('board', 'CBSE').strip() or 'CBSE'
         class_   = request.form.get('class','').strip()
         section  = request.form.get('section','').strip()
         subject  = request.form.get('subject','').strip()
@@ -7645,11 +10721,11 @@ def teacher_create_test_v2():
                             continue
                         c.execute("""INSERT INTO questions
                                    (class,subject,chapter,test_no,question_type,question,
-                                    option_a,option_b,option_c,option_d,correct_answer)
-                                   VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                                    option_a,option_b,option_c,option_d,correct_answer,board)
+                                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
                                  (class_, subject, chapter, test_no, parsed.get('question_type','MCQ'), parsed['question'],
                                   parsed['option_a'], parsed['option_b'], parsed['option_c'], parsed['option_d'],
-                                  parsed['correct_answer']))
+                                  parsed['correct_answer'], board))
                         inserted_ids.append(c.lastrowid)
                 conn.commit()
             finally:
@@ -7698,10 +10774,10 @@ def teacher_create_test_v2():
             c.execute("""INSERT INTO test_generation_history
                          (teacher_id,class,section,subject,chapter,test_no,output_mode,
                           total_questions,mcq_count,assertion_count,very_short_count,
-                          short_count,long_count,case_study_count,remark)
-                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                          short_count,long_count,case_study_count,remark,board)
+                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                       (uploader_id, class_, section, subject, chapter or test_no, test_no, output_mode,
-                       len(inserted_ids), len(inserted_ids), 0, 0, 0, 0, 0, remark or 'CSV Upload'))
+                       len(inserted_ids), len(inserted_ids), 0, 0, 0, 0, 0, remark or 'CSV Upload', board))
 
             c.execute("""INSERT INTO mcq_test_history (teacher_id, teacher_name, class, section, subject, test_no, question_count)
                          VALUES (?,?,?,?,?,?,?)""",
@@ -7709,10 +10785,10 @@ def teacher_create_test_v2():
 
             if output_mode in ('cbt', 'both'):
                 c.execute("""INSERT INTO test_papers
-                             (filename,class,section,subject,test_no,uploaded_by,uploader_type,question_count,is_active)
-                             VALUES (?,?,?,?,?,?,?,?,1)""",
+                             (filename,class,section,subject,test_no,uploaded_by,uploader_type,question_count,is_active,board)
+                             VALUES (?,?,?,?,?,?,?,?,1,?)""",
                           (f"{class_}{section}_{subject}_{test_no}", class_, section, subject, test_no,
-                           uploader_id, uploader_type, len(inserted_ids)))
+                           uploader_id, uploader_type, len(inserted_ids), board))
 
             conn.commit()
             conn.close()
@@ -7723,108 +10799,81 @@ def teacher_create_test_v2():
             return jsonify({'status':'success','message': msg})
 
         # ── AI generation ──
-        gemini_api_key = _get_gemini_key()
-        if not gemini_api_key:
-            conn.close()
-            return jsonify({'status':'error','message':'GEMINI_API_KEY not set'}), 500
+        type_counts = []
+        if mcq_count:        type_counts.append(('MCQ (4 options)', mcq_count))
+        if assertion_count:  type_counts.append(('Assertion-Reason', assertion_count))
+        if very_short_count: type_counts.append(('Very Short Answer (1 Mark)', very_short_count))
+        if short_count:      type_counts.append(('Short Answer (3 Marks)', short_count))
+        if long_count:       type_counts.append(('Long Answer (5 Marks)', long_count))
+        if case_study_count: type_counts.append(('Case Study (4 Marks)', case_study_count))
 
-        model_name = get_working_model(gemini_api_key) or 'gemini-3.5-flash-lite'
-        app.logger.info(f"Using Gemini model: {model_name}")
-
-        type_instructions = []
-        if mcq_count:        type_instructions.append(f"{mcq_count} MCQ (4 options)")
-        if assertion_count:  type_instructions.append(f"{assertion_count} Assertion-Reason")
-        if very_short_count: type_instructions.append(f"{very_short_count} Very Short Answer (1 Mark)")
-        if short_count:      type_instructions.append(f"{short_count} Short Answer (3 Marks)")
-        if long_count:       type_instructions.append(f"{long_count} Long Answer (5 Marks)")
-        if case_study_count: type_instructions.append(f"{case_study_count} Case Study (4 Marks)")
-
-        if not type_instructions:
+        if not type_counts:
             conn.close()
             return jsonify({'status':'error','message':'Enter at least 1 question quantity'}), 400
 
-        ai_prompt = _build_ai_prompt(class_, section, subject, chapter, test_no, remark, type_instructions)
-
-        try:
-            result, provider, err_msg = generate_ai_content(ai_prompt, timeout=60)
-            if not result:
-                return jsonify({'status':'error','message': err_msg}), 500
-
-            raw_text = result['candidates'][0]['content']['parts'][0]['text'].strip()
-            app.logger.info(f"Raw AI response length: {len(raw_text)}")
-            app.logger.debug(f"Raw AI response (first 1000 chars): {raw_text[:1000]}")
-            if '```' in raw_text:
-                for part in raw_text.split('```'):
-                    part = part.strip()
-                    if part.startswith('json'): part = part[4:].strip()
-                    if part.startswith('['): raw_text = part; break
-
-            questions = safe_json_loads(raw_text)
-            if questions is None:
-                app.logger.error(f"AI response invalid. Full response (first 2000 chars): {raw_text[:2000]}")
+        # Check duplicate test_no upfront to avoid waiting on AI generation
+        if output_mode in ('cbt', 'both'):
+            c.execute("""SELECT COUNT(*) as cnt FROM questions
+                         WHERE class=? AND subject=? AND test_no=?""",
+                     (class_, subject, test_no))
+            if c.fetchone()['cnt'] > 0:
+                conn.close()
                 return jsonify({
                     'status': 'error',
-                    'message': 'AI returned invalid JSON. Please try again with a simpler prompt.'
-                }), 500
+                    'message': f'Test No "{test_no}" already has questions for {subject} Class {class_}. Use a different Test No.'
+                }), 400
+
+        # ── AI generation (batched to prevent token truncation) ──
+        try:
+            questions, gen_err = generate_cbt_questions_in_batches(
+                class_, section, subject, chapter, test_no, remark,
+                type_counts=type_counts, board=board, max_batch_size=10
+            )
+            if not questions:
+                conn.close()
+                return jsonify({'status':'error','message': gen_err or 'Failed to generate questions'}), 500
 
             if output_mode in ('cbt', 'both'):
-                c.execute("""SELECT COUNT(*) as cnt FROM questions
-                             WHERE class=? AND subject=? AND test_no=?""",
-                         (class_, subject, test_no))
-                if c.fetchone()['cnt'] > 0:
-                    conn.close()
-                    return jsonify({
-                        'status': 'error',
-                        'message': f'Test No "{test_no}" already has questions for {subject} Class {class_}. Use a different Test No.'
-                    }), 400
-
                 inserted = 0
                 for q in questions:
                     if q.get('question_type','MCQ') in ('MCQ','Assertion-Reason'):
-                        img_path = None
-                        smiles_val = q.get('smiles', '') or q.get('compound_name', '') or ''
-                        if smiles_val:
-                            img_path = f'__smiles__{smiles_val}'
-                        elif q.get('image_prompt') or q.get('image_keywords'):
-                            kws = q.get('image_keywords') or [q.get('image_prompt', '')]
-                            matched_img = image_handler.find_from_bank(kws)
-                            if not matched_img:
-                                matched_img = image_handler.fetch_and_save_wikimedia_diagram(kws, topic=chapter, class_=class_, subject=subject)
-                            if matched_img:
-                                img_path = matched_img.replace('\\', '/')
+                        img_path = process_cbt_question_image(q, class_, section, subject, chapter)
 
                         c.execute("""INSERT INTO questions
                                    (class,subject,chapter,test_no,question_type,question,question_hi,
                                     option_a,option_a_hi,option_b,option_b_hi,option_c,option_c_hi,
-                                    option_d,option_d_hi,correct_answer,image_path)
-                                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                                    option_d,option_d_hi,correct_answer,image_path,board)
+                                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                                  (class_,subject,chapter,test_no,
                                   q.get('question_type','MCQ'),q.get('question',''),q.get('question_hi',''),
                                   q.get('option_a',''),q.get('option_a_hi',''),
                                   q.get('option_b',''),q.get('option_b_hi',''),
                                   q.get('option_c',''),q.get('option_c_hi',''),
                                   q.get('option_d',''),q.get('option_d_hi',''),
-                                  q.get('correct_answer',''),img_path))
+                                  q.get('correct_answer',''),img_path,board))
                         inserted += 1
                 c.execute("""INSERT INTO test_papers
-                             (filename,class,section,subject,test_no,uploaded_by,uploader_type,question_count,is_active)
-                             VALUES (?,?,?,?,?,?,?,?,1)""",
-                         (f"{class_}{section}_{subject}_{test_no}",class_,section,subject,test_no,
-                          str(teacher_id),'teacher',inserted))
+                             (filename,class,section,subject,test_no,uploaded_by,uploader_type,question_count,is_active,board)
+                             VALUES (?,?,?,?,?,?,?,?,1,?)""",
+                          (f"{class_}{section}_{subject}_{test_no}",class_,section,subject,test_no,
+                           str(teacher_id),'teacher',inserted,board))
                 conn.commit()
 
             c.execute("""INSERT INTO test_generation_history
                          (teacher_id,class,section,subject,chapter,test_no,output_mode,
                           total_questions,mcq_count,assertion_count,very_short_count,
-                          short_count,long_count,case_study_count,remark)
-                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                     (str(teacher_id),class_,section,subject,chapter,test_no,output_mode,
-                      len(questions),mcq_count,assertion_count,very_short_count,
-                      short_count,long_count,case_study_count,remark))
+                          short_count,long_count,case_study_count,remark,board)
+                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                      (str(teacher_id),class_,section,subject,chapter,test_no,output_mode,
+                       len(questions),mcq_count,assertion_count,very_short_count,
+                       short_count,long_count,case_study_count,remark,board))
+            teacher_name = session.get('teacher_name') or 'Teacher'
+            c.execute("""INSERT INTO mcq_test_history (teacher_id, teacher_name, class, section, subject, test_no, question_count)
+                         VALUES (?,?,?,?,?,?,?)""",
+                      (teacher_id or 0, teacher_name, class_, section, subject, test_no, len(questions)))
             conn.commit()
             history_id = c.lastrowid
             conn.close()
-
 
             if output_mode == 'print':
                 return jsonify({'status':'success','mode':'print',
@@ -7840,7 +10889,7 @@ def teacher_create_test_v2():
             app.logger.error(f"Gemini HTTP error: {err_body}")
             return jsonify({'status':'error','message':f'Gemini API error: {e.code} - {err_body[:200]}'}), 500
         except Exception as e:
-            app.logger.error(f"Gemini exception: {str(e)}")
+            app.logger.error(f"Teacher test generation exception: {str(e)}")
             return jsonify({'status':'error','message':str(e)}), 500
 
     conn.close()
@@ -7882,11 +10931,15 @@ def teacher_create_test_v2():
     history = [dict(r) for r in c.fetchall()]
     conn.close()
 
+    category = request.args.get('category', '').strip()
+    is_coding = (category == 'coding_test')
     return render_template('teacher_create_test_v2.html',
                            assignments=assignments,
                            class_subject_map=class_subject_map,
                            class_section_subject_map=class_section_subject_map,
-                           history=history)
+                           history=history,
+                           category=category,
+                           is_coding=is_coding)
 @app.route('/admin/test_history')
 @admin_required
 def admin_test_history():
@@ -7899,13 +10952,14 @@ def admin_test_history():
 
 # ── SHARED AI PROMPT BUILDER ──────────────────────────────────────────────────
 
-def _build_ai_prompt(class_, section, subject, chapter, test_no, remark, type_instructions):
+def _build_ai_prompt(class_, section, subject, chapter, test_no, remark, type_instructions, board='CBSE'):
+    board_str = (board or 'CBSE').strip()
     subj_lower = (subject or '').strip().lower()
     is_hindi = any(h in subj_lower for h in ['hindi', 'हिन्दी', 'हिंदी'])
     is_english = any(e in subj_lower for e in ['english', 'अंग्रेजी', 'अंग्रेज़ी'])
 
     if is_hindi:
-        persona = "You are an expert CBSE/ICSE Hindi Subject Teacher and question paper generator."
+        persona = f"You are an expert {board_str} Hindi Subject Teacher and question paper generator."
         lang_rule = """- STRICT HINDI LANGUAGE RULE (MANDATORY):
   * The subject is HINDI. Therefore, you MUST generate ALL questions, options, and explanations in pure HINDI language ONLY (Devanagari script, e.g. "निम्नलिखित में से कौन सा शब्द...", "(क) ...", "(ख) ...").
   * 'question' MUST be in Hindi. 'question_hi' must also contain the same Hindi question.
@@ -7913,20 +10967,26 @@ def _build_ai_prompt(class_, section, subject, chapter, test_no, remark, type_in
   * 'option_a_hi', 'option_b_hi', 'option_c_hi', 'option_d_hi' must contain the corresponding Hindi options.
   * DO NOT write questions or options in English under any circumstance."""
     elif is_english:
-        persona = "You are an expert CBSE/ICSE English Subject Teacher and question paper generator."
+        persona = f"You are an expert {board_str} English Subject Teacher and question paper generator."
         lang_rule = """- STRICT ENGLISH LANGUAGE RULE (MANDATORY):
   * The subject is ENGLISH. Generate ALL questions and options strictly in ENGLISH language.
   * DO NOT convert, translate, or output questions/options in Hindi.
   * Set 'question_hi', 'option_a_hi', 'option_b_hi', 'option_c_hi', 'option_d_hi' to empty strings ""."""
+    elif is_language_subject(subject):
+        persona = f"You are an expert {board_str} {subject} Subject Teacher and question paper generator."
+        lang_rule = f"""- STRICT {subject.upper()} LANGUAGE RULE (MANDATORY):
+  * The subject is {subject} (a Language Subject). Generate ALL questions, options, and explanations strictly in {subject} language only.
+  * DO NOT convert, translate, or output questions/options in any other language.
+  * Set 'question_hi', 'option_a_hi', 'option_b_hi', 'option_c_hi', 'option_d_hi' to empty strings ""."""
     else:
-        persona = f"You are an expert CBSE/ICSE {subject} question paper generator."
+        persona = f"You are an expert {board_str} {subject} question paper generator following the official {board_str} syllabus."
         lang_rule = f"""- STRICT LANGUAGE RULE (MANDATORY):
   * Since the subject is {subject} (NOT Hindi), generate all primary questions and options ('question', 'option_a', 'option_b', 'option_c', 'option_d') strictly in ENGLISH.
   * DO NOT convert or translate the primary question/options into Hindi.
   * You may provide standard secondary translations strictly in the '_hi' fields ('question_hi', 'option_a_hi', 'option_b_hi', 'option_c_hi', 'option_d_hi') for student reference, but the primary question and option fields MUST remain in English."""
 
     return f"""{persona}
-Class: {class_}{section} | Subject: {subject} | Chapter: {chapter} | Test No: {test_no}
+Board: {board_str} | Class: {class_}{section} | Subject: {subject} | Chapter/Topics: {chapter} | Test No: {test_no}
 Teacher instructions: {remark if remark else 'Standard difficulty, balanced coverage'}
 
 Generate EXACTLY these question types:
@@ -7934,7 +10994,7 @@ Generate EXACTLY these question types:
 
 OUTPUT: Return ONLY a valid JSON array. No markdown. No text before or after.
 Every object must have ALL keys:
-question_type, content_type, question, question_hi, option_a, option_a_hi, option_b, option_b_hi, option_c, option_c_hi, option_d, option_d_hi, correct_answer, smiles, image_prompt, marks
+question_type, content_type, question, question_hi, option_a, option_a_hi, option_b, option_b_hi, option_c, option_c_hi, option_d, option_d_hi, correct_answer, smiles, circuit_type, image_prompt, image_keywords, marks
 
 RULES:
 {lang_rule}
@@ -7947,11 +11007,172 @@ RULES:
   e.g. "$\\\\ce{{Fe^{{2+}} + 2e- -> Fe}}$" for ionic equations
   For simple formulas use $\\\\ce{{H2O}}$, $\\\\ce{{H2SO4}}$, $\\\\ce{{Ca(OH)2}}$
   Set content_type="chemistry" for all chemistry questions.
-  For structural diagrams set smiles field (e.g. benzene="c1ccccc1", ethanol="CCO").
+- DIAGRAM / CIRCUIT / MOLECULE RULES:
+  * For electrical circuit questions (resistors, battery, switches, logic gates), provide 'circuit_type' (e.g. 'series_resistors', 'parallel_resistors', 'series_parallel', 'wheatstone', 'logic_gates') and descriptive 'image_prompt'.
+  * For chemical structures or organic chemistry, provide 'smiles' (e.g. benzene="c1ccccc1", ethanol="CCO", aspirin="CC(=O)Oc1ccccc1C(=O)O") or compound name.
+  * For biology, physics, or general science diagrams, set 'image_prompt' and short search terms in 'image_keywords' (e.g. ["human eye", "refraction of light", "plant cell", "electric motor"]).
 - NON-MCQ: set option_a/b/c/d="", option_a_hi/b_hi/c_hi/d_hi="" and correct_answer="N/A"
-- smiles="" and image_prompt="" when not needed.
+- Leave smiles="", circuit_type="", image_prompt="", image_keywords=[] when no diagram is needed.
 
 Return ONLY the JSON array starting with [ and ending with ]."""
+
+
+def generate_cbt_questions_in_batches(class_, section, subject, chapter, test_no, remark, type_counts, board='CBSE', max_batch_size=10):
+    """
+    Generates CBT questions in structured batches to avoid LLM token limits (e.g. Gemini 8192 / DeepSeek 4096).
+    Guarantees full question counts (e.g. 50 MCQs) without response truncation.
+    """
+    total_requested = sum(cnt for _, cnt in type_counts if cnt > 0)
+    if total_requested == 0:
+        return [], "No questions requested"
+
+    # If small request (<= 12), single batch is sufficient and fastest
+    if total_requested <= 12:
+        batches = [[(label, cnt) for label, cnt in type_counts if cnt > 0]]
+    else:
+        batches = []
+        for label, cnt in type_counts:
+            if cnt <= 0:
+                continue
+            rem = cnt
+            while rem > 0:
+                chunk = min(rem, max_batch_size)
+                batches.append([(label, chunk)])
+                rem -= chunk
+
+    all_questions = []
+    seen_stems = []
+    total_batches = len(batches)
+    last_batch_err = ""
+    app.logger.info(f"Generating {total_requested} questions across {total_batches} AI batches (class={class_}{section}, subject={subject}, chapter={chapter})")
+
+    for b_idx, batch_specs in enumerate(batches, start=1):
+        type_instructions = []
+        batch_q_count = 0
+        batch_label = ""
+        for label, cnt in batch_specs:
+            batch_q_count += cnt
+            batch_label = label
+            if label.startswith(f"{cnt} "):
+                type_instructions.append(label)
+            else:
+                type_instructions.append(f"{cnt} {label}")
+
+        batch_context = f"Batch {b_idx} of {total_batches}."
+        if total_batches > 1:
+            batch_context += f" Generate exactly {batch_q_count} unique questions."
+            if seen_stems:
+                exclusions = "\n".join(f"- {s}" for s in seen_stems[-15:])
+                batch_context += f" DO NOT repeat or duplicate any of these previously generated questions:\n{exclusions}"
+            batch_context += " Ensure diverse, balanced syllabus coverage across all subtopics of the chapter."
+
+        full_remark = f"{remark} | {batch_context}".strip(' |') if remark else batch_context
+        ai_prompt = _build_ai_prompt(
+            class_, section, subject, chapter, test_no,
+            remark=full_remark,
+            type_instructions=type_instructions,
+            board=board
+        )
+
+        parsed_batch = None
+        for attempt in range(3):
+            try:
+                result, provider, err_msg = generate_ai_content(ai_prompt, timeout=75)
+                if not result:
+                    last_batch_err = err_msg or "AI returned empty response"
+                    time.sleep(2 * (attempt + 1))
+                    continue
+
+                raw_text = result['candidates'][0]['content']['parts'][0]['text'].strip()
+                if raw_text.startswith('```'):
+                    first_line_end = raw_text.find('\n')
+                    if first_line_end != -1:
+                        raw_text = raw_text[first_line_end+1:].strip()
+                    else:
+                        raw_text = raw_text.lstrip('`').strip()
+                        if raw_text.startswith('json'):
+                            raw_text = raw_text[4:].strip()
+                if raw_text.endswith('```'):
+                    raw_text = raw_text[:-3].strip()
+
+                questions_sub = safe_json_loads(raw_text)
+                if questions_sub and isinstance(questions_sub, list) and len(questions_sub) > 0:
+                    parsed_batch = questions_sub
+                    break
+                else:
+                    last_batch_err = "Failed to parse JSON array from AI response"
+            except Exception as e:
+                last_batch_err = str(e)
+            time.sleep(2 * (attempt + 1))
+
+        if parsed_batch:
+            for q in parsed_batch:
+                if not isinstance(q, dict):
+                    continue
+                # Normalize question_type if missing
+                if not q.get('question_type'):
+                    q['question_type'] = 'Assertion-Reason' if 'assertion' in batch_label.lower() else 'MCQ'
+                # Normalize correct_answer
+                raw_ans = q.get('correct_answer', '')
+                letter = _normalize_correct_answer(raw_ans, q.get('option_a', ''), q.get('option_b', ''), q.get('option_c', ''), q.get('option_d', ''))
+                if letter in ('A', 'B', 'C', 'D'):
+                    q['correct_answer'] = f"option_{letter.lower()}"
+                q_stem = (q.get('question') or '').strip()
+                if q_stem:
+                    seen_stems.append(q_stem[:70])
+                all_questions.append(q)
+            app.logger.info(f"Batch {b_idx}/{total_batches} generated {len(parsed_batch)} questions (Total collected so far: {len(all_questions)})")
+        else:
+            app.logger.error(f"Batch {b_idx}/{total_batches} failed after 3 attempts: {last_batch_err}")
+
+        # Sleep briefly between batches to respect rate limits
+        if b_idx < total_batches:
+            time.sleep(1.2)
+
+    # Top-up deficit check if minor shortage occurred
+    deficit = total_requested - len(all_questions)
+    if 1 <= deficit <= 20 and all_questions:
+        app.logger.info(f"Topping up {deficit} missing questions...")
+        topup_instructions = [f"{deficit} MCQ (4 options)"]
+        exclusions = "\n".join(f"- {s}" for s in seen_stems[-15:])
+        topup_remark = f"{remark} | Top-up exactly {deficit} questions. DO NOT repeat:\n{exclusions}".strip(' |')
+        topup_prompt = _build_ai_prompt(class_, section, subject, chapter, test_no, topup_remark, topup_instructions, board=board)
+        for t_attempt in range(2):
+            try:
+                res, prov, err = generate_ai_content(topup_prompt, timeout=60)
+                if res:
+                    raw = res['candidates'][0]['content']['parts'][0]['text'].strip()
+                    if raw.startswith('```'):
+                        first_line_end = raw.find('\n')
+                        if first_line_end != -1:
+                            raw = raw[first_line_end+1:].strip()
+                        else:
+                            raw = raw.lstrip('`').strip()
+                            if raw.startswith('json'):
+                                raw = raw[4:].strip()
+                    if raw.endswith('```'):
+                        raw = raw[:-3].strip()
+                    topup_qs = safe_json_loads(raw)
+                    if topup_qs and isinstance(topup_qs, list):
+                        for q in topup_qs:
+                            if not isinstance(q, dict): continue
+                            if not q.get('question_type'): q['question_type'] = 'MCQ'
+                            letter = _normalize_correct_answer(q.get('correct_answer',''), q.get('option_a',''), q.get('option_b',''), q.get('option_c',''), q.get('option_d',''))
+                            if letter in ('A', 'B', 'C', 'D'): q['correct_answer'] = f"option_{letter.lower()}"
+                            all_questions.append(q)
+                        if len(all_questions) >= total_requested:
+                            break
+            except Exception as e:
+                app.logger.warning(f"Top-up call attempt {t_attempt+1} failed: {e}")
+            time.sleep(2)
+
+    if len(all_questions) > total_requested:
+        all_questions = all_questions[:total_requested]
+
+    if not all_questions:
+        return None, f"AI Generation Failed: {last_batch_err or 'No questions produced by AI'}"
+
+    return all_questions, None
 
 
 # ── REDIS + RQ (REDIS QUEUE) & THREAD FALLBACK QUEUE MANAGER ──────────────────
@@ -8461,7 +11682,7 @@ pre, code {{ font-family: 'Consolas', 'Courier New', monospace; }}
 </table>
 {sections_html}
 <div style='margin-top:30px;text-align:center;font-size:9pt;font-style:italic;color:#666;border-top:1px solid #ccc;padding-top:8px;'>
-    *** End of {paper_type} ***<br>Generated by RRB CBT &nbsp;·&nbsp; Developed by Gaurav Shukla &amp; Team
+    *** End of {paper_type} ***<br>Generated by RRB CBT &nbsp;&middot;&nbsp; {get_site_config()['developer_credit']}
 </div>
 </body>
 </html>"""
@@ -8686,6 +11907,11 @@ def descriptive_paper():
         subj_lower = (subject or '').strip().lower()
         is_hindi = any(h in subj_lower for h in ['hindi', 'हिन्दी', 'हिंदी'])
         is_english = any(e in subj_lower for e in ['english', 'अंग्रेजी', 'अंग्रेज़ी'])
+        is_math = any(m in subj_lower for m in ['math', 'maths', 'mathematics', 'statistics', 'calculus', 'algebra', 'geometry', 'trigonometry'])
+        is_accounts = any(a in subj_lower for a in ['account', 'accountancy', 'bookkeeping', 'commerce', 'economics', 'business studies', 'finance'])
+        is_chemistry = any(c in subj_lower for c in ['chemistry', 'biochemistry'])
+        is_physics = any(p in subj_lower for p in ['physics', 'physical science'])
+        is_programming = any(pr in subj_lower for pr in ['computer', 'java', 'python', 'programming', 'c++', 'sql', 'html', 'coding', 'information technology', 'it', 'computer science', 'computer application'])
 
         if is_hindi:
             lang_rule_paper = """- STRICT HINDI LANGUAGE DIRECTIVE (MANDATORY):
@@ -8693,6 +11919,9 @@ def descriptive_paper():
         elif is_english:
             lang_rule_paper = """- STRICT ENGLISH LANGUAGE DIRECTIVE (MANDATORY):
   * Since the subject is ENGLISH, the ENTIRE question paper MUST be generated in ENGLISH language only. DO NOT convert or translate into Hindi."""
+        elif is_language_subject(subject):
+            lang_rule_paper = f"""- STRICT {subject.upper()} LANGUAGE DIRECTIVE (MANDATORY):
+  * Since the subject is {subject} (a Language Subject), the ENTIRE question paper (all questions, options, sub_questions, section instructions, and passages) MUST be generated in {subject} language only. DO NOT convert or translate into Hindi or English."""
         else:
             lang_rule_paper = f"""- STRICT LANGUAGE DIRECTIVE (MANDATORY):
   * Since the subject is {subject} (NOT Hindi), generate the entire question paper strictly in ENGLISH (or the standard subject language). DO NOT convert or translate questions into Hindi."""
@@ -8736,11 +11965,23 @@ def descriptive_paper():
         if current_batch:
             batches.append(current_batch)
 
+        import math as _math
+
         def generate_single_batch(batch_specs, b_idx):
             lines = []
             for s in batch_specs:
                 m_str = f", {s['marks']} mark{'s' if s['marks'] > 1 else ''} each" if is_graded else ""
-                lines.append(f"• Section: {s['title']} — EXACTLY {s['count']} questions{m_str}.\n  Instruction: {s['instruction']}\n  Requirements: {s['detail']}")
+                orig_count = s['count']
+                # Generate 25% extra questions so the paper has choice (attempt any N out of N+extra)
+                # Only apply for non-MCQ/TF/FIB where choice makes sense (short, long, case study, VS, AR)
+                choice_types = ('vs', 'sh', 'lg', 'cs', 'ar')
+                if s.get('type') in choice_types and orig_count >= 2:
+                    extra_count = _math.ceil(orig_count * 1.25)
+                    choice_note = f" (Generate EXACTLY {extra_count} questions; students will attempt any {orig_count} out of {extra_count})"
+                else:
+                    extra_count = orig_count
+                    choice_note = ""
+                lines.append(f"• Section: {s['title']} — EXACTLY {extra_count} questions{m_str}.{choice_note}\n  Instruction: {s['instruction']}{(' Attempt any ' + str(orig_count) + ' out of ' + str(extra_count) + '.') if extra_count > orig_count else ''}\n  Requirements: {s['detail']}")
 
             batch_prompt = f"""You are an expert {board} question paper setter.
 Generate ONLY the following specific section(s) of a {paper_type.lower()} strictly adhering to the LATEST 2024-25 / 2025-26 rationalized curriculum.
@@ -8760,10 +12001,10 @@ TEACHER INSTRUCTIONS / REMARKS:
 {remarks if remarks else f'Standard board difficulty. High quality questions. Follow latest {board} pattern.'}
 {image_context}
 
-FORMATTING DIRECTIVES FOR PHYSICS, CHEMISTRY & PROGRAMMING (STRICT COMPLIANCE):
-1. PHYSICS:
+SUBJECT-SPECIFIC FORMATTING DIRECTIVES (STRICT COMPLIANCE — apply whichever is relevant):
+1. PHYSICS / SCIENCE:
    - For all formulas, equations, units, and mathematical symbols: ALWAYS use LaTeX math delimiters \\( ... \\).
-   - Display equations: \\[ ... \\].
+   - Display equations (standalone on their own line): \\[ ... \\].
    - Examples: \\( v = u + at \\), \\( F = G\\frac{{m_1 m_2}}{{r^2}} \\), \\( E = mc^2 \\), \\( \\vec{{F}} = m\\vec{{a}} \\), \\( \\lambda = \\frac{{h}}{{p}} \\), \\( 10\\ \\Omega \\), \\( 5\\ \\mu\\text{{F}} \\), \\( 9.8\\ \\text{{m/s}}^2 \\).
    - Greek letters: \\( \\alpha, \\beta, \\gamma, \\theta, \\lambda, \\mu, \\pi, \\rho, \\sigma, \\tau, \\phi, \\omega, \\Delta, \\Omega \\).
 
@@ -8772,7 +12013,35 @@ FORMATTING DIRECTIVES FOR PHYSICS, CHEMISTRY & PROGRAMMING (STRICT COMPLIANCE):
    - Examples: \\( \\ce{{2H2 + O2 -> 2H2O}} \\), \\( \\ce{{CaCO3 ->[\\Delta] CaO + CO2 ^}} \\), \\( \\ce{{Fe^{{2+}} + 2e- -> Fe}} \\), \\( \\ce{{H2SO4}} \\), \\( \\ce{{CH3COOH <=> CH3COO- + H+}} \\).
    - States of matter: \\( \\ce{{NaCl (aq)}} \\), \\( \\ce{{H2O (l)}} \\), \\( \\ce{{CO2 (g)}} \\), \\( \\ce{{AgCl (s) v}} \\).
 
-3. PROGRAMMING (Java, Python, C++, C, SQL, HTML, etc.):
+3. MATHEMATICS / STATISTICS:
+   - ALWAYS use LaTeX delimiters for ALL mathematical content — expressions, fractions, integrals, summations, limits, matrices, sets, and inequalities.
+   - Inline math: \\( ... \\). Display/block math: \\[ ... \\].
+   - Fractions: \\( \\frac{{a}}{{b}} \\), \\( \\frac{{d}}{{dx}}(x^n) = nx^{{n-1}} \\).
+   - Integrals: \\( \\int_{{a}}^{{b}} f(x)\\,dx \\), \\( \\int x^2\\,dx = \\frac{{x^3}}{{3}} + C \\).
+   - Summation: \\( \\sum_{{i=1}}^{{n}} i = \\frac{{n(n+1)}}{{2}} \\).
+   - Limits: \\( \\lim_{{x \\to 0}} \\frac{{\\sin x}}{{x}} = 1 \\).
+   - Matrices: \\( \\begin{{pmatrix}} a & b \\\\ c & d \\end{{pmatrix}} \\).
+   - Sets / Probability: \\( P(A \\cup B) \\), \\( \\binom{{n}}{{r}} \\), \\( \\bar{{x}} \\), \\( \\sigma^2 \\).
+   - Geometry / Trigonometry: \\( \\sin\\theta \\), \\( \\cos^2\\theta + \\sin^2\\theta = 1 \\), \\( \\triangle ABC \\), \\( \\angle BAC = 60^\\circ \\).
+   - NEVER write math as plain text (e.g. write \\( x^2 + 3x - 4 = 0 \\) NOT 'x^2 + 3x - 4 = 0').
+
+4. ACCOUNTANCY / COMMERCE / ECONOMICS / BUSINESS STUDIES:
+   - For Journal Entries, Ledger Accounts, Balance Sheets, Trial Balances, Cash Flow Statements, Trading & Profit & Loss Accounts, Ratio Analysis tables: ALWAYS use a properly formatted markdown table OR a plaintext ASCII ledger table inside a code block.
+   - Journal Entry example (use markdown table):
+     | Date | Particulars | L.F. | Dr (₹) | Cr (₹) |
+     |------|-------------|------|--------|--------|
+     | ...  | ...         | ...  | ...    | ...    |
+   - Ledger Account / T-account example (use code block):
+     ```
+     Dr.          [Account Name] Account          Cr.
+     Date | Particulars | J.F. | Amount  |  Date | Particulars | J.F. | Amount
+     -----|-------------|------|---------|-------|-------------|------|-------
+     ```
+   - Balance Sheet / Financial Statement example (use markdown table with clear Liabilities | Amount | Assets | Amount columns).
+   - Monetary amounts: ALWAYS use ₹ symbol (e.g. ₹ 50,000 or Rs. 50,000). NEVER use $ for Indian Rupees.
+   - Ratios and formulae: write in plain text within the question (e.g. "Current Ratio = Current Assets / Current Liabilities") OR use LaTeX \\( ... \\) for formula display.
+
+5. PROGRAMMING (Java, Python, C++, C, SQL, HTML, etc.):
    - For ALL multi-line code snippets, programs, and code tracing problems: ALWAYS enclose in markdown code blocks with the exact language identifier:
      ```java
      public class Solution {{
@@ -9539,6 +12808,1651 @@ def api_exemplar_generate_paper():
     })
 
 
+# ---------------------------------------------------------------------------
+# /theme.css — Dynamic CSS custom properties from settings table
+# ---------------------------------------------------------------------------
+@app.route('/theme.css')
+def serve_theme_css():
+    """Serves dynamic CSS with :root variables from the settings table."""
+    cfg = get_site_config()
+    primary   = cfg['theme_primary']
+    secondary = cfg['theme_secondary']
+    accent    = cfg['theme_accent']
+    student   = cfg['theme_student']
+    font_web  = cfg['theme_font_web']
+
+    def _darken(hex_col, factor=0.75):
+        hex_col = hex_col.lstrip('#')
+        try:
+            r, g, b = int(hex_col[0:2], 16), int(hex_col[2:4], 16), int(hex_col[4:6], 16)
+            return '#{:02x}{:02x}{:02x}'.format(int(r*factor), int(g*factor), int(b*factor))
+        except Exception:
+            return '#0d1457'
+
+    css_font = f"'{font_web}', sans-serif" if font_web in _GOOGLE_FONTS_MAP else f'{font_web}, sans-serif'
+    css = f""":root {{
+  --primary:        {primary};
+  --primary-light:  {secondary};
+  --primary-lighter:{secondary};
+  --primary-dark:   {_darken(primary)};
+  --accent:         {accent};
+  --green-dk:       {student};
+  --green:          {student};
+  --theme-font:     {css_font};
+}}
+body {{ font-family: {css_font}; }}
+"""
+    from flask import Response
+    return Response(css, mimetype='text/css',
+                    headers={'Cache-Control': 'no-store'})
+
+
+# ---------------------------------------------------------------------------
+# /admin/save_theme — Save white-label theme, font, and developer credit settings
+# ---------------------------------------------------------------------------
+@app.route('/admin/save_theme', methods=['POST'])
+def admin_save_theme():
+    """Save white-label theme, font, credit, and active language settings."""
+    if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
+        return jsonify({'status': 'error', 'message': 'Not authorized. Please log in as Admin.'}), 403
+    data = request.get_json(silent=True) or request.form
+    allowed_keys = [
+        'theme_primary', 'theme_secondary', 'theme_accent', 'theme_student',
+        'theme_icon_color', 'theme_btn_bg', 'theme_btn_text',
+        'theme_heading_color', 'theme_body_text', 'theme_muted_text',
+        'theme_page_bg', 'theme_card_bg', 'theme_sidebar_bg',
+        'theme_link_color', 'theme_hover_color', 'theme_border_color',
+        'theme_success_color', 'theme_warning_color', 'theme_danger_color',
+        'theme_font_web', 'theme_font_export', 'developer_credit', 'active_language'
+    ]
+    for key in allowed_keys:
+        if key in data:
+            val = str(data[key]).strip()
+            if val or key in ('developer_credit',):
+                set_setting(key, val)
+    return jsonify({'status': 'success', 'message': 'Theme settings saved successfully.'})
+
+
+@app.route('/api/set_language', methods=['POST'])
+def api_set_language():
+    """Sets student language in session for instant UI switching."""
+    data = request.get_json(silent=True) or request.form or {}
+    lang = (data.get('lang_code') or 'en').strip().lower()[:10]
+    session['student_lang'] = lang
+    return jsonify({'status': 'success', 'active_language': lang})
+
+
+# ---------------------------------------------------------------------------
+# /admin/translate — Trigger AI translation for a language (background thread)
+# ---------------------------------------------------------------------------
+import threading, hashlib, time as _time
+
+def _run_translation(lang_code):
+    """Background worker: translates all UI strings via Gemini and caches them."""
+    try:
+        from ui_strings import UI_STRINGS
+    except Exception as e:
+        app.logger.error(f"Failed to import UI_STRINGS: {e}")
+        try:
+            with get_db() as _conn:
+                _conn.execute(
+                    "UPDATE translation_meta SET status='error', last_updated=CURRENT_TIMESTAMP WHERE lang_code=?",
+                    (lang_code,)
+                )
+        except Exception:
+            pass
+        return
+
+    gemini_key = _get_gemini_key()
+    if not gemini_key:
+        app.logger.error("Gemini API key not configured for translation")
+        try:
+            with get_db() as _conn:
+                _conn.execute(
+                    "UPDATE translation_meta SET status='error', last_updated=CURRENT_TIMESTAMP WHERE lang_code=?",
+                    (lang_code,)
+                )
+        except Exception:
+            pass
+        return
+
+    keys   = list(UI_STRINGS.keys())
+    total  = len(keys)
+    source_hash = hashlib.sha256(
+        '|'.join(f'{k}={v}' for k, v in UI_STRINGS.items()).encode()
+    ).hexdigest()
+
+    conn = get_db()
+    try:
+        conn.execute(
+            """INSERT OR REPLACE INTO translation_meta
+               (lang_code, source_hash, status, progress, total_strings, translated_count, last_updated)
+               VALUES (?, ?, 'in_progress', 0, ?, 0, CURRENT_TIMESTAMP)""",
+            (lang_code, source_hash, total)
+        )
+        conn.commit()
+
+        BATCH = 20
+        translated_count = 0
+        model_name = get_working_model(gemini_key) or 'gemini-1.5-flash-latest'
+        lang_label_map = {
+            'hi': 'Hindi', 'mr': 'Marathi', 'ta': 'Tamil',
+            'te': 'Telugu', 'bn': 'Bengali', 'gu': 'Gujarati',
+            'kn': 'Kannada', 'ml': 'Malayalam', 'pa': 'Punjabi',
+        }
+        lang_label = lang_label_map.get(lang_code, lang_code)
+
+        for batch_start in range(0, total, BATCH):
+            batch_keys = keys[batch_start:batch_start + BATCH]
+            batch_vals = {k: UI_STRINGS[k] for k in batch_keys}
+
+            prompt = (
+                f"You are a professional educational software translator. "
+                f"Translate these UI strings from English to {lang_label}. "
+                f"Return ONLY a JSON object with the same keys, values translated. "
+                f"Keep placeholders like {{{{name}}}} unchanged. "
+                f"JSON to translate:\n{json.dumps(batch_vals, ensure_ascii=False)}"
+            )
+            try:
+                import urllib.request, urllib.error
+                req_body = json.dumps({
+                    'contents': [{'parts': [{'text': prompt}]}],
+                    'generationConfig': {'temperature': 0.1, 'maxOutputTokens': 2048}
+                }).encode()
+                url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
+                       f"{model_name}:generateContent?key={gemini_key}")
+                req = urllib.request.Request(url, data=req_body,
+                                             headers={'Content-Type': 'application/json'})
+                with urllib.request.urlopen(req, timeout=60) as resp:
+                    result = json.loads(resp.read().decode())
+                raw_text = result['candidates'][0]['content']['parts'][0]['text']
+                # Strip markdown code fences if present
+                raw_text = raw_text.strip()
+                if raw_text.startswith('```'):
+                    raw_text = raw_text.split('\n', 1)[1].rsplit('```', 1)[0]
+                translated_batch = json.loads(raw_text)
+                for k, v in translated_batch.items():
+                    if k in batch_vals:
+                        conn.execute(
+                            "INSERT OR REPLACE INTO translation_cache (lang_code, string_key, translated) VALUES (?,?,?)",
+                            (lang_code, k, v)
+                        )
+                translated_count += len(translated_batch)
+                conn.commit()
+            except Exception as e:
+                app.logger.warning(f"Translation batch error ({lang_code}): {e}")
+
+            progress = min(99, int((batch_start + BATCH) / total * 100))
+            conn.execute(
+                """UPDATE translation_meta SET progress=?, translated_count=?, last_updated=CURRENT_TIMESTAMP
+                   WHERE lang_code=?""",
+                (progress, translated_count, lang_code)
+            )
+            conn.commit()
+            _time.sleep(1)  # Respect Gemini rate limits
+
+        # Mark done
+        conn.execute(
+            """UPDATE translation_meta SET status='done', progress=100, translated_count=?,
+               source_hash=?, last_updated=CURRENT_TIMESTAMP WHERE lang_code=?""",
+            (translated_count, source_hash, lang_code)
+        )
+        conn.commit()
+    except Exception as e:
+        app.logger.error(f"Fatal error in _run_translation ({lang_code}): {e}")
+        try:
+            conn.execute(
+                "UPDATE translation_meta SET status='error', last_updated=CURRENT_TIMESTAMP WHERE lang_code=?",
+                (lang_code,)
+            )
+            conn.commit()
+        except Exception:
+            pass
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
+@app.route('/admin/translate', methods=['POST'])
+def admin_translate():
+    """Kick off background translation for a language."""
+    if not session.get('admin_logged_in'):
+        return jsonify({'status': 'error', 'message': 'Not authorized'}), 403
+    lang_code = request.json.get('lang_code', '').strip().lower()[:10]
+    if not lang_code:
+        return jsonify({'status': 'error', 'message': 'lang_code required'}), 400
+
+    # Check if already in progress
+    conn = get_db()
+    row = conn.execute(
+        "SELECT status FROM translation_meta WHERE lang_code=?", (lang_code,)
+    ).fetchone()
+    if row and row[0] == 'in_progress':
+        conn.close()
+        return jsonify({'status': 'already_running', 'message': 'Translation already in progress'})
+
+    # Check if already done + hash unchanged
+    try:
+        from ui_strings import UI_STRINGS
+        current_hash = hashlib.sha256(
+            '|'.join(f'{k}={v}' for k, v in UI_STRINGS.items()).encode()
+        ).hexdigest()
+        if row and row[0] == 'done':
+            meta = conn.execute(
+                "SELECT source_hash FROM translation_meta WHERE lang_code=?", (lang_code,)
+            ).fetchone()
+            if meta and meta[0] == current_hash:
+                conn.close()
+                # Already translated, just activate
+                set_setting('active_language', lang_code)
+                return jsonify({'status': 'cached', 'message': 'Using existing translation'})
+    except Exception:
+        pass
+    conn.close()
+
+    threading.Thread(target=_run_translation, args=(lang_code,), daemon=True).start()
+    return jsonify({'status': 'started', 'message': f'Translation started for {lang_code}'})
+
+
+@app.route('/admin/translation_progress')
+def admin_translation_progress():
+    """Poll translation progress for a language."""
+    if not session.get('admin_logged_in'):
+        return jsonify({'status': 'error', 'message': 'Not authorized'}), 403
+    lang_code = request.args.get('lang', 'en')
+    conn = get_db()
+    row = conn.execute(
+        "SELECT status, progress, total_strings, translated_count FROM translation_meta WHERE lang_code=?",
+        (lang_code,)
+    ).fetchone()
+    conn.close()
+    if not row:
+        return jsonify({'status': 'pending', 'progress': 0, 'total': 0, 'done': 0})
+    status, progress, total, done = row
+    if status == 'done':
+        set_setting('active_language', lang_code)
+    return jsonify({'status': status, 'progress': progress, 'total': total, 'done': done})
+
+
+# ---------------------------------------------------------------------------
+# /admin/reset_settings — Reset all white-label settings to factory defaults
+# ---------------------------------------------------------------------------
+_DEFAULT_SETTINGS = {
+    'school_name':       'RRB Group of Schools',
+    'school_address':    '',
+    'academic_session':  '',
+    'logo_path':         '',
+    # Brand Colors
+    'theme_primary':     '#1a237e',
+    'theme_secondary':   '#3949ab',
+    'theme_accent':      '#10b981',
+    'theme_student':     '#1b5e20',
+    # Extended Colors
+    'theme_icon_color':  '#4f46e5',
+    'theme_btn_bg':      '#1a237e',
+    'theme_btn_text':    '#ffffff',
+    'theme_heading_color':   '#1e1b4b',
+    'theme_body_text':       '#1e293b',
+    'theme_muted_text':      '#64748b',
+    'theme_page_bg':         '#f0f4f8',
+    'theme_card_bg':         '#ffffff',
+    'theme_sidebar_bg':      '#1a237e',
+    'theme_link_color':      '#3949ab',
+    'theme_hover_color':     '#4f46e5',
+    'theme_border_color':    '#e2e8f0',
+    'theme_success_color':   '#16a34a',
+    'theme_warning_color':   '#f59e0b',
+    'theme_danger_color':    '#dc2626',
+    # Fonts
+    'theme_font_web':    'Poppins',
+    'theme_font_export': 'Arial',
+    'developer_credit':  'Developed by Gaurav Shukla &amp; Team',
+    'active_language':   'en',
+}
+
+_DEFAULT_THEME_SETTINGS = {
+    # Brand Colors
+    'theme_primary':         '#1a237e',
+    'theme_secondary':       '#3949ab',
+    'theme_accent':          '#10b981',
+    'theme_student':         '#1b5e20',
+    # Extended Colors
+    'theme_icon_color':      '#4f46e5',
+    'theme_btn_bg':          '#1a237e',
+    'theme_btn_text':        '#ffffff',
+    'theme_heading_color':   '#1e1b4b',
+    'theme_body_text':       '#1e293b',
+    'theme_muted_text':      '#64748b',
+    'theme_page_bg':         '#f0f4f8',
+    'theme_card_bg':         '#ffffff',
+    'theme_sidebar_bg':      '#1a237e',
+    'theme_link_color':      '#3949ab',
+    'theme_hover_color':     '#4f46e5',
+    'theme_border_color':    '#e2e8f0',
+    'theme_success_color':   '#16a34a',
+    'theme_warning_color':   '#f59e0b',
+    'theme_danger_color':    '#dc2626',
+    # Fonts
+    'theme_font_web':        'Poppins',
+    'theme_font_export':     'Arial',
+    'developer_credit':      'Developed by Gaurav Shukla &amp; Team',
+}
+
+@app.route('/admin/reset_theme', methods=['POST'])
+def admin_reset_theme():
+    """Revert only theme colors, fonts, and developer credit to factory defaults."""
+    if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
+        return jsonify({'status': 'error', 'message': 'Not authorized. Please log in as Admin.'}), 403
+    for key, val in _DEFAULT_THEME_SETTINGS.items():
+        set_setting(key, val)
+    return jsonify({'status': 'success', 'message': 'Theme reset to factory defaults successfully.'})
+
+@app.route('/admin/reset_settings', methods=['POST'])
+def admin_reset_settings():
+    """Revert all white-label settings to factory defaults in one click."""
+    if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
+        return jsonify({'status': 'error', 'message': 'Not authorized. Please log in as Admin.'}), 403
+    for key, val in _DEFAULT_SETTINGS.items():
+        set_setting(key, val)
+    return jsonify({'status': 'success', 'message': 'All settings reset to defaults.'})
+
+
+# ---------------------------------------------------------------------------
+# Coding Test Module Execution & Evaluation Endpoints
+# ---------------------------------------------------------------------------
+from coding_runner import run_code, evaluate_submission, check_compiler_availability
+
+@app.route('/api/test_coding_runner', methods=['POST'])
+def api_test_coding_runner():
+    """
+    Test endpoint for executing and evaluating student code snippets.
+    Supports Python, Java, C, and C++.
+    """
+    if not session.get('admin_logged_in') and not session.get('teacher_logged_in') and not session.get('student_id'):
+        return jsonify({'status': 'error', 'message': 'Authentication required'}), 401
+        
+    data = request.get_json(silent=True) or request.form
+    code = data.get('code', '')
+    language = data.get('language', 'python')
+    stdin_input = data.get('stdin_input', '')
+    timeout_seconds = int(data.get('timeout_seconds', 5))
+    test_cases = data.get('test_cases', [])
+    
+    if not code:
+        return jsonify({'status': 'error', 'message': 'Code snippet is required'}), 400
+        
+    if test_cases and isinstance(test_cases, list):
+        eval_result = evaluate_submission(code, language, test_cases, timeout_seconds=timeout_seconds)
+        return jsonify(eval_result)
+    else:
+        run_result = run_code(code, language, stdin_input, timeout_seconds=timeout_seconds)
+        return jsonify(run_result)
+
+
+# ---------------------------------------------------------------------------
+# Coding Test Module AI Generation & Teacher Review Endpoints
+# ---------------------------------------------------------------------------
+
+@app.route('/api/generate_coding_questions', methods=['POST'])
+def api_generate_coding_questions():
+    """Generate programming coding questions & test cases via Gemini AI and save as unapproved drafts."""
+    if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
+        return jsonify({'status': 'error', 'message': 'Not authorized'}), 403
+
+    conn = None
+    try:
+        board = request.form.get('board', 'CBSE').strip() or 'CBSE'
+        class_ = request.form.get('class', '').strip()
+        section = request.form.get('section', '').strip()
+        subject = request.form.get('subject', '').strip()
+        topic = request.form.get('chapter', '').strip() or request.form.get('topic', '').strip() or 'Programming Fundamentals'
+        test_no = request.form.get('test_no', '').strip() or f"CODING_{uuid.uuid4().hex[:6].upper()}"
+        
+        try:
+            coding_count = int(request.form.get('coding_count', 5) or 5)
+        except Exception:
+            coding_count = 5
+
+        try:
+            coding_marks = float(request.form.get('coding_marks', 10) or 10)
+        except Exception:
+            coding_marks = 10.0
+
+        coding_difficulty = request.form.get('coding_difficulty', 'medium').strip()
+        
+        allowed_langs_list = request.form.getlist('allowed_languages')
+        if not allowed_langs_list:
+            allowed_langs_list = ['python', 'java', 'c', 'cpp']
+        allowed_langs = ','.join(allowed_langs_list)
+
+        prompt = f"""You are an expert Computer Science teacher and coding problem author for {board} Class {class_} ({subject}).
+Generate EXACTLY {coding_count} practical programming/coding problems for Topic/Syllabus: "{topic}".
+Difficulty Level: {coding_difficulty.upper()}.
+Target Languages: {allowed_langs}.
+
+Return ONLY a valid JSON array of {coding_count} problem objects. DO NOT include markdown backticks around JSON if possible, or format strictly as ```json ... ```.
+
+Each object MUST have the following structure:
+[
+  {{
+    "title": "Short descriptive title of problem",
+    "problem_statement": "Clear detailed statement of the problem, background scenario, and requirement.",
+    "input_format": "Description of input format expected from stdin",
+    "output_format": "Description of output format expected on stdout",
+    "constraints": "Space/Time and Input bounds constraints e.g. 1 <= N <= 1000",
+    "sample_input": "First sample input string",
+    "sample_output": "First sample output string",
+    "test_cases": [
+      {{"input": "Sample input 1", "expected_output": "Expected output 1", "is_hidden": 0, "marks_weight": 1.0}},
+      {{"input": "Sample input 2", "expected_output": "Expected output 2", "is_hidden": 0, "marks_weight": 1.0}},
+      {{"input": "Hidden test input 1", "expected_output": "Hidden expected output 1", "is_hidden": 1, "marks_weight": 1.0}},
+      {{"input": "Hidden test input 2", "expected_output": "Hidden expected output 2", "is_hidden": 1, "marks_weight": 1.0}}
+    ]
+  }}
+]
+"""
+        res_dict, provider_used, err = generate_ai_content(prompt, timeout=90)
+        if not res_dict:
+            return jsonify({'status': 'error', 'message': f'AI Generation Error: {err or "No response from AI generator"}'}), 500
+
+        raw_res = ""
+        try:
+            raw_res = res_dict['candidates'][0]['content']['parts'][0]['text'].strip()
+        except Exception:
+            raw_res = str(res_dict)
+
+        parsed = safe_json_loads(raw_res)
+        if isinstance(parsed, dict):
+            for k in ['coding_questions', 'questions', 'problems', 'data', 'items']:
+                if isinstance(parsed.get(k), list):
+                    parsed = parsed[k]
+                    break
+            if isinstance(parsed, dict):
+                parsed = [parsed]
+
+        if not parsed or not isinstance(parsed, list):
+            raw_problems = re.findall(r'\{\s*"title"\s*:\s*"(.*?)"\s*,\s*"problem_statement"\s*:\s*"(.*?)"', raw_res, re.DOTALL)
+            if raw_problems:
+                parsed = []
+                for t_match, p_match in raw_problems:
+                    parsed.append({
+                        "title": t_match.strip(),
+                        "problem_statement": p_match.strip(),
+                        "sample_input": "",
+                        "sample_output": "",
+                        "test_cases": []
+                    })
+
+        if not parsed or not isinstance(parsed, list):
+            return jsonify({'status': 'error', 'message': 'Failed to parse AI response into structured coding problems. Please try again.'}), 500
+
+        uploader_type = 'admin' if session.get('admin_logged_in') else 'teacher'
+        uploaded_by = 'admin' if uploader_type == 'admin' else str(session.get('teacher_id') or 'teacher')
+
+        conn = get_db()
+        c = conn.cursor()
+        inserted_ids = []
+
+        for q in parsed:
+            if not isinstance(q, dict) or not q.get('problem_statement'):
+                continue
+            title = q.get('title', 'Coding Challenge').strip()
+            statement = q.get('problem_statement', '').strip()
+            inp_fmt = q.get('input_format', '').strip()
+            out_fmt = q.get('output_format', '').strip()
+            constraints = q.get('constraints', '').strip()
+            sample_in = q.get('sample_input', '').strip()
+            sample_out = q.get('sample_output', '').strip()
+
+            c.execute("""INSERT INTO coding_questions
+                         (test_no, class, section, subject, title, problem_statement,
+                          allowed_languages, sample_input, sample_output, total_marks,
+                          created_by, topic, difficulty, input_format, output_format,
+                          constraints, ai_generated, approved)
+                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,0)""",
+                      (test_no, class_, section, subject, title, statement,
+                       allowed_langs, sample_in, sample_out, coding_marks,
+                       uploaded_by, topic, coding_difficulty, inp_fmt, out_fmt, constraints))
+            qid = c.lastrowid
+            inserted_ids.append(qid)
+
+            # Insert draft test cases
+            tc_list = q.get('test_cases', [])
+            if not tc_list and (sample_in or sample_out):
+                tc_list = [{'input': sample_in, 'expected_output': sample_out, 'is_hidden': 0, 'marks_weight': 1.0}]
+            
+            for tc in tc_list:
+                c.execute("""INSERT INTO coding_test_cases
+                             (question_id, input, expected_output, is_hidden, marks_weight)
+                             VALUES (?,?,?,?,?)""",
+                          (qid, tc.get('input', ''), tc.get('expected_output', ''),
+                           1 if tc.get('is_hidden') else 0, float(tc.get('marks_weight', 1.0))))
+
+        # Register entry in test_papers repository
+        c.execute("""INSERT INTO test_papers
+                     (filename, class, section, subject, test_no, uploaded_by, uploader_type, is_active, question_count, paper_type)
+                     VALUES (?,?,?,?,?,?,?,0,?,'Coding Test')""",
+                  (f"{class_}{section}_{subject}_{test_no}_Coding", class_, section, subject, test_no, uploaded_by, uploader_type, len(inserted_ids)))
+
+        conn.commit()
+    except Exception as e:
+        if conn:
+            try:
+                conn.rollback()
+                conn.close()
+            except Exception:
+                pass
+        return jsonify({'status': 'error', 'message': f'Server error saving coding questions: {str(e)}'}), 500
+
+    conn.close()
+    return jsonify({
+        'status': 'success',
+        'test_no': test_no,
+        'count': len(inserted_ids),
+        'redirect_url': f'/teacher/coding_review?test_no={test_no}',
+        'message': f'Successfully generated {len(inserted_ids)} AI coding questions draft for Test {test_no}! Redirecting to Teacher Review screen...'
+    })
+
+@app.route('/teacher/coding_review')
+def teacher_coding_review():
+    """Teacher/Admin review, edit, and approval dashboard for draft coding questions."""
+    if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
+        return redirect(url_for('teacher_login'))
+
+    test_no = request.args.get('test_no', '').strip()
+    conn = get_db()
+    c = conn.cursor()
+
+    if test_no:
+        c.execute("SELECT * FROM coding_questions WHERE test_no=? ORDER BY id ASC", (test_no,))
+    else:
+        c.execute("SELECT * FROM coding_questions WHERE approved=0 ORDER BY created_at DESC, id ASC")
+    
+    q_rows = [dict(r) for r in c.fetchall()]
+
+    for q in q_rows:
+        c.execute("SELECT * FROM coding_test_cases WHERE question_id=? ORDER BY id ASC", (q['id'],))
+        q['test_cases'] = [dict(tc) for tc in c.fetchall()]
+
+    conn.close()
+    return render_template('coding_review.html', questions=q_rows, test_no=test_no, is_admin=bool(session.get('admin_logged_in')))
+
+@app.route('/api/coding_questions/<int:qid>/update', methods=['POST'])
+def api_update_coding_question(qid):
+    """Update a draft coding question and its test cases."""
+    if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
+        return jsonify({'status': 'error', 'message': 'Not authorized'}), 403
+
+    data = request.get_json(silent=True) or request.form
+    title = data.get('title', '').strip()
+    topic = data.get('topic', '').strip()
+    difficulty = data.get('difficulty', 'medium').strip()
+    statement = data.get('problem_statement', '').strip()
+    inp_fmt = data.get('input_format', '').strip()
+    out_fmt = data.get('output_format', '').strip()
+    constraints = data.get('constraints', '').strip()
+    sample_in = data.get('sample_input', '').strip()
+    sample_out = data.get('sample_output', '').strip()
+    total_marks = float(data.get('total_marks', 10))
+    test_cases = data.get('test_cases', [])
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""UPDATE coding_questions SET
+                 title=?, topic=?, difficulty=?, problem_statement=?,
+                 input_format=?, output_format=?, constraints=?,
+                 sample_input=?, sample_output=?, total_marks=?
+                 WHERE id=?""",
+              (title, topic, difficulty, statement, inp_fmt, out_fmt, constraints, sample_in, sample_out, total_marks, qid))
+
+    if test_cases and isinstance(test_cases, list):
+        c.execute("DELETE FROM coding_test_cases WHERE question_id=?", (qid,))
+        for tc in test_cases:
+            c.execute("""INSERT INTO coding_test_cases
+                         (question_id, input, expected_output, is_hidden, marks_weight)
+                         VALUES (?,?,?,?,?)""",
+                      (qid, tc.get('input', ''), tc.get('expected_output', ''),
+                       1 if tc.get('is_hidden') else 0, float(tc.get('marks_weight', 1.0))))
+
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success', 'message': 'Coding question updated successfully.'})
+
+@app.route('/api/coding_questions/<int:qid>/approve', methods=['POST'])
+def api_approve_coding_question(qid):
+    """Approve a draft coding question, setting approved = 1 and marking test paper active."""
+    if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
+        return jsonify({'status': 'error', 'message': 'Not authorized'}), 403
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE coding_questions SET approved=1 WHERE id=?", (qid,))
+    c.execute("SELECT test_no FROM coding_questions WHERE id=?", (qid,))
+    row = c.fetchone()
+    if row and row['test_no']:
+        c.execute("UPDATE test_papers SET is_active=1 WHERE test_no=?", (row['test_no'],))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success', 'message': f'Coding Question #{qid} approved!'})
+
+@app.route('/api/coding_questions/approve_all', methods=['POST'])
+def api_approve_all_coding_questions():
+    """Approve all draft coding questions for a specific test number or subject and activate paper."""
+    if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
+        return jsonify({'status': 'error', 'message': 'Not authorized'}), 403
+
+    data = request.get_json(silent=True) or request.form
+    test_no = data.get('test_no', '').strip()
+
+    conn = get_db()
+    c = conn.cursor()
+    if test_no:
+        c.execute("UPDATE coding_questions SET approved=1 WHERE test_no=?", (test_no,))
+        c.execute("UPDATE test_papers SET is_active=1 WHERE test_no=?", (test_no,))
+    else:
+        c.execute("UPDATE coding_questions SET approved=1 WHERE approved=0")
+        c.execute("UPDATE test_papers SET is_active=1 WHERE paper_type='Coding Test'")
+    
+    count = c.rowcount
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success', 'message': f'Approved {count} coding questions and published test paper!'})
+
+@app.route('/api/coding_questions/<int:qid>/delete', methods=['DELETE', 'POST'])
+def api_delete_coding_question(qid):
+    """Delete a coding question and its test cases."""
+    if not session.get('admin_logged_in') and not session.get('teacher_logged_in'):
+        return jsonify({'status': 'error', 'message': 'Not authorized'}), 403
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM coding_questions WHERE id=?", (qid,))
+    c.execute("DELETE FROM coding_test_cases WHERE question_id=?", (qid,))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success', 'message': 'Coding question deleted.'})
+
+
+# ---------------------------------------------------------------------------
+# Student-Facing Coding Exam Portal Routes (Phase 3)
+# ---------------------------------------------------------------------------
+
+@app.route('/coding_exam_list')
+@student_required
+def coding_exam_list():
+    """
+    Render student question list view for a Coding Test session.
+    """
+    if not session.get('guidelines_accepted'):
+        return redirect(url_for('guidelines'))
+
+    student_id = session.get('student_id')
+    conn = get_db()
+    c = conn.cursor()
+
+    active_sess = get_active_session_for_student(student_id=student_id, conn=conn)
+    is_active = (active_sess is not None and active_sess.get('status') in ('running', 'paused'))
+    if not is_active:
+        c.execute("SELECT is_active FROM exam_control WHERE id=1")
+        row = c.fetchone()
+        if not row or not row['is_active']:
+            conn.close()
+            return redirect(url_for('waiting'))
+
+    c.execute("SELECT * FROM students WHERE student_id=?", (student_id,))
+    student = c.fetchone()
+    if not student:
+        conn.close()
+        return redirect(url_for('index'))
+
+    if student['status'] == 'Submitted':
+        conn.close()
+        return redirect(url_for('submitted'))
+
+    if student['status'] == 'Not Started':
+        c.execute("UPDATE students SET status='In Progress', exam_started_at=CURRENT_TIMESTAMP WHERE student_id=?", (student_id,))
+        conn.commit()
+
+    # Fetch ordered questions for student
+    c.execute("""SELECT cq.*, sq.shuffled_index 
+                 FROM shuffled_questions sq
+                 JOIN coding_questions cq ON sq.question_id = cq.id
+                 WHERE sq.student_id = ? AND cq.approved = 1
+                 ORDER BY sq.shuffled_index""", (student_id,))
+    questions = [dict(r) for r in c.fetchall()]
+
+    if not questions:
+        clean_cls = (student['class'] or '').replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+        c.execute("""SELECT * FROM coding_questions 
+                     WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND test_no=? AND approved=1
+                     ORDER BY id""",
+                  (student['class'], f"%{clean_cls}%", student['subject'], student['test_no']))
+        questions = [dict(r) for r in c.fetchall()]
+
+    # Submission status mapping if table exists
+    submissions_by_qid = {}
+    try:
+        c.execute("SELECT question_id, score, status FROM coding_submissions WHERE student_id=?", (student_id,))
+        submissions_by_qid = {r['question_id']: dict(r) for r in c.fetchall()}
+    except Exception:
+        pass
+
+    for q in questions:
+        q['submission'] = submissions_by_qid.get(q['id'])
+
+    conn.close()
+    return render_template('coding_exam_list.html',
+                           student=dict(student),
+                           questions=questions,
+                           active_sess=active_sess,
+                           school_name=get_setting('school_name', 'RRB Group of Schools'),
+                           logo_path=get_setting('logo_path', ''))
+
+
+@app.route('/coding_editor/<int:question_id>')
+@student_required
+def coding_editor(question_id):
+    """
+    Render student split-screen Monaco code editor view for Phase 4.
+    """
+    if not session.get('guidelines_accepted'):
+        return redirect(url_for('guidelines'))
+
+    student_id = session.get('student_id')
+    conn = get_db()
+    c = conn.cursor()
+
+    active_sess = get_active_session_for_student(student_id=student_id, conn=conn)
+    is_active = (active_sess is not None and active_sess.get('status') in ('running', 'paused'))
+    if not is_active:
+        c.execute("SELECT is_active FROM exam_control WHERE id=1")
+        row = c.fetchone()
+        if not row or not row['is_active']:
+            conn.close()
+            return redirect(url_for('waiting'))
+
+    c.execute("SELECT * FROM students WHERE student_id=?", (student_id,))
+    student = c.fetchone()
+    if not student or student['status'] == 'Submitted':
+        conn.close()
+        return redirect(url_for('submitted'))
+
+    c.execute("SELECT * FROM coding_questions WHERE id=? AND approved=1", (question_id,))
+    question = c.fetchone()
+    if not question:
+        conn.close()
+        flash("Coding question not found or not approved.", "danger")
+        return redirect(url_for('coding_exam_list'))
+
+    # Strictly fetch VISIBLE test cases ONLY (is_hidden = 0). Hidden test cases are NEVER exposed.
+    c.execute("SELECT input, expected_output FROM coding_test_cases WHERE question_id=? AND is_hidden=0 ORDER BY id", (question_id,))
+    sample_cases = [dict(r) for r in c.fetchall()]
+
+    conn.close()
+    return render_template('coding_editor.html',
+                           student=dict(student),
+                           question=dict(question),
+                           sample_cases=sample_cases,
+                           active_sess=active_sess)
+
+
+@app.route('/api/coding_drafts/save', methods=['POST'])
+@student_required
+def api_save_coding_draft():
+    """Autosave or explicitly save code draft per student + question + language."""
+    student_id = session.get('student_id')
+    if not student_id:
+        return jsonify({'status': 'error', 'message': 'Student session required'}), 401
+
+    data = request.get_json(silent=True) or request.form
+    question_id = data.get('question_id')
+    language = (data.get('language') or 'python').strip().lower()
+    code = data.get('code', '')
+
+    if not question_id:
+        return jsonify({'status': 'error', 'message': 'question_id is required'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""INSERT INTO coding_drafts (student_id, question_id, language, code, updated_at)
+                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                 ON CONFLICT(student_id, question_id, language) DO UPDATE SET
+                     code = excluded.code,
+                     updated_at = CURRENT_TIMESTAMP""",
+              (student_id, int(question_id), language, code))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success', 'message': 'Draft saved successfully'})
+
+
+@app.route('/api/coding_drafts/get/<int:question_id>', methods=['GET'])
+@student_required
+def api_get_coding_draft(question_id):
+    """Retrieve saved code draft for a student + question + language."""
+    student_id = session.get('student_id')
+    if not student_id:
+        return jsonify({'status': 'error', 'message': 'Student session required'}), 401
+
+    language = request.args.get('lang', 'python').strip().lower()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""SELECT code, updated_at FROM coding_drafts 
+                 WHERE student_id=? AND question_id=? AND language=?""",
+              (student_id, question_id, language))
+    row = c.fetchone()
+    conn.close()
+
+    if row:
+        return jsonify({'status': 'success', 'code': row['code'], 'updated_at': str(row['updated_at'])})
+    return jsonify({'status': 'not_found', 'code': ''})
+
+
+@app.route('/api/coding_run', methods=['POST'])
+@student_required
+def api_coding_run():
+    """
+    Execute student code snippet against custom/sample stdin input via Phase 1 runner.
+    Does NOT compute grades or marks.
+    """
+    student_id = session.get('student_id')
+    if not student_id:
+        return jsonify({'status': 'error', 'message': 'Authentication required'}), 401
+
+    data = request.get_json(silent=True) or request.form
+    code = data.get('code', '')
+    language = (data.get('language') or 'python').strip().lower()
+    stdin_input = data.get('stdin_input', '')
+
+    if not code:
+        return jsonify({'status': 'error', 'message': 'Code snippet is empty'}), 400
+
+    run_result = run_code(code, language, stdin_input, timeout_seconds=5)
+    return jsonify(run_result)
+
+
+def sync_student_coding_results(student_id, conn=None):
+    """
+    Recalculates total coding score for a student and updates the results reporting table.
+    """
+    close_db = False
+    if conn is None:
+        conn = get_db()
+        close_db = True
+    try:
+        c = conn.cursor()
+        c.execute("SELECT * FROM students WHERE student_id=?", (student_id,))
+        student = c.fetchone()
+        if not student:
+            return
+            
+        test_no = student['test_no'] or ''
+        clean_cls = (student['class'] or '').replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+        
+        c.execute("""SELECT id, total_marks FROM coding_questions
+                     WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND (test_no=? OR topic=? OR test_no='') AND approved=1""",
+                  (student['class'], f"%{clean_cls}%", student['subject'], test_no, test_no))
+        approved_qs = c.fetchall()
+        
+        if not approved_qs:
+            return
+            
+        total_test_marks = sum(float(q['total_marks'] or 10.0) for q in approved_qs) or 10.0
+        total_q_count = len(approved_qs)
+        approved_qids = [q['id'] for q in approved_qs]
+        
+        placeholders = ','.join(['?'] * len(approved_qids))
+        c.execute(f"""SELECT SUM(marks_awarded) as total_score FROM coding_submissions
+                       WHERE student_id=? AND question_id IN ({placeholders})""",
+                   [student_id] + approved_qids)
+        row_score = c.fetchone()
+        score_sum = float(row_score['total_score']) if (row_score and row_score['total_score'] is not None) else 0.0
+        percentage = round((score_sum / total_test_marks) * 100, 2)
+        
+        _save_or_update_result(c, student_id, student['name'], student['class'], student['section'],
+                               student['subject'], score_sum, total_q_count, percentage, test_no)
+        conn.commit()
+    except Exception as e:
+        app.logger.error(f"Error in sync_student_coding_results: {e}")
+    finally:
+        if close_db:
+            conn.close()
+
+
+@app.route('/api/coding_submit', methods=['POST'])
+@student_required
+def api_coding_submit():
+    """
+    Save student submission into coding_submissions and run Phase 5 evaluation engine.
+    Computes test cases passed, marks awarded, per-case results breakdown,
+    and aggregates total score into existing results table.
+    """
+    import json
+    student_id = session.get('student_id')
+    if not student_id:
+        return jsonify({'status': 'error', 'message': 'Authentication required'}), 401
+
+    data = request.get_json(silent=True) or request.form
+    question_id = data.get('question_id')
+    language = (data.get('language') or 'python').strip().lower()
+    code = data.get('code', '')
+
+    if not question_id or not code:
+        return jsonify({'status': 'error', 'message': 'question_id and code are required'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # 1. Fetch student & question info
+    c.execute("SELECT * FROM students WHERE student_id=?", (student_id,))
+    student = c.fetchone()
+    if not student:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Student profile not found'}), 404
+
+    c.execute("SELECT * FROM coding_questions WHERE id=? AND approved=1", (int(question_id),))
+    question = c.fetchone()
+    if not question:
+        conn.close()
+        return jsonify({'status': 'error', 'message': 'Coding question not found or not approved'}), 404
+
+    question_marks = float(question['total_marks'] or 10.0)
+
+    # 2. Fetch ALL test cases (visible + hidden) for evaluation
+    c.execute("""SELECT id, input, expected_output, is_hidden, marks_weight 
+                 FROM coding_test_cases 
+                 WHERE question_id=? 
+                 ORDER BY id""", (int(question_id),))
+    tc_rows = [dict(r) for r in c.fetchall()]
+
+    if not tc_rows:
+        sample_in = question['sample_input'] or ''
+        sample_out = question['sample_output'] or ''
+        tc_rows = [{'id': 1, 'input': sample_in, 'expected_output': sample_out, 'is_hidden': 0, 'marks_weight': 1.0}]
+
+    # 3. Save to coding_drafts first
+    c.execute("""INSERT INTO coding_drafts (student_id, question_id, language, code, updated_at)
+                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                 ON CONFLICT(student_id, question_id, language) DO UPDATE SET
+                     code = excluded.code,
+                     updated_at = CURRENT_TIMESTAMP""",
+              (student_id, int(question_id), language, code))
+
+    # 4. Run Evaluation Engine
+    eval_res = evaluate_submission(code, language, tc_rows, question_marks=question_marks, timeout_seconds=5)
+
+    # 5. Sanitize results for DB storage & student UI (hide inputs/outputs for hidden test cases)
+    sanitized_case_results = []
+    for r in eval_res['results']:
+        is_h = bool(r.get('is_hidden'))
+        sanitized_case_results.append({
+            'test_case_id': r.get('test_case_id'),
+            'is_hidden': is_h,
+            'passed': bool(r.get('passed')),
+            'status': r.get('status'),
+            'input': '[Hidden]' if is_h else r.get('input'),
+            'expected_output': '[Hidden]' if is_h else r.get('expected_output'),
+            'actual_output': '[Hidden]' if is_h else r.get('actual_output'),
+            'execution_time_ms': round(float(r.get('execution_time_ms', 0)), 1),
+            'stderr': '[Hidden]' if is_h else r.get('stderr')
+        })
+
+    json_results_str = json.dumps(sanitized_case_results)
+
+    # 6. Save or update coding_submissions
+    c.execute("SELECT id FROM coding_submissions WHERE student_id=? AND question_id=?", (student_id, int(question_id)))
+    existing = c.fetchone()
+    if existing:
+        c.execute("""UPDATE coding_submissions 
+                     SET code=?, language=?, test_cases_passed=?, total_test_cases=?, marks_awarded=?,
+                         status=?, stdout_output=?, stderr_output=?, submitted_at=CURRENT_TIMESTAMP
+                     WHERE id=?""",
+                  (code, language, eval_res['passed_count'], eval_res['total_test_cases'], eval_res['marks_awarded'],
+                   eval_res['status'], json_results_str, '', existing['id']))
+    else:
+        c.execute("""INSERT INTO coding_submissions 
+                     (student_id, question_id, code, language, test_cases_passed, total_test_cases, marks_awarded, status, stdout_output, stderr_output, submitted_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)""",
+                  (student_id, int(question_id), code, language, eval_res['passed_count'], eval_res['total_test_cases'], eval_res['marks_awarded'], eval_res['status'], json_results_str, ''))
+
+    # 7. Aggregate Total Score across all coding questions in this test_no
+    test_no = student['test_no'] or session.get('test_no', '')
+    clean_cls = (student['class'] or '').replace('th','').replace('st','').replace('nd','').replace('rd','').strip()
+    
+    c.execute("""SELECT id, total_marks FROM coding_questions
+                 WHERE (class=? OR class LIKE ?) AND LOWER(subject)=LOWER(?) AND (test_no=? OR topic=? OR test_no='') AND approved=1""",
+              (student['class'], f"%{clean_cls}%", student['subject'], test_no, test_no))
+    approved_qs = c.fetchall()
+    
+    total_test_marks = sum(float(q['total_marks'] or 10.0) for q in approved_qs) or 10.0
+    total_q_count = len(approved_qs) or 1
+
+    approved_qids = [q['id'] for q in approved_qs]
+    score_sum = 0.0
+    if approved_qids:
+        placeholders = ','.join(['?'] * len(approved_qids))
+        c.execute(f"""SELECT SUM(marks_awarded) as total_score FROM coding_submissions
+                       WHERE student_id=? AND question_id IN ({placeholders})""",
+                   [student_id] + approved_qids)
+        row_score = c.fetchone()
+        if row_score and row_score['total_score'] is not None:
+            score_sum = float(row_score['total_score'])
+
+    percentage = round((score_sum / total_test_marks) * 100, 2)
+
+    # 8. Save/Update result in reporting pipeline table `results`
+    _save_or_update_result(c, student_id, student['name'], student['class'], student['section'],
+                           student['subject'], score_sum, total_q_count, percentage, test_no)
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        'status': 'success',
+        'message': 'Evaluation complete!',
+        'eval_status': eval_res['status'],
+        'passed_count': eval_res['passed_count'],
+        'total_test_cases': eval_res['total_test_cases'],
+        'marks_awarded': eval_res['marks_awarded'],
+        'question_marks': question_marks,
+        'case_results': sanitized_case_results
+    })
+
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# QUESTION BANK MODULE ROUTES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── AJAX: curriculum hierarchy helpers ────────────────────────────────────────
+
+@app.route('/api/qb/subjects')
+def qb_api_subjects():
+    """Return subjects for board+class (used by upload form AJAX)."""
+    if not (session.get('admin_logged_in') or session.get('teacher_logged_in')):
+        return jsonify([])
+    board = request.args.get('board', 'CBSE')
+    class_num = request.args.get('class', '10')
+    subjects = question_bank.get_curriculum_subjects(board, class_num)
+    return jsonify(subjects)
+
+
+@app.route('/api/qb/chapters')
+def qb_api_chapters():
+    """Return chapter suggestions for board+class+subject (autocomplete)."""
+    if not (session.get('admin_logged_in') or session.get('teacher_logged_in')):
+        return jsonify([])
+    board = request.args.get('board', 'CBSE')
+    class_num = request.args.get('class', '10')
+    subject = request.args.get('subject', '')
+    chapters = question_bank.get_chapter_suggestions(board, class_num, subject)
+    return jsonify(chapters)
+
+
+# ── MAIN BROWSE VIEW ──────────────────────────────────────────────────────────
+
+@app.route('/question-bank')
+def question_bank_browse():
+    """Browsable Question Bank — Admin and Teacher access."""
+    is_admin = session.get('admin_logged_in')
+    is_teacher = session.get('teacher_logged_in')
+    if not (is_admin or is_teacher):
+        return redirect(url_for('teacher_login'))
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Filter params
+    f_board = request.args.get('board', '')
+    f_class = request.args.get('class', '')
+    f_subject = request.args.get('subject', '')
+    f_chapter = request.args.get('chapter', '')
+    f_type = request.args.get('type', '')
+
+    # Build query for approved items
+    where_clauses = ["approved = 1"]
+    params = []
+    if f_board:
+        where_clauses.append("board = ?")
+        params.append(f_board)
+    if f_class:
+        where_clauses.append("class = ?")
+        params.append(f_class)
+    if f_subject:
+        where_clauses.append("subject = ?")
+        params.append(f_subject)
+    if f_chapter:
+        where_clauses.append("chapter LIKE ?")
+        params.append(f'%{f_chapter}%')
+    if f_type:
+        where_clauses.append("question_type = ?")
+        params.append(f_type)
+
+    where_sql = " AND ".join(where_clauses)
+    c.execute(f"SELECT * FROM question_bank_items WHERE {where_sql} ORDER BY board, class, subject, chapter, question_type, id", params)
+    items = c.fetchall()
+
+    # Distinct filter options (only from approved items)
+    c.execute("SELECT DISTINCT board FROM question_bank_items WHERE approved=1 ORDER BY board")
+    boards = [r['board'] for r in c.fetchall()]
+    c.execute("SELECT DISTINCT class FROM question_bank_items WHERE approved=1 ORDER BY CAST(class AS INTEGER)")
+    classes = [r['class'] for r in c.fetchall()]
+    c.execute("SELECT DISTINCT subject FROM question_bank_items WHERE approved=1 ORDER BY subject")
+    subjects = [r['subject'] for r in c.fetchall()]
+    c.execute("SELECT DISTINCT chapter FROM question_bank_items WHERE approved=1 ORDER BY chapter")
+    chapters = [r['chapter'] for r in c.fetchall()]
+
+    # Stats
+    c.execute("SELECT COUNT(*) as cnt FROM question_bank_items WHERE approved=1")
+    total_approved = c.fetchone()['cnt']
+    c.execute("SELECT COUNT(*) as cnt FROM question_bank_items WHERE approved=0")
+    total_pending = c.fetchone()['cnt']
+    c.execute("SELECT COUNT(*) as cnt FROM question_bank_papers")
+    total_papers = c.fetchone()['cnt']
+
+    conn.close()
+
+    return render_template('question_bank.html',
+        items=items, boards=boards, classes=classes, subjects=subjects, chapters=chapters,
+        f_board=f_board, f_class=f_class, f_subject=f_subject, f_chapter=f_chapter, f_type=f_type,
+        total_approved=total_approved, total_pending=total_pending, total_papers=total_papers,
+        is_admin=is_admin, is_teacher=is_teacher,
+        all_boards=question_bank.get_curriculum_boards()
+    )
+
+
+# ── UPLOAD FORM & EXTRACTION JOB ─────────────────────────────────────────────
+
+@app.route('/question-bank/upload', methods=['GET', 'POST'])
+def question_bank_upload():
+    """Upload a PDF to the Question Bank and trigger background extraction."""
+    is_admin = session.get('admin_logged_in')
+    is_teacher = session.get('teacher_logged_in')
+    if not (is_admin or is_teacher):
+        return redirect(url_for('teacher_login'))
+
+    all_boards = question_bank.get_curriculum_boards()
+    error = None
+    success = None
+
+    if request.method == 'POST':
+        board = request.form.get('board', '').strip()
+        class_num = request.form.get('class', '').strip()
+        subject = request.form.get('subject', '').strip()
+        chapter = request.form.get('chapter', '').strip()
+        qtype = request.form.get('question_type', 'MCQ').strip()
+        pdf_file = request.files.get('pdf_file')
+
+        if not all([board, class_num, subject, chapter, qtype, pdf_file and pdf_file.filename]):
+            error = "All fields are required, including the PDF file."
+        elif not pdf_file.filename.lower().endswith('.pdf'):
+            error = "Only PDF files are accepted."
+        else:
+            # Save PDF
+            safe_fname = secure_filename(pdf_file.filename)
+            pdf_path = os.path.join(QB_UPLOAD_FOLDER, safe_fname)
+            pdf_file.save(pdf_path)
+
+            # Insert paper record
+            conn = get_db()
+            c = conn.cursor()
+            uploader = session.get('teacher_id') or 'admin'
+            uploader_type = 'admin' if is_admin else 'teacher'
+            c.execute("""INSERT INTO question_bank_papers
+                         (uploaded_by, uploader_type, original_filename, board, class, subject, chapter, question_type, status)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'processing')""",
+                      (str(uploader), uploader_type, safe_fname, board, class_num, subject, chapter, qtype))
+            paper_id = c.lastrowid
+            conn.commit()
+            conn.close()
+
+            log_audit_event(uploader_type, str(uploader), 'QB_UPLOAD',
+                            'question_bank_papers', str(paper_id))
+
+            # Launch background extraction thread
+            def _extract_job(pdf_path, board, class_num, subject, chapter, qtype, paper_id):
+                try:
+                    items = question_bank.extract_questions_from_pdf(
+                        pdf_path=os.path.abspath(pdf_path),
+                        board=board, class_num=class_num, subject=subject,
+                        chapter=chapter, question_type=qtype, paper_id=paper_id
+                    )
+                    conn2 = get_db()
+                    c2 = conn2.cursor()
+                    for item in items:
+                        c2.execute("""INSERT INTO question_bank_items
+                                      (paper_id, board, class, subject, chapter, question_type,
+                                       raw_question_text, raw_options, raw_answer, image_path,
+                                       ai_generated, approved, source_page)
+                                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?)""",
+                                   (paper_id, item['board'], item['class'], item['subject'],
+                                    item['chapter'], item['question_type'],
+                                    item['raw_question_text'], item['raw_options'],
+                                    item['raw_answer'], item['image_path'],
+                                    item['source_page']))
+                    c2.execute("UPDATE question_bank_papers SET status='processed' WHERE id=?", (paper_id,))
+                    conn2.commit()
+                    conn2.close()
+                    app.logger.info(f"[QB] Extracted {len(items)} questions for paper_id={paper_id}")
+                except Exception as e:
+                    app.logger.error(f"[QB] Extraction failed paper_id={paper_id}: {e}")
+                    try:
+                        conn3 = get_db()
+                        c3 = conn3.cursor()
+                        c3.execute("UPDATE question_bank_papers SET status='failed' WHERE id=?", (paper_id,))
+                        conn3.commit()
+                        conn3.close()
+                    except Exception:
+                        pass
+
+            t = threading.Thread(target=_extract_job, daemon=True,
+                                 args=(pdf_path, board, class_num, subject, chapter, qtype, paper_id))
+            t.start()
+
+            return redirect(url_for('question_bank_review', paper_id=paper_id))
+
+    return render_template('question_bank_upload.html',
+        all_boards=all_boards, error=error, success=success,
+        is_admin=is_admin, is_teacher=is_teacher
+    )
+
+
+# ── PER-QUESTION REVIEW SCREEN ────────────────────────────────────────────────
+
+@app.route('/question-bank/review/<int:paper_id>')
+def question_bank_review(paper_id):
+    """Per-question review & tagging screen for a specific upload."""
+    is_admin = session.get('admin_logged_in')
+    is_teacher = session.get('teacher_logged_in')
+    if not (is_admin or is_teacher):
+        return redirect(url_for('teacher_login'))
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM question_bank_papers WHERE id=?", (paper_id,))
+    paper = c.fetchone()
+    if not paper:
+        conn.close()
+        return "Paper not found", 404
+
+    c.execute("SELECT * FROM question_bank_items WHERE paper_id=? ORDER BY source_page, id", (paper_id,))
+    items = c.fetchall()
+    conn.close()
+
+    all_boards = question_bank.get_curriculum_boards()
+    status = paper['status']
+
+    return render_template('question_bank_review.html',
+        paper=paper, items=items, status=status,
+        all_boards=all_boards, is_admin=is_admin, is_teacher=is_teacher
+    )
+
+
+@app.route('/question-bank/review/<int:paper_id>/status')
+def question_bank_review_status(paper_id):
+    """AJAX polling — returns extraction status and question count."""
+    if not (session.get('admin_logged_in') or session.get('teacher_logged_in')):
+        return jsonify({'status': 'error'}), 401
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT status FROM question_bank_papers WHERE id=?", (paper_id,))
+    row = c.fetchone()
+    c.execute("SELECT COUNT(*) as cnt FROM question_bank_items WHERE paper_id=?", (paper_id,))
+    count_row = c.fetchone()
+    conn.close()
+    if not row:
+        return jsonify({'status': 'not_found'})
+    return jsonify({'status': row['status'], 'count': count_row['cnt']})
+
+
+@app.route('/question-bank/review/save', methods=['POST'])
+def question_bank_review_save():
+    """Save per-question edits and bulk approve selected items."""
+    is_admin = session.get('admin_logged_in')
+    is_teacher = session.get('teacher_logged_in')
+    if not (is_admin or is_teacher):
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+
+    data = request.get_json(force=True) or {}
+    paper_id = data.get('paper_id')
+    edits = data.get('edits', [])   # list of {id, chapter, question_type, approved}
+    approve_all = data.get('approve_all', False)
+
+    approver = str(session.get('teacher_id') or 'admin')
+    now = datetime.datetime.now().isoformat()
+
+    conn = get_db()
+    c = conn.cursor()
+
+    if approve_all:
+        c.execute("""UPDATE question_bank_items SET approved=1, approved_by=?, approved_at=?
+                     WHERE paper_id=?""", (approver, now, paper_id))
+    else:
+        for edit in edits:
+            item_id = edit.get('id')
+            if not item_id:
+                continue
+            chapter = edit.get('chapter', '').strip()
+            qtype = edit.get('question_type', 'MCQ').strip()
+            approved = 1 if edit.get('approved') else 0
+            approved_by = approver if approved else ''
+            approved_at = now if approved else None
+            c.execute("""UPDATE question_bank_items
+                         SET chapter=?, question_type=?, approved=?, approved_by=?, approved_at=?
+                         WHERE id=?""",
+                      (chapter, qtype, approved, approved_by, approved_at, item_id))
+
+    conn.commit()
+    c.execute("SELECT COUNT(*) as cnt FROM question_bank_items WHERE paper_id=? AND approved=1", (paper_id,))
+    approved_count = c.fetchone()['cnt']
+    conn.close()
+
+    log_audit_event('admin' if is_admin else 'teacher', approver,
+                    'QB_APPROVE', 'question_bank_items', str(paper_id))
+    return jsonify({'status': 'ok', 'approved_count': approved_count})
+
+
+@app.route('/question-bank/item/delete', methods=['POST'])
+def question_bank_item_delete():
+    """Delete a single question bank item."""
+    is_admin = session.get('admin_logged_in')
+    is_teacher = session.get('teacher_logged_in')
+    if not (is_admin or is_teacher):
+        return jsonify({'status': 'error'}), 401
+    data = request.get_json(force=True) or {}
+    item_id = data.get('id')
+    if not item_id:
+        return jsonify({'status': 'error', 'message': 'No item id'}), 400
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM question_bank_items WHERE id=?", (item_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'ok'})
+
+
+# ── AI GENERATION FROM BANK REFERENCE ────────────────────────────────────────
+
+@app.route('/question-bank/generate', methods=['GET', 'POST'])
+def question_bank_generate():
+    """AI generation of new questions using Question Bank items as reference context."""
+    is_admin = session.get('admin_logged_in')
+    is_teacher = session.get('teacher_logged_in')
+    if not (is_admin or is_teacher):
+        return redirect(url_for('teacher_login'))
+
+    all_boards = question_bank.get_curriculum_boards()
+    result_items = []
+    error = None
+    provider_used = None
+    form_data = {}
+
+    if request.method == 'POST':
+        board = request.form.get('board', '').strip()
+        class_num = request.form.get('class', '').strip()
+        subject = request.form.get('subject', '').strip()
+        chapter = request.form.get('chapter', '').strip()
+        qtype = request.form.get('question_type', 'MCQ').strip()
+        try:
+            count = max(1, min(20, int(request.form.get('count', '5'))))
+        except ValueError:
+            count = 5
+
+        form_data = {'board': board, 'class': class_num, 'subject': subject,
+                     'chapter': chapter, 'question_type': qtype, 'count': count}
+
+        # Fetch reference items from question_bank_items
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("""SELECT raw_question_text, raw_options FROM question_bank_items
+                     WHERE approved=1 AND board=? AND class=? AND subject=?
+                     AND chapter LIKE ? AND question_type=?
+                     ORDER BY RANDOM() LIMIT 15""",
+                  (board, class_num, subject, f'%{chapter}%', qtype))
+        ref_items = [dict(r) for r in c.fetchall()]
+        conn.close()
+
+        # Build prompt and call AI
+        prompt = question_bank.build_generation_prompt(
+            ref_items, board, class_num, subject, chapter, qtype, count
+        )
+        res_dict, provider_used, err_msg = generate_ai_content(prompt, timeout=90)
+        log_audit_event('admin' if is_admin else 'teacher',
+                        str(session.get('teacher_id') or 'admin'),
+                        f'QB_GENERATE via {provider_used or "none"}',
+                        'question_bank_items', '')
+
+        if not res_dict:
+            error = err_msg or "AI generation failed. Please try again."
+        else:
+            raw_text = res_dict['candidates'][0]['content']['parts'][0]['text'].strip()
+            result_items = question_bank.parse_ai_question_response(
+                raw_text, qtype, board, class_num, subject, chapter
+            )
+            if not result_items:
+                error = "AI returned a response but no valid questions could be parsed."
+
+    return render_template('question_bank_generate.html',
+        all_boards=all_boards, result_items=result_items,
+        error=error, provider_used=provider_used, form_data=form_data,
+        is_admin=is_admin, is_teacher=is_teacher
+    )
+
+
+@app.route('/question-bank/generate/save', methods=['POST'])
+def question_bank_generate_save():
+    """Save selected AI-generated questions into question_bank_items (pending review)."""
+    is_admin = session.get('admin_logged_in')
+    is_teacher = session.get('teacher_logged_in')
+    if not (is_admin or is_teacher):
+        return jsonify({'status': 'error'}), 401
+
+    data = request.get_json(force=True) or {}
+    questions = data.get('questions', [])
+    if not questions:
+        return jsonify({'status': 'error', 'message': 'No questions provided'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+    saved = 0
+    for q in questions:
+        q_text = q.get('raw_question_text', '').strip()
+        if not q_text:
+            continue
+        c.execute("""INSERT INTO question_bank_items
+                     (paper_id, board, class, subject, chapter, question_type,
+                      raw_question_text, raw_options, raw_answer, image_path,
+                      ai_generated, approved, source_page)
+                     VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, '', 1, 0, 0)""",
+                  (q.get('board', ''), q.get('class', ''), q.get('subject', ''),
+                   q.get('chapter', ''), q.get('question_type', 'MCQ'),
+                   q_text, q.get('raw_options', '[]'), q.get('raw_answer', '')))
+        saved += 1
+    conn.commit()
+    conn.close()
+
+    return jsonify({'status': 'ok', 'saved': saved,
+                    'message': f'{saved} question(s) saved to Question Bank (pending review)'})
+
+
+# ── WORD EXPORT WITH OMML EQUATIONS ──────────────────────────────────────────
+
+@app.route('/question-bank/export/word', methods=['POST'])
+def question_bank_export_word():
+    """
+    Export selected approved Question Bank items as a Word document
+    with native OMML equations (not plain text or images).
+    """
+    is_admin = session.get('admin_logged_in')
+    is_teacher = session.get('teacher_logged_in')
+    if not (is_admin or is_teacher):
+        return jsonify({'status': 'error'}), 401
+
+    data = request.get_json(force=True) or {}
+    item_ids = data.get('item_ids', [])
+    title = data.get('title', 'Question Bank Export')
+    if not item_ids:
+        return jsonify({'status': 'error', 'message': 'No items selected'}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+    placeholders = ','.join(['?'] * len(item_ids))
+    c.execute(f"SELECT * FROM question_bank_items WHERE id IN ({placeholders}) AND approved=1 ORDER BY chapter, question_type, id",
+              item_ids)
+    items = [dict(r) for r in c.fetchall()]
+    conn.close()
+
+    if not items:
+        return jsonify({'status': 'error', 'message': 'No approved items found for given IDs'}), 404
+
+    try:
+        import docx as _docx
+        from docx.shared import Pt, RGBColor, Inches, Mm
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        from docx.enum.table import WD_TABLE_ALIGNMENT
+    except ImportError:
+        return jsonify({'status': 'error', 'message': 'python-docx not installed'}), 500
+
+    doc = _docx.Document()
+    # A4 setup
+    for sec in doc.sections:
+        sec.page_width = Mm(210)
+        sec.page_height = Mm(297)
+        sec.top_margin = Mm(18)
+        sec.bottom_margin = Mm(18)
+        sec.left_margin = Mm(20)
+        sec.right_margin = Mm(20)
+
+    # Title
+    p_title = doc.add_paragraph()
+    p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r_title = p_title.add_run(title)
+    r_title.bold = True
+    r_title.font.size = Pt(16)
+    r_title.font.color.rgb = RGBColor(26, 35, 126)
+
+    school = get_setting('school_name', 'RRB Group of Schools')
+    p_sub = doc.add_paragraph()
+    p_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r_sub = p_sub.add_run(f"{school}  |  Question Bank Export")
+    r_sub.font.size = Pt(10)
+    r_sub.font.color.rgb = RGBColor(100, 116, 139)
+
+    doc.add_paragraph()  # spacer
+
+    # Group by chapter
+    chapters_seen = {}
+    for item in items:
+        ch = item['chapter']
+        if ch not in chapters_seen:
+            chapters_seen[ch] = []
+        chapters_seen[ch].append(item)
+
+    q_global = 1
+    for chapter_name, ch_items in chapters_seen.items():
+        # Chapter header
+        p_ch = doc.add_paragraph()
+        p_ch.paragraph_format.space_before = Pt(14)
+        p_ch.paragraph_format.keep_with_next = True
+        r_ch = p_ch.add_run(f"Chapter: {chapter_name}")
+        r_ch.bold = True
+        r_ch.font.size = Pt(12)
+        r_ch.font.color.rgb = RGBColor(26, 35, 126)
+
+        for item in ch_items:
+            q_text = item.get('raw_question_text', '')
+            q_type = item.get('question_type', 'MCQ')
+
+            # Question paragraph with math-aware runs
+            p_q = doc.add_paragraph()
+            p_q.paragraph_format.space_before = Pt(8)
+            p_q.paragraph_format.space_after = Pt(2)
+
+            # Question prefix run
+            r_prefix = p_q.add_run(f"Q{q_global}. [{q_type}]  ")
+            r_prefix.bold = True
+            r_prefix.font.size = Pt(11)
+
+            # Add question text with OMML math support
+            question_bank.add_math_aware_runs(p_q, q_text, base_font_size=11)
+
+            # Image (if any)
+            img_path = item.get('image_path', '')
+            if img_path:
+                abs_img = os.path.join(os.path.dirname(os.path.abspath(__file__)), img_path)
+                if os.path.exists(abs_img) and os.path.getsize(abs_img) > 0:
+                    try:
+                        p_img = doc.add_paragraph()
+                        p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        doc.add_picture(abs_img, width=Inches(3.0))
+                    except Exception:
+                        pass
+
+            # MCQ options with math support
+            raw_opts = item.get('raw_options', '[]')
+            try:
+                opts = json.loads(raw_opts) if raw_opts else []
+            except Exception:
+                opts = []
+            for opt in opts:
+                p_opt = doc.add_paragraph()
+                p_opt.paragraph_format.left_indent = Mm(10)
+                p_opt.paragraph_format.space_before = Pt(1)
+                p_opt.paragraph_format.space_after = Pt(1)
+                question_bank.add_math_aware_runs(p_opt, str(opt), base_font_size=10)
+
+            q_global += 1
+
+    # Footer
+    p_foot = doc.add_paragraph()
+    p_foot.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_foot.paragraph_format.space_before = Pt(24)
+    r_foot = p_foot.add_run(f"*** End of Question Bank Export ***\nGenerated by RRB CBT School System | {datetime.datetime.now().strftime('%d/%m/%Y')}")
+    r_foot.italic = True
+    r_foot.font.size = Pt(8.5)
+    r_foot.font.color.rgb = RGBColor(150, 150, 150)
+
+    # Save
+    fname = f"QB_Export_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
+    out_path = os.path.join(EXPORT_FOLDER, fname)
+    doc.save(out_path)
+
+    return send_file(out_path, as_attachment=True, download_name=fname,
+                     mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+
+
+# ── PAPERS MANAGEMENT (Admin view of all uploads) ─────────────────────────────
+
+@app.route('/question-bank/papers')
+@admin_required
+def question_bank_papers_list():
+    """Admin view of all uploaded Question Bank papers."""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM question_bank_papers ORDER BY upload_date DESC")
+    papers = c.fetchall()
+    conn.close()
+    return render_template('question_bank.html', view='papers', papers=papers,
+                           is_admin=True, is_teacher=False,
+                           all_boards=question_bank.get_curriculum_boards())
+
+
+@app.route('/question-bank/papers/<int:paper_id>/delete', methods=['POST'])
+@admin_required
+def question_bank_paper_delete(paper_id):
+    """Admin: delete a paper and all its extracted questions."""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM question_bank_items WHERE paper_id=?", (paper_id,))
+    c.execute("DELETE FROM question_bank_papers WHERE id=?", (paper_id,))
+    conn.commit()
+    conn.close()
+    log_audit_event('admin', 'admin', 'QB_DELETE_PAPER', 'question_bank_papers', str(paper_id))
+    return jsonify({'status': 'ok'})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 if __name__ == '__main__':
     host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', 5000))
