@@ -1,0 +1,355 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Question Bank - RRB CBT</title>
+<meta name="description" content="Browse, filter and manage your Question Bank organised by Board, Class, Subject and Chapter.">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --primary:#1a237e;--primary-light:#3949ab;--primary-lighter:#667eea;
+  --accent:#10b981;--danger:#dc2626;--warn:#f59e0b;
+  --bg:#f0f4f8;--card:#fff;--border:#e2e8f0;--text:#1e293b;--muted:#64748b;
+  --sidebar-w:280px;--radius:16px;--shadow:0 4px 20px rgba(0,0,0,.06);
+  --transition:all .3s cubic-bezier(.4,0,.2,1);
+}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;}
+
+/* === SIDEBAR === */
+.sidebar{width:var(--sidebar-w);background:linear-gradient(180deg,#0d1457 0%,#1a237e 50%,#3949ab 100%);color:#fff;height:100vh;position:fixed;top:0;left:0;z-index:100;display:flex;flex-direction:column;box-shadow:4px 0 25px rgba(0,0,0,.15);overflow:hidden;transition:var(--transition);}
+.sidebar-header{padding:20px 18px 14px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sidebar-header h2{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:10px;}
+.sidebar-header h2 i{background:rgba(255,255,255,.12);width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+.sidebar-header p{font-size:.75rem;color:rgba(255,255,255,.55);margin-top:4px;padding-left:46px;}
+.filter-form{flex:1;overflow-y:auto;padding:16px;}
+.filter-form::-webkit-scrollbar{width:3px;}
+.filter-form::-webkit-scrollbar-track{background:transparent;}
+.filter-form::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px;}
+.filter-group{margin-bottom:14px;}
+.filter-group label{display:block;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.filter-group select,.filter-group input{width:100%;padding:9px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:#fff;font-family:inherit;font-size:.85rem;outline:none;transition:border-color .2s;}
+.filter-group select:focus,.filter-group input:focus{border-color:rgba(255,255,255,.4);}
+.filter-group select option{background:#1a237e;color:#fff;}
+.filter-actions{padding:0 16px 16px;display:flex;flex-direction:column;gap:8px;}
+.btn-filter{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:10px;font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none;}
+.btn-apply{background:linear-gradient(135deg,var(--accent),#059669);color:#fff;}
+.btn-apply:hover{transform:translateY(-1px);}
+.btn-reset{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);}
+.btn-reset:hover{background:rgba(255,255,255,.15);}
+
+/* === MAIN === */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden;}
+.topbar{background:var(--card);padding:14px 28px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:0 2px 12px rgba(0,0,0,.05);position:sticky;top:0;z-index:50;}
+.topbar h1{font-size:1.35rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:10px;flex:1;}
+.topbar-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-action{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:10px;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none;}
+.btn-upload{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;box-shadow:0 4px 12px rgba(26,35,126,.2);}
+.btn-upload:hover{transform:translateY(-1px);}
+.btn-gen{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;box-shadow:0 4px 12px rgba(124,58,237,.2);}
+.btn-gen:hover{transform:translateY(-1px);}
+.btn-export{background:linear-gradient(135deg,#0369a1,#0ea5e9);color:#fff;box-shadow:0 4px 12px rgba(14,165,233,.2);}
+.btn-export:hover{transform:translateY(-1px);}
+.btn-outline{background:var(--bg);color:var(--text);border:1.5px solid var(--border);}
+.btn-outline:hover{background:var(--border);}
+.btn-sm{padding:6px 12px;font-size:.78rem;}
+
+/* === STATS === */
+.stats-row{display:flex;gap:14px;padding:20px 28px 0;flex-wrap:wrap;}
+.stat-card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:16px 20px;display:flex;align-items:center;gap:14px;min-width:160px;flex:1;}
+.stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.stat-icon.blue{background:#dbeafe;color:#1d4ed8;}
+.stat-icon.green{background:#dcfce7;color:#15803d;}
+.stat-icon.orange{background:#fff7ed;color:#c2410c;}
+.stat-icon.purple{background:#f3e8ff;color:#7c3aed;}
+.stat-val{font-size:1.5rem;font-weight:800;color:var(--text);}
+.stat-lbl{font-size:.75rem;color:var(--muted);}
+
+/* === FILTER CHIP === */
+.active-filters{display:flex;gap:8px;flex-wrap:wrap;padding:14px 28px 0;min-height:20px;}
+.filter-chip{display:inline-flex;align-items:center;gap:6px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:4px 10px;border-radius:20px;font-size:.78rem;font-weight:600;}
+
+/* === QUESTIONS GRID === */
+.content{padding:16px 28px 28px;}
+.results-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.results-header h2{font-size:1rem;font-weight:700;color:var(--primary);}
+.select-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.select-bar label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--muted);}
+.select-bar input[type=checkbox]{accent-color:var(--accent);}
+.q-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px;}
+.q-card{background:var(--card);border-radius:14px;border:1.5px solid var(--border);overflow:hidden;transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column;}
+.q-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.1);transform:translateY(-2px);}
+.q-card.selected{border-color:#3949ab;box-shadow:0 0 0 2px rgba(57,73,171,.25);}
+.q-card-header{padding:12px 14px;background:#f8fafc;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.q-card-header input[type=checkbox]{accent-color:var(--primary);}
+.q-badge{padding:3px 9px;border-radius:20px;font-size:.72rem;font-weight:700;}
+.badge-mcq{background:#dbeafe;color:#1d4ed8;}
+.badge-num{background:#fef3c7;color:#92400e;}
+.badge-desc{background:#f3e8ff;color:#6b21a8;}
+.badge-code{background:#ecfdf5;color:#065f46;}
+.badge-ai{background:#fce7f3;color:#9d174d;}
+.q-hierarchy{flex:1;font-size:.7rem;color:var(--muted);font-weight:500;}
+.q-card-body{padding:14px;flex:1;}
+.q-text{font-size:.875rem;line-height:1.65;color:var(--text);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-overflow:hidden;overflow:hidden;}
+.q-options{margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:3px;}
+.q-options span{background:#f8fafc;border:1px solid var(--border);padding:3px 7px;border-radius:5px;font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.q-card-footer{padding:10px 14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.q-meta-small{font-size:.72rem;color:var(--muted);}
+.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.78rem;transition:color .2s;display:flex;align-items:center;gap:4px;}
+.del-btn:hover{color:var(--danger);}
+.empty-state{text-align:center;padding:80px 20px;color:var(--muted);}
+.empty-state i{font-size:4rem;margin-bottom:20px;color:#cbd5e1;}
+.empty-state h2{font-size:1.4rem;font-weight:700;margin-bottom:10px;}
+.empty-state p{font-size:.9rem;line-height:1.7;}
+.empty-state .cta{display:inline-flex;align-items:center;gap:8px;margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;border-radius:12px;text-decoration:none;font-weight:600;font-size:.9rem;}
+/* Export modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9000;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--card);border-radius:20px;padding:28px;max-width:460px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.modal h3{font-size:1.1rem;font-weight:700;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.modal .form-group{margin-bottom:14px;}
+.modal label{display:block;font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:6px;}
+.modal input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.875rem;outline:none;}
+.modal input:focus{border-color:var(--primary-light);}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;font-size:.875rem;font-weight:500;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.2);transform:translateY(80px);opacity:0;transition:all .3s;}
+.toast.show{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h2><i class="fas fa-database"></i> Question Bank</h2>
+    <p>Filter by hierarchy</p>
+  </div>
+  <form method="GET" action="/question-bank" class="filter-form" id="filter-form">
+    <div class="filter-group">
+      <label><i class="fas fa-layer-group"></i> Board</label>
+      <select name="board" onchange="this.form.submit()">
+        <option value="">All Boards</option>
+        {% for b in all_boards %}<option value="{{ b }}" {% if f_board==b %}selected{% endif %}>{{ b }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label><i class="fas fa-graduation-cap"></i> Class</label>
+      <select name="class" onchange="this.form.submit()">
+        <option value="">All Classes</option>
+        {% for n in range(1,13) %}<option value="{{ n }}" {% if f_class==n|string %}selected{% endif %}>Class {{ n }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label><i class="fas fa-book"></i> Subject</label>
+      <select name="subject" onchange="this.form.submit()">
+        <option value="">All Subjects</option>
+        {% for s in subjects %}<option value="{{ s }}" {% if f_subject==s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label><i class="fas fa-bookmark"></i> Chapter</label>
+      <select name="chapter" onchange="this.form.submit()">
+        <option value="">All Chapters</option>
+        {% for ch in chapters %}<option value="{{ ch }}" {% if f_chapter==ch %}selected{% endif %}>{{ ch }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label><i class="fas fa-tag"></i> Question Type</label>
+      <select name="type" onchange="this.form.submit()">
+        <option value="">All Types</option>
+        {% for t in ['MCQ','Numerical','Descriptive','Coding'] %}<option value="{{ t }}" {% if f_type==t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+      </select>
+    </div>
+  </form>
+  <div class="filter-actions">
+    <a href="/question-bank" class="btn-filter btn-reset"><i class="fas fa-times"></i> Clear Filters</a>
+    {% if is_admin %}<a href="/question-bank/papers" class="btn-filter btn-reset" style="margin-top:4px;"><i class="fas fa-file-pdf"></i> All Papers</a>{% endif %}
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+  <div class="topbar">
+    <h1><i class="fas fa-database" style="color:var(--primary-light);"></i> Question Bank</h1>
+    <div class="topbar-actions">
+      <a href="/question-bank/upload" class="btn-action btn-upload"><i class="fas fa-cloud-upload-alt"></i> Upload PDF</a>
+      <a href="/question-bank/generate" class="btn-action btn-gen"><i class="fas fa-robot"></i> AI Generate</a>
+      <button class="btn-action btn-export" id="export-btn" onclick="openExportModal()"><i class="fas fa-file-word"></i> Export Word</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+      <div><div class="stat-val">{{ total_approved }}</div><div class="stat-lbl">Approved Questions</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+      <div><div class="stat-val">{{ total_pending }}</div><div class="stat-lbl">Pending Review</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-file-pdf"></i></div>
+      <div><div class="stat-val">{{ total_papers }}</div><div class="stat-lbl">PDFs Uploaded</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fas fa-filter"></i></div>
+      <div><div class="stat-val">{{ items|length }}</div><div class="stat-lbl">Matching Filter</div></div>
+    </div>
+  </div>
+
+  <!-- Active filters -->
+  <div class="active-filters">
+    {% if f_board %}<span class="filter-chip"><i class="fas fa-layer-group"></i> {{ f_board }}</span>{% endif %}
+    {% if f_class %}<span class="filter-chip"><i class="fas fa-graduation-cap"></i> Class {{ f_class }}</span>{% endif %}
+    {% if f_subject %}<span class="filter-chip"><i class="fas fa-book"></i> {{ f_subject }}</span>{% endif %}
+    {% if f_chapter %}<span class="filter-chip"><i class="fas fa-bookmark"></i> {{ f_chapter }}</span>{% endif %}
+    {% if f_type %}<span class="filter-chip"><i class="fas fa-tag"></i> {{ f_type }}</span>{% endif %}
+  </div>
+
+  <div class="content">
+    {% if items %}
+    <div class="results-header">
+      <h2>{{ items|length }} question{{ 's' if items|length != 1 else '' }} found</h2>
+      <div class="select-bar">
+        <label><input type="checkbox" id="check-all" onchange="toggleAll(this)"> Select All</label>
+        <span id="selected-count" style="font-size:.82rem;color:var(--muted);">0 selected</span>
+      </div>
+    </div>
+    <div class="q-grid" id="q-grid">
+    {% for item in items %}
+    <div class="q-card" id="qcard-{{ item.id }}" data-id="{{ item.id }}">
+      <div class="q-card-header">
+        <input type="checkbox" class="q-chk" onchange="updateSelection(this)">
+        {% if item.question_type == 'MCQ' %}<span class="q-badge badge-mcq">MCQ</span>
+        {% elif item.question_type == 'Numerical' %}<span class="q-badge badge-num">Numerical</span>
+        {% elif item.question_type == 'Coding' %}<span class="q-badge badge-code">Coding</span>
+        {% else %}<span class="q-badge badge-desc">Descriptive</span>{% endif %}
+        {% if item.ai_generated %}<span class="q-badge badge-ai" title="AI-generated">AI</span>{% endif %}
+        <div class="q-hierarchy">{{ item.board }} · C{{ item.class }} · {{ item.subject }}</div>
+      </div>
+      <div class="q-card-body">
+        <div class="q-text">{{ item.raw_question_text }}</div>
+        {% if item.raw_options and item.raw_options != '[]' %}
+        <div class="q-options" id="qopts-{{ item.id }}">
+          <script>
+          (function(){
+            try{var opts=JSON.parse({{ item.raw_options | tojson }});
+            document.addEventListener('DOMContentLoaded',function(){
+              var c=document.getElementById('qopts-{{ item.id }}');
+              if(c)opts.slice(0,4).forEach(function(o){var s=document.createElement('span');s.textContent=o;c.appendChild(s);});
+            });}catch(e){}
+          })();
+          </script>
+        </div>
+        {% endif %}
+      </div>
+      <div class="q-card-footer">
+        <div class="q-meta-small">
+          <i class="fas fa-bookmark" style="color:var(--primary-light);"></i> {{ item.chapter|truncate(28,True,'…') }}
+          {% if item.source_page %} · pg.{{ item.source_page }}{% endif %}
+        </div>
+        <button class="del-btn" onclick="deleteItem({{ item.id }}, this)"><i class="fas fa-trash"></i> Remove</button>
+      </div>
+    </div>
+    {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-database"></i>
+      <h2>No questions yet</h2>
+      {% if f_board or f_class or f_subject or f_chapter or f_type %}
+      <p>No approved questions match the current filters.<br>Try clearing some filters or upload a new PDF.</p>
+      <a href="/question-bank" class="cta"><i class="fas fa-times"></i> Clear Filters</a>
+      {% else %}
+      <p>Your Question Bank is empty. Upload a PDF exam paper to get started.<br>Gemini Vision will automatically extract and structure every question.</p>
+      <a href="/question-bank/upload" class="cta"><i class="fas fa-cloud-upload-alt"></i> Upload Your First PDF</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</main>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal">
+    <h3><i class="fas fa-file-word" style="color:#1d4ed8;"></i> Export to Word</h3>
+    <p style="font-size:.875rem;color:var(--muted);margin-bottom:16px;">Selected questions will be exported as a Word document with native, editable equations.</p>
+    <div class="form-group">
+      <label>Document Title</label>
+      <input type="text" id="export-title" value="Question Bank — RRB CBT" placeholder="Export title...">
+    </div>
+    <div id="export-info" style="font-size:.85rem;color:var(--accent);font-weight:600;margin-bottom:4px;"></div>
+    <div class="modal-footer">
+      <button class="btn-action btn-outline btn-sm" onclick="closeExportModal()">Cancel</button>
+      <button class="btn-action btn-export btn-sm" onclick="doExport()"><i class="fas fa-download"></i> Download .docx</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function toggleAll(master){
+  document.querySelectorAll('.q-chk').forEach(c=>{
+    c.checked=master.checked;
+    c.closest('.q-card').classList.toggle('selected',master.checked);
+  });
+  updateSelectedCount();
+}
+function updateSelection(chk){
+  chk.closest('.q-card').classList.toggle('selected',chk.checked);
+  updateSelectedCount();
+}
+function updateSelectedCount(){
+  const n=document.querySelectorAll('.q-chk:checked').length;
+  document.getElementById('selected-count').textContent=n+' selected';
+}
+function getSelectedIds(){
+  return Array.from(document.querySelectorAll('.q-chk:checked')).map(c=>parseInt(c.closest('.q-card').dataset.id));
+}
+function deleteItem(id, btn){
+  if(!confirm('Remove this question from the bank?'))return;
+  fetch('/question-bank/item/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})})
+    .then(r=>r.json()).then(d=>{
+      if(d.status==='ok'){document.getElementById('qcard-'+id).remove();showToast('Question removed');}
+    });
+}
+function openExportModal(){
+  const ids=getSelectedIds();
+  if(!ids.length){showToast('Select questions first (use checkboxes).');return;}
+  document.getElementById('export-info').textContent=ids.length+' question(s) selected for export';
+  document.getElementById('export-modal').classList.add('show');
+}
+function closeExportModal(){document.getElementById('export-modal').classList.remove('show');}
+function doExport(){
+  const ids=getSelectedIds();
+  const title=document.getElementById('export-title').value||'Question Bank Export';
+  if(!ids.length){showToast('No questions selected.');return;}
+  showToast('Generating Word document…');
+  fetch('/question-bank/export/word',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({item_ids:ids,title:title})
+  }).then(r=>{
+    if(!r.ok)return r.json().then(d=>{throw new Error(d.message||'Export failed');});
+    return r.blob();
+  }).then(blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='QB_Export.docx';a.click();
+    URL.revokeObjectURL(url);
+    closeExportModal();
+    showToast('✅ Word document downloaded!');
+  }).catch(e=>showToast('Export error: '+e.message));
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+// Close modal on overlay click
+document.getElementById('export-modal').addEventListener('click',function(e){if(e.target===this)closeExportModal();});
+</script>
+</body>
+</html>
