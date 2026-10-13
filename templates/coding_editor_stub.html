@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ question['title'] }} — Coding Problem View</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Topbar ─────────────────────────────────────────────────── */
+        .topbar {
+            background-color: #090d16;
+            border-bottom: 1px solid var(--card-border);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .btn-back {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            color: var(--text-main);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            background-color: #334155;
+            color: #ffffff;
+        }
+
+        .timer-box {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ── Main Layout ────────────────────────────────────────────── */
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px;
+            flex: 1;
+        }
+
+        @media (max-width: 992px) {
+            .split-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .q-header-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .q-meta-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .badge-pill {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .badge-blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .badge-green { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge-yellow { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+        .statement-box {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+            white-space: pre-wrap;
+            background: #0f172a;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .section-sub {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .code-box {
+            background-color: #090d16;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: #67e8f9;
+            white-space: pre-wrap;
+        }
+
+        /* ── Stub Right Panel ────────────────────────────────────────── */
+        .stub-panel {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #3b82f6;
+            border-radius: 14px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.1);
+        }
+
+        .stub-icon {
+            width: 72px;
+            height: 72px;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .stub-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .stub-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            max-width: 440px;
+            line-height: 1.6;
+        }
+
+        .phase-badge {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .lang-list {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .lang-chip {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #93c5fd;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <a href="/coding_exam_list" class="btn-back">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Back to Question List</span>
+        </a>
+
+        <div style="font-weight: 600; font-size: 1rem; color: #cbd5e1;">
+            {{ question['title'] }}
+        </div>
+
+        <div class="timer-box">
+            <i class="fa-regular fa-clock"></i>
+            <span id="timerDisplay">--:--</span>
+        </div>
+    </div>
+
+    <!-- Main Split Layout -->
+    <div class="split-layout">
+        
+        <!-- Left Panel: Problem Details -->
+        <div class="panel">
+            <div>
+                <div class="q-meta-row" style="margin-bottom: 8px;">
+                    <span class="badge-pill badge-blue">{{ question['topic'] or 'General Programming' }}</span>
+                    <span class="badge-pill badge-yellow">{{ (question['difficulty'] or 'medium')|upper }}</span>
+                    <span class="badge-pill badge-green">{{ question['total_marks'] or 10 }} Marks</span>
+                </div>
+                <div class="q-header-title">{{ question['title'] }}</div>
+            </div>
+
+            <div>
+                <div class="section-sub">Problem Statement</div>
+                <div class="statement-box">{{ question['problem_statement'] }}</div>
+            </div>
+
+            {% if question['input_format'] %}
+            <div>
+                <div class="section-sub">Input Format</div>
+                <div class="statement-box" style="font-size: 0.9rem;">{{ question['input_format'] }}</div>
+            </div>
+            {% endif %}
+
+            {% if question['output_format'] %}
+            <div>
+                <div class="section-sub">Output Format</div>
+                <div class="statement-box" style="font-size: 0.9rem;">{{ question['output_format'] }}</div>
+            </div>
+            {% endif %}
+
+            {% if question['constraints'] %}
+            <div>
+                <div class="section-sub">Constraints</div>
+                <div class="statement-box" style="font-size: 0.9rem;">{{ question['constraints'] }}</div>
+            </div>
+            {% endif %}
+
+            {% if sample_cases %}
+            <div>
+                <div class="section-sub">Sample Test Cases</div>
+                {% for tc in sample_cases %}
+                <div style="margin-bottom: 12px;">
+                    <div style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 4px;">Sample #{{ loop.index }} Input:</div>
+                    <div class="code-box">{{ tc['input'] or '(empty)' }}</div>
+                    <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 6px; margin-bottom: 4px;">Sample #{{ loop.index }} Output:</div>
+                    <div class="code-box" style="color: #34d399;">{{ tc['expected_output'] or '(empty)' }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Panel: Phase 3 Stub Notice -->
+        <div class="stub-panel">
+            <div class="stub-icon">
+                <i class="fa-solid fa-code"></i>
+            </div>
+
+            <div class="phase-badge">
+                <i class="fa-solid fa-circle-check"></i> Phase 3 Question Routing Verified
+            </div>
+
+            <div class="stub-title">
+                Code Editor & Evaluation Engine
+            </div>
+
+            <div class="stub-desc">
+                You have successfully navigated to this coding question. The interactive split-screen code editor, compiler selection, sample runner, and evaluation submission engine will be implemented in Phase 4 & Phase 5.
+            </div>
+
+            <div style="margin-top: 10px;">
+                <div class="section-sub" style="margin-bottom: 10px;">Supported Execution Languages</div>
+                <div class="lang-list">
+                    {% for lang in (question['allowed_languages'] or 'python,java,c,cpp').split(',') %}
+                    <span class="lang-chip">{{ lang|trim|upper }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <a href="/coding_exam_list" class="btn-back" style="background-color: var(--accent-blue); border: none; color: white;">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Return to Question List</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Simple timer loop
+        fetch('/api/session_status')
+            .then(res => res.json())
+            .then(data => {
+                let sec = data.remaining_time || 3600;
+                setInterval(() => {
+                    if (sec > 0) sec--;
+                    let m = Math.floor(sec / 60);
+                    let s = sec % 60;
+                    document.getElementById('timerDisplay').innerText = 
+                        (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+                }, 1000);
+            });
+    </script>
+</body>
+</html>
