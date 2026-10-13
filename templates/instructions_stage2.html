@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test-Specific Instructions - CBT Examination</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --primary: #1a237e;
+            --primary-light: #283593;
+            --primary-dark: #0d1457;
+            --accent: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --purple: #7c3aed;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --muted: #64748b;
+            --radius: 12px;
+            --shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Header ────────────────────────────────────────────── */
+        .cbt-header {
+            background: var(--primary);
+            color: #fff;
+            padding: 12px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .cbt-brand { display: flex; align-items: center; gap: 12px; }
+        .cbt-brand-icon {
+            width: 40px; height: 40px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; color: #93c5fd;
+        }
+        .cbt-brand h1 { font-size: 1.15rem; font-weight: 700; }
+        .cbt-brand p { font-size: 0.72rem; color: rgba(255,255,255,0.7); }
+        .cbt-candidate {
+            display: flex; align-items: center; gap: 12px;
+            background: rgba(255,255,255,0.08);
+            padding: 6px 14px; border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .cand-info { text-align: right; }
+        .cand-name { font-size: 0.85rem; font-weight: 600; }
+        .cand-id { font-size: 0.72rem; color: #93c5fd; }
+        .cand-avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: #e0e7ff; color: #1e3a8a;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem;
+        }
+
+        /* ── Main Container ────────────────────────────────────── */
+        .container {
+            max-width: 1360px;
+            margin: 20px auto 30px;
+            padding: 0 24px;
+            flex: 1;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .instructions-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .stage-banner {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: #fff;
+            padding: 18px 26px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .stage-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .stage-indicator {
+            background: rgba(255,255,255,0.15);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .content-body {
+            padding: 26px 30px;
+            line-height: 1.7;
+            font-size: 0.92rem;
+            color: #334155;
+        }
+
+        /* ── Test Overview Grid ────────────────────────────────── */
+        .test-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .meta-card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .meta-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; flex-shrink: 0;
+        }
+        .meta-icon.blue { background: #dbeafe; color: #1e40af; }
+        .meta-icon.green { background: #dcfce7; color: #166534; }
+        .meta-icon.purple { background: #ede9fe; color: #6b21a8; }
+        .meta-icon.orange { background: #ffedd5; color: #9a3412; }
+        .meta-val { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+        .meta-lbl { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
+
+        /* ── Sections Table ────────────────────────────────────── */
+        .table-wrap {
+            overflow-x: auto;
+            margin: 16px 0 24px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            text-align: left;
+        }
+        thead {
+            background: #1e293b;
+            color: #fff;
+        }
+        th, td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        tbody tr:nth-child(even) { background: #f8fafc; }
+        tbody tr:hover { background: #f1f5f9; }
+
+        .badge-timing {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 9px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .timing-free { background: #dbeafe; color: #1e40af; }
+        .timing-fixed { background: #fef3c7; color: #92400e; }
+        .timing-lock { background: #fce7f3; color: #9d174d; }
+
+        /* ── Language Bar ──────────────────────────────────────── */
+        .lang-bar {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .lang-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+        }
+        .lang-select {
+            padding: 8px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.88rem;
+            color: var(--text);
+            font-weight: 600;
+            background: #fff;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* ── Declaration Area ──────────────────────────────────── */
+        .declaration-box {
+            background: #fffbeb;
+            border: 1.5px solid #fde68a;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 22px 0 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+        .declaration-box input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        .declaration-text {
+            font-size: 0.86rem;
+            color: #92400e;
+            line-height: 1.6;
+        }
+        .declaration-text strong { color: #78350f; }
+
+        /* ── Footer Actions ────────────────────────────────────── */
+        .card-footer {
+            background: #f8fafc;
+            border-top: 1px solid var(--border);
+            padding: 16px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 26px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-prev {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        .btn-prev:hover { background: #cbd5e1; }
+        .btn-ready {
+            background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(22, 163, 74, 0.25);
+            margin-left: auto;
+        }
+        .btn-ready:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(22, 163, 74, 0.35);
+        }
+        .btn-ready:disabled {
+            background: #94a3b8;
+            box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CBT Header -->
+    <header class="cbt-header">
+        <div class="cbt-brand">
+            <div class="cbt-brand-icon"><i class="fas fa-layer-group"></i></div>
+            <div>
+                <h1>Computer Based Examination Portal</h1>
+                <p>Stage 2 of 2 — Test-Specific Instructions &amp; Declaration</p>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+            <div class="lang-selector-top" style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.18); padding:5px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.3);">
+                <i class="fas fa-globe" style="font-size:0.85rem; color:#fff;"></i>
+                <select id="studentLangSelect" onchange="switchStudentLang(this.value)" style="background:transparent; color:#fff; border:none; font-size:0.82rem; font-weight:600; cursor:pointer; outline:none; font-family:'Poppins',sans-serif;">
+                    <option value="en" style="color:#1e293b;" {% if active_language=='en' %}selected{% endif %}>English</option>
+                    <option value="hi" style="color:#1e293b;" {% if active_language=='hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+                    <option value="mr" style="color:#1e293b;" {% if active_language=='mr' %}selected{% endif %}>मराठी (Marathi)</option>
+                    <option value="ta" style="color:#1e293b;" {% if active_language=='ta' %}selected{% endif %}>தமிழ் (Tamil)</option>
+                    <option value="te" style="color:#1e293b;" {% if active_language=='te' %}selected{% endif %}>తెలుగు (Telugu)</option>
+                    <option value="bn" style="color:#1e293b;" {% if active_language=='bn' %}selected{% endif %}>বাংলা (Bengali)</option>
+                    <option value="gu" style="color:#1e293b;" {% if active_language=='gu' %}selected{% endif %}>ગુજરાતી (Gujarati)</option>
+                    <option value="kn" style="color:#1e293b;" {% if active_language=='kn' %}selected{% endif %}>ಕನ್ನಡ (Kannada)</option>
+                </select>
+            </div>
+            <div class="cbt-candidate">
+                <div class="cand-info">
+                    <div class="cand-name">{{ session.get('student_name', 'Student Candidate') }}</div>
+                    <div class="cand-id">Class {{ session.get('class', '') }} &bull; ID: {{ session.get('student_id', '') }}</div>
+                </div>
+                <div class="cand-avatar">
+                    {{ session.get('student_name', 'S')[:1].upper() }}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="instructions-card">
+            <!-- Stage Banner -->
+            <div class="stage-banner">
+                <div class="stage-title">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>{{ test_title or session.get('subject', 'Multi-Section Examination') }}</span>
+                </div>
+                <div class="stage-indicator">STAGE 2: TEST STRUCTURE &amp; RULES</div>
+            </div>
+
+            <form action="{{ url_for('instructions_accept') }}" method="POST">
+                <div class="content-body">
+
+                    <!-- Meta Summary Cards -->
+                    <div class="test-meta-grid">
+                        <div class="meta-card">
+                            <div class="meta-icon blue"><i class="fas fa-file-alt"></i></div>
+                            <div>
+                                <div class="meta-val">{{ test_no or session.get('test_no', 'Test 1') }}</div>
+                                <div class="meta-lbl">Test Identifier</div>
+                            </div>
+                        </div>
+                        <div class="meta-card">
+                            <div class="meta-icon purple"><i class="fas fa-layer-group"></i></div>
+                            <div>
+                                <div class="meta-val">{{ sections|length }} Sections</div>
+                                <div class="meta-lbl">Composite Sections</div>
+                            </div>
+                        </div>
+                        <div class="meta-card">
+                            <div class="meta-icon green"><i class="fas fa-question-circle"></i></div>
+                            <div>
+                                <div class="meta-val">{{ total_questions or (sections | map(attribute='question_count') | sum) }} Qs</div>
+                                <div class="meta-lbl">Total Questions</div>
+                            </div>
+                        </div>
+                        <div class="meta-card">
+                            <div class="meta-icon orange"><i class="fas fa-clock"></i></div>
+                            <div>
+                                <div class="meta-val">{{ total_duration or (sections | map(attribute='duration_minutes') | sum) or 60 }} Mins</div>
+                                <div class="meta-lbl">Total Duration</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sections Breakdown Table -->
+                    <h3 style="font-size:0.98rem; font-weight:700; color:var(--primary); margin-bottom:6px;">
+                        <i class="fas fa-table"></i> Section-Wise Questions &amp; Marking Scheme
+                    </h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Section Name</th>
+                                    <th>Subject</th>
+                                    <th style="text-align:center;">Questions</th>
+                                    <th style="text-align:center;">Correct Mark</th>
+                                    <th style="text-align:center;">Negative Mark</th>
+                                    <th>Section Timing Behavior</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sec in sections %}
+                                <tr>
+                                    <td><strong>{{ sec.section_name }}</strong></td>
+                                    <td>{{ sec.subject }}</td>
+                                    <td style="text-align:center; font-weight:700;">{{ sec.question_count }}</td>
+                                    <td style="text-align:center; color:#15803d; font-weight:600;">+{{ sec.positive_marks }}</td>
+                                    <td style="text-align:center; color:{% if sec.negative_marks < 0 %}#b91c1c{% else %}#64748b{% endif %}; font-weight:600;">
+                                        {{ sec.negative_marks }}
+                                    </td>
+                                    <td>
+                                        {% if timing_mode == 'fixed' %}
+                                        <span class="badge-timing timing-fixed">
+                                            <i class="fas fa-stopwatch"></i> Fixed {{ sec.duration_minutes }} Mins
+                                        </span>
+                                        {% elif timing_mode == 'no_fixed_lock' %}
+                                        <span class="badge-timing timing-lock">
+                                            <i class="fas fa-lock"></i> One-Way Lock on Leave
+                                        </span>
+                                        {% else %}
+                                        <span class="badge-timing timing-free">
+                                            <i class="fas fa-unlock"></i> Free Navigation
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Language Selection -->
+                    <div class="lang-bar">
+                        <div class="lang-label">
+                            <i class="fas fa-language" style="font-size:1.2rem;"></i>
+                            <span>Choose your default viewing language:</span>
+                        </div>
+                        <select name="exam_language" class="lang-select" onchange="onStage2LangChange(this.value)">
+                            <option value="English" {% if active_language != 'hi' %}selected{% endif %}>English</option>
+                            <option value="Hindi" {% if active_language == 'hi' %}selected{% endif %}>Hindi (हिंदी)</option>
+                        </select>
+                    </div>
+                    <div style="font-size:0.8rem; color:#64748b; margin-top:-8px; margin-bottom:14px; padding-left:4px;">
+                        <i class="fas fa-info-circle" style="color:var(--primary);"></i>
+                        <strong>Note:</strong> Questions on Language subjects (e.g., English, Hindi, Sanskrit, etc.) appear strictly in their respective language and will not be translated.
+                    </div>
+
+                    <!-- Declaration -->
+                    <div class="declaration-box">
+                        <input type="checkbox" id="declarationCheck" required onchange="toggleBeginButton()">
+                        <label for="declarationCheck" class="declaration-text">
+                            <strong>Candidate Undertaking &amp; Declaration:</strong><br>
+                            I have read and understood all the instructions given on this page and the previous general instructions page. I have ensured that the computer terminal and mouse provided to me are in proper working order. I declare that I am not carrying any unauthorized devices or notes into the examination. I understand that any violation will result in immediate cancellation of my candidature.
+                        </label>
+                    </div>
+
+                </div>
+
+                <!-- Footer Action Buttons -->
+                <div class="card-footer">
+                    <a href="{{ url_for('instructions_stage1') }}" class="btn btn-prev">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Previous</span>
+                    </a>
+                    <button type="submit" id="beginBtn" class="btn btn-ready" disabled>
+                        <span>I am ready to begin</span>
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleBeginButton() {
+            const check = document.getElementById('declarationCheck');
+            const btn = document.getElementById('beginBtn');
+            btn.disabled = !check.checked;
+        }
+
+        async function switchStudentLang(lang) {
+            try {
+                await fetch('/api/set_language', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({lang_code: lang})
+                });
+                location.reload();
+            } catch(e) {
+                console.error('Lang switch error:', e);
+            }
+        }
+
+        function onStage2LangChange(val) {
+            const langCode = (val.toLowerCase() === 'hindi' || val.toLowerCase() === 'hi') ? 'hi' : 'en';
+            switchStudentLang(langCode);
+        }
+    </script>
+</body>
+</html>
