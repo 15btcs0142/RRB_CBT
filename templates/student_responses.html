@@ -672,6 +672,7 @@
             }
         }
     </style>
+    {{ theme_style_tag|safe }}
 </head>
 <body>
 
@@ -690,7 +691,7 @@
     </div>
 
     <!-- ─── Watermark ──────────────────────────────────────────────────── -->
-    <div class="watermark">RRB Group of Schools</div>
+    <div class="watermark">{{ school_name }}</div>
 
     <!-- ─── Brand Bar ──────────────────────────────────────────────────── -->
     <div class="brand-bar">
@@ -722,8 +723,11 @@
         <div class="student-info-card">
             <div class="info-item"><i class="fas fa-user-graduate"></i> <strong>Name:</strong> {{ student['name'] }}</div>
             <div class="info-item"><i class="fas fa-id-card"></i> <strong>ID:</strong> {{ student['student_id'] }}</div>
-            <div class="info-item"><i class="fas fa-graduation-cap"></i> <strong>Class:</strong> {{ student['class'] }}</div>
+            <div class="info-item"><i class="fas fa-graduation-cap"></i> <strong>Class:</strong> {{ student['class'] }}{% if 'section' in student.keys() and student['section'] %}-{{ student['section'] }}{% endif %}</div>
             <div class="info-item"><i class="fas fa-book-open"></i> <strong>Subject:</strong> {{ student['subject'] }}</div>
+            {% if 'test_no' in student.keys() and student['test_no'] %}
+            <div class="info-item"><i class="fas fa-hashtag"></i> <strong>Test No:</strong> {{ student['test_no'] }}</div>
+            {% endif %}
             <div class="info-item"><i class="fas fa-circle"></i> <strong>Status:</strong> {{ student['status'] }}</div>
             <div class="info-item"><i class="fas fa-network-wired"></i> <strong>IP:</strong> {{ student['ip'] }}</div>
         </div>
@@ -775,6 +779,29 @@
             </div>
         </div>
 
+        {% if section_breakdown %}
+        <!-- Section-Wise Score Breakdown Card -->
+        <div class="score-summary-card" style="margin-top: -10px; margin-bottom: 24px;">
+            <div style="grid-column: 1 / -1; margin-bottom: 4px; font-weight: 700; color: #1a237e; display: flex; align-items: center; gap: 8px; font-size: 0.95rem;">
+                <i class="fas fa-layer-group"></i> Section-Wise Score Breakdown
+            </div>
+            {% for sec in section_breakdown %}
+            <div class="score-item" style="flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 16px;">
+                <div style="font-size: 0.88rem; font-weight: 700; color: #1a237e;">{{ sec.section_name }}</div>
+                <div style="font-size: 0.75rem; color: #64748b;">Subject: {{ sec.subject }}</div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: #2e7d32; margin-top: 4px;">
+                    {{ sec.marks_obtained }} / {{ sec.max_marks }} <span style="font-size: 0.72rem; color: #64748b; font-weight: normal;">marks</span>
+                </div>
+                <div style="font-size: 0.74rem; color: #475569; display: flex; gap: 8px; margin-top: 2px;">
+                    <span style="color:#2e7d32;">✓ {{ sec.correct }}</span>
+                    <span style="color:#c62828;">✗ {{ sec.incorrect }}</span>
+                    <span style="color:#e65100;">⊘ {{ sec.total - sec.attempted }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <!-- Filter Bar -->
         <div class="filter-bar">
             <div class="filter-label">
@@ -811,7 +838,12 @@
                             data-correct="{{ 'true' if q.is_correct else 'false' }}"
                             data-attempted="{{ 'true' if q.selected else 'false' }}">
                             <td><strong>{{ loop.index }}</strong></td>
-                            <td class="question-text">{{ q.question }}</td>
+                            <td class="question-text">
+                                {% if q.section_name %}
+                                <span style="display:inline-block; margin-bottom:4px; font-size:0.7rem; font-weight:700; background:#e8eaf6; color:#1a237e; padding:1px 8px; border-radius:10px;">{{ q.section_name }}</span><br>
+                                {% endif %}
+                                {{ q.question }}
+                            </td>
                             <td class="options-list">
                                 <span>A. {{ q.options.A }}</span>
                                 <span>B. {{ q.options.B }}</span>
@@ -844,11 +876,105 @@
                     </tbody>
                 </table>
             </div>
+        {% if coding_responses %}
+        <div style="margin-top: 32px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                <h3 style="color: #1a237e; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-code"></i> Coding Test Submissions
+                </h3>
+                <span style="background: #e8eaf6; color: #1a237e; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 0.8rem;">
+                    {{ coding_responses|length }} Problem{% if coding_responses|length > 1 %}s{% endif %}
+                </span>
+            </div>
+
+            {% for cq in coding_responses %}
+            <div style="background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border-radius: 16px; border: 1px solid rgba(26,35,126,0.1); padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.04);">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px;">
+                    <div>
+                        <h4 style="font-size: 1rem; color: #1a237e; font-weight: 600;">
+                            Q{{ loop.index }}. {{ cq.title }}
+                        </h4>
+                        <div style="font-size: 0.78rem; color: #666; margin-top: 4px;">
+                            {{ cq.problem_statement|truncate(120) }}
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="background: #f5f7fa; color: #333; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; border: 1px solid #e0e0e0;">
+                            <i class="fas fa-terminal"></i> {{ cq.language|upper }}
+                        </span>
+                        <span style="background: {% if cq.status == 'Passed' %}#e8f5e9{% elif 'Error' in cq.status or cq.status == 'Failed' %}#fce4ec{% else %}#fff3e0{% endif %}; color: {% if cq.status == 'Passed' %}#2e7d32{% elif 'Error' in cq.status or cq.status == 'Failed' %}#c62828{% else %}#e65100{% endif %}; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">
+                            {{ cq.status }}
+                        </span>
+                        <span style="background: #1a237e; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 700;">
+                            {{ cq.marks_awarded }} / {{ cq.total_marks }} Marks
+                        </span>
+                    </div>
+                </div>
+
+                {% if cq.code %}
+                <div style="margin-bottom: 14px;">
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #555; text-transform: uppercase; margin-bottom: 6px;">Submitted Code</div>
+                    <pre style="background: #1e1e2e; color: #a6adc8; padding: 14px; border-radius: 10px; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.82rem; line-height: 1.4; max-height: 250px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;"><code>{{ cq.code }}</code></pre>
+                </div>
+                {% else %}
+                <div style="background: #f9f9f9; padding: 12px; border-radius: 8px; color: #888; font-size: 0.82rem; font-style: italic; margin-bottom: 14px;">
+                    No code submitted.
+                </div>
+                {% endif %}
+
+                {% if cq.case_results %}
+                <div>
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #555; text-transform: uppercase; margin-bottom: 6px;">
+                        Test Cases Evaluation (Passed {{ cq.test_cases_passed }}/{{ cq.total_test_cases }})
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                            <thead>
+                                <tr style="background: #f0f4f8; color: #333;">
+                                    <th style="padding: 6px 10px; text-align: left; font-weight: 600; color: #1a237e;">#</th>
+                                    <th style="padding: 6px 10px; text-align: left; font-weight: 600; color: #1a237e;">Type</th>
+                                    <th style="padding: 6px 10px; text-align: left; font-weight: 600; color: #1a237e;">Status</th>
+                                    <th style="padding: 6px 10px; text-align: left; font-weight: 600; color: #1a237e;">Input</th>
+                                    <th style="padding: 6px 10px; text-align: left; font-weight: 600; color: #1a237e;">Expected Output</th>
+                                    <th style="padding: 6px 10px; text-align: left; font-weight: 600; color: #1a237e;">Actual Output</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tc in cq.case_results %}
+                                <tr style="border-bottom: 1px solid #eee;">
+                                    <td style="padding: 6px 10px;">{{ loop.index }}</td>
+                                    <td style="padding: 6px 10px;">
+                                        {% if tc.is_hidden %}
+                                            <span style="color: #666; font-size: 0.75rem;"><i class="fas fa-lock"></i> Hidden</span>
+                                        {% else %}
+                                            <span style="color: #1a237e; font-size: 0.75rem;"><i class="fas fa-eye"></i> Visible</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 6px 10px;">
+                                        {% if tc.passed %}
+                                            <span style="color: #2e7d32; font-weight: 600;">Passed</span>
+                                        {% else %}
+                                            <span style="color: #c62828; font-weight: 600;">{{ tc.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 6px 10px; font-family: monospace;">{{ tc.input }}</td>
+                                    <td style="padding: 6px 10px; font-family: monospace;">{{ tc.expected_output }}</td>
+                                    <td style="padding: 6px 10px; font-family: monospace;">{{ tc.actual_output }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
         </div>
+        {% endif %}
 
         <div class="footer-note">
             <i class="fas fa-shield-alt"></i>
-            RRB CBT &nbsp;·&nbsp; Developed By Gaurav Shukla &amp; Team <i class="fas fa-heart" style="color:#e53935;font-size:0.65rem;"></i>
+            RRB CBT &nbsp;·&nbsp; {{ developer_credit }} <i class="fas fa-heart" style="color:#e53935;font-size:0.65rem;"></i>
         </div>
 
     </div>
